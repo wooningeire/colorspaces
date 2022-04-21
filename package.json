@@ -10,6 +10,7 @@
   },
   "author": "",
   "license": "MIT",
+  "type": "module",
   "browserslist": [
     "since 2018"
   ],
