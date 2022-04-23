@@ -1,11 +1,16 @@
 <template>
 	<main>
-		Filler
+		
 	</main>
 </template>
 
 <script lang="ts">
 import {defineComponent} from "vue";
+import {Tree, Node, Socket, Link} from "../models/Node";
+
+const tree = new Tree();
+
+const node = new Node();
 
 export default defineComponent({
 	name: "Root",
@@ -19,6 +24,7 @@ export default defineComponent({
 
 body {
 	margin: 0;
+	font-family: Atkinson Hyperlegible, Overpass, sans-serif;
 }
 
 input,
@@ -27,18 +33,9 @@ button {
 }
 
 main {
-	font-family: Atkinson Hyperlegible, Overpass, sans-serif;
-
-	--col-not-text: #0000003f;
-	--col-not-bg: #0000000f;
-}
-
-main {
 	width: 100vw;
 	height: 100vh;
 	display: grid;
-	grid-template-columns: 1fr 1fr;
 	align-items: center;
-	gap: 2em;
 }
 </style>
