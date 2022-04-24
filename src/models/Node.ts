@@ -5,9 +5,12 @@ export class Tree {
 	readonly nodes: Node[] = [];
 }
 
+let i = 0;
 export class Node {
 	readonly ins: Socket[] = [];
 	readonly outs: Socket[] = [];
+
+	readonly id = i++;
 
 	pos: Vector = [];
 

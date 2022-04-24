@@ -1,19 +1,23 @@
 <template>
 	<main>
-		
+		<TheNodeTree />
 	</main>
 </template>
 
 <script lang="ts">
 import {defineComponent} from "vue";
+
+import TheNodeTree from "./TheNodeTree.vue";
+
 import {Tree, Node, Socket, Link} from "../models/Node";
 import {colorModelNodes} from "../models/nodetypes";
 
-new colorModelNodes.RgbNode();
-
-
 export default defineComponent({
 	name: "Root",
+
+	components: {
+		TheNodeTree,
+	},
 });
 </script>
 
