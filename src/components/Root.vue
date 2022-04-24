@@ -7,10 +7,10 @@
 <script lang="ts">
 import {defineComponent} from "vue";
 import {Tree, Node, Socket, Link} from "../models/Node";
+import {colorModelNodes} from "../models/nodetypes";
 
-const tree = new Tree();
+new colorModelNodes.RgbNode();
 
-const node = new Node();
 
 export default defineComponent({
 	name: "Root",

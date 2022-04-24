@@ -11,22 +11,19 @@ export class Node {
 
 	pos: Vector = [];
 
-	readonly label: string;
-
-	constructor() {
-		
-	}
+	constructor(
+		readonly type: symbol,
+		public label: string="",
+	) {}
 }
 
 export class Socket {
-	readonly label: string;
-
 	constructor(
 		readonly node: Node,
 		readonly isInput: boolean,
-	) {
 
-	}
+		public label: string="",
+	) {}
 }
 
 export class Link {
