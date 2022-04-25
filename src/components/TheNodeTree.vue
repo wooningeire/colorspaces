@@ -12,7 +12,7 @@
 import {defineComponent} from "vue";
 import BaseNode from "./BaseNode.vue";
 import {Tree} from "../models/Node";
-import {colorModelNodes} from "../models/nodetypes";
+import {spaces, externals} from "../models/nodetypes";
 
 export default defineComponent({
 	name: "TheNodeTree",
@@ -27,7 +27,10 @@ export default defineComponent({
 	},
 
 	created() {
-		this.tree.nodes.push(new colorModelNodes.RgbNode());
+		this.tree.nodes.push(
+			new spaces.SrgbNode(),
+			new externals.DeviceTransformNode([400, 100]),
+		);
 	},
 });
 </script>

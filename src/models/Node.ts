@@ -10,13 +10,14 @@ export class Node {
 	readonly ins: Socket[] = [];
 	readonly outs: Socket[] = [];
 
-	readonly id = i++;
+	readonly fields = [];
 
-	pos: Vector = [];
+	readonly id = i++;
 
 	constructor(
 		readonly type: symbol,
 		public label: string="",
+		public pos: Vector=[0, 0],
 	) {}
 }
 

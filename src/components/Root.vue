@@ -10,7 +10,7 @@ import {defineComponent} from "vue";
 import TheNodeTree from "./TheNodeTree.vue";
 
 import {Tree, Node, Socket, Link} from "../models/Node";
-import {colorModelNodes} from "../models/nodetypes";
+import {spaces} from "../models/nodetypes";
 
 export default defineComponent({
 	name: "Root",
