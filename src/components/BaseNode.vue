@@ -13,7 +13,8 @@
 		<div class="out-sockets">
 			<BaseSocket v-for="socket of node.outs"
 					:key="socket.label"
-					:socket="socket" />
+					:socket="socket"
+					@focussocket="focussocket" />
 		</div>
 	</div>
 </template>
@@ -21,7 +22,7 @@
 <script lang="ts">
 import {defineComponent} from "vue";
 import BaseSocket from "./BaseSocket.vue";
-import {Node} from "../models/Node";
+import {Node, Socket} from "../models/Node";
 
 export default defineComponent({
 	name: "BaseNode",
@@ -30,6 +31,12 @@ export default defineComponent({
 		node: {
 			type: Node,
 			required: true,
+		},
+	},
+
+	methods: {
+		focussocket(socketUi: InstanceType<typeof BaseSocket>) {
+			this.$emit("focussocket", socketUi);		
 		},
 	},
 

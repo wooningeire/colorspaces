@@ -1,6 +1,8 @@
 <template>
-	<div class="socket-container" :class="{'in': socket.isInput}">
-		<div class="socket"></div>
+	<div class="socket-container"
+			:class="{'in': socket.isInput}">
+		<div class="socket"
+				@pointerdown="onpointerdown"></div>
 		{{socket.label}}
 	</div>
 </template>
@@ -16,6 +18,18 @@ export default defineComponent({
 		socket: {
 			type: Socket,
 			required: true,
+		},
+	},
+
+	methods: {
+		onpointerdown() {
+			this.$emit("focussocket", this);
+		},
+	},
+
+	computed: {
+		socketEl() {
+			return this.$el?.querySelector(".socket");
 		},
 	},
 });

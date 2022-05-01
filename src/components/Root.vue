@@ -1,7 +1,5 @@
 <template>
-	<main>
-		<TheNodeTree />
-	</main>
+	<TheNodeTree />
 </template>
 
 <script lang="ts">
