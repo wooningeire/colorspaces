@@ -1,1 +1,1 @@
-export type Vector = number[];
+export type Vec2 = [number, number];

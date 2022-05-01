@@ -13,24 +13,42 @@ import {defineComponent} from "vue";
 import BaseNode from "./BaseNode.vue";
 import {Tree} from "../models/Node";
 import {spaces, externals} from "../models/nodetypes";
+import {Vec2} from "../util";
 
 export default defineComponent({
 	name: "TheNodeTree",
 
-	data: () => ({
+	data: () => (<{
+		pos: Vec2,
+		tree: Tree,
+		deviceNodes: {
+			transformNode: externals.DeviceTransformNode,
+			postprocessingNode: externals.DevicePostprocessingNode,
+			visionNode: externals.VisionNode,
+		},
+	}>{
 		pos: [0, 0],
 		tree: new Tree(),
+		deviceNodes: {
+			// set in `created`
+		},
 	}),
 
-	components: {
-		BaseNode,
+	methods: {
+		parseTree() {
+			this.deviceNodes.transformNode.ins[0];
+		},
 	},
 
 	created() {
 		this.tree.nodes.push(
-			new spaces.SrgbNode(),
-			new externals.DeviceTransformNode([400, 100]),
+			new spaces.SrgbNode([50, 50]),
+			(this.deviceNodes.transformNode = new externals.DeviceTransformNode([400, 100])),
 		);
+	},
+
+	components: {
+		BaseNode,
 	},
 });
 </script>

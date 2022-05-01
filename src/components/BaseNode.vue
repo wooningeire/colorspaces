@@ -47,6 +47,8 @@ export default defineComponent({
 	flex-direction: column;
 	border: 1px solid;
 
+	width: 160px;
+
 	// grid-template-areas:
 	// 		"A A"
 	// 		"B C";

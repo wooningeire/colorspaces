@@ -1,4 +1,4 @@
-import {Vector} from "../util";
+import {Vec2} from "../util";
 
 export class Tree {
 	readonly links: Link[] = [];
@@ -7,6 +7,9 @@ export class Tree {
 
 let i = 0;
 export class Node {
+	static readonly TYPE: symbol = Symbol();
+	static readonly LABEL: string = "";
+
 	readonly ins: Socket[] = [];
 	readonly outs: Socket[] = [];
 
@@ -14,10 +17,11 @@ export class Node {
 
 	readonly id = i++;
 
+	// Note: If subclass constructor is called, `new.target` is the subclass
 	constructor(
-		readonly type: symbol,
-		public label: string="",
-		public pos: Vector=[0, 0],
+		public pos: Vec2=[0, 0],
+		readonly type: symbol=new.target.TYPE,
+		public label: string=new.target.LABEL,
 	) {}
 }
 

@@ -1,5 +1,5 @@
 import {Node, Socket} from "./Node";
-import {Vector} from "../util";
+import {Vec2} from "../util";
 
 export namespace spaces {
 	export class LinearNode extends Node {
@@ -11,7 +11,7 @@ export namespace spaces {
 		blue: number = 0;
 
 		constructor() {
-			super(SrgbNode.TYPE, SrgbNode.LABEL);
+			super();
 
 			this.outs.push(
 				new Socket(this, false, "Color"),
@@ -27,8 +27,8 @@ export namespace spaces {
 		green: number = 0;
 		blue: number = 0;
 
-		constructor(pos?: Vector) {
-			super(SrgbNode.TYPE, SrgbNode.LABEL, pos);
+		constructor(pos?: Vec2) {
+			super(pos);
 
 			this.outs.push(
 				new Socket(this, false, "Color"),
@@ -42,8 +42,8 @@ export namespace externals {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Device transform";
 		
-		constructor(pos?: Vector) {
-			super(DeviceTransformNode.TYPE, DeviceTransformNode.LABEL, pos);
+		constructor(pos?: Vec2) {
+			super(pos);
 
 			this.ins.push(
 				new Socket(this, true, "Color data"),
