@@ -25,10 +25,19 @@ export class Node {
 	) {}
 }
 
+enum Type {
+	UNKNOWN,
+	COL_RAW,
+	COL_TRANSFORMED,
+}
+
 export class Socket {
+	static Type = Type;
+
 	constructor(
 		readonly node: Node,
 		readonly isInput: boolean,
+		readonly type: Type,
 
 		public label: string="",
 	) {}

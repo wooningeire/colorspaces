@@ -11,7 +11,7 @@
 <script lang="ts">
 import {defineComponent} from "vue";
 import BaseNode from "./BaseNode.vue";
-import {Tree} from "../models/Node";
+import {Tree, Socket} from "../models/Node";
 import {spaces, externals} from "../models/nodetypes";
 import {Vec2} from "../util";
 
@@ -23,8 +23,8 @@ export default defineComponent({
 		tree: Tree,
 		deviceNodes: {
 			transformNode: externals.DeviceTransformNode,
-			postprocessingNode: externals.DevicePostprocessingNode,
-			visionNode: externals.VisionNode,
+			// postprocessingNode: externals.DevicePostprocessingNode,
+			// visionNode: externals.VisionNode,
 		},
 	}>{
 		pos: [0, 0],
@@ -36,7 +36,12 @@ export default defineComponent({
 
 	methods: {
 		parseTree() {
-			this.deviceNodes.transformNode.ins[0];
+			const resultSocket = this.deviceNodes.transformNode.ins[0];
+
+			for (const link of resultSocket.links) {
+				if (link.src.type !== Socket.Type.COL_TRANSFORMED) continue;
+				return link.src.node.rgbOutput();
+			}
 		},
 	},
 

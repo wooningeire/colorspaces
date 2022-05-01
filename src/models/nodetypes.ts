@@ -14,7 +14,7 @@ export namespace spaces {
 			super();
 
 			this.outs.push(
-				new Socket(this, false, "Color"),
+				new Socket(this, false, Socket.Type.COL_TRANSFORMED, "Color"),
 			);
 		}
 	}
@@ -31,7 +31,7 @@ export namespace spaces {
 			super(pos);
 
 			this.outs.push(
-				new Socket(this, false, "Color"),
+				new Socket(this, false, Socket.Type.COL_TRANSFORMED, "Color"),
 			);
 		}
 	}
@@ -46,11 +46,11 @@ export namespace externals {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, "Color data"),
+				new Socket(this, true, Socket.Type.COL_TRANSFORMED, "Color data"),
 			);
 
 			this.outs.push(
-				new Socket(this, false, "Screen image"),
+				new Socket(this, false, Socket.Type.UNKNOWN, "Screen image"),
 			);
 		}
 	}

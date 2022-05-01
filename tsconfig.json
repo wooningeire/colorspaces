@@ -4,5 +4,6 @@
 		"downlevelIteration": true,
 		"useDefineForClassFields": true,
 		"moduleResolution": "node",
+		"jsx": "preserve",
 	},
 }
