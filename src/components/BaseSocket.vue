@@ -24,9 +24,8 @@ export default defineComponent({
 			required: true,
 		},
 
-		draggingSocket: {
-			type: Boolean,
-			required: true,
+		draggedSocket: {
+			type: Socket,
 		},
 	},
 
@@ -39,7 +38,15 @@ export default defineComponent({
 		},
 
 		ondrop(event: DragEvent) {
-			this.$emit("link-to-socket", this);
+			if (this.willAcceptLink()) {
+				this.$emit("link-to-socket", this);
+			}
+		},
+
+		willAcceptLink() {
+			return (this.socket.isInput !== this.draggedSocket.isInput)
+					&& (this.socket.node !== this.draggedSocket.node)
+					&& (this.socket.type === this.draggedSocket.type);
 		},
 	},
 

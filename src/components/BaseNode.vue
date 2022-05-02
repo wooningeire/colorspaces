@@ -8,7 +8,8 @@
 			<BaseSocket v-for="socket of node.ins"
 					:key="socket.label"
 					:socket="socket"
-					:draggingSocket="draggingSocket"
+					:draggedSocket="draggedSocket"
+					@drag-socket="socketVue => $emit('drag-socket', socketVue)"
 					@link-to-socket="socketVue => $emit('link-to-socket', socketVue)" />
 		</div>
 
@@ -16,8 +17,9 @@
 			<BaseSocket v-for="socket of node.outs"
 					:key="socket.label"
 					:socket="socket"
-					:draggingSocket="draggingSocket"
-					@drag-socket="socketVue => $emit('drag-socket', socketVue)" />
+					:draggedSocket="draggedSocket"
+					@drag-socket="socketVue => $emit('drag-socket', socketVue)"
+					@link-to-socket="socketVue => $emit('link-to-socket', socketVue)" />
 		</div>
 	</div>
 </template>
@@ -36,9 +38,8 @@ export default defineComponent({
 			required: true,
 		},
 
-		draggingSocket: {
-			type: Boolean,
-			required: true,
+		draggedSocket: {
+			type: Socket,
 		},
 	},
 

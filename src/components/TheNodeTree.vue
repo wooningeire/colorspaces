@@ -4,7 +4,7 @@
 			<BaseNode v-for="node of tree.nodes"
 					:key="node.id"
 					:node="node"
-					:draggingSocket="draggingSocket"
+					:draggedSocket="draggedSocket"
 					@drag-socket="onDragSocket"
 					@link-to-socket="onLinkToSocket" />
 		</div>
@@ -98,7 +98,12 @@ export default defineComponent({
 
 		onLinkToSocket(socketVue: InstanceType<typeof BaseSocket>) {
 			this.socketVues.set(socketVue.socket, socketVue);
-			this.tree.linkSockets(this.draggedSocket, socketVue.socket);
+
+			if (this.draggedSocket.isInput) {
+				this.tree.linkSockets(socketVue.socket, this.draggedSocket);
+			} else {
+				this.tree.linkSockets(this.draggedSocket, socketVue.socket);
+			}
 		},
 		//#endregion
 
