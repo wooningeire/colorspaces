@@ -1,8 +1,18 @@
 <template>
-	<div class="node" :style="{'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`}">
+	<div class="node"
+			:style="{
+				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
+				'color': `rgb(${node.color.map(x => x * 255)})`,
+			}">
 		<div class="node-content">
 			<div class="label">
 				{{node.label}}
+			</div>
+
+			<div class="fields">
+				<BaseField v-for="field of node.fields"
+						:key="field.id"
+						:field="field" />
 			</div>
 		</div>
 
@@ -29,6 +39,7 @@
 <script lang="ts">
 import {defineComponent} from "vue";
 import BaseSocket from "./BaseSocket.vue";
+import BaseField from "./BaseField.vue";
 import {Node, Socket} from "../models/Node";
 
 export default defineComponent({
@@ -47,6 +58,7 @@ export default defineComponent({
 
 	components: {
 		BaseSocket,
+		BaseField,
 	},
 });
 </script>
@@ -57,7 +69,7 @@ export default defineComponent({
 	// display: inline grid;
 	display: inline flex;
 	flex-direction: column;
-	border: 4px solid;
+	border: 4px solid #ffffff7f;
 	width: 160px;
 	padding-bottom: 1em;
 
@@ -81,6 +93,11 @@ export default defineComponent({
 			text-align: center;
 			padding: 0 0.25em;
 			font-weight: 800;
+		}
+
+		> .fields {
+			display: flex;
+			flex-flow: column;
 		}
 	}
 }

@@ -33,7 +33,7 @@ import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
 import {Tree, Socket} from "../models/Node";
 import {spaces, externals} from "../models/nodetypes";
-import {Vec2, Listen} from "../util";
+import {Vec2, Listen, Color} from "../util";
 
 export default defineComponent({
 	name: "TheNodeTree",
@@ -67,12 +67,12 @@ export default defineComponent({
 	}),
 
 	methods: {
-		parseTree() {
+		srgbOutput() {
 			const resultSocket = this.deviceNodes.transformNode.ins[0];
 
 			for (const link of resultSocket.links) {
 				if (link.src.type !== Socket.Type.COL_TRANSFORMED) continue;
-				return link.src.node.rgbOutput();
+				return link.src.node.srgbOutput();
 			}
 		},
 
@@ -104,6 +104,10 @@ export default defineComponent({
 			} else {
 				this.tree.linkSockets(this.draggedSocket, socketVue.socket);
 			}
+
+			if ([socketVue.socket.node, this.draggedSocket.node].includes(this.deviceNodes.transformNode)) {
+				this.updateDisplay();
+			}
 		},
 		//#endregion
 
@@ -128,6 +132,10 @@ export default defineComponent({
 			// if (!rect) return 0;
 			return (rect.top + rect.bottom) / 2;
 		},
+
+		updateDisplay() {
+			this.deviceNodes.transformNode.color = this.srgbOutput();
+		},
 	},
 
 	computed: {
@@ -151,11 +159,9 @@ export default defineComponent({
 	created() {
 		this.tree.nodes.push(
 			new spaces.SrgbNode([50, 50]),
+			new spaces.LinearNode([50, 400]),
 			(this.deviceNodes.transformNode = new externals.DeviceTransformNode([400, 100])),
 		);
-	},
-
-	mounted() {
 	},
 
 	components: {

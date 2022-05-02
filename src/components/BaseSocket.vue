@@ -65,8 +65,8 @@ export default defineComponent({
 	--socket-text-padding: 8px;
 
 	> .socket {
-		width: 8px;
-		height: 8px;
+		width: var(--socket-size);
+		height: var(--socket-size);
 		position: absolute;
 		top: 0.5em;
 		bottom: 0.5em;
@@ -75,7 +75,8 @@ export default defineComponent({
 		background: currentcolor;
 		box-shadow: 0 0 0 4px #2f3432;
 
-		--socket-offset: -6px;
+		--socket-size: 10px;
+		--socket-offset: -7px;
 	}
 
 	&.in {

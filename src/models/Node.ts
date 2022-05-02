@@ -1,7 +1,7 @@
-import {Vec2} from "../util";
+import {Color, Vec2} from "../util";
 
 export class Tree {
-	readonly links: Link[] = [];
+	readonly links = new Set<Link>();
 	readonly nodes: Node[] = [];
 
 	linkSockets(src: Socket, dst: Socket) {
@@ -9,7 +9,16 @@ export class Tree {
 		if (dst.isOutput) throw new Error("Dest is an output");
 		if (src.node === dst.node) throw new Error("Sockets belong to same node");
 
-		this.links.push(new Link(src, dst));
+		const link = new Link(src, dst);
+
+		const existingDstLink = dst.links[0];
+		this.links.delete(existingDstLink);
+		dst.links.pop();
+
+		src.links.push(link);
+		dst.links.push(link);
+
+		this.links.add(link);
 	}
 }
 
@@ -21,7 +30,9 @@ export class Node {
 	readonly ins: Socket[] = [];
 	readonly outs: Socket[] = [];
 
-	readonly fields = [];
+	readonly fields: Field[] = [];
+
+	color: Color = [1, 1, 1]; // temp
 
 	readonly id = i++;
 
@@ -31,21 +42,27 @@ export class Node {
 		readonly type: symbol=new.target.TYPE,
 		public label: string=new.target.LABEL,
 	) {}
+
+	srgbOutput(): Color {
+		throw new TypeError("Not implemented");
+	}
 }
 
-enum Type {
+enum SocketType {
 	UNKNOWN,
 	COL_RAW,
 	COL_TRANSFORMED,
 }
 
 export class Socket {
-	static Type = Type;
+	static readonly Type = SocketType;
+
+	readonly links: Link[] = [];
 
 	constructor(
 		readonly node: Node,
 		readonly isInput: boolean,
-		readonly type: Type,
+		readonly type: SocketType,
 
 		public label: string="",
 	) {}
@@ -61,5 +78,17 @@ export class Link {
 		readonly src: Socket,
 		/** Destination socket. */
 		readonly dst: Socket,
+	) {}
+}
+
+
+let j = 0;
+export class Field {
+	readonly id = j++;
+
+	value = 0;
+
+	constructor(
+		public label: string="",
 	) {}
 }

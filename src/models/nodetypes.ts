@@ -1,27 +1,14 @@
-import {Node, Socket} from "./Node";
-import {Vec2} from "../util";
+import {Field, Node, Socket} from "./Node";
+import {Color, Vec2} from "../util";
+
+export namespace rgbModels {
+	
+}
 
 export namespace spaces {
 	export class LinearNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Linear";
-		
-		red: number = 0;
-		green: number = 0;
-		blue: number = 0;
-
-		constructor() {
-			super();
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.COL_TRANSFORMED, "Color"),
-			);
-		}
-	}
-
-	export class SrgbNode extends Node {
-		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "sRGB";
+		static readonly LABEL = "Linear RGB";
 		
 		red: number = 0;
 		green: number = 0;
@@ -30,9 +17,42 @@ export namespace spaces {
 		constructor(pos?: Vec2) {
 			super(pos);
 
+			this.fields.push(
+				new Field("Red"),
+				new Field("Green"),
+				new Field("Blue"),
+			);
+
 			this.outs.push(
 				new Socket(this, false, Socket.Type.COL_TRANSFORMED, "Color"),
 			);
+		}
+
+		srgbOutput(): Color {
+			return this.fields.map(field => Math.pow(field.value, 1/2.2)) as Color;
+		}
+	}
+
+	export class SrgbNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "sRGB";
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.fields.push(
+				new Field("Red"),
+				new Field("Green"),
+				new Field("Blue"),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.COL_TRANSFORMED, "Color"),
+			);
+		}
+
+		srgbOutput(): Color {
+			return this.fields.map(field => field.value) as Color;
 		}
 	}
 }
