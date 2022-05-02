@@ -188,6 +188,10 @@ export default defineComponent({
 		stroke-width: 2px;
 
 		pointer-events: none;
+
+		> .new-link {
+			opacity: 0.5;
+		}
 	}
 }
 </style>

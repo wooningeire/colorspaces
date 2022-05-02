@@ -39,5 +39,8 @@ main {
 	height: 100vh;
 	display: grid;
 	align-items: center;
+
+	background: radial-gradient(circle, #4a514e, #2f3432 80%, #1f2321);
+	color: #fff;
 }
 </style>

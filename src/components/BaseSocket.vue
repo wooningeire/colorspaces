@@ -62,6 +62,8 @@ export default defineComponent({
 .socket-container {
 	position: relative;
 
+	--socket-text-padding: 8px;
+
 	> .socket {
 		width: 8px;
 		height: 8px;
@@ -69,18 +71,27 @@ export default defineComponent({
 		top: 0.5em;
 		bottom: 0.5em;
 
+		border-radius: 50%;
 		background: currentcolor;
+		box-shadow: 0 0 0 4px #2f3432;
+
+		--socket-offset: -6px;
 	}
 
-	&.in > .socket {
-		left: -8px;
+	&.in {
+		padding-left: var(--socket-text-padding);
+
+		> .socket {
+			left: var(--socket-offset);
+		}
 	}
 
 	&:not(.in) {
 		text-align: right;
+		padding-right: var(--socket-text-padding);
 
 		> .socket {
-			right: -8px;
+			right: var(--socket-offset);
 		}
 	}
 }

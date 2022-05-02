@@ -1,7 +1,9 @@
 <template>
 	<div class="node" :style="{'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`}">
 		<div class="node-content">
-			{{node.label}}
+			<div class="label">
+				{{node.label}}
+			</div>
 		</div>
 
 		<div class="in-sockets">
@@ -55,9 +57,13 @@ export default defineComponent({
 	// display: inline grid;
 	display: inline flex;
 	flex-direction: column;
-	border: 1px solid;
-
+	border: 4px solid;
 	width: 160px;
+	padding-bottom: 1em;
+
+	border-radius: 1em;
+	background: #2f352caf;
+	box-shadow: 0 4px 40px #0000003f;
 
 	// grid-template-areas:
 	// 		"A A"
@@ -67,5 +73,15 @@ export default defineComponent({
 	// > .node-content {
 	// 	grid-area: A;
 	// }
+
+	> .node-content {
+		margin-bottom: 0.5em;
+
+		> .label {
+			text-align: center;
+			padding: 0 0.25em;
+			font-weight: 800;
+		}
+	}
 }
 </style>
