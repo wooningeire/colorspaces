@@ -7,14 +7,17 @@
 		<div class="in-sockets">
 			<BaseSocket v-for="socket of node.ins"
 					:key="socket.label"
-					:socket="socket" />
+					:socket="socket"
+					:draggingSocket="draggingSocket"
+					@link-to-socket="socketVue => $emit('link-to-socket', socketVue)" />
 		</div>
 
 		<div class="out-sockets">
 			<BaseSocket v-for="socket of node.outs"
 					:key="socket.label"
 					:socket="socket"
-					@focussocket="focussocket" />
+					:draggingSocket="draggingSocket"
+					@drag-socket="socketVue => $emit('drag-socket', socketVue)" />
 		</div>
 	</div>
 </template>
@@ -32,11 +35,10 @@ export default defineComponent({
 			type: Node,
 			required: true,
 		},
-	},
 
-	methods: {
-		focussocket(socketUi: InstanceType<typeof BaseSocket>) {
-			this.$emit("focussocket", socketUi);		
+		draggingSocket: {
+			type: Boolean,
+			required: true,
 		},
 	},
 

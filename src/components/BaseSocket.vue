@@ -2,7 +2,11 @@
 	<div class="socket-container"
 			:class="{'in': socket.isInput}">
 		<div class="socket"
-				@pointerdown="onpointerdown"></div>
+				draggable="true"
+				@dragstart="ondragstart"
+				@dragenter.prevent
+				@dragover.prevent
+				@drop="ondrop"></div>
 		{{socket.label}}
 	</div>
 </template>
@@ -19,11 +23,23 @@ export default defineComponent({
 			type: Socket,
 			required: true,
 		},
+
+		draggingSocket: {
+			type: Boolean,
+			required: true,
+		},
 	},
 
 	methods: {
-		onpointerdown() {
-			this.$emit("focussocket", this);
+		ondragstart(event: DragEvent) {
+			event.dataTransfer.dropEffect = "link";
+			event.dataTransfer.setDragImage(document.createElement("div"), 0, 0);
+
+			this.$emit("drag-socket", this);
+		},
+
+		ondrop(event: DragEvent) {
+			this.$emit("link-to-socket", this);
 		},
 	},
 

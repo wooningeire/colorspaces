@@ -4,17 +4,25 @@
 			<BaseNode v-for="node of tree.nodes"
 					:key="node.id"
 					:node="node"
-					@focussocket="focussocket" />
+					:draggingSocket="draggingSocket"
+					@drag-socket="onDragSocket"
+					@link-to-socket="onLinkToSocket" />
 		</div>
 
 		<svg class="links"
 				:viewbox="`0 0 ${$el?.clientWidth ?? 300} ${$el?.clientHeight ?? 150}`">
-			<line v-if="focusedSocket"
+			<line v-if="draggingSocket"
 					class="new-link"
-					:x1="focusedSocketX"
-					:y1="focusedSocketY"
+					:x1="draggedSocketX"
+					:y1="draggedSocketY"
 					:x2="pointerX"
 					:y2="pointerY" />
+
+			<line v-for="link of tree.links"
+					:x1="socketX(link.src)"
+					:y1="socketY(link.src)"
+					:x2="socketX(link.dst)"
+					:y2="socketY(link.dst)" />
 		</svg>
 	</div>
 </template>
@@ -25,7 +33,7 @@ import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
 import {Tree, Socket} from "../models/Node";
 import {spaces, externals} from "../models/nodetypes";
-import {Vec2} from "../util";
+import {Vec2, Listen} from "../util";
 
 export default defineComponent({
 	name: "TheNodeTree",
@@ -39,7 +47,8 @@ export default defineComponent({
 			// visionNode: externals.VisionNode,
 		},
 
-		focusedSocketUi: InstanceType<typeof BaseSocket>,
+		draggedSocketVue: InstanceType<typeof BaseSocket>,
+		socketVues: WeakMap<Socket, InstanceType<typeof BaseSocket>>,
 
 		pointerX: number,
 		pointerY: number,
@@ -50,7 +59,8 @@ export default defineComponent({
 			// set in `created`
 		},
 
-		focusedSocketUi: null,
+		draggedSocketVue: null,
+		socketVues: new WeakMap(),
 
 		pointerX: -1,
 		pointerY: -1,
@@ -67,30 +77,69 @@ export default defineComponent({
 		},
 
 		//#region Events
-		focussocket(socketUi: InstanceType<typeof BaseSocket>) {
-			this.focusedSocketUi = socketUi;
-			console.log(this.focusedSocketUi);
+		onDragSocket(socketVue: InstanceType<typeof BaseSocket>) {
+			this.draggedSocketVue = socketVue;
+			this.socketVues.set(socketVue.socket, socketVue);
+
+			this.pointerX = this.draggedSocketX;
+			this.pointerY = this.draggedSocketY;
+
+			const dragListener = Listen.for(window, "dragover", (event: DragEvent) => {
+				this.pointerX = event.pageX;
+				this.pointerY = event.pageY;
+			});
+
+			socketVue.socketEl.addEventListener("dragend", () => {
+				this.draggedSocketVue = null;
+
+				dragListener.detach();
+			}, {once: true});
+		},
+
+		onLinkToSocket(socketVue: InstanceType<typeof BaseSocket>) {
+			this.socketVues.set(socketVue.socket, socketVue);
+			this.tree.linkSockets(this.draggedSocket, socketVue.socket);
 		},
 		//#endregion
-	},
 
-	computed: {
-		focusedSocket() {
-			return this.focusedSocketUi?.socket;
+		socketX(socket: Socket) {
+			return this.rectCenterX(this.socketRect(socket));
 		},
 
-		focusedSocketX() {
-			const rect = this.focusedSocketUi?.socketEl?.getBoundingClientRect();
-			if (!rect) return 0;
+		socketY(socket: Socket) {
+			return this.rectCenterY(this.socketRect(socket));
+		},
 
+		socketRect(socket: Socket) {
+			return this.socketVues.get(socket)?.socketEl?.getBoundingClientRect();
+		},
+
+		rectCenterX(rect: DOMRect) {
+			// if (!rect) return 0;
 			return (rect.left + rect.right) / 2;
 		},
 
-		focusedSocketY() {
-			const rect = this.focusedSocketUi?.socketEl?.getBoundingClientRect();
-			if (!rect) return 0;
-
+		rectCenterY(rect: DOMRect) {
+			// if (!rect) return 0;
 			return (rect.top + rect.bottom) / 2;
+		},
+	},
+
+	computed: {
+		draggedSocket() {
+			return this.draggedSocketVue?.socket;
+		},
+
+		draggedSocketX() {
+			return this.rectCenterX(this.draggedSocketVue?.socketEl?.getBoundingClientRect());
+		},
+
+		draggedSocketY() {
+			return this.rectCenterY(this.draggedSocketVue?.socketEl?.getBoundingClientRect());
+		},
+
+		draggingSocket() {
+			return Boolean(this.draggedSocketVue);
 		},
 	},
 
@@ -102,14 +151,6 @@ export default defineComponent({
 	},
 
 	mounted() {
-		addEventListener("pointermove", event => {
-			this.pointerX = event.pageX;
-			this.pointerY = event.pageY;
-		});
-
-		addEventListener("pointerup", () => {
-			this.focusedSocketUi = null;
-		});
 	},
 
 	components: {
@@ -138,8 +179,10 @@ export default defineComponent({
 	}
 
 	> svg.links {
-		stroke: #000;
+		stroke: currentcolor;
 		stroke-width: 2px;
+
+		pointer-events: none;
 	}
 }
 </style>

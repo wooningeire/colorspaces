@@ -3,6 +3,14 @@ import {Vec2} from "../util";
 export class Tree {
 	readonly links: Link[] = [];
 	readonly nodes: Node[] = [];
+
+	linkSockets(src: Socket, dst: Socket) {
+		if (src.isInput) throw new Error("Source is an input");
+		if (dst.isOutput) throw new Error("Dest is an output");
+		if (src.node === dst.node) throw new Error("Sockets belong to same node");
+
+		this.links.push(new Link(src, dst));
+	}
 }
 
 let i = 0;
@@ -41,11 +49,17 @@ export class Socket {
 
 		public label: string="",
 	) {}
+
+	get isOutput() {
+		return !this.isInput;
+	}
 }
 
 export class Link {
-	/** Source socket. */
-	src: Socket;
-	/** Destination socket. */
-	dst: Socket;
+	constructor(
+		/** Source socket. */
+		readonly src: Socket,
+		/** Destination socket. */
+		readonly dst: Socket,
+	) {}
 }
