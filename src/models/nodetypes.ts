@@ -29,7 +29,7 @@ export namespace spaces {
 		}
 
 		srgbOutput(): Color {
-			return this.fields.map(field => Math.pow(field.value, 1/2.2)) as Color;
+			return cm.linearToSrgb(this.ins[0].inValue as Color);
 		}
 	}
 

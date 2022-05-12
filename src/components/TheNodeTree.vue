@@ -71,7 +71,7 @@ export default defineComponent({
 			const resultSocket = this.deviceNodes.transformNode.ins[0];
 
 			for (const link of resultSocket.links) {
-				if (link.src.type !== Socket.Type.COL_TRANSFORMED) continue;
+				if (link.src.type !== Socket.Type.ColTransformed) continue;
 				return link.src.node.srgbOutput();
 			}
 		},
