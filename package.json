@@ -6,7 +6,7 @@
     "start": "parcel src/index.html",
     "build": "parcel build src/index.html",
     "build.public": "parcel build src/index.html --public-url ./",
-    "test": "jest"
+    "test": "jest --watchAll"
   },
   "author": "",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "concurrently": "^7.1.0",
     "jest": "^27.5.1",
     "parcel": "^2.5.0",
-    "parcel-resolver-ts-base-url": "^1.1.5",
+    "require-json5": "^1.2.0",
     "sass": "^1.50.0",
     "ts-jest": "^27.1.4",
     "ts-node": "^10.7.0",
