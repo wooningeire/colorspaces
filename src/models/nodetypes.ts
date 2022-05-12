@@ -6,9 +6,10 @@ export namespace rgbModels {
 }
 
 export namespace spaces {
+
 	export class LinearNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Linear RGB";
+		static readonly LABEL = "Linear sRGB";
 		
 		red: number = 0;
 		green: number = 0;

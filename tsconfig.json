@@ -4,6 +4,19 @@
 		"downlevelIteration": true,
 		"useDefineForClassFields": true,
 		"moduleResolution": "node",
+		"esModuleInterop": true,
 		"jsx": "preserve",
+
+		"baseUrl": "./",
+		"paths": {
+			"@src/*": ["src/*"],
+		},
+	},
+	
+	// Allows jest.config.ts to work with type: module
+	"ts-node": {
+		"moduleTypes": {
+			"jest.config.ts": "cjs",
+		},
 	},
 }

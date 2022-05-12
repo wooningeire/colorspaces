@@ -105,6 +105,7 @@ export default defineComponent({
 				this.tree.linkSockets(this.draggedSocket, socketVue.socket);
 			}
 
+			// TODO
 			if ([socketVue.socket.node, this.draggedSocket.node].includes(this.deviceNodes.transformNode)) {
 				this.updateDisplay();
 			}
