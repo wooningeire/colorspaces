@@ -8,52 +8,64 @@
 				@dragover.prevent
 				@drop="ondrop"></div>
 		{{socket.label}}
+
+		<div class="socket-value-editor">
+			<template v-if="socket.type === SocketType.Float">
+				<BaseEntry v-model="socket.inValue" />
+			</template>
+
+			<template v-else-if="socket.type === SocketType.Rgb">
+				<EntryRgb v-model="socket.inValue" />
+			</template>
+		</div>
 	</div>
 </template>
 
 <script lang="ts">
 import {defineComponent} from "vue";
 import {Socket} from "../models/Node";
+import BaseEntry from "./input/BaseEntry.vue";
+import EntryRgb from "./input/EntryRgb.vue";
 
 export default defineComponent({
-	name: "BaseSocket",
-
-	props: {
-		socket: {
-			type: Socket,
-			required: true,
-		},
-
-		draggedSocket: {
-			type: Socket,
-		},
-	},
-
-	methods: {
-		ondragstart(event: DragEvent) {
-			event.dataTransfer.dropEffect = "link";
-			event.dataTransfer.setDragImage(document.createElement("div"), 0, 0);
-
-			this.$emit("drag-socket", this);
-		},
-
-		ondrop(event: DragEvent) {
-			if (this.willAcceptLink()) {
-				this.$emit("link-to-socket", this);
-			}
-		},
-
-		willAcceptLink() {
-			return (this.socket.isInput !== this.draggedSocket.isInput)
-					&& (this.socket.node !== this.draggedSocket.node)
-					&& (this.socket.type === this.draggedSocket.type);
-		},
-	},
-
-	computed: {
-		socketEl() {
-			return this.$el?.querySelector(".socket");
-		},
+    name: "BaseSocket",
+    props: {
+        socket: {
+            type: Socket,
+            required: true,
+        },
+        draggedSocket: {
+            type: Socket,
+        },
+    },
+    methods: {
+        ondragstart(event: DragEvent) {
+            event.dataTransfer.dropEffect = "link";
+            event.dataTransfer.setDragImage(document.createElement("div"), 0, 0);
+            this.$emit("drag-socket", this);
+        },
+        ondrop(event: DragEvent) {
+            if (this.willAcceptLink()) {
+                this.$emit("link-to-socket", this);
+            }
+        },
+        willAcceptLink() {
+            return (this.socket.isInput !== this.draggedSocket.isInput)
+                && (this.socket.node !== this.draggedSocket.node)
+                && (this.socket.type === this.draggedSocket.type);
+        },
+    },
+    computed: {
+        socketEl() {
+            return this.$el?.querySelector(".socket");
+        },
+        SocketType() {
+            return Socket.Type;
+        },
+    },
+    components: {
+		BaseEntry,
+		EntryRgb,
 	},
 });
 </script>

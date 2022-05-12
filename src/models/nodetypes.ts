@@ -1,5 +1,6 @@
 import {Field, Node, Socket} from "./Node";
 import {Color, Vec2} from "../util";
+import * as cm from "./colormanagement";
 
 export namespace rgbModels {
 	
@@ -18,14 +19,12 @@ export namespace spaces {
 		constructor(pos?: Vec2) {
 			super(pos);
 
-			this.fields.push(
-				new Field("Red"),
-				new Field("Green"),
-				new Field("Blue"),
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Rgb, "RGB"),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.COL_TRANSFORMED, "Color"),
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
 			);
 		}
 
@@ -48,7 +47,7 @@ export namespace spaces {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.COL_TRANSFORMED, "Color"),
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
 			);
 		}
 
@@ -67,11 +66,11 @@ export namespace externals {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.COL_TRANSFORMED, "Color data"),
+				new Socket(this, true, Socket.Type.ColTransformed, "Color data"),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.UNKNOWN, "Screen image"),
+				new Socket(this, false, Socket.Type.Unknown, "Screen image"),
 			);
 		}
 	}

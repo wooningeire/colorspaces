@@ -44,20 +44,28 @@ export class Node {
 	) {}
 
 	srgbOutput(): Color {
-		throw new TypeError("Not implemented");
+		throw new TypeError("Abstract method; call on child class");
 	}
 }
 
 enum SocketType {
-	UNKNOWN,
-	COL_RAW,
-	COL_TRANSFORMED,
+	Unknown,
+	ColRaw,
+	ColTransformed,
+	Float,
+	Rgb,
 }
 
 export class Socket {
 	static readonly Type = SocketType;
+	private static readonly defaultValues = new Map<SocketType, number | Color>([
+		[SocketType.Float, 0],
+		[SocketType.Rgb, [0, 0, 0]],
+	]);
 
 	readonly links: Link[] = [];
+
+	inValue: number | Color;
 
 	constructor(
 		readonly node: Node,
@@ -65,7 +73,9 @@ export class Socket {
 		readonly type: SocketType,
 
 		public label: string="",
-	) {}
+	) {
+		this.inValue = new.target.defaultValues.get(type);
+	}
 
 	get isOutput() {
 		return !this.isInput;
