@@ -43,6 +43,10 @@ export class Node {
 		public label: string=new.target.LABEL,
 	) {}
 
+	output(): Color {
+		throw new TypeError("Abstract method; call on child class");
+	}
+
 	srgbOutput(): Color {
 		throw new TypeError("Abstract method; call on child class");
 	}
@@ -53,19 +57,19 @@ enum SocketType {
 	ColRaw,
 	ColTransformed,
 	Float,
-	Rgb,
+	RgbRaw,
 }
 
 export class Socket {
 	static readonly Type = SocketType;
 	private static readonly defaultValues = new Map<SocketType, number | Color>([
 		[SocketType.Float, 0],
-		[SocketType.Rgb, [0, 0, 0]],
+		[SocketType.RgbRaw, [0, 0, 0]],
 	]);
 
 	readonly links: Link[] = [];
 
-	inValue: number | Color;
+	fieldValue: any;//number | Color;
 
 	constructor(
 		readonly node: Node,
@@ -74,11 +78,15 @@ export class Socket {
 
 		public label: string="",
 	) {
-		this.inValue = new.target.defaultValues.get(type);
+		this.fieldValue = new.target.defaultValues.get(type);
 	}
 
 	get isOutput() {
 		return !this.isInput;
+	}
+
+	get inValue(): any {
+		return this.links[0]?.srcNode.output() ?? this.fieldValue;
 	}
 }
 
@@ -89,6 +97,14 @@ export class Link {
 		/** Destination socket. */
 		readonly dst: Socket,
 	) {}
+
+	get srcNode() {
+		return this.src.node;
+	}
+
+	get dstNode() {
+		return this.dst.node;
+	}
 }
 
 

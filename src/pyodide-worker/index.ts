@@ -5,9 +5,13 @@
 globalThis.HTMLElement = class {};
 // @ts-ignore
 globalThis.customElements = {get() {return [];}};
+// @ts-ignore
+globalThis.document = {querySelectorAll() {return {length: 0};}};
 
 const {pyodide, colour} = await import("./load-colour");
 
-postMessage(colour.XYZ_to_Lab(pyodide.runPython("[1,2,3]")).toJs().toString());
+const list = (...elements: any[]) => pyodide.globals.get("list")(elements);
+
+postMessage(colour.XYZ_to_Lab(list(1, 2, 3)).toJs().toString());
 
 export default undefined;

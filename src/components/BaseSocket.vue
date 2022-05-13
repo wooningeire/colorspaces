@@ -9,13 +9,13 @@
 				@drop="ondrop"></div>
 		{{socket.label}}
 
-		<div class="socket-value-editor">
+		<div class="socket-value-editor" v-if="socket.isInput && !socket.links[0]">
 			<template v-if="socket.type === SocketType.Float">
-				<BaseEntry v-model="socket.inValue" />
+				<BaseEntry v-model="socket.fieldValue" />
 			</template>
 
-			<template v-else-if="socket.type === SocketType.Rgb">
-				<EntryRgb v-model="socket.inValue" />
+			<template v-else-if="socket.type === SocketType.RgbRaw">
+				<EntryRgb v-model="socket.fieldValue" />
 			</template>
 		</div>
 	</div>
@@ -40,8 +40,8 @@ export default defineComponent({
     },
     methods: {
         ondragstart(event: DragEvent) {
-            event.dataTransfer.dropEffect = "link";
-            event.dataTransfer.setDragImage(document.createElement("div"), 0, 0);
+            event.dataTransfer!.dropEffect = "link";
+            event.dataTransfer!.setDragImage(document.createElement("div"), 0, 0);
             this.$emit("drag-socket", this);
         },
         ondrop(event: DragEvent) {
@@ -50,6 +50,9 @@ export default defineComponent({
             }
         },
         willAcceptLink() {
+			// preemptive + stops TypeScript complaint
+			if (!this.draggedSocket) throw new TypeError("Not currently dragging from a socket");
+
             return (this.socket.isInput !== this.draggedSocket.isInput)
                 && (this.socket.node !== this.draggedSocket.node)
                 && (this.socket.type === this.draggedSocket.type);

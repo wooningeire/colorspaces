@@ -2,7 +2,7 @@
 // import "https://cdn.jsdelivr.net/pyodide/v0.20.0/full/pyodide.js";
 import {loadPyodide} from "./pyodide/pyodide";
 
-// const pack = await import("https://cdn.jsdelivr.net/pyodide/v0.20.0/full/pyodide.js");
+// const pyodidePackage = await import("https://cdn.jsdelivr.net/pyodide/v0.20.0/full/pyodide.js");
 
 export const pyodide = await loadPyodide();
 await pyodide.loadPackage("micropip");

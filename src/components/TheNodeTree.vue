@@ -32,7 +32,7 @@ import {defineComponent} from "vue";
 import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
 import {Tree, Socket} from "../models/Node";
-import {spaces, externals} from "../models/nodetypes";
+import {rgbModels, spaces, externals} from "../models/nodetypes";
 import {Vec2, Listen, Color} from "../util";
 
 export default defineComponent({
@@ -47,7 +47,7 @@ export default defineComponent({
 			// visionNode: externals.VisionNode,
 		},
 
-		draggedSocketVue: InstanceType<typeof BaseSocket>,
+		draggedSocketVue: InstanceType<typeof BaseSocket> | null,
 		socketVues: WeakMap<Socket, InstanceType<typeof BaseSocket>>,
 
 		pointerX: number,
@@ -74,6 +74,9 @@ export default defineComponent({
 				if (link.src.type !== Socket.Type.ColTransformed) continue;
 				return link.src.node.srgbOutput();
 			}
+
+			console.warn("Reaching placeholder area");
+			return [1, 1, 1];
 		},
 
 		//#region Events
@@ -98,6 +101,9 @@ export default defineComponent({
 
 		onLinkToSocket(socketVue: InstanceType<typeof BaseSocket>) {
 			this.socketVues.set(socketVue.socket, socketVue);
+			
+			// preemptive + stops TypeScript complaint
+			if (!this.draggedSocket) throw new TypeError("Not currently dragging from a socket");
 
 			if (this.draggedSocket.isInput) {
 				this.tree.linkSockets(socketVue.socket, this.draggedSocket);
@@ -135,7 +141,7 @@ export default defineComponent({
 		},
 
 		updateDisplay() {
-			this.deviceNodes.transformNode.color = this.srgbOutput();
+			this.deviceNodes.transformNode.color = this.srgbOutput() as Color;
 		},
 	},
 
@@ -159,9 +165,10 @@ export default defineComponent({
 
 	created() {
 		this.tree.nodes.push(
-			new spaces.SrgbNode([50, 50]),
-			new spaces.LinearNode([50, 400]),
-			(this.deviceNodes.transformNode = new externals.DeviceTransformNode([400, 100])),
+			new rgbModels.RgbNode([50, 200]),
+			new spaces.SrgbNode([450, 50]),
+			new spaces.LinearNode([450, 400]),
+			(this.deviceNodes.transformNode = new externals.DeviceTransformNode([800, 100])),
 		);
 	},
 
