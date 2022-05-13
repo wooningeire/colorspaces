@@ -2,6 +2,8 @@
 	"compilerOptions": {
 		"module": "esnext",
 		"target": "esnext",
+		"strict": true,
+		"sourceMap": true,
 		"moduleResolution": "node",
 		"jsx": "preserve",
 
@@ -9,13 +11,19 @@
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
 		"downlevelIteration": true,
+		
+		"lib": ["esnext", "dom"],
+		"skipLibCheck": true,
 
 		"baseUrl": "./",
-		// Must update in jest.config.ts
+		// Must update in jest.config.ts and vite.config.ts
 		"paths": {
 			"@src/*": ["src/*"],
 		},
 	},
+
+	"include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
+	"references": [{ "path": "./tsconfig.node.json" }],
 	
 	// Allows jest.config.ts to work with type: module
 	"ts-node": {
