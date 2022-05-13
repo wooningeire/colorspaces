@@ -32,8 +32,6 @@ export class Node {
 
 	readonly fields: Field[] = [];
 
-	color: Color = [1, 1, 1]; // temp
-
 	readonly id = i++;
 
 	// Note: If subclass constructor is called, `new.target` is the subclass
@@ -44,10 +42,6 @@ export class Node {
 	) {}
 
 	output(): Color {
-		throw new TypeError("Abstract method; call on child class");
-	}
-
-	srgbOutput(): Color {
 		throw new TypeError("Abstract method; call on child class");
 	}
 }

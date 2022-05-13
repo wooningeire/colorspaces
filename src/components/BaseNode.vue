@@ -2,7 +2,8 @@
 	<div class="node"
 			:style="{
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
-				'color': `rgb(${node.color.map(x => x * 255)})`,
+				//@ts-ignore
+				'color': node.type === externals.DeviceTransformNode.TYPE ? `rgb(${node.displayColor.map(x => x * 255)})` : '',
 			}">
 		<div class="node-content">
 			<div class="label">
@@ -41,6 +42,7 @@ import {defineComponent} from "vue";
 import BaseSocket from "./BaseSocket.vue";
 import BaseField from "./BaseField.vue";
 import {Node, Socket} from "../models/Node";
+import {externals} from "../models/nodetypes";
 
 export default defineComponent({
 	name: "BaseNode",
@@ -53,6 +55,12 @@ export default defineComponent({
 
 		draggedSocket: {
 			type: Socket,
+		},
+	},
+
+	computed: {
+		externals() {
+			return externals;
 		},
 	},
 

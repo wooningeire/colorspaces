@@ -72,7 +72,7 @@ export default defineComponent({
 
 			for (const link of resultSocket.links) {
 				if (link.src.type !== Socket.Type.ColTransformed) continue;
-				return link.src.node.srgbOutput();
+				return link.src.node.output();
 			}
 
 			console.warn("Reaching placeholder area");
@@ -141,7 +141,7 @@ export default defineComponent({
 		},
 
 		updateDisplay() {
-			this.deviceNodes.transformNode.color = this.srgbOutput() as Color;
+			this.deviceNodes.transformNode.displayColor = this.srgbOutput() as Color;
 		},
 	},
 

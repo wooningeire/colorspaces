@@ -45,7 +45,7 @@ export namespace spaces {
 			);
 		}
 
-		srgbOutput(): Color {
+		output(): Color {
 			return cm.linearToSrgb(this.ins[0].inValue as Color);
 		}
 	}
@@ -66,7 +66,7 @@ export namespace spaces {
 			);
 		}
 
-		srgbOutput(): Color {
+		output(): Color {
 			return this.ins[0].inValue as Color;
 		}
 	}
@@ -76,6 +76,8 @@ export namespace externals {
 	export class DeviceTransformNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Device transform";
+
+		displayColor: Color = [1, 1, 1]; // temp
 		
 		constructor(pos?: Vec2) {
 			super(pos);
