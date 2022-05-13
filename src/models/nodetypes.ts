@@ -11,10 +11,6 @@ export namespace spaces {
 	export class LinearNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Linear sRGB";
-		
-		red: number = 0;
-		green: number = 0;
-		blue: number = 0;
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -40,10 +36,8 @@ export namespace spaces {
 		constructor(pos?: Vec2) {
 			super(pos);
 
-			this.fields.push(
-				new Field("Red"),
-				new Field("Green"),
-				new Field("Blue"),
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Rgb, "RGB"),
 			);
 
 			this.outs.push(
@@ -52,7 +46,7 @@ export namespace spaces {
 		}
 
 		srgbOutput(): Color {
-			return this.fields.map(field => field.value) as Color;
+			return this.ins[0].inValue as Color;
 		}
 	}
 }
