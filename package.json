@@ -7,7 +7,7 @@
     "build": "vite build",
     "build.public": "vite build --base ./",
     "preview": "vite preview",
-    "find-ts-errors": "vue-tsc --noEmit",
+    "typecheck": "vue-tsc --noEmit",
     "test": "jest --watchAll"
   },
   "author": "",
