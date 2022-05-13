@@ -6,6 +6,7 @@
 		"sourceMap": true,
 		"moduleResolution": "node",
 		"jsx": "preserve",
+		"allowJs": true,
 
 		"useDefineForClassFields": true,
 		"esModuleInterop": true,

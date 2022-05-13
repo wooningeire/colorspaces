@@ -4,9 +4,10 @@
   "description": "Interactive color space explorer",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
-    "build.public": "vue-tsc --noEmit && vite build --base ./",
+    "build": "vite build",
+    "build.public": "vite build --base ./",
     "preview": "vite preview",
+    "find-ts-errors": "vue-tsc --noEmit",
     "test": "jest --watchAll"
   },
   "author": "",
