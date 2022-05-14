@@ -5,10 +5,11 @@
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
 				'color': node instanceof externals.DeviceTransformNode ? `rgb(${node.displayColor.map(x => x * 255)})` : '',
 			}">
+		<div class="label">
+			{{node.label}}
+		</div>
+
 		<div class="node-content">
-			<div class="label">
-				{{node.label}}
-			</div>
 
 			<div class="fields">
 				<BaseField v-for="field of node.fields"
@@ -65,12 +66,8 @@ export default defineComponent({
 	},
 
 	methods: {
-		onfocus(event: FocusEvent) {
-			console.log(event);
-		},
-
 		startDragging(event: PointerEvent) {
-			if (this.shouldDrag(event)) return;
+			if (this.shouldCancelDrag(event)) return;
 
 			const startingPos = this.node.pos;
 			const pointerStartPos = [event.pageX, event.pageY];
@@ -89,7 +86,7 @@ export default defineComponent({
 			}, {once: true});
 		},
 
-		shouldDrag(event: PointerEvent) {
+		shouldCancelDrag(event: PointerEvent) {
 			// Make this check more sophisticated
 			return event.target !== this.$el;
 		},
@@ -113,7 +110,7 @@ export default defineComponent({
 	padding-bottom: 1em;
 
 	border-radius: 1em;
-	background: #2f352caf;
+	background: #2f352cdf;
 	box-shadow: 0 4px 40px #0000003f;
 
 	// grid-template-areas:
@@ -125,14 +122,16 @@ export default defineComponent({
 	// 	grid-area: A;
 	// }
 
+	> .label {
+		text-align: center;
+		padding: 0 0.25em;
+		font-weight: 800;
+
+		pointer-events: none;
+	}
+
 	> .node-content {
 		margin-bottom: 0.5em;
-
-		> .label {
-			text-align: center;
-			padding: 0 0.25em;
-			font-weight: 800;
-		}
 
 		> .fields {
 			display: flex;

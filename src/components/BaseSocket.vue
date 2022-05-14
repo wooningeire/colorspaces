@@ -7,7 +7,9 @@
 				@dragstart="ondragstart"
 				@dragenter.prevent
 				@dragover.prevent
-				@drop="ondrop"></div>
+				@drop="ondrop">
+			<div class="socket-display"></div>
+		</div>
 		{{socket.label}}
 
 		<div class="socket-value-editor" v-if="socket.isInput && !socket.links[0]">
@@ -83,18 +85,27 @@ export default defineComponent({
 	--socket-text-padding: 8px;
 
 	> .socket {
-		width: var(--socket-size);
-		height: var(--socket-size);
+		--socket-box-size: 20px;
+		--socket-size: 10px;
+		--socket-offset: -12px;
+
+		width: var(--socket-box-size);
+		height: var(--socket-box-size);
 		position: absolute;
-		top: 0.5em;
+		top: 0em;
 		bottom: 0.5em;
 
-		border-radius: 50%;
-		background: currentcolor;
-		box-shadow: 0 0 0 4px #2f3432;
+		display: grid;
+		place-items: center;
+		
+		> .socket-display {
+			width: var(--socket-size);
+			height: var(--socket-size);
 
-		--socket-size: 10px;
-		--socket-offset: -7px;
+			border-radius: 50%;
+			background: currentcolor;
+			box-shadow: 0 0 0 4px #2f3432;
+		}
 	}
 
 	&.in {
