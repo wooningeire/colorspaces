@@ -6,6 +6,7 @@
 					:node="node"
 					:draggedSocket="draggedSocket"
 					@drag-socket="onDragSocket"
+					@dragged="rerenderLinks"
 					@link-to-socket="onLinkToSocket" />
 		</div>
 
@@ -19,6 +20,7 @@
 					:y2="pointerY" />
 
 			<line v-for="link of tree.links"
+					:key="link.id"
 					:x1="socketX(link.src)"
 					:y1="socketY(link.src)"
 					:x2="socketX(link.dst)"
@@ -80,6 +82,11 @@ export default defineComponent({
 		},
 
 		//#region Events
+		rerenderLinks() {
+			// This is just so the links get rerendered... certainly can be more efficient
+			this.$forceUpdate();
+		},
+
 		onDragSocket(socketVue: InstanceType<typeof BaseSocket>) {
 			this.draggedSocketVue = socketVue;
 			this.socketVues.set(socketVue.socket, socketVue);

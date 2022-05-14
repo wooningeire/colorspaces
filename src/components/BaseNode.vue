@@ -1,9 +1,9 @@
 <template>
 	<div class="node"
+			@pointerdown="startDragging"
 			:style="{
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
-				//@ts-ignore
-				'color': node.type === externals.DeviceTransformNode.TYPE ? `rgb(${node.displayColor.map(x => x * 255)})` : '',
+				'color': node instanceof externals.DeviceTransformNode ? `rgb(${node.displayColor.map(x => x * 255)})` : '',
 			}">
 		<div class="node-content">
 			<div class="label">
@@ -43,6 +43,7 @@ import BaseSocket from "./BaseSocket.vue";
 import BaseField from "./BaseField.vue";
 import {Node, Socket} from "../models/Node";
 import {externals} from "../models/nodetypes";
+import {Listen} from "@src/util";
 
 export default defineComponent({
 	name: "BaseNode",
@@ -58,9 +59,39 @@ export default defineComponent({
 		},
 	},
 
+	data: () => ({
+		dragging: false,
+	}),
+
 	computed: {
 		externals() {
 			return externals;
+		},
+	},
+
+	methods: {
+		startDragging(event: PointerEvent) {
+			if (this.shouldDrag(event)) return;
+
+			this.dragging = true;
+
+			const moveListener = Listen.for(window, "pointermove", (event: PointerEvent) => {
+				this.node.pos[0] += event.movementX;
+				this.node.pos[1] += event.movementY;
+
+				this.$emit("dragged");
+			});
+
+			addEventListener("pointerup", () => {
+				this.dragging = false;
+
+				moveListener.detach();
+			}, {once: true});
+		},
+
+		shouldDrag(event: PointerEvent) {
+			// Make this check more sophisticated
+			return event.target !== this.$el;
 		},
 	},
 

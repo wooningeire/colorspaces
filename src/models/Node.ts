@@ -28,7 +28,6 @@ export class Tree {
 	}
 }
 
-let i = 0;
 export class Node {
 	static readonly TYPE: symbol = Symbol();
 	static readonly LABEL: string = "";
@@ -38,7 +37,8 @@ export class Node {
 
 	readonly fields: Field[] = [];
 
-	readonly id = i++;
+	private static nextId = 0;
+	readonly id = Node.nextId++;
 
 	// Note: If subclass constructor is called, `new.target` is the subclass
 	constructor(
@@ -93,6 +93,9 @@ export class Socket {
 }
 
 export class Link {
+	private static nextId = 0;
+	readonly id = Link.nextId++;
+
 	constructor(
 		/** Source socket. */
 		readonly src: Socket,
@@ -110,9 +113,9 @@ export class Link {
 }
 
 
-let j = 0;
 export class Field {
-	readonly id = j++;
+	private static nextId = 0;
+	readonly id = Field.nextId++;
 
 	value = 0;
 
