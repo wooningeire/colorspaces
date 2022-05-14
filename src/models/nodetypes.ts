@@ -75,13 +75,19 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "XYZ";
 
+		private readonly primariesSockets: Socket[];
+
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "X (chromaticity 1)"),
-				new Socket(this, true, Socket.Type.Float, "Y (luminance)"),
-				new Socket(this, true, Socket.Type.Float, "Z (chromaticity 2)"),
+				new Socket(this, true, Socket.Type.Unknown, "Observer FOV", false),
+				new Socket(this, true, Socket.Type.Unknown, "Standard illuminant", false),
+				...(this.primariesSockets = [
+					new Socket(this, true, Socket.Type.Float, "X (chromaticity 1)"),
+					new Socket(this, true, Socket.Type.Float, "Y (luminance)"),
+					new Socket(this, true, Socket.Type.Float, "Z (chromaticity 2)"),
+				]),
 			);
 
 			this.outs.push(
@@ -90,7 +96,7 @@ export namespace spaces {
 		}
 
 		output(): Color {
-			return cm.linearToSrgb(cm.xyz2degToLinear(this.ins.map(socket => socket.inValue) as Color));
+			return cm.linearToSrgb(cm.xyz2degToLinear(this.primariesSockets.map(socket => socket.inValue) as Color));
 		}
 	}
 }

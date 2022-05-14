@@ -77,6 +77,8 @@ export class Socket {
 		readonly type: SocketType,
 
 		public label: string="",
+
+		readonly showSocket: boolean=true,
 	) {
 		this.fieldValue = new.target.defaultValues.get(type);
 	}

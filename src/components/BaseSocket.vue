@@ -6,7 +6,8 @@
 				@dragstart="ondragstart"
 				@dragenter.prevent
 				@dragover.prevent
-				@drop="ondrop"></div>
+				@drop="ondrop"
+				v-if="socket.showSocket"></div>
 		{{socket.label}}
 
 		<div class="socket-value-editor" v-if="socket.isInput && !socket.links[0]">
@@ -77,6 +78,7 @@ export default defineComponent({
 <style lang="scss" scoped>
 .socket-container {
 	position: relative;
+	margin-bottom: .25em;
 
 	--socket-text-padding: 8px;
 

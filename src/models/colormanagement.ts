@@ -42,12 +42,17 @@ export const xyz2degToLinear = (xyz: Color, /* illuminantXyz: Color */) => {
 
 // https://www.mathworks.com/help/images/ref/whitepoint.html
 const illuminantsXyz = {
-	icc: [31595, 32768, 27030].map(comp => comp / 32768),
-	d50: [0.9642956764295677, 1, 0.8251046025104602] as Color,
-	d65: [0.9504559270516716, 1, 1.0890577507598784] as Color,//[0.9504, 1, 1.0888] as Color,
-	e: [1, 1, 1],
+	"2deg": {
+		"ICC": [31595, 32768, 27030].map(comp => comp / 32768),
+		"D50": [0.9642956764295677, 1, 0.8251046025104602] as Color,
+		"D65": [0.9504559270516716, 1, 1.0890577507598784] as Color,//[0.9504, 1, 1.0888] as Color,
+		"E": [1, 1, 1],
+	},
 };
 
+/**
+ * From https://github.com/colour-science/colour/blob/develop/colour/adaptation/
+ */
 const chromaticAdaptationTransforms = {
 	"Bradford": [
 		[ 0.8951,  0.2664, -0.1614],
