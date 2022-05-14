@@ -17,7 +17,7 @@ export namespace rgbModels {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "Color data"),
+				new Socket(this, false, Socket.Type.RgbRaw, "RGB data"),
 			);
 		}
 
@@ -68,6 +68,29 @@ export namespace spaces {
 
 		output(): Color {
 			return this.ins[0].inValue as Color;
+		}
+	}
+
+	export class XyzNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "XYZ";
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Float, "X (chromaticity 1)"),
+				new Socket(this, true, Socket.Type.Float, "Y (luminance)"),
+				new Socket(this, true, Socket.Type.Float, "Z (chromaticity 2)"),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+			);
+		}
+
+		output(): Color {
+			return cm.linearToSrgb(cm.xyz2degToLinear(this.ins.map(socket => socket.inValue) as Color));
 		}
 	}
 }

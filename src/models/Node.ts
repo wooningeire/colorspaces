@@ -20,6 +20,12 @@ export class Tree {
 
 		this.links.add(link);
 	}
+
+	unlink(link: Link) {
+		this.links.delete(link);
+		link.src.links.splice(link.src.links.indexOf(link), 1);
+		link.dst.links.splice(link.dst.links.indexOf(link), 1);
+	}
 }
 
 let i = 0;

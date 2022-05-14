@@ -33,6 +33,7 @@
     "vue-tsc": "^0.34.13"
   },
   "dependencies": {
+    "mathjs": "^10.5.3",
     "pyodide": "^0.20.0",
     "vue": "^3.2.33"
   }

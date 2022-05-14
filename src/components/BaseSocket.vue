@@ -34,6 +34,7 @@ export default defineComponent({
             type: Socket,
             required: true,
         },
+
         draggedSocket: {
             type: Socket,
         },

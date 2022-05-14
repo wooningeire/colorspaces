@@ -141,7 +141,9 @@ export default defineComponent({
 		},
 
 		updateDisplay() {
-			this.deviceNodes.transformNode.displayColor = this.srgbOutput() as Color;
+			const displayColor = this.srgbOutput() as Color;
+			console.log(displayColor);
+			this.deviceNodes.transformNode.displayColor = displayColor;
 		},
 	},
 
@@ -167,7 +169,8 @@ export default defineComponent({
 		this.tree.nodes.push(
 			new rgbModels.RgbNode([50, 200]),
 			new spaces.SrgbNode([450, 50]),
-			new spaces.LinearNode([450, 400]),
+			new spaces.LinearNode([450, 250]),
+			new spaces.XyzNode([450, 450]),
 			(this.deviceNodes.transformNode = new externals.DeviceTransformNode([800, 100])),
 		);
 	},
