@@ -3,11 +3,11 @@
 			:class="{'in': socket.isInput}">
 		<div class="socket"
 				draggable="true"
+				v-if="socket.showSocket"
 				@dragstart="ondragstart"
 				@dragenter.prevent
 				@dragover.prevent
-				@drop="ondrop"
-				v-if="socket.showSocket"></div>
+				@drop="ondrop"></div>
 		{{socket.label}}
 
 		<div class="socket-value-editor" v-if="socket.isInput && !socket.links[0]">

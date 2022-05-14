@@ -58,11 +58,6 @@ export default defineComponent({
 			type: Socket,
 		},
 	},
-
-	data: () => ({
-		dragging: false,
-	}),
-
 	computed: {
 		externals() {
 			return externals;
@@ -70,21 +65,26 @@ export default defineComponent({
 	},
 
 	methods: {
+		onfocus(event: FocusEvent) {
+			console.log(event);
+		},
+
 		startDragging(event: PointerEvent) {
 			if (this.shouldDrag(event)) return;
 
-			this.dragging = true;
+			const startingPos = this.node.pos;
+			const pointerStartPos = [event.pageX, event.pageY];
 
-			const moveListener = Listen.for(window, "pointermove", (event: PointerEvent) => {
-				this.node.pos[0] += event.movementX;
-				this.node.pos[1] += event.movementY;
+			const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
+				this.node.pos = [
+					startingPos[0] + (moveEvent.pageX - pointerStartPos[0]),
+					startingPos[1] + (moveEvent.pageY - pointerStartPos[1]),
+				];
 
 				this.$emit("dragged");
 			});
 
 			addEventListener("pointerup", () => {
-				this.dragging = false;
-
 				moveListener.detach();
 			}, {once: true});
 		},
