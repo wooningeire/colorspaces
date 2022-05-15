@@ -47,47 +47,52 @@ export class Node {
 		public label: string=new.target.LABEL,
 	) {}
 
-	output(): Color {
+	output(): any {
 		throw new TypeError("Abstract method; call on child class");
 	}
 }
 
 enum SocketType {
 	Unknown,
-	ColRaw,
-	ColTransformed,
 	Float,
 	RgbRaw,
+	ColTransformed,
 }
 
-export class Socket {
+type SocketValue<St extends SocketType=any> =
+		St extends SocketType.Float ? number :
+		St extends SocketType.RgbRaw ? Color :
+		St extends SocketType.ColTransformed ? Color :
+		never;
+
+export class Socket<St extends SocketType=any> {
 	static readonly Type = SocketType;
-	private static readonly defaultValues = new Map<SocketType, number | Color>([
+	private static readonly defaultValues = new Map<SocketType, SocketValue>([
 		[SocketType.Float, 0],
 		[SocketType.RgbRaw, [0, 0, 0]],
 	]);
 
 	readonly links: Link[] = [];
 
-	fieldValue: any;//number | Color;
+	fieldValue: SocketValue<St>;//number | Color;
 
 	constructor(
 		readonly node: Node,
 		readonly isInput: boolean,
-		readonly type: SocketType,
+		readonly type: St,
 
 		public label: string="",
 
 		readonly showSocket: boolean=true,
 	) {
-		this.fieldValue = new.target.defaultValues.get(type);
+		this.fieldValue = new.target.defaultValues.get(type) as SocketValue<St>;
 	}
 
 	get isOutput() {
 		return !this.isInput;
 	}
 
-	get inValue(): any {
+	get inValue(): SocketValue<St> {
 		return this.links[0]?.srcNode.output() ?? this.fieldValue;
 	}
 }

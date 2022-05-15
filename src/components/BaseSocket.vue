@@ -15,11 +15,13 @@
 
 		<div class="socket-value-editor" v-if="socket.isInput && !socket.links[0]">
 			<template v-if="socket.type === SocketType.Float">
-				<BaseEntry v-model="socket.fieldValue" />
+				<BaseEntry v-model="socket.fieldValue"
+						@update:modelValue="$emit('value-change')" />
 			</template>
 
 			<template v-else-if="socket.type === SocketType.RgbRaw">
-				<EntryRgb v-model="socket.fieldValue" />
+				<EntryRgb v-model="socket.fieldValue"
+						@update:modelValue="$emit('value-change')" />
 			</template>
 		</div>
 	</div>

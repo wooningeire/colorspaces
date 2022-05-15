@@ -6,7 +6,8 @@
 					:node="node"
 					@drag-socket="onDragSocket"
 					@dragged="rerenderLinks"
-					@link-to-socket="onLinkToSocket" />
+					@link-to-socket="onLinkToSocket"
+					@value-change="updateOutputColor" />
 		</div>
 
 		<svg class="links"
@@ -125,9 +126,8 @@ export default defineComponent({
 			}
 
 			// TODO
-			if ([socketVue.socket.node, this.draggedSocket.node].includes(this.deviceNodes.transformNode)) {
-				this.updateDisplay();
-			}
+			// if ([socketVue.socket.node, this.draggedSocket.node].includes(this.deviceNodes.transformNode)) {
+			this.updateOutputColor();
 		},
 		//#endregion
 
@@ -153,7 +153,7 @@ export default defineComponent({
 			return (rect.top + rect.bottom) / 2;
 		},
 
-		updateDisplay() {
+		updateOutputColor() {
 			const displayColor = this.srgbOutput() as Color;
 			console.log(displayColor);
 			this.deviceNodes.transformNode.displayColor = displayColor;

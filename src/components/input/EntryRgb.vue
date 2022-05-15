@@ -32,6 +32,7 @@ export default defineComponent({
 
 		modelValue: {
 			type: Array,
+			required: true,
 		},
 	},
 

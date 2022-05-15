@@ -22,7 +22,8 @@
 					:key="socket.label"
 					:socket="socket"
 					@drag-socket="socketVue => $emit('drag-socket', socketVue)"
-					@link-to-socket="socketVue => $emit('link-to-socket', socketVue)" />
+					@link-to-socket="socketVue => $emit('link-to-socket', socketVue)"
+					@value-change="$emit('value-change')" />
 		</div>
 
 		<div class="out-sockets">

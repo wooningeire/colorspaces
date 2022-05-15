@@ -1,5 +1,13 @@
 export type Vec2 = [number, number];
-export type Color = [number, number, number];
+type Vec3 = [number, number, number];
+export type Color = Vec3;
+
+type Rgb = Vec3;
+type Srgb = Vec3;
+type LinearSrgb = Vec3;
+type Xyz = Vec3;
+type Xyy = Vec3;
+type Xy = Vec2;
 
 export const qs = (selector: string, context: Element | Document | DocumentFragment=document) => context.querySelector(selector);
 
