@@ -31,7 +31,7 @@ export default defineComponent({
 	}),
 
 	methods: {
-		onInput(event) {
+		onInput(event: Event) {
 			const proposedValue = this.convertOut(Number(this.$el.value));
 
 			this.proposedValueIsValid = this.validate(proposedValue);

@@ -5,26 +5,27 @@
 					:key="node.id"
 					:node="node"
 					@drag-socket="onDragSocket"
-					@dragged="rerenderLinks"
 					@link-to-socket="onLinkToSocket"
-					@value-change="updateOutputColor" />
+
+					@tree-update="recomputeOutputColor"
+					@potential-socket-position-change="rerenderLinks" />
 		</div>
 
 		<svg class="links"
 				:viewbox="`0 0 ${$el?.clientWidth ?? 300} ${$el?.clientHeight ?? 150}`">
 			<line v-if="draggingSocket"
 					class="new-link"
-					:x1="draggedSocketX"
-					:y1="draggedSocketY"
+					:x1="draggedSocketVue?.socketPos()[0]"
+					:y1="draggedSocketVue?.socketPos()[1]"
 					:x2="pointerX"
 					:y2="pointerY" />
 
 			<line v-for="link of tree.links"
 					:key="link.id"
-					:x1="socketX(link.src)"
-					:y1="socketY(link.src)"
-					:x2="socketX(link.dst)"
-					:y2="socketY(link.dst)" />
+					:x1="getSocketVue(link.src)?.socketPos()[0]"
+					:y1="getSocketVue(link.src)?.socketPos()[1]"
+					:x2="getSocketVue(link.dst)?.socketPos()[0]"
+					:y2="getSocketVue(link.dst)?.socketPos()[1]" />
 		</svg>
 	</div>
 </template>
@@ -71,6 +72,7 @@ export default defineComponent({
 	provide() {
 		return {
 			draggedSocket: computed(() => this.draggedSocket),
+			draggingSocket: computed(() => this.draggingSocket),
 			tree: this.tree,
 		};
 	},
@@ -84,7 +86,6 @@ export default defineComponent({
 				return link.src.node.output();
 			}
 
-			console.warn("Reaching placeholder area");
 			return [1, 1, 1];
 		},
 
@@ -98,8 +99,7 @@ export default defineComponent({
 			this.draggedSocketVue = socketVue;
 			this.socketVues.set(socketVue.socket, socketVue);
 
-			this.pointerX = this.draggedSocketX;
-			this.pointerY = this.draggedSocketY;
+			[this.pointerX, this.pointerY] = this.draggedSocketVue.socketPos();
 
 			const dragListener = Listen.for(window, "dragover", (event: DragEvent) => {
 				this.pointerX = event.pageX;
@@ -124,36 +124,14 @@ export default defineComponent({
 			} else {
 				this.tree.linkSockets(this.draggedSocket, socketVue.socket);
 			}
-
-			// TODO
-			// if ([socketVue.socket.node, this.draggedSocket.node].includes(this.deviceNodes.transformNode)) {
-			this.updateOutputColor();
 		},
 		//#endregion
 
-		socketX(socket: Socket) {
-			return this.rectCenterX(this.socketRect(socket));
+		getSocketVue(socket: Socket) {
+			return this.socketVues.get(socket);
 		},
 
-		socketY(socket: Socket) {
-			return this.rectCenterY(this.socketRect(socket));
-		},
-
-		socketRect(socket: Socket) {
-			return this.socketVues.get(socket)?.socketEl?.getBoundingClientRect();
-		},
-
-		rectCenterX(rect: DOMRect) {
-			// if (!rect) return 0;
-			return (rect.left + rect.right) / 2;
-		},
-
-		rectCenterY(rect: DOMRect) {
-			// if (!rect) return 0;
-			return (rect.top + rect.bottom) / 2;
-		},
-
-		updateOutputColor() {
+		recomputeOutputColor() {
 			const displayColor = this.srgbOutput() as Color;
 			console.log(displayColor);
 			this.deviceNodes.transformNode.displayColor = displayColor;
@@ -163,14 +141,6 @@ export default defineComponent({
 	computed: {
 		draggedSocket() {
 			return this.draggedSocketVue?.socket;
-		},
-
-		draggedSocketX() {
-			return this.rectCenterX(this.draggedSocketVue?.socketEl?.getBoundingClientRect());
-		},
-
-		draggedSocketY() {
-			return this.rectCenterY(this.draggedSocketVue?.socketEl?.getBoundingClientRect());
 		},
 
 		draggingSocket() {

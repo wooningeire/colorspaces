@@ -59,7 +59,7 @@ enum SocketType {
 	ColTransformed,
 }
 
-type SocketValue<St extends SocketType=any> =
+export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.Float ? number :
 		St extends SocketType.RgbRaw ? Color :
 		St extends SocketType.ColTransformed ? Color :

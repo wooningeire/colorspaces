@@ -8,7 +8,8 @@
 				@dragenter.prevent
 				@dragover.prevent
 				@drop="ondrop"
-				@dblclick="unlinkLinks">
+				@dblclick="unlinkLinks"
+				ref="socketHitbox">
 			<div class="socket-display"></div>
 		</div>
 		{{socket.label}}
@@ -28,8 +29,8 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
-import {Socket} from "../models/Node";
+import {defineComponent, inject} from "vue";
+import {Tree, Socket} from "../models/Node";
 import BaseEntry from "./input/BaseEntry.vue";
 import EntryRgb from "./input/EntryRgb.vue";
 
@@ -42,7 +43,17 @@ export default defineComponent({
         },
     },
 
-	inject: ["tree", "draggedSocket"],
+	emits: ["value-change", "drag-socket", "link-to-socket", "unlink"],
+
+	// For TypeScript
+	setup() {
+		return {
+			tree: inject("tree") as Tree,
+			draggedSocket: inject("draggedSocket") as Socket,
+		};
+	},
+
+	// inject: ["tree", "draggedSocket"],
 
     methods: {
         ondragstart(event: DragEvent) {
@@ -66,12 +77,25 @@ export default defineComponent({
 
 		unlinkLinks() {
 			this.socket.links.forEach(link => this.tree.unlink(link));
+			this.$emit("unlink");
+		},
+
+		rect() {
+			return this.socketEl.getBoundingClientRect();
+		},
+
+		socketPos() {
+			return [
+				(this.rect().left + this.rect().right) / 2,
+				(this.rect().top + this.rect().bottom) / 2,
+			];
 		},
     },
     computed: {
         socketEl() {
-            return this.$el?.querySelector(".socket");
+            return this.$refs.socketHitbox as HTMLDivElement;
         },
+
         SocketType() {
             return Socket.Type;
         },

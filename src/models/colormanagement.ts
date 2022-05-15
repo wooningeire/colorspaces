@@ -59,7 +59,6 @@ export const hslToRgb = ([hue, sat, lightness]: Color) => {
 export const hsvToRgb = ([hue, sat, value]: Color) => {
 	hue = mod(hue, 1) * 6;
 	const segmentStart = Math.floor(hue);
-	console.log(hue - segmentStart);
 
 	const plateau = value;
 	const valley = value * (1 - sat);

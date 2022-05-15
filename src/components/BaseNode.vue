@@ -22,8 +22,13 @@
 					:key="socket.label"
 					:socket="socket"
 					@drag-socket="socketVue => $emit('drag-socket', socketVue)"
-					@link-to-socket="socketVue => $emit('link-to-socket', socketVue)"
-					@value-change="$emit('value-change')" />
+					@link-to-socket="socketVue => ($emit('link-to-socket', socketVue),
+							$emit('tree-update'),
+							$emit('potential-socket-position-change'))"
+
+					@value-change="$emit('tree-update')"
+					@unlink="$emit('tree-update'),
+							$emit('potential-socket-position-change')" />
 		</div>
 
 		<div class="out-sockets">
@@ -31,7 +36,12 @@
 					:key="socket.label"
 					:socket="socket"
 					@drag-socket="socketVue => $emit('drag-socket', socketVue)"
-					@link-to-socket="socketVue => $emit('link-to-socket', socketVue)" />
+					@link-to-socket="socketVue => ($emit('link-to-socket', socketVue),
+							$emit('tree-update'),
+							$emit('potential-socket-position-change'))"
+
+					@unlink="$emit('tree-update'),
+							$emit('potential-socket-position-change')" />
 		</div>
 	</div>
 </template>
@@ -54,6 +64,14 @@ export default defineComponent({
 		},
 	},
 
+	emits: [
+		"drag-socket",
+		"link-to-socket",
+		"node-dragged",
+		"potential-socket-position-change",
+		"tree-update",
+	],
+
 	computed: {
 		externals() {
 			return externals;
@@ -73,7 +91,8 @@ export default defineComponent({
 					startingPos[1] + (moveEvent.pageY - pointerStartPos[1]),
 				];
 
-				this.$emit("dragged");
+				this.$emit("node-dragged");
+				this.$emit("potential-socket-position-change");
 			});
 
 			addEventListener("pointerup", () => {
