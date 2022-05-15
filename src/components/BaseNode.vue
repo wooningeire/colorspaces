@@ -10,7 +10,6 @@
 		</div>
 
 		<div class="node-content">
-
 			<div class="fields">
 				<BaseField v-for="field of node.fields"
 						:key="field.id"

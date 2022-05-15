@@ -22,3 +22,5 @@ export class Listen {
 		this.target.removeEventListener(this.type, this.handler, this.options);
 	}
 }
+
+export const mod = (a: number, b: number) => (a % b + b) % b;

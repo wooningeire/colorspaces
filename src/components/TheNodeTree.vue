@@ -174,7 +174,7 @@ export default defineComponent({
 
 	created() {
 		this.tree.nodes.push(
-			new rgbModels.RgbNode([50, 200]),
+			new rgbModels.HsvNode([50, 200]),
 			new spaces.SrgbNode([450, 50]),
 			new spaces.LinearNode([450, 250]),
 			new spaces.XyzNode([450, 450]),

@@ -3,6 +3,7 @@ import {Color, Vec2} from "../util";
 import * as cm from "./colormanagement";
 
 export namespace rgbModels {
+	//TODO code duplication
 	export class RgbNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "RGB";
@@ -25,10 +26,78 @@ export namespace rgbModels {
 			return this.ins.map(socket => socket.inValue) as Color;
 		}
 	}
+
+	export class HslNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "HSL";
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Float, "Hue"),
+				new Socket(this, true, Socket.Type.Float, "Saturation"),
+				new Socket(this, true, Socket.Type.Float, "Lightness"),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.RgbRaw, "RGB data"),
+			);
+		}
+
+		output(): Color {
+			return cm.hslToRgb(this.ins.map(socket => socket.inValue) as Color) as Color;
+		}
+	}
+
+	export class HsvNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "HSV";
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Float, "Hue"),
+				new Socket(this, true, Socket.Type.Float, "Saturation"),
+				new Socket(this, true, Socket.Type.Float, "Value"),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.RgbRaw, "RGB data"),
+			);
+		}
+
+		output(): Color {
+			return cm.hsvToRgb(this.ins.map(socket => socket.inValue) as Color) as Color;
+		}
+	}
+
+	export class CmyNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "CMY";
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Float, "Cyan"),
+				new Socket(this, true, Socket.Type.Float, "Magenta"),
+				new Socket(this, true, Socket.Type.Float, "Yellow"),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.RgbRaw, "RGB data"),
+			);
+		}
+
+		output(): Color {
+			return cm.cmyToRgb(this.ins.map(socket => socket.inValue) as Color) as Color;
+		}
+	}
 }
 
 export namespace spaces {
-
 	export class LinearNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Linear sRGB";
