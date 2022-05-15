@@ -19,7 +19,7 @@
 		"baseUrl": "./",
 		// Must update in jest.config.ts and vite.config.ts
 		"paths": {
-			"@src/*": ["src/*"],
+			"@/*": ["src/*"],
 		},
 	},
 

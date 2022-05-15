@@ -15,7 +15,7 @@ import {defineComponent} from "vue";
 import converterMixin from "./converterMixin";
 import BaseEntry from "./BaseEntry.vue";
 
-import {Color} from "@src/util";
+import {Color} from "@/util";
 
 const acceptAlways = () => true;
 

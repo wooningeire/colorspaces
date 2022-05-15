@@ -1,7 +1,7 @@
 import It from "./iter";
 
-import {Color} from "@src/util";
-import * as cm from "@src/models/colormanagement";
+import {Color} from "@/util";
+import * as cm from "@/models/colormanagement";
 
 describe("sRGB", () => {
 	test("inversion functions are accurate", () => {

@@ -18,7 +18,7 @@ export default async () => {
 		// setupFilesAfterEnv: ["./tests/setup.ts"]
 	
 		moduleNameMapper: {
-			"@src/(.*)": "<rootDir>/src/$1",
+			"@/(.*)": "<rootDir>/src/$1",
 		},//pathsToModuleNameMapper(compilerOptions.paths),
 	};
 };

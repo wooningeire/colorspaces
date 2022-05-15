@@ -43,7 +43,6 @@ export default defineComponent({
 
 	data: () => (<{
 		pos: Vec2,
-		tree: Tree,
 		deviceNodes: {
 			transformNode: externals.DeviceTransformNode,
 			// postprocessingNode: externals.DevicePostprocessingNode,
@@ -57,7 +56,6 @@ export default defineComponent({
 		pointerY: number,
 	}>{
 		pos: [0, 0],
-		tree: new Tree(),
 		deviceNodes: {
 			// set in `created`
 		},
@@ -68,6 +66,13 @@ export default defineComponent({
 		pointerX: -1,
 		pointerY: -1,
 	}),
+
+	props: {
+		tree: {
+			type: Tree,
+			required: true,
+		},
+	},
 
 	provide() {
 		return {
@@ -172,6 +177,8 @@ export default defineComponent({
 
 	display: grid;
 	place-items: center;
+
+	overflow: hidden;
 	
 	> * {
 		grid-area: 1 / 1;

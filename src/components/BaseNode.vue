@@ -52,7 +52,7 @@ import BaseSocket from "./BaseSocket.vue";
 import BaseField from "./BaseField.vue";
 import {Node, Socket} from "../models/Node";
 import {externals} from "../models/nodetypes";
-import {Listen} from "@src/util";
+import {Listen} from "@/util";
 
 export default defineComponent({
 	name: "BaseNode",
