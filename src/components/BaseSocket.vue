@@ -7,7 +7,8 @@
 				@dragstart="ondragstart"
 				@dragenter.prevent
 				@dragover.prevent
-				@drop="ondrop">
+				@drop="ondrop"
+				@dblclick="unlinkLinks">
 			<div class="socket-display"></div>
 		</div>
 		{{socket.label}}
@@ -37,11 +38,10 @@ export default defineComponent({
             type: Socket,
             required: true,
         },
-
-        draggedSocket: {
-            type: Socket,
-        },
     },
+
+	inject: ["tree", "draggedSocket"],
+
     methods: {
         ondragstart(event: DragEvent) {
             event.dataTransfer!.dropEffect = "link";
@@ -57,10 +57,14 @@ export default defineComponent({
 			// preemptive + stops TypeScript complaint
 			if (!this.draggedSocket) throw new TypeError("Not currently dragging from a socket");
 
-            return (this.socket.isInput !== this.draggedSocket.isInput)
-                && (this.socket.node !== this.draggedSocket.node)
-                && (this.socket.type === this.draggedSocket.type);
+            return this.socket.isInput !== this.draggedSocket.isInput
+                && this.socket.node !== this.draggedSocket.node
+                && this.socket.type === this.draggedSocket.type;
         },
+
+		unlinkLinks() {
+			this.socket.links.forEach(link => this.tree.unlink(link));
+		},
     },
     computed: {
         socketEl() {

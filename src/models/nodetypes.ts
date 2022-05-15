@@ -1,4 +1,4 @@
-import {Field, Node, Socket} from "./Node";
+import {Node, Socket} from "./Node";
 import {Color, Vec2} from "../util";
 import * as cm from "./colormanagement";
 

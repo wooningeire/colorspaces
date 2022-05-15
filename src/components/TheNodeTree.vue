@@ -4,7 +4,6 @@
 			<BaseNode v-for="node of tree.nodes"
 					:key="node.id"
 					:node="node"
-					:draggedSocket="draggedSocket"
 					@drag-socket="onDragSocket"
 					@dragged="rerenderLinks"
 					@link-to-socket="onLinkToSocket" />
@@ -30,7 +29,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
+import {defineComponent, computed} from "vue";
 import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
 import {Tree, Socket} from "../models/Node";
@@ -67,6 +66,13 @@ export default defineComponent({
 		pointerX: -1,
 		pointerY: -1,
 	}),
+
+	provide() {
+		return {
+			draggedSocket: computed(() => this.draggedSocket),
+			tree: this.tree,
+		};
+	},
 
 	methods: {
 		srgbOutput() {
