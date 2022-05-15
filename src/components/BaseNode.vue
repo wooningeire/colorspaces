@@ -1,14 +1,15 @@
 <template>
 	<div class="node"
+			@pointerdown="startDragging"
 			:style="{
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
-				//@ts-ignore
-				'color': node.type === externals.DeviceTransformNode.TYPE ? `rgb(${node.displayColor.map(x => x * 255)})` : '',
+				'color': node instanceof externals.DeviceTransformNode ? `rgb(${node.displayColor.map(x => x * 255)})` : '',
 			}">
+		<div class="label">
+			{{node.label}}
+		</div>
+
 		<div class="node-content">
-			<div class="label">
-				{{node.label}}
-			</div>
 
 			<div class="fields">
 				<BaseField v-for="field of node.fields"
@@ -43,6 +44,7 @@ import BaseSocket from "./BaseSocket.vue";
 import BaseField from "./BaseField.vue";
 import {Node, Socket} from "../models/Node";
 import {externals} from "../models/nodetypes";
+import {Listen} from "@src/util";
 
 export default defineComponent({
 	name: "BaseNode",
@@ -57,10 +59,36 @@ export default defineComponent({
 			type: Socket,
 		},
 	},
-
 	computed: {
 		externals() {
 			return externals;
+		},
+	},
+
+	methods: {
+		startDragging(event: PointerEvent) {
+			if (this.shouldCancelDrag(event)) return;
+
+			const startingPos = this.node.pos;
+			const pointerStartPos = [event.pageX, event.pageY];
+
+			const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
+				this.node.pos = [
+					startingPos[0] + (moveEvent.pageX - pointerStartPos[0]),
+					startingPos[1] + (moveEvent.pageY - pointerStartPos[1]),
+				];
+
+				this.$emit("dragged");
+			});
+
+			addEventListener("pointerup", () => {
+				moveListener.detach();
+			}, {once: true});
+		},
+
+		shouldCancelDrag(event: PointerEvent) {
+			// Make this check more sophisticated
+			return event.target !== this.$el;
 		},
 	},
 
@@ -82,7 +110,7 @@ export default defineComponent({
 	padding-bottom: 1em;
 
 	border-radius: 1em;
-	background: #2f352caf;
+	background: #2f352cdf;
 	box-shadow: 0 4px 40px #0000003f;
 
 	// grid-template-areas:
@@ -94,14 +122,16 @@ export default defineComponent({
 	// 	grid-area: A;
 	// }
 
+	> .label {
+		text-align: center;
+		padding: 0 0.25em;
+		font-weight: 800;
+
+		pointer-events: none;
+	}
+
 	> .node-content {
 		margin-bottom: 0.5em;
-
-		> .label {
-			text-align: center;
-			padding: 0 0.25em;
-			font-weight: 800;
-		}
 
 		> .fields {
 			display: flex;

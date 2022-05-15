@@ -81,7 +81,6 @@ export namespace spaces {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Unknown, "Observer FOV", false),
 				new Socket(this, true, Socket.Type.Unknown, "Standard illuminant", false),
 				...(this.primariesSockets = [
 					new Socket(this, true, Socket.Type.Float, "X (chromaticity 1)"),
