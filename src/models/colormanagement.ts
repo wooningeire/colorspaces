@@ -57,20 +57,21 @@ export const hslToRgb = ([hue, sat, lightness]: Color) => {
 };
 
 export const hsvToRgb = ([hue, sat, value]: Color) => {
-	hue = mod(hue, 1);
-	const segmentProgress = mod(hue, 1/6);
+	hue = mod(hue, 1) * 6;
+	const segmentStart = Math.floor(hue);
+	console.log(hue - segmentStart);
 
 	const plateau = value;
 	const valley = value * (1 - sat);
-	const falling = value * (1 - sat * (hue - segmentProgress));
-	const rising = value * (1 - sat * (1 - (hue - segmentProgress)));
+	const falling = value * (1 - sat * (hue - segmentStart));
+	const rising = value * (1 - sat * (1 - (hue - segmentStart)));
  
-	if      (segmentProgress < 1/6) return [plateau, rising,  valley];
-	else if (segmentProgress < 2/6) return [falling, plateau, valley];
-	else if (segmentProgress < 3/6) return [valley,  plateau, rising];
-	else if (segmentProgress < 4/6) return [valley,  falling, plateau];
-	else if (segmentProgress < 5/6) return [rising,  valley,  plateau];
-	else                            return [plateau, valley,  falling];
+	if      (hue < 1) return [plateau, rising,  valley];
+	else if (hue < 2) return [falling, plateau, valley];
+	else if (hue < 3) return [valley,  plateau, rising];
+	else if (hue < 4) return [valley,  falling, plateau];
+	else if (hue < 5) return [rising,  valley,  plateau];
+	else              return [plateau, valley,  falling];
 };
 
 
