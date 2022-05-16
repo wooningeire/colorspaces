@@ -1,11 +1,13 @@
 <template>
 	<div class="node-tree">
-		<div class="nodes">
+		<div class="nodes"
+				@pointerdown.self="cancelSelect">
 			<BaseNode v-for="node of tree.nodes"
 					:key="node.id"
 					:node="node"
 					@drag-socket="onDragSocket"
 					@link-to-socket="onLinkToSocket"
+					@node-selected="selectNode"
 
 					@tree-update="recomputeOutputColor"
 					@potential-socket-position-change="rerenderLinks" />
@@ -55,6 +57,8 @@ export default defineComponent({
 
 		pointerX: number,
 		pointerY: number,
+
+		selectedNodes: Set<Node>,
 	}>{
 		pos: [0, 0],
 
@@ -63,6 +67,8 @@ export default defineComponent({
 
 		pointerX: -1,
 		pointerY: -1,
+
+		selectedNodes: new Set(),
 	}),
 
 	props: {
@@ -83,6 +89,7 @@ export default defineComponent({
 			draggingSocket: computed(() => this.draggingSocket),
 			tree: this.tree,
 			socketVues: this.socketVues,
+			selectedNodes: this.selectedNodes,
 		};
 	},
 
@@ -140,6 +147,16 @@ export default defineComponent({
 			const displayColor = this.srgbOutput() as Color;
 			console.log(displayColor);
 			this.deviceNodes.transformNode.displayColor = displayColor;
+		},
+
+		selectNode(node: Node) {
+			this.selectedNodes.clear();
+
+			this.selectedNodes.add(node);
+		},
+
+		cancelSelect() {
+			this.selectedNodes.clear();
 		},
 	},
 

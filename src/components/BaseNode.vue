@@ -9,6 +9,7 @@
 				'subtle': node instanceof externals.DevicePostprocessingNode
 						|| node instanceof externals.EnvironmentNode
 						|| node instanceof externals.VisionNode,
+				'selected': isSelected,
 			}">
 		<div class="label">
 			{{node.label}}
@@ -52,11 +53,13 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
+import {defineComponent, inject} from "vue";
+
 import BaseSocket from "./BaseSocket.vue";
 import BaseField from "./BaseField.vue";
-import {Node, Socket} from "../models/Node";
-import {externals} from "../models/nodetypes";
+
+import {Node, Socket} from "@/models/Node";
+import {externals} from "@/models/nodetypes";
 import {Listen} from "@/util";
 
 export default defineComponent({
@@ -69,23 +72,36 @@ export default defineComponent({
 		},
 	},
 
+	setup() {
+		return {
+			selectedNodes: inject("selectedNodes") as Set<Node>,
+		};
+	},
+
 	emits: [
 		"drag-socket",
 		"link-to-socket",
 		"node-dragged",
 		"potential-socket-position-change",
 		"tree-update",
+		"node-selected",
 	],
 
 	computed: {
 		externals() {
 			return externals;
 		},
+
+		isSelected() {
+			return this.selectedNodes.has(this.node);
+		},
 	},
 
 	methods: {
 		startDragging(event: PointerEvent) {
 			if (this.shouldCancelDrag(event)) return;
+
+			this.$emit("node-selected", this.node);
 
 			const startingPos = this.node.pos;
 			const pointerStartPos = [event.pageX, event.pageY];
@@ -147,6 +163,10 @@ export default defineComponent({
 		&:not(:hover) {
 			opacity: 0.25;
 		}
+	}
+
+	&.selected {
+		border-color: #80efff;
 	}
 
 	> .label {

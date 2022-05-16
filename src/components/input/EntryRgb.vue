@@ -86,7 +86,6 @@ export default defineComponent({
 	
 	watch: {
 		modelValue() {
-			console.log("model value");
 			if (this.isFocused) return;
 			this.updateDisplayValue();
 		},
