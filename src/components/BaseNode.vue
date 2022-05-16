@@ -4,6 +4,11 @@
 			:style="{
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
 				'color': node instanceof externals.DeviceTransformNode ? `rgb(${node.displayColor.map(x => x * 255)})` : '',
+			}"
+			:class="{
+				'subtle': node instanceof externals.DevicePostprocessingNode
+						|| node instanceof externals.EnvironmentNode
+						|| node instanceof externals.VisionNode,
 			}">
 		<div class="label">
 			{{node.label}}
@@ -117,7 +122,7 @@ export default defineComponent({
 .node {
 	position: absolute;
 	// display: inline grid;
-	display: inline flex;
+	display: flex;
 	flex-direction: column;
 	border: 4px solid #ffffff7f;
 	width: 160px;
@@ -125,7 +130,7 @@ export default defineComponent({
 
 	border-radius: 1em;
 	background: #2f352cdf;
-	box-shadow: 0 4px 40px #0000003f;
+	box-shadow: 0 4px 40px #000000af;
 
 	// grid-template-areas:
 	// 		"A A"
@@ -135,6 +140,14 @@ export default defineComponent({
 	// > .node-content {
 	// 	grid-area: A;
 	// }
+
+	&.subtle {
+		transition: 0.2s opacity ease;
+
+		&:not(:hover) {
+			opacity: 0.25;
+		}
+	}
 
 	> .label {
 		text-align: center;

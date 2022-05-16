@@ -184,12 +184,55 @@ export namespace externals {
 			);
 
 			this.outs.push(
+				new Socket(this, false, Socket.Type.Unknown, "Color data"),
+			);
+		}
+	}
+
+	export class DevicePostprocessingNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Device postprocessing";
+		
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Unknown, "Color data"),
+			);
+
+			this.outs.push(
 				new Socket(this, false, Socket.Type.Unknown, "Screen image"),
 			);
 		}
 	}
 
-	export class DevicePostprocessingNode extends Node {}
+	export class EnvironmentNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Environmental conditions";
+		
+		constructor(pos?: Vec2) {
+			super(pos);
 
-	export class VisionNode extends Node {}
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Unknown, "Radiation"),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.Unknown, "Radiation"),
+			);
+		}
+	}
+
+	export class VisionNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Human vision";
+		
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Unknown, "Radiation"),
+			);
+		}
+	}
 }

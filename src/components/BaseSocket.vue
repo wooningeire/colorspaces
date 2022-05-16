@@ -50,6 +50,7 @@ export default defineComponent({
 		return {
 			tree: inject("tree") as Tree,
 			draggedSocket: inject("draggedSocket") as Socket,
+			socketVues: inject("socketVues") as WeakMap<Socket, unknown>,
 		};
 	},
 
@@ -100,6 +101,11 @@ export default defineComponent({
             return Socket.Type;
         },
     },
+
+	mounted() {
+		this.socketVues.set(this.socket, this);
+	},
+
     components: {
 		BaseEntry,
 		EntryRgb,

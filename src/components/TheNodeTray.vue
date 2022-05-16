@@ -6,9 +6,9 @@ const emit = defineEmits(["add-node"]);
 
 <template>
 	<div class="node-tray">
-		<div v-for="[name, nodeConstructor] of [...Object.entries(rgbModels), ...Object.entries(spaces)]"
+		<div v-for="nodeConstructor of [...Object.values(rgbModels), ...Object.values(spaces)]"
 				@click="emit('add-node', nodeConstructor)">
-			{{name}}
+			{{nodeConstructor.LABEL}}
 		</div>
 	</div>
 </template>

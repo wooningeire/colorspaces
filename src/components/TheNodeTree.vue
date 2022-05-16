@@ -25,29 +25,40 @@
 					:x1="getSocketVue(link.src)?.socketPos()[0]"
 					:y1="getSocketVue(link.src)?.socketPos()[1]"
 					:x2="getSocketVue(link.dst)?.socketPos()[0]"
-					:y2="getSocketVue(link.dst)?.socketPos()[1]" />
+					:y2="getSocketVue(link.dst)?.socketPos()[1]"
+					
+					:class="{
+						'subtle': link.dstNode instanceof externals.DevicePostprocessingNode
+								|| link.dstNode instanceof externals.EnvironmentNode
+								|| link.dstNode instanceof externals.VisionNode,
+					}" />
 		</svg>
 	</div>
 </template>
 
 <script lang="ts">
 import {defineComponent, computed} from "vue";
+
 import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
+
 import {Tree, Socket} from "../models/Node";
 import {rgbModels, spaces, externals} from "../models/nodetypes";
 import {Vec2, Listen, Color} from "../util";
+
+export interface DeviceNodes {
+	transformNode: externals.DeviceTransformNode;
+	postprocessingNode: externals.DevicePostprocessingNode;
+	environmentNode: externals.EnvironmentNode;
+	visionNode: externals.VisionNode;
+}
 
 export default defineComponent({
 	name: "TheNodeTree",
 
 	data: () => (<{
 		pos: Vec2,
-		deviceNodes: {
-			transformNode: externals.DeviceTransformNode,
-			// postprocessingNode: externals.DevicePostprocessingNode,
-			// visionNode: externals.VisionNode,
-		},
+		deviceNodes: DeviceNodes,
 
 		draggedSocketVue: InstanceType<typeof BaseSocket> | null,
 		socketVues: WeakMap<Socket, InstanceType<typeof BaseSocket>>,
@@ -79,6 +90,7 @@ export default defineComponent({
 			draggedSocket: computed(() => this.draggedSocket),
 			draggingSocket: computed(() => this.draggingSocket),
 			tree: this.tree,
+			socketVues: this.socketVues,
 		};
 	},
 
@@ -102,7 +114,6 @@ export default defineComponent({
 
 		onDragSocket(socketVue: InstanceType<typeof BaseSocket>) {
 			this.draggedSocketVue = socketVue;
-			this.socketVues.set(socketVue.socket, socketVue);
 
 			[this.pointerX, this.pointerY] = this.draggedSocketVue.socketPos();
 
@@ -119,8 +130,6 @@ export default defineComponent({
 		},
 
 		onLinkToSocket(socketVue: InstanceType<typeof BaseSocket>) {
-			this.socketVues.set(socketVue.socket, socketVue);
-			
 			// preemptive + stops TypeScript complaint
 			if (!this.draggedSocket) throw new TypeError("Not currently dragging from a socket");
 
@@ -151,16 +160,10 @@ export default defineComponent({
 		draggingSocket() {
 			return Boolean(this.draggedSocketVue);
 		},
-	},
 
-	created() {
-		this.tree.nodes.push(
-			new rgbModels.HsvNode([50, 200]),
-			new spaces.SrgbNode([450, 50]),
-			new spaces.LinearNode([450, 250]),
-			new spaces.XyzNode([450, 450]),
-			(this.deviceNodes.transformNode = new externals.DeviceTransformNode([800, 100])),
-		);
+		externals() {
+			return externals;
+		},
 	},
 
 	components: {
@@ -198,6 +201,10 @@ export default defineComponent({
 
 		> .new-link {
 			opacity: 0.5;
+		}
+
+		> .subtle {
+			opacity: 0.25;
 		}
 	}
 }

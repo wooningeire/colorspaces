@@ -1,16 +1,34 @@
 <script lang="ts" setup>
 import {ref, reactive, onMounted} from "vue";
 
-import TheNodeTree from "./TheNodeTree.vue";
+import TheNodeTree, {DeviceNodes} from "./TheNodeTree.vue";
 import TheNodeTray from "./TheNodeTray.vue";
 
 import {Tree} from "@/models/Node";
+import {rgbModels, spaces, externals} from "@/models/nodetypes";
 
+const dn = <DeviceNodes>{};
 const tree = reactive(new Tree());
+
+tree.nodes.push(
+	new rgbModels.HsvNode([50, 200]),
+	new spaces.SrgbNode([450, 50]),
+	new spaces.LinearNode([450, 250]),
+	new spaces.XyzNode([450, 450]),
+	(dn.transformNode = new externals.DeviceTransformNode([800, 100])),
+	(dn.postprocessingNode = new externals.DevicePostprocessingNode([800, 250])),
+	(dn.environmentNode = new externals.EnvironmentNode([800, 400])),
+	(dn.visionNode = new externals.VisionNode([800, 550])),
+);
+
+tree.linkSockets(dn.transformNode.outs[0], dn.postprocessingNode.ins[0]);
+tree.linkSockets(dn.postprocessingNode.outs[0], dn.environmentNode.ins[0]);
+tree.linkSockets(dn.environmentNode.outs[0], dn.visionNode.ins[0]);
 </script>
 
 <template>
-	<TheNodeTree :tree="tree" />
+	<TheNodeTree :tree="tree"
+			:deviceNodes="dn" />
 	<TheNodeTray @add-node="nodeConstructor => tree.nodes.push(new nodeConstructor())" />
 </template>
 
