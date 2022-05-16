@@ -9,11 +9,13 @@ export class Tree {
 		if (dst.isOutput) throw new Error("Dest is an output");
 		if (src.node === dst.node) throw new Error("Sockets belong to same node");
 
-		const link = new Link(src, dst);
-
 		const existingDstLink = dst.links[0];
-		this.links.delete(existingDstLink);
-		dst.links.pop();
+		if (existingDstLink) {
+			this.unlink(existingDstLink);
+		}
+
+
+		const link = new Link(src, dst);
 
 		src.links.push(link);
 		dst.links.push(link);
@@ -31,6 +33,7 @@ export class Tree {
 		this.nodes.delete(node);
 
 		[...node.ins, ...node.outs].forEach(socket => {
+			console.log(socket.links);
 			socket.links.forEach(link => {
 				this.unlink(link);
 			});

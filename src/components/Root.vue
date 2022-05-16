@@ -37,7 +37,10 @@ const treeVue = ref(null) as any as InstanceType<typeof TheNodeTree>;
 			ref="treeVue" />
 	<TheNodeTray @add-node="nodeConstructor => tree.nodes.add(new nodeConstructor())" />
 
-	<TheToolbar @delete-node="() => (selectedNodes.forEach(tree.deleteNode, tree), treeVue.recomputeOutputColor())" />
+	<TheToolbar @delete-node="() => {
+		selectedNodes.forEach(tree.deleteNode, tree);
+		treeVue.recomputeOutputColor();
+	}" />
 </template>
 
 <style lang="scss">

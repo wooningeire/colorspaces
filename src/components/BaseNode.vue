@@ -147,7 +147,7 @@ export default defineComponent({
 
 	border-radius: 1em;
 	background: #2e3331df;
-	box-shadow: 0 4px 40px #000000af;
+	box-shadow: 0 4px 40px -20px #000000af;
 
 	font-size: calc(14/16 * 1em);
 
@@ -187,6 +187,10 @@ export default defineComponent({
 			display: flex;
 			flex-flow: column;
 		}
+	}
+
+	:deep(input) {
+		width: 100%;
 	}
 }
 </style>

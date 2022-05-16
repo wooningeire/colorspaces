@@ -126,6 +126,8 @@ export default defineComponent({
 	position: relative;
 	margin-bottom: .25em;
 
+	padding: 0 var(--socket-text-padding);
+
 	--socket-text-padding: 8px;
 
 	> .socket {
@@ -153,7 +155,6 @@ export default defineComponent({
 	}
 
 	&.in {
-		padding-left: var(--socket-text-padding);
 
 		> .socket {
 			left: var(--socket-offset);
@@ -162,7 +163,6 @@ export default defineComponent({
 
 	&:not(.in) {
 		text-align: right;
-		padding-right: var(--socket-text-padding);
 
 		> .socket {
 			right: var(--socket-offset);

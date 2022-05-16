@@ -101,7 +101,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.invalid >>> input {
+.invalid :deep(input) {
 	color: red;
 }
 </style>
