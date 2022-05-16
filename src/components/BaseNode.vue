@@ -1,6 +1,9 @@
 <template>
 	<div class="node"
-			@pointerdown="startDragging"
+			@pointerdown="event => {
+				startDragging(event);
+				$emit('node-selected', node);
+			}"
 			:style="{
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
 				'color': node instanceof externals.DeviceTransformNode ? `rgb(${node.displayColor.map(x => x * 255)})` : '',
@@ -100,9 +103,7 @@ export default defineComponent({
 	methods: {
 		startDragging(event: PointerEvent) {
 			if (this.shouldCancelDrag(event)) return;
-
-			this.$emit("node-selected", this.node);
-
+			
 			const startingPos = this.node.pos;
 			const pointerStartPos = [event.pageX, event.pageY];
 
@@ -140,13 +141,15 @@ export default defineComponent({
 	// display: inline grid;
 	display: flex;
 	flex-direction: column;
-	border: 4px solid #ffffff7f;
+	border: 4px solid #ffffff3f;
 	width: 160px;
 	padding-bottom: 1em;
 
 	border-radius: 1em;
-	background: #2f352cdf;
+	background: #2e3331df;
 	box-shadow: 0 4px 40px #000000af;
+
+	font-size: calc(14/16 * 1em);
 
 	// grid-template-areas:
 	// 		"A A"

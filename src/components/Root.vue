@@ -26,14 +26,18 @@ tree.linkSockets(dn.environmentNode.outs[0], dn.visionNode.ins[0]);
 
 const selectedNodes = reactive(new Set<Node>());
 provide("selectedNodes", selectedNodes);
+
+
+const treeVue = ref(null) as any as InstanceType<typeof TheNodeTree>;
 </script>
 
 <template>
 	<TheNodeTree :tree="tree"
-			:deviceNodes="dn" />
+			:deviceNodes="dn"
+			ref="treeVue" />
 	<TheNodeTray @add-node="nodeConstructor => tree.nodes.add(new nodeConstructor())" />
 
-	<TheToolbar @delete-node="() => selectedNodes.forEach(tree.deleteNode, tree)" />
+	<TheToolbar @delete-node="() => (selectedNodes.forEach(tree.deleteNode, tree), treeVue.recomputeOutputColor())" />
 </template>
 
 <style lang="scss">
