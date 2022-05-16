@@ -1,35 +1,39 @@
 <script lang="ts" setup>
-import {ref, reactive, onMounted} from "vue";
+import {ref, reactive, onMounted, provide} from "vue";
 
 import TheNodeTree, {DeviceNodes} from "./TheNodeTree.vue";
 import TheNodeTray from "./TheNodeTray.vue";
 import TheToolbar from "./TheToolbar.vue";
 
-import {Tree} from "@/models/Node";
+import {Tree, Node} from "@/models/Node";
 import {rgbModels, spaces, externals} from "@/models/nodetypes";
 
 const dn = reactive(<DeviceNodes>{});
 const tree = reactive(new Tree());
 
-tree.nodes.push(
+[
 	new spaces.SrgbNode([450, 50]),
 	(dn.transformNode = new externals.DeviceTransformNode([800, 100])),
 	(dn.postprocessingNode = new externals.DevicePostprocessingNode([800, 250])),
 	(dn.environmentNode = new externals.EnvironmentNode([800, 400])),
-	(dn.visionNode = new externals.VisionNode([800, 550])),
-);
+	(dn.visionNode = new externals.VisionNode([800, 550]))
+].forEach(tree.nodes.add, tree.nodes);
 
 tree.linkSockets(dn.transformNode.outs[0], dn.postprocessingNode.ins[0]);
 tree.linkSockets(dn.postprocessingNode.outs[0], dn.environmentNode.ins[0]);
 tree.linkSockets(dn.environmentNode.outs[0], dn.visionNode.ins[0]);
+
+
+const selectedNodes = reactive(new Set<Node>());
+provide("selectedNodes", selectedNodes);
 </script>
 
 <template>
 	<TheNodeTree :tree="tree"
 			:deviceNodes="dn" />
-	<TheNodeTray @add-node="nodeConstructor => tree.nodes.push(new nodeConstructor())" />
+	<TheNodeTray @add-node="nodeConstructor => tree.nodes.add(new nodeConstructor())" />
 
-	<TheToolbar />
+	<TheToolbar @delete-node="() => selectedNodes.forEach(tree.deleteNode, tree)" />
 </template>
 
 <style lang="scss">

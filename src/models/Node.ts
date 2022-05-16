@@ -2,7 +2,7 @@ import {Color, Vec2} from "../util";
 
 export class Tree {
 	readonly links = new Set<Link>();
-	readonly nodes: Node[] = [];
+	readonly nodes = new Set<Node>();
 
 	linkSockets(src: Socket, dst: Socket) {
 		if (src.isInput) throw new Error("Source is an input");
@@ -25,6 +25,16 @@ export class Tree {
 		this.links.delete(link);
 		link.src.links.splice(link.src.links.indexOf(link), 1);
 		link.dst.links.splice(link.dst.links.indexOf(link), 1);
+	}
+
+	deleteNode(node: Node) {
+		this.nodes.delete(node);
+
+		[...node.ins, ...node.outs].forEach(socket => {
+			socket.links.forEach(link => {
+				this.unlink(link);
+			});
+		});
 	}
 }
 

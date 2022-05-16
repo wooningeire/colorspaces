@@ -29,7 +29,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, computed, PropType} from "vue";
+import {defineComponent, computed, PropType, inject} from "vue";
 
 import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
@@ -57,8 +57,6 @@ export default defineComponent({
 
 		pointerX: number,
 		pointerY: number,
-
-		selectedNodes: Set<Node>,
 	}>{
 		pos: [0, 0],
 
@@ -67,8 +65,6 @@ export default defineComponent({
 
 		pointerX: -1,
 		pointerY: -1,
-
-		selectedNodes: new Set(),
 	}),
 
 	props: {
@@ -83,13 +79,18 @@ export default defineComponent({
 		},
 	},
 
+	setup() {
+		return {
+			selectedNodes: inject("selectedNodes") as Set<Node>,
+		};
+	},
+
 	provide() {
 		return {
 			draggedSocket: computed(() => this.draggedSocket),
 			draggingSocket: computed(() => this.draggingSocket),
 			tree: this.tree,
 			socketVues: this.socketVues,
-			selectedNodes: this.selectedNodes,
 		};
 	},
 
