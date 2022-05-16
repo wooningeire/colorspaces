@@ -25,5 +25,7 @@ const emit = defineEmits(["add-node"]);
 	border: solid #aebf80;
 	border-width: 4px 4px 0 4px;
 	box-shadow: 0 4px 40px #0000003f;
+
+	cursor: pointer;
 }
 </style>

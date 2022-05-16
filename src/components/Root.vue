@@ -7,7 +7,7 @@ import TheNodeTray from "./TheNodeTray.vue";
 import {Tree} from "@/models/Node";
 import {rgbModels, spaces, externals} from "@/models/nodetypes";
 
-const dn = <DeviceNodes>{};
+const dn = reactive(<DeviceNodes>{});
 const tree = reactive(new Tree());
 
 tree.nodes.push(

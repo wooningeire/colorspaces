@@ -231,7 +231,7 @@ export namespace externals {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Unknown, "Radiation"),
+				new Socket(this, true, Socket.Type.Unknown, "Light"),
 			);
 		}
 	}

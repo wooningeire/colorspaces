@@ -37,7 +37,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, computed} from "vue";
+import {defineComponent, computed, PropType} from "vue";
 
 import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
@@ -58,7 +58,6 @@ export default defineComponent({
 
 	data: () => (<{
 		pos: Vec2,
-		deviceNodes: DeviceNodes,
 
 		draggedSocketVue: InstanceType<typeof BaseSocket> | null,
 		socketVues: WeakMap<Socket, InstanceType<typeof BaseSocket>>,
@@ -67,9 +66,6 @@ export default defineComponent({
 		pointerY: number,
 	}>{
 		pos: [0, 0],
-		deviceNodes: {
-			// set in `created`
-		},
 
 		draggedSocketVue: null,
 		socketVues: new WeakMap(),
@@ -81,6 +77,11 @@ export default defineComponent({
 	props: {
 		tree: {
 			type: Tree,
+			required: true,
+		},
+
+		deviceNodes: {
+			type: Object as PropType<DeviceNodes>,
 			required: true,
 		},
 	},

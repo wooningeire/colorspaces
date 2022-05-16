@@ -2,14 +2,16 @@
 	<div class="socket-container"
 			:class="{'in': socket.isInput}">
 		<div class="socket"
-				draggable="true"
 				v-if="socket.showSocket"
+
+				ref="socketHitbox"
+				draggable="true"
 				@dragstart="ondragstart"
 				@dragenter.prevent
 				@dragover.prevent
 				@drop="ondrop"
-				@dblclick="unlinkLinks"
-				ref="socketHitbox">
+
+				@dblclick="unlinkLinks">
 			<div class="socket-display"></div>
 		</div>
 		{{socket.label}}
@@ -17,12 +19,16 @@
 		<div class="socket-value-editor" v-if="socket.isInput && !socket.links[0]">
 			<template v-if="socket.type === SocketType.Float">
 				<BaseEntry v-model="socket.fieldValue"
-						@update:modelValue="$emit('value-change')" />
+						@update:modelValue="$emit('value-change')"
+						
+						:validate="isFinite" />
 			</template>
 
 			<template v-else-if="socket.type === SocketType.RgbRaw">
 				<EntryRgb v-model="socket.fieldValue"
-						@update:modelValue="$emit('value-change')" />
+						@update:modelValue="$emit('value-change')"
+
+						:validate="color => color.every(comp => isFinite(comp))" />
 			</template>
 		</div>
 	</div>
@@ -30,9 +36,11 @@
 
 <script lang="ts">
 import {defineComponent, inject} from "vue";
-import {Tree, Socket} from "../models/Node";
+
 import BaseEntry from "./input/BaseEntry.vue";
 import EntryRgb from "./input/EntryRgb.vue";
+
+import {Tree, Socket} from "@/models/Node";
 
 export default defineComponent({
     name: "BaseSocket",
