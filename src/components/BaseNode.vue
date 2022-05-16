@@ -1,6 +1,9 @@
 <template>
 	<div class="node"
-			@pointerdown="startDragging"
+			@pointerdown="event => {
+				startDragging(event);
+				$emit('node-selected', node);
+			}"
 			:style="{
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
 				'color': node instanceof externals.DeviceTransformNode ? `rgb(${node.displayColor.map(x => x * 255)})` : '',
@@ -9,6 +12,7 @@
 				'subtle': node instanceof externals.DevicePostprocessingNode
 						|| node instanceof externals.EnvironmentNode
 						|| node instanceof externals.VisionNode,
+				'selected': isSelected,
 			}">
 		<div class="label">
 			{{node.label}}
@@ -52,11 +56,13 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
+import {defineComponent, inject} from "vue";
+
 import BaseSocket from "./BaseSocket.vue";
 import BaseField from "./BaseField.vue";
-import {Node, Socket} from "../models/Node";
-import {externals} from "../models/nodetypes";
+
+import {Node, Socket} from "@/models/Node";
+import {externals} from "@/models/nodetypes";
 import {Listen} from "@/util";
 
 export default defineComponent({
@@ -69,24 +75,35 @@ export default defineComponent({
 		},
 	},
 
+	setup() {
+		return {
+			selectedNodes: inject("selectedNodes") as Set<Node>,
+		};
+	},
+
 	emits: [
 		"drag-socket",
 		"link-to-socket",
 		"node-dragged",
 		"potential-socket-position-change",
 		"tree-update",
+		"node-selected",
 	],
 
 	computed: {
 		externals() {
 			return externals;
 		},
+
+		isSelected() {
+			return this.selectedNodes.has(this.node);
+		},
 	},
 
 	methods: {
 		startDragging(event: PointerEvent) {
 			if (this.shouldCancelDrag(event)) return;
-
+			
 			const startingPos = this.node.pos;
 			const pointerStartPos = [event.pageX, event.pageY];
 
@@ -124,13 +141,15 @@ export default defineComponent({
 	// display: inline grid;
 	display: flex;
 	flex-direction: column;
-	border: 4px solid #ffffff7f;
+	border: 4px solid #ffffff3f;
 	width: 160px;
 	padding-bottom: 1em;
 
 	border-radius: 1em;
-	background: #2f352cdf;
-	box-shadow: 0 4px 40px #000000af;
+	background: #2e3331df;
+	box-shadow: 0 4px 40px -20px #000000af;
+
+	font-size: calc(14/16 * 1em);
 
 	// grid-template-areas:
 	// 		"A A"
@@ -149,6 +168,10 @@ export default defineComponent({
 		}
 	}
 
+	&.selected {
+		border-color: #80efff;
+	}
+
 	> .label {
 		text-align: center;
 		padding: 0 0.25em;
@@ -164,6 +187,10 @@ export default defineComponent({
 			display: flex;
 			flex-flow: column;
 		}
+	}
+
+	:deep(input) {
+		width: 100%;
 	}
 }
 </style>

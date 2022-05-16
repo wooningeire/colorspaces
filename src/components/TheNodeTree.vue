@@ -1,11 +1,13 @@
 <template>
 	<div class="node-tree">
-		<div class="nodes">
+		<div class="nodes"
+				@pointerdown.self="cancelSelect">
 			<BaseNode v-for="node of tree.nodes"
 					:key="node.id"
 					:node="node"
 					@drag-socket="onDragSocket"
 					@link-to-socket="onLinkToSocket"
+					@node-selected="selectNode"
 
 					@tree-update="recomputeOutputColor"
 					@potential-socket-position-change="rerenderLinks" />
@@ -27,7 +29,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, computed, PropType} from "vue";
+import {defineComponent, computed, PropType, inject} from "vue";
 
 import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
@@ -75,6 +77,12 @@ export default defineComponent({
 			type: Object as PropType<DeviceNodes>,
 			required: true,
 		},
+	},
+
+	setup() {
+		return {
+			selectedNodes: inject("selectedNodes") as Set<Node>,
+		};
 	},
 
 	provide() {
@@ -140,6 +148,16 @@ export default defineComponent({
 			const displayColor = this.srgbOutput() as Color;
 			console.log(displayColor);
 			this.deviceNodes.transformNode.displayColor = displayColor;
+		},
+
+		selectNode(node: Node) {
+			this.selectedNodes.clear();
+
+			this.selectedNodes.add(node);
+		},
+
+		cancelSelect() {
+			this.selectedNodes.clear();
 		},
 	},
 

@@ -86,7 +86,6 @@ export default defineComponent({
 	
 	watch: {
 		modelValue() {
-			console.log("model value");
 			if (this.isFocused) return;
 			this.updateDisplayValue();
 		},
@@ -102,7 +101,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.invalid >>> input {
+.invalid :deep(input) {
 	color: red;
 }
 </style>

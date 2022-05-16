@@ -62,8 +62,17 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-.invalid {
-	color: red;
+<style lang="scss" scoped>
+input {
+	background: rgb(85, 88, 87);
+	border: none;
+	color: inherit;
+
+	margin-bottom: 0.25rem;
+	border-radius: 4px;
+
+	&.invalid {
+		color: red;
+	}
 }
 </style>

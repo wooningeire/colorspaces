@@ -18,9 +18,9 @@ const emit = defineEmits(["add-node"]);
 	height: 100%;
 
 	padding: 2em;
-	margin: 0 2em;
+	margin-right: 2em;
 
-	background: #0000007f;
+	background: #000000cf;
 	border-radius: 2em 2em 0 0;
 	border: solid #aebf80;
 	border-width: 4px 4px 0 4px;
