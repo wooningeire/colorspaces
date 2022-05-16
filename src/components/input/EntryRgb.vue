@@ -1,8 +1,8 @@
 <template>
 	<div @input="onInput"
 			@change.stop="onChange"
-			@focus="onFocus"
-			@blur="onBlur"
+			@focus.capture="onFocus"
+			@blur.capture="onBlur"
 			:class="{invalid: !proposedValueIsValid}">
 		<BaseEntry v-model="displayColor[0]" />
 		<BaseEntry v-model="displayColor[1]" />
@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
+import {defineComponent, reactive} from "vue";
 import converterMixin from "./converterMixin";
 import BaseEntry from "./BaseEntry.vue";
 
@@ -34,14 +34,23 @@ export default defineComponent({
 			type: Array,
 			required: true,
 		},
-	},
 
+		convertIn: {
+			type: Function,
+			default: (value: number[]) => [...value],
+		},
+
+		convertOut: {
+			type: Function,
+			default: (value: number[]) => [...value],
+		},
+	},
 	data() {
 		return {
 			proposedValueIsValid: true,
 			isFocused: false,
 
-			displayColor: [...this.modelValue],
+			displayColor: this.convertIn(this.modelValue),
 		};
 	},
 
@@ -58,8 +67,7 @@ export default defineComponent({
 		},
 
 		updateDisplayValue() {
-			Object.assign(this.displayColor, this.convertIn(this.modelValue));
-			// this.displayColor = this.convertIn(this.modelValue);
+			this.displayColor = this.convertIn(this.modelValue);
 		},
 
 		onChange() {
@@ -78,6 +86,7 @@ export default defineComponent({
 	
 	watch: {
 		modelValue() {
+			console.log("model value");
 			if (this.isFocused) return;
 			this.updateDisplayValue();
 		},
@@ -93,7 +102,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.invalid {
+.invalid >>> input {
 	color: red;
 }
 </style>

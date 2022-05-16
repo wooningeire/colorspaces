@@ -1,8 +1,7 @@
 <template>
 	<input type="text"
 			@input="onInput"
-			@change.stop="onChange"
-			@focus="onFocus"
+			@change="onChange"
 			@blur="onBlur"
 			:class="{invalid: !proposedValueIsValid}" />
 </template>
@@ -27,11 +26,12 @@ export default defineComponent({
 
 	data: () => ({
 		proposedValueIsValid: true,
-		isFocused: false,
+		userIsInputing: false,
 	}),
 
 	methods: {
-		onInput(event: Event) {
+		onInput(event: InputEvent) {
+			this.userIsInputing = true;
 			const proposedValue = this.convertOut(Number(this.$el.value));
 
 			this.proposedValueIsValid = this.validate(proposedValue);
@@ -43,22 +43,19 @@ export default defineComponent({
 		},
 
 		onChange() {
+			this.userIsInputing = false;
 			this.updateDisplayValue();
 			this.proposedValueIsValid = true;
 		},
 
-		onFocus() {
-			this.isFocused = true;
-		},
-
 		onBlur() {
-			this.isFocused = false;
+			this.userIsInputing = false;
 		},
 	},
 	
 	watch: {
 		modelValue() {
-			if (this.isFocused) return;
+			if (this.userIsInputing) return;
 			this.updateDisplayValue();
 		},
 	},

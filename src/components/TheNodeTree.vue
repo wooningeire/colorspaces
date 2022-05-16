@@ -20,18 +20,8 @@
 					:x2="pointerX"
 					:y2="pointerY" />
 
-			<line v-for="link of tree.links"
-					:key="link.id"
-					:x1="getSocketVue(link.src)?.socketPos()[0]"
-					:y1="getSocketVue(link.src)?.socketPos()[1]"
-					:x2="getSocketVue(link.dst)?.socketPos()[0]"
-					:y2="getSocketVue(link.dst)?.socketPos()[1]"
-					
-					:class="{
-						'subtle': link.dstNode instanceof externals.DevicePostprocessingNode
-								|| link.dstNode instanceof externals.EnvironmentNode
-								|| link.dstNode instanceof externals.VisionNode,
-					}" />
+			<BaseLinks :socketVues="socketVues"
+					ref="linksComponent" />
 		</svg>
 	</div>
 </template>
@@ -41,6 +31,7 @@ import {defineComponent, computed, PropType} from "vue";
 
 import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
+import BaseLinks from "./BaseLinks.vue";
 
 import {Tree, Socket} from "../models/Node";
 import {rgbModels, spaces, externals} from "../models/nodetypes";
@@ -109,8 +100,7 @@ export default defineComponent({
 
 		//#region Events
 		rerenderLinks() {
-			// This is just so the links get rerendered... certainly can be more efficient
-			this.$forceUpdate();
+			(this.$refs.linksComponent as InstanceType<typeof BaseLinks>).$forceUpdate();
 		},
 
 		onDragSocket(socketVue: InstanceType<typeof BaseSocket>) {
@@ -169,6 +159,7 @@ export default defineComponent({
 
 	components: {
 		BaseNode,
+		BaseLinks,
 	},
 });
 </script>
@@ -202,10 +193,6 @@ export default defineComponent({
 
 		> .new-link {
 			opacity: 0.5;
-		}
-
-		> .subtle {
-			opacity: 0.25;
 		}
 	}
 }
