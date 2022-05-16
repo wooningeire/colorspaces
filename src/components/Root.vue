@@ -11,10 +11,7 @@ const dn = reactive(<DeviceNodes>{});
 const tree = reactive(new Tree());
 
 tree.nodes.push(
-	new rgbModels.HsvNode([50, 200]),
 	new spaces.SrgbNode([450, 50]),
-	new spaces.LinearNode([450, 250]),
-	new spaces.XyzNode([450, 450]),
 	(dn.transformNode = new externals.DeviceTransformNode([800, 100])),
 	(dn.postprocessingNode = new externals.DevicePostprocessingNode([800, 250])),
 	(dn.environmentNode = new externals.EnvironmentNode([800, 400])),

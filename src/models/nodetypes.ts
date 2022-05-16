@@ -167,6 +167,34 @@ export namespace spaces {
 			return cm.linearToSrgb(cm.xyz2degToLinear(this.primariesSockets.map(socket => socket.inValue) as Color));
 		}
 	}
+
+	export class XyyNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "xyY";
+
+		private readonly primariesSockets: Socket[];
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Unknown, "Standard illuminant", false),
+				...(this.primariesSockets = [
+					new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)"),
+					new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)"),
+					new Socket(this, true, Socket.Type.Float, "Y (luminance)"),
+				]),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+			);
+		}
+
+		output(): Color {
+			return cm.linearToSrgb(cm.xyz2degToLinear(cm.xyyToXyz(this.primariesSockets.map(socket => socket.inValue) as Color)));
+		}
+	}
 }
 
 export namespace externals {

@@ -85,6 +85,15 @@ export const xyz2degToLinear = (xyz: Color, /* illuminantXyz: Color */) => {
 	return mat as any as Color;
 };
 
+// https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space
+export const xyyToXyz = ([x, y, lum]: Color) => y === 0
+		? [0, 0, 0] as Color
+		: [
+			lum / y * x,
+			lum,
+			lum / y * (1 - x - y),
+		] as Color;
+
 // https://www.mathworks.com/help/images/ref/whitepoint.html
 const illuminantsXyz = <{
 	[standard: string]: {
