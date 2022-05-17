@@ -42,3 +42,8 @@ export type ModifierKeys = {
 	alt: boolean,
 	meta: boolean,
 };
+
+
+export const clearTextSelection = () => {
+	getSelection()?.removeAllRanges();
+};

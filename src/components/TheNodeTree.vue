@@ -1,7 +1,7 @@
 <template>
 	<div class="node-tree">
 		<div class="nodes"
-				@pointerdown.self="cancelSelect">
+				@pointerdown.self="onPointerDownSelf">
 			<BaseNode v-for="node of tree.nodes"
 					:key="node.id"
 					:node="node"
@@ -37,7 +37,7 @@ import BaseLinks from "./BaseLinks.vue";
 
 import {Tree, Socket, Node} from "../models/Node";
 import {rgbModels, spaces, externals} from "../models/nodetypes";
-import {Vec2, Listen, Color} from "../util";
+import {Vec2, Listen, Color, ModifierKeys, clearTextSelection} from "../util";
 
 export interface DeviceNodes {
 	transformNode: externals.DeviceTransformNode;
@@ -82,7 +82,7 @@ export default defineComponent({
 	setup() {
 		return {
 			selectedNodes: inject("selectedNodes") as Set<Node>,
-			modifierKeys: inject("modifierKeys"),
+			modifierKeys: inject("modifierKeys") as ModifierKeys,
 		};
 	},
 
@@ -159,6 +159,16 @@ export default defineComponent({
 
 		cancelSelect() {
 			this.selectedNodes.clear();
+		},
+		
+		onPointerDownSelf() {
+			if (this.modifierKeys.shift) {
+				clearTextSelection();
+			}
+
+			if (!this.modifierKeys.shift) {
+				this.cancelSelect();
+			}
 		},
 	},
 

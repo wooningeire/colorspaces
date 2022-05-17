@@ -63,7 +63,7 @@ import BaseField from "./BaseField.vue";
 
 import {Node, Socket} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
-import {Listen, ModifierKeys} from "@/util";
+import {clearTextSelection, Listen, ModifierKeys} from "@/util";
 
 export default defineComponent({
 	name: "BaseNode",
@@ -109,6 +109,8 @@ export default defineComponent({
 			const pointerStartPos = [event.pageX, event.pageY];
 
 			const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
+				clearTextSelection();
+
 				this.node.pos = [
 					startingPos[0] + (moveEvent.pageX - pointerStartPos[0]),
 					startingPos[1] + (moveEvent.pageY - pointerStartPos[1]),
@@ -125,12 +127,13 @@ export default defineComponent({
 
 		shouldCancelDrag(event: PointerEvent) {
 			// Make this check more sophisticated
-			return event.target !== this.$el;
+			// return event.target !== this.$el;
+			return (event.target as Element).tagName.toLowerCase() === "input";
 		},
 
 		emitNodeSelected(event: PointerEvent) {
 			if (this.modifierKeys.shift) {
-				getSelection()?.removeAllRanges();
+				clearTextSelection();
 				// event.preventDefault();
 			}
 
@@ -161,6 +164,8 @@ export default defineComponent({
 
 	font-size: calc(14/16 * 1em);
 
+	cursor: default;
+
 	// grid-template-areas:
 	// 		"A A"
 	// 		"B C";
@@ -187,7 +192,7 @@ export default defineComponent({
 		padding: 0 0.25em;
 		font-weight: 800;
 
-		pointer-events: none;
+		// pointer-events: none;
 	}
 
 	> .node-content {

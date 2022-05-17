@@ -10,6 +10,7 @@
 				@dragenter.prevent
 				@dragover.prevent
 				@drop="ondrop"
+				@pointerdown.stop
 
 				@dblclick="unlinkLinks">
 			<div class="socket-display"></div>
