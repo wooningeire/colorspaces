@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {ref, reactive, onMounted, provide} from "vue";
+import {ref, reactive, onMounted, provide, Ref} from "vue";
 
 import TheNodeTree, {DeviceNodes} from "./TheNodeTree.vue";
 import TheNodeTray from "./TheNodeTray.vue";
@@ -28,14 +28,42 @@ const selectedNodes = reactive(new Set<Node>());
 provide("selectedNodes", selectedNodes);
 
 
-const treeVue = ref(null) as any as InstanceType<typeof TheNodeTree>;
+const treeVue = ref(null) as any as Ref<InstanceType<typeof TheNodeTree>>;
+
+
+const modifierKeys = reactive({
+	ctrl: false,
+	shift: false,
+	alt: false,
+	meta: false,
+});
+provide("modifierKeys", modifierKeys);
+
+const updateModifierKeys = (event: KeyboardEvent) => {
+	Object.assign(modifierKeys, {
+		ctrl: event.ctrlKey,
+		shift: event.shiftKey,
+		alt: event.altKey,
+		meta: event.metaKey,
+	});
+};
+
+addEventListener("keydown", updateModifierKeys);
+addEventListener("keyup", updateModifierKeys);
+
+
+const addNode = <T extends Node>(nodeConstructor: new () => T) => {
+	const node = new nodeConstructor();
+	tree.nodes.add(node);
+	treeVue.value.selectNode(node);
+};
 </script>
 
 <template>
 	<TheNodeTree :tree="tree"
 			:deviceNodes="dn"
 			ref="treeVue" />
-	<TheNodeTray @add-node="nodeConstructor => tree.nodes.add(new nodeConstructor())" />
+	<TheNodeTray @add-node="addNode" />
 
 	<TheToolbar @delete-node="() => {
 		selectedNodes.forEach(tree.deleteNode, tree);

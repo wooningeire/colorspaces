@@ -2,7 +2,7 @@
 	<div class="node"
 			@pointerdown="event => {
 				startDragging(event);
-				$emit('node-selected', node);
+				emitNodeSelected(event);
 			}"
 			:style="{
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
@@ -63,7 +63,7 @@ import BaseField from "./BaseField.vue";
 
 import {Node, Socket} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
-import {Listen} from "@/util";
+import {Listen, ModifierKeys} from "@/util";
 
 export default defineComponent({
 	name: "BaseNode",
@@ -78,6 +78,7 @@ export default defineComponent({
 	setup() {
 		return {
 			selectedNodes: inject("selectedNodes") as Set<Node>,
+			modifierKeys: inject("modifierKeys") as ModifierKeys,
 		};
 	},
 
@@ -125,6 +126,15 @@ export default defineComponent({
 		shouldCancelDrag(event: PointerEvent) {
 			// Make this check more sophisticated
 			return event.target !== this.$el;
+		},
+
+		emitNodeSelected(event: PointerEvent) {
+			if (this.modifierKeys.shift) {
+				getSelection()?.removeAllRanges();
+				// event.preventDefault();
+			}
+
+			this.$emit("node-selected", this.node, !this.modifierKeys.shift);
 		},
 	},
 

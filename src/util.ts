@@ -11,6 +11,7 @@ type Xy = Vec2;
 
 export const qs = (selector: string, context: Element | Document | DocumentFragment=document) => context.querySelector(selector);
 
+
 type Handler = (event: any) => void; //TypeScript workaround
 
 export class Listen {
@@ -31,4 +32,13 @@ export class Listen {
 	}
 }
 
+
 export const mod = (a: number, b: number) => (a % b + b) % b;
+
+
+export type ModifierKeys = {
+	shift: boolean,
+	ctrl: boolean,
+	alt: boolean,
+	meta: boolean,
+};

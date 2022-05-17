@@ -33,7 +33,6 @@ export class Tree {
 		this.nodes.delete(node);
 
 		[...node.ins, ...node.outs].forEach(socket => {
-			console.log(socket.links);
 			socket.links.forEach(link => {
 				this.unlink(link);
 			});

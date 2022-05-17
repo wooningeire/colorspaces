@@ -35,7 +35,7 @@ import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
 import BaseLinks from "./BaseLinks.vue";
 
-import {Tree, Socket} from "../models/Node";
+import {Tree, Socket, Node} from "../models/Node";
 import {rgbModels, spaces, externals} from "../models/nodetypes";
 import {Vec2, Listen, Color} from "../util";
 
@@ -82,6 +82,7 @@ export default defineComponent({
 	setup() {
 		return {
 			selectedNodes: inject("selectedNodes") as Set<Node>,
+			modifierKeys: inject("modifierKeys"),
 		};
 	},
 
@@ -146,13 +147,13 @@ export default defineComponent({
 
 		recomputeOutputColor() {
 			const displayColor = this.srgbOutput() as Color;
-			console.log(displayColor);
 			this.deviceNodes.transformNode.displayColor = displayColor;
 		},
 
-		selectNode(node: Node) {
-			this.selectedNodes.clear();
-
+		selectNode(node: Node, clearSelection: boolean=true) {
+			if (clearSelection) {
+				this.selectedNodes.clear();
+			}
 			this.selectedNodes.add(node);
 		},
 
