@@ -6,7 +6,6 @@
 			}"
 			:style="{
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
-				'color': node instanceof externals.DeviceTransformNode ? `rgb(${node.displayColor.map(x => x * 255)})` : '',
 			}"
 			:class="{
 				'subtle': node instanceof externals.DevicePostprocessingNode
@@ -19,11 +18,17 @@
 		</div>
 
 		<div class="node-content">
-			<div class="fields">
+			<!-- <div class="fields">
 				<BaseField v-for="field of node.fields"
 						:key="field.id"
 						:field="field" />
-			</div>
+			</div> -->
+
+			<div class="color-display-box"
+					v-if="node instanceof externals.DeviceTransformNode"
+					:style="{
+						'background': `rgb(${node.displayColor.map(x => x * 255)})`,
+					}"></div>
 		</div>
 
 		<div class="in-sockets">
@@ -154,7 +159,7 @@ export default defineComponent({
 	// display: inline grid;
 	display: flex;
 	flex-direction: column;
-	border: 4px solid #ffffff3f;
+	border: 4px solid var(--node-border-color);
 	width: 160px;
 	padding-bottom: 1em;
 
@@ -165,6 +170,8 @@ export default defineComponent({
 	font-size: calc(14/16 * 1em);
 
 	cursor: default;
+
+	--node-border-color: #ffffff3f;
 
 	// grid-template-areas:
 	// 		"A A"
@@ -201,6 +208,15 @@ export default defineComponent({
 		> .fields {
 			display: flex;
 			flex-flow: column;
+		}
+
+		> .color-display-box {
+			position: absolute;
+			right: -4em;
+			width: 3em;
+			height: 2em;
+
+			box-shadow: 0 0 0 2px var(--node-border-color);
 		}
 	}
 

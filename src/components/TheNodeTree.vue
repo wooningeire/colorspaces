@@ -155,6 +155,10 @@ export default defineComponent({
 				this.selectedNodes.clear();
 			}
 			this.selectedNodes.add(node);
+
+			// For layering purposes — places node at top
+			// this.tree.nodes.delete(node);
+			// this.tree.nodes.add(node);
 		},
 
 		cancelSelect() {
