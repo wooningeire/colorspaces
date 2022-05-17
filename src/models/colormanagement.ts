@@ -94,8 +94,26 @@ export const xyyToXyz = ([x, y, lum]: Color) => y === 0
 			lum / y * (1 - x - y),
 		] as Color;
 
+// https://en.wikipedia.org/wiki/CIELAB_color_space#From_CIELAB_to_CIEXYZ
+export const labToXyz = ([l, a, b]: Color, referenceWhite: Color) => {
+	const tempY = (l + 16) / 116;
+	const tempX = tempY + a / 500;
+	const tempZ = tempY - b / 200;
+
+	const compHelper = (comp: number) =>
+			comp > 6/29
+					? comp**3
+					: 3 * (6/29)**2 * (comp - 4/29);
+
+	return [
+		compHelper(tempX) * referenceWhite[0],
+		compHelper(tempY) * referenceWhite[1],
+		compHelper(tempZ) * referenceWhite[2],
+	] as Color;
+};
+
 // https://www.mathworks.com/help/images/ref/whitepoint.html
-const illuminantsXyz = <{
+export const illuminantsXyz = <{
 	[standard: string]: {
 		[illuminant: string]: Color,
 	},

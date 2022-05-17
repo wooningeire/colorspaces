@@ -100,7 +100,7 @@ export namespace rgbModels {
 export namespace math {
 	export class LerpNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Blend";
+		static readonly LABEL = "RGB blend";
 
 		private readonly facSocket: Socket;
 		private readonly colorSockets: Socket[];
@@ -111,13 +111,13 @@ export namespace math {
 			this.ins.push(
 				(this.facSocket = new Socket(this, true, Socket.Type.Float, "Blend amount")),
 				...(this.colorSockets = [
-					new Socket(this, true, Socket.Type.ColTransformed, "Color"),
-					new Socket(this, true, Socket.Type.ColTransformed, "Color"),
+					new Socket(this, true, Socket.Type.RgbRaw, "RGB"),
+					new Socket(this, true, Socket.Type.RgbRaw, "RGB"),
 				]),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
 			);
 		}
 
@@ -185,11 +185,11 @@ export namespace spaces {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Unknown, "Standard illuminant", false),
+				new Socket(this, true, Socket.Type.Unknown, "White point", false),
 				...(this.primariesSockets = [
-					new Socket(this, true, Socket.Type.Float, "X (chromaticity 1)"),
-					new Socket(this, true, Socket.Type.Float, "Y (luminance)"),
-					new Socket(this, true, Socket.Type.Float, "Z (chromaticity 2)"),
+					new Socket(this, true, Socket.Type.Float, "X"),
+					new Socket(this, true, Socket.Type.Float, "Y"),
+					new Socket(this, true, Socket.Type.Float, "Z"),
 				]),
 			);
 
@@ -213,7 +213,7 @@ export namespace spaces {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Unknown, "Standard illuminant", false),
+				new Socket(this, true, Socket.Type.Unknown, "White point", false),
 				...(this.primariesSockets = [
 					new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)"),
 					new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)"),
@@ -228,6 +228,51 @@ export namespace spaces {
 
 		output(): Color {
 			return cm.linearToSrgb(cm.xyz2degToLinear(cm.xyyToXyz(this.primariesSockets.map(socket => socket.inValue) as Color)));
+		}
+	}
+
+	export class LabNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "L*a*b*";
+
+		private readonly primariesSockets: Socket[];
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Unknown, "White point", false),
+				...(this.primariesSockets = [
+					new Socket(this, true, Socket.Type.Float, "L*"),
+					new Socket(this, true, Socket.Type.Float, "a*"),
+					new Socket(this, true, Socket.Type.Float, "b*"),
+				]),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+			);
+		}
+
+		output(): Color {
+			
+			console.log(cm.linearToSrgb(
+				cm.xyz2degToLinear(
+					cm.labToXyz(
+						this.primariesSockets.map(socket => socket.inValue) as Color,
+						cm.illuminantsXyz["2deg"]["D65"],
+					),
+				),
+			));
+
+			return cm.linearToSrgb(
+				cm.xyz2degToLinear(
+					cm.labToXyz(
+						this.primariesSockets.map(socket => socket.inValue) as Color,
+						cm.illuminantsXyz["2deg"]["D65"],
+					),
+				),
+			);
 		}
 	}
 }
