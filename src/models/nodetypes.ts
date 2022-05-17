@@ -97,6 +97,41 @@ export namespace rgbModels {
 	}
 }
 
+export namespace math {
+	export class LerpNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Blend";
+
+		private readonly facSocket: Socket;
+		private readonly colorSockets: Socket[];
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				(this.facSocket = new Socket(this, true, Socket.Type.Float, "Blend amount")),
+				...(this.colorSockets = [
+					new Socket(this, true, Socket.Type.ColTransformed, "Color"),
+					new Socket(this, true, Socket.Type.ColTransformed, "Color"),
+				]),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+			);
+		}
+
+		output(): Color {
+			const fac = this.facSocket.inValue as number;
+
+			const col0 = this.colorSockets[0].inValue as Color;
+			const col1 = this.colorSockets[1].inValue as Color;
+
+			return col0.map((_, i) => col0[i] * (1 - fac) + col1[i] * fac) as Color;
+		}
+	}
+}
+
 export namespace spaces {
 	export class LinearNode extends Node {
 		static readonly TYPE = Symbol(this.name);

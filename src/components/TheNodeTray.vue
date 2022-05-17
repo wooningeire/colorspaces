@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import {rgbModels, spaces} from "@/models/nodetypes";
+import {rgbModels, math, spaces} from "@/models/nodetypes";
 
 const emit = defineEmits(["add-node"]);
 </script>
 
 <template>
 	<div class="node-tray">
-		<div v-for="nodeConstructor of [...Object.values(rgbModels), ...Object.values(spaces)]"
+		<div v-for="nodeConstructor of [...Object.values(rgbModels), ...Object.values(math), ...Object.values(spaces)]"
 				@click="emit('add-node', nodeConstructor)">
 			{{nodeConstructor.LABEL}}
 		</div>
