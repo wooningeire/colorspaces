@@ -9,9 +9,10 @@ export class Tree {
 		if (dst.isOutput) throw new Error("Dest is an output");
 		if (src.node === dst.node) throw new Error("Sockets belong to same node");
 
+
 		const existingDstLink = dst.links[0];
 		if (existingDstLink) {
-			this.unlink(existingDstLink);
+			this.unlinkWithoutEvents(existingDstLink);
 		}
 
 
@@ -21,12 +22,24 @@ export class Tree {
 		dst.links.push(link);
 
 		this.links.add(link);
+
+		if (!existingDstLink) {
+			src.node.onSocketLink(src);
+			dst.node.onSocketLink(dst);
+		}
 	}
 
-	unlink(link: Link) {
+	private unlinkWithoutEvents(link: Link) {
 		this.links.delete(link);
 		link.src.links.splice(link.src.links.indexOf(link), 1);
 		link.dst.links.splice(link.dst.links.indexOf(link), 1);
+	}
+
+	unlink(link: Link) {
+		this.unlinkWithoutEvents(link);
+
+		link.srcNode.onSocketUnlink(link.src);
+		link.dstNode.onSocketUnlink(link.dst);
 	}
 
 	deleteNode(node: Node) {
@@ -62,6 +75,12 @@ export class Node {
 	output(): any {
 		throw new TypeError("Abstract method; call on child class");
 	}
+
+	onSocketLink(socket: Socket) {}
+
+	onSocketUnlink(socket: Socket) {}
+
+	onDependencyUpdate() {} // doesn't do anything yet
 }
 
 enum SocketType {
@@ -78,6 +97,9 @@ export type SocketValue<St extends SocketType=any> =
 		never;
 
 export class Socket<St extends SocketType=any> {
+	private static nextId = 0;
+	readonly id = Socket.nextId++;
+
 	static readonly Type = SocketType;
 	private static readonly defaultValues = new Map<SocketType, SocketValue>([
 		[SocketType.Float, 0],

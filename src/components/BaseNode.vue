@@ -23,31 +23,33 @@
 						:key="field.id"
 						:field="field" />
 			</div> -->
-
-			<div class="color-display-box"
-					v-if="node instanceof externals.DeviceTransformNode"
-					:style="{
-						'background': `rgb(${node.displayColor.map(x => x * 255)})`,
-					}"></div>
 		</div>
 
 		<div class="in-sockets">
-			<BaseSocket v-for="socket of node.ins"
-					:key="socket.label"
-					:socket="socket"
-					@drag-socket="socketVue => $emit('drag-socket', socketVue)"
-					@link-to-socket="socketVue => ($emit('link-to-socket', socketVue),
-							$emit('tree-update'),
-							$emit('potential-socket-position-change'))"
+			<template v-for="(socket, index) of node.ins"
+					:key="socket.id">
+				<div class="color-display-box"
+						v-if="node instanceof externals.DeviceTransformNode
+								&& socket.links[0]"
+						:style="{
+							'background': `rgb(${node.output()[index].map(x => x * 255)})`,
+						}"></div>
 
-					@value-change="$emit('tree-update')"
-					@unlink="$emit('tree-update'),
-							$emit('potential-socket-position-change')" />
+				<BaseSocket :socket="socket"
+						@drag-socket="socketVue => $emit('drag-socket', socketVue)"
+						@link-to-socket="socketVue => ($emit('link-to-socket', socketVue),
+								$emit('tree-update'),
+								$emit('potential-socket-position-change'))"
+
+						@value-change="$emit('tree-update')"
+						@unlink="$emit('tree-update'),
+								$emit('potential-socket-position-change')" />
+			</template>
 		</div>
 
 		<div class="out-sockets">
 			<BaseSocket v-for="socket of node.outs"
-					:key="socket.label"
+					:key="socket.id"
 					:socket="socket"
 					@drag-socket="socketVue => $emit('drag-socket', socketVue)"
 					@link-to-socket="socketVue => ($emit('link-to-socket', socketVue),
@@ -209,15 +211,15 @@ export default defineComponent({
 			display: flex;
 			flex-flow: column;
 		}
+	}
 
-		> .color-display-box {
-			position: absolute;
-			right: -4em;
-			width: 3em;
-			height: 2em;
+	.color-display-box {
+		position: absolute;
+		right: .5em;
+		width: 3em;
+		height: 1em;
 
-			box-shadow: 0 0 0 2px var(--node-border-color);
-		}
+		box-shadow: 0 0 0 2px var(--node-border-color);
 	}
 
 	:deep(input) {

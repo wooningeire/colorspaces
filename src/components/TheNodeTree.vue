@@ -9,7 +9,7 @@
 					@link-to-socket="onLinkToSocket"
 					@node-selected="selectNode"
 
-					@tree-update="recomputeOutputColor"
+					@tree-update="void 0/* recomputeOutputColor */"
 					@potential-socket-position-change="rerenderLinks" />
 		</div>
 
@@ -96,7 +96,7 @@ export default defineComponent({
 	},
 
 	methods: {
-		srgbOutput() {
+		/* srgbOutput() {
 			const resultSocket = this.deviceNodes.transformNode.ins[0];
 
 			for (const link of resultSocket.links) {
@@ -105,7 +105,7 @@ export default defineComponent({
 			}
 
 			return [1, 1, 1];
-		},
+		}, */
 
 		//#region Events
 		rerenderLinks() {
@@ -145,10 +145,9 @@ export default defineComponent({
 			return this.socketVues.get(socket);
 		},
 
-		recomputeOutputColor() {
-			const displayColor = this.srgbOutput() as Color;
-			this.deviceNodes.transformNode.displayColor = displayColor;
-		},
+		// recomputeOutputColor() {
+		// 	const displayColor = this.srgbOutput() as Color;
+		// },
 
 		selectNode(node: Node, clearSelection: boolean=true) {
 			if (clearSelection) {

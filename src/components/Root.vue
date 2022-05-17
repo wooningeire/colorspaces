@@ -67,7 +67,7 @@ const addNode = <T extends Node>(nodeConstructor: new () => T) => {
 
 	<TheToolbar @delete-node="() => {
 		selectedNodes.forEach(tree.deleteNode, tree);
-		treeVue.recomputeOutputColor();
+		// treeVue.recomputeOutputColor();
 	}" />
 </template>
 

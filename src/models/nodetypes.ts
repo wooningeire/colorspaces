@@ -201,19 +201,34 @@ export namespace externals {
 	export class DeviceTransformNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Device transform";
-
-		displayColor: Color = [1, 1, 1]; // temp
 		
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.ColTransformed, "Color data"),
+				new Socket(this, true, Socket.Type.ColTransformed, "Color"),
 			);
 
 			this.outs.push(
 				new Socket(this, false, Socket.Type.Unknown, "Color data"),
 			);
+		}
+
+		output(): Color[] {
+			return this.ins.filter(socket => socket.links[0])
+					.map(socket => socket.links[0].srcNode.output());
+		}
+
+		onSocketLink(socket: Socket) {
+			if (!socket.isInput) return;
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.ColTransformed, "Color"),
+			);
+		}
+
+		onSocketUnlink(socket: Socket): void {
+			this.ins.splice(this.ins.indexOf(socket), 1);
 		}
 	}
 
