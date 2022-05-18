@@ -14,9 +14,9 @@ const tree = reactive(new Tree());
 [
 	new spaces.SrgbNode([450, 50]),
 	(dn.transformNode = new externals.DeviceTransformNode([800, 100])),
-	(dn.postprocessingNode = new externals.DevicePostprocessingNode([800, 250])),
-	(dn.environmentNode = new externals.EnvironmentNode([800, 400])),
-	(dn.visionNode = new externals.VisionNode([800, 550]))
+	(dn.postprocessingNode = new externals.DevicePostprocessingNode([1000, 100])),
+	(dn.environmentNode = new externals.EnvironmentNode([1000, 250])),
+	(dn.visionNode = new externals.VisionNode([1000, 400])),
 ].forEach(tree.nodes.add, tree.nodes);
 
 tree.linkSockets(dn.transformNode.outs[0], dn.postprocessingNode.ins[0]);
@@ -82,7 +82,8 @@ body {
 }
 
 input,
-button {
+button,
+select {
 	font-family: inherit;
 }
 

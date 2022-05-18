@@ -46,9 +46,7 @@ export class Tree {
 		this.nodes.delete(node);
 
 		[...node.ins, ...node.outs].forEach(socket => {
-			socket.links.forEach(link => {
-				this.unlink(link);
-			});
+			socket.links.forEach(this.unlink, this);
 		});
 	}
 }
@@ -97,17 +95,20 @@ export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.ColTransformed ? Color :
 		never;
 
-type SocketOptions<St extends SocketType=any> = 
+type SocketData<St extends SocketType=any> = 
 		// St extends SocketType.Float ? {defaultValue?: SocketValue<St>} :
 		St extends SocketType.Dropdown ? {
 			options?: {
 				value: string,
 				text: string,
-				selected?: boolean,
 			}[],
 		} :
 		{};
 
+type SocketOptions<St extends SocketType=any> = 
+		{defaultValue: SocketValue<St>} &
+		(St extends SocketType.Dropdown ? SocketData<St> :
+		{});
 
 export class Socket<St extends SocketType=any> {
 	private static nextId = 0;
@@ -123,6 +124,8 @@ export class Socket<St extends SocketType=any> {
 
 	fieldValue: SocketValue<St>;//number | Color;
 
+	readonly data: SocketData<St>
+
 	constructor(
 		readonly node: Node,
 		readonly isInput: boolean,
@@ -132,9 +135,12 @@ export class Socket<St extends SocketType=any> {
 
 		readonly showSocket: boolean=true,
 
-		readonly options: SocketOptions<St>={},
+		options: SocketOptions<St>=<SocketOptions<St>>{},
 	) {
-		this.fieldValue = new.target.defaultValues.get(type) as SocketValue<St>;
+		const {defaultValue, ...data} = options;
+
+		this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
+		this.data = data;
 	}
 
 	get isOutput() {

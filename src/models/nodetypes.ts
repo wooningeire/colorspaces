@@ -4,7 +4,12 @@ import * as cm from "./colormanagement";
 
 export namespace images {
 	export class GradientNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Value range";
 
+		constructor(pos?: Vec2) {
+			super(pos);
+		}
 	}
 }
 
@@ -118,10 +123,11 @@ export namespace math {
 			this.ins.push(
 				(this.methodSocket = new Socket(this, true, Socket.Type.Dropdown, "", false, {
 					options: [
-						{value: "mix", text: "Mix", selected: true},
+						{value: "mix", text: "Mix"},
 						{value: "add", text: "Add"},
 						{value: "multiply", text: "Multiply"},
 					],
+					defaultValue: "mix",
 				})),
 				(this.facSocket = new Socket(this, true, Socket.Type.Float, "Blend amount")),
 				...(this.colorSockets = [
@@ -202,6 +208,13 @@ export namespace spaces {
 		}
 	}
 
+	const whitePointSocketOptions = {
+		options: [
+			{value: "2deg/D65", text: "CIE 2° / D65"}
+		],
+		defaultValue: "2deg/D65",
+	};
+
 	export class XyzNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "XYZ";
@@ -212,7 +225,7 @@ export namespace spaces {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Unknown, "White point", false),
+				new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions),
 				...(this.primariesSockets = [
 					new Socket(this, true, Socket.Type.Float, "X"),
 					new Socket(this, true, Socket.Type.Float, "Y"),
@@ -240,7 +253,7 @@ export namespace spaces {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Unknown, "White point", false),
+				new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions),
 				...(this.primariesSockets = [
 					new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)"),
 					new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)"),
@@ -268,7 +281,7 @@ export namespace spaces {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Unknown, "White point", false),
+				new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions),
 				...(this.primariesSockets = [
 					new Socket(this, true, Socket.Type.Float, "L*"),
 					new Socket(this, true, Socket.Type.Float, "a*"),

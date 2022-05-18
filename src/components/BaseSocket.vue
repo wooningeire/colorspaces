@@ -35,9 +35,8 @@
 			<template v-else-if="socket.type === SocketType.Dropdown">
 				<select v-model="socket.fieldValue"
 						@change="$emit('value-change')">
-					<option v-for="{text, value, selected} of socket.options.options"
-							:value="value"
-							:selected="selected">
+					<option v-for="{text, value, selected} of socket.data.options"
+							:value="value">
 						{{text}}
 					</option>
 				</select>
@@ -116,6 +115,10 @@ export default defineComponent({
         socketEl() {
             return this.$refs.socketHitbox as HTMLDivElement;
         },
+
+		Socket() {
+			return Socket;
+		},
 
         SocketType() {
             return Socket.Type;
