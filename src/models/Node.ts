@@ -83,11 +83,12 @@ export class Node {
 	onDependencyUpdate() {} // doesn't do anything yet
 }
 
-enum SocketType {
+export enum SocketType {
 	Unknown,
 	Float,
 	RgbRaw,
 	ColTransformed,
+	Dropdown,
 }
 
 export type SocketValue<St extends SocketType=any> =
@@ -95,6 +96,18 @@ export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.RgbRaw ? Color :
 		St extends SocketType.ColTransformed ? Color :
 		never;
+
+type SocketOptions<St extends SocketType=any> = 
+		// St extends SocketType.Float ? {defaultValue?: SocketValue<St>} :
+		St extends SocketType.Dropdown ? {
+			options?: {
+				value: string,
+				text: string,
+				selected?: boolean,
+			}[],
+		} :
+		{};
+
 
 export class Socket<St extends SocketType=any> {
 	private static nextId = 0;
@@ -118,6 +131,8 @@ export class Socket<St extends SocketType=any> {
 		public label: string="",
 
 		readonly showSocket: boolean=true,
+
+		readonly options: SocketOptions<St>={},
 	) {
 		this.fieldValue = new.target.defaultValues.get(type) as SocketValue<St>;
 	}

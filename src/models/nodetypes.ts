@@ -1,6 +1,12 @@
-import {Node, Socket} from "./Node";
+import {Node, Socket, SocketType} from "./Node";
 import {Color, Vec2} from "../util";
 import * as cm from "./colormanagement";
+
+export namespace images {
+	export class GradientNode extends Node {
+
+	}
+}
 
 export namespace rgbModels {
 	//TODO code duplication
@@ -102,13 +108,21 @@ export namespace math {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "RGB blend";
 
-		private readonly facSocket: Socket;
-		private readonly colorSockets: Socket[];
+		private readonly methodSocket: Socket<SocketType.Dropdown>;
+		private readonly facSocket: Socket<SocketType.Float>;
+		private readonly colorSockets: Socket<SocketType.RgbRaw>[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
+				(this.methodSocket = new Socket(this, true, Socket.Type.Dropdown, "", false, {
+					options: [
+						{value: "mix", text: "Mix", selected: true},
+						{value: "add", text: "Add"},
+						{value: "multiply", text: "Multiply"},
+					],
+				})),
 				(this.facSocket = new Socket(this, true, Socket.Type.Float, "Blend amount")),
 				...(this.colorSockets = [
 					new Socket(this, true, Socket.Type.RgbRaw, "RGB"),
@@ -122,12 +136,25 @@ export namespace math {
 		}
 
 		output(): Color {
-			const fac = this.facSocket.inValue as number;
+			const fac = this.facSocket.inValue;
 
-			const col0 = this.colorSockets[0].inValue as Color;
-			const col1 = this.colorSockets[1].inValue as Color;
+			const col0 = this.colorSockets[0].inValue;
+			const col1 = this.colorSockets[1].inValue;
 
-			return col0.map((_, i) => col0[i] * (1 - fac) + col1[i] * fac) as Color;
+			switch (this.methodSocket.inValue) {
+				case "mix":
+					return col0.map((_, i) => col0[i] * (1 - fac) + col1[i] * fac) as Color;
+
+				case "add":
+					return col0.map((_, i) => col0[i] + col1[i] * fac) as Color;
+
+				case "multiply":
+					return col0.map((_, i) => col0[i] * ((1 - fac) + col1[i] * fac)) as Color;
+					
+				default:
+					throw new TypeError("Unknown blend mode");
+			}
+
 		}
 	}
 }
@@ -308,6 +335,8 @@ export namespace externals {
 		}
 
 		onSocketUnlink(socket: Socket): void {
+			if (!socket.isInput) return;
+
 			this.ins.splice(this.ins.indexOf(socket), 1);
 		}
 	}

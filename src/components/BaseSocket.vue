@@ -31,6 +31,17 @@
 
 						:validate="color => color.every(comp => isFinite(comp))" />
 			</template>
+
+			<template v-else-if="socket.type === SocketType.Dropdown">
+				<select v-model="socket.fieldValue"
+						@change="$emit('value-change')">
+					<option v-for="{text, value, selected} of socket.options.options"
+							:value="value"
+							:selected="selected">
+						{{text}}
+					</option>
+				</select>
+			</template>
 		</div>
 	</div>
 </template>

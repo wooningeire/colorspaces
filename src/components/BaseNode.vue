@@ -135,7 +135,7 @@ export default defineComponent({
 		shouldCancelDrag(event: PointerEvent) {
 			// Make this check more sophisticated
 			// return event.target !== this.$el;
-			return (event.target as Element).tagName.toLowerCase() === "input";
+			return ["input", "select"].includes((event.target as Element).tagName.toLowerCase());
 		},
 
 		emitNodeSelected(event: PointerEvent) {
