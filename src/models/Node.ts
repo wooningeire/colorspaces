@@ -93,6 +93,7 @@ export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.Float ? number :
 		St extends SocketType.RgbRaw ? Color :
 		St extends SocketType.ColTransformed ? Color :
+		St extends SocketType.Dropdown ? string :
 		never;
 
 type SocketData<St extends SocketType=any> = 

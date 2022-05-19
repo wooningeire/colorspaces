@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {defineProps, inject} from "vue";
+import {inject} from "vue";
 
 import {Tree, Socket} from "@/models/Node";
 import {externals} from "@/models/nodetypes";

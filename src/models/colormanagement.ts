@@ -1,4 +1,4 @@
-import {Color, mod} from "../util";
+import {Color, Vec2, mod} from "../util";
 import * as math from "mathjs";
 
 /** Transfer function as defined by https://www.w3.org/Graphics/Color/srgb
@@ -86,7 +86,7 @@ export const xyz2degToLinear = (xyz: Color, /* illuminantXyz: Color */) => {
 };
 
 // https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space
-export const xyyToXyz = ([x, y, lum]: Color) => y === 0
+export const xyyToXyz = ([x, y, lum=1]: Color) => y === 0
 		? [0, 0, 0] as Color
 		: [
 			lum / y * x,
@@ -128,6 +128,40 @@ export const illuminantsXyz = <{
 	"10deg": {
 
 	},
+};
+
+export const illuminantsXy = <{
+	[standard: string]: {
+		[illuminant: string]: Vec2,
+	},
+}>{
+	"2deg": {
+		"A": [0.44758, 0.40745],
+        "B": [0.34842, 0.35161],
+        "C": [0.31006, 0.31616],
+        "D50": [0.34570, 0.35850],
+        "D55": [0.33243, 0.34744],
+        "D60": [0.321616709705268, 0.337619916550817],
+        "D65": [0.31270, 0.32900],
+        "D75": [0.29903, 0.31488],
+        "E": [1 / 3, 1 / 3],
+	},
+
+	"10deg": {
+		"A": [0.45117, 0.40594],
+        "B": [0.34980, 0.35270],
+        "C": [0.31039, 0.31905],
+        "D50": [0.34773, 0.35952],
+        "D55": [0.33412, 0.34877],
+        "D60": [0.322986926715820, 0.339275732345997],
+        "D65": [0.31382, 0.33100],
+        "D75": [0.29968, 0.31740],
+        "E": [1 / 3, 1 / 3],
+	},
+
+	"": {
+	},
+	
 };
 
 /**

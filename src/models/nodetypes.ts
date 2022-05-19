@@ -1,6 +1,7 @@
 import {Node, Socket, SocketType} from "./Node";
 import {Color, Vec2} from "../util";
 import * as cm from "./colormanagement";
+import { e } from "mathjs";
 
 export namespace images {
 	export class GradientNode extends Node {
@@ -210,7 +211,24 @@ export namespace spaces {
 
 	const whitePointSocketOptions = {
 		options: [
-			{value: "2deg/D65", text: "CIE 2° / D65"}
+			{value: "2deg/A", text: "CIE 2° / A"},
+			{value: "2deg/B", text: "CIE 2° / B"},
+			{value: "2deg/C", text: "CIE 2° / C"},
+			{value: "2deg/D50", text: "CIE 2° / D50"},
+			{value: "2deg/D55", text: "CIE 2° / D55"},
+			{value: "2deg/D60", text: "CIE 2° / D60"},
+			{value: "2deg/D65", text: "CIE 2° / D65"},
+			{value: "2deg/D75", text: "CIE 2° / D75"},
+			{value: "2deg/E", text: "CIE 2° / E"},
+			{value: "10deg/A", text: "CIE 10° / A"},
+			{value: "10deg/B", text: "CIE 10° / B"},
+			{value: "10deg/C", text: "CIE 10° / C"},
+			{value: "10deg/D50", text: "CIE 10° / D50"},
+			{value: "10deg/D55", text: "CIE 10° / D55"},
+			{value: "10deg/D60", text: "CIE 10° / D60"},
+			{value: "10deg/D65", text: "CIE 10° / D65"},
+			{value: "10deg/D75", text: "CIE 10° / D75"},
+			{value: "10deg/E", text: "CIE 10° / E"},
 		],
 		defaultValue: "2deg/D65",
 	};
@@ -219,13 +237,14 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "XYZ";
 
-		private readonly primariesSockets: Socket[];
+		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
+		private readonly primariesSockets: Socket<SocketType.Float>[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions),
+				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
 				...(this.primariesSockets = [
 					new Socket(this, true, Socket.Type.Float, "X"),
 					new Socket(this, true, Socket.Type.Float, "Y"),
@@ -239,7 +258,20 @@ export namespace spaces {
 		}
 
 		output(): Color {
-			return cm.linearToSrgb(cm.xyz2degToLinear(this.primariesSockets.map(socket => socket.inValue) as Color));
+			const illuminantId = this.whitePointSocket.inValue;
+			let illuminant: Color;
+			if (illuminantId !== "custom") {
+				const [standard, illuminantName] = illuminantId.split("/"); 
+				illuminant = cm.illuminantsXyz[standard][illuminantName];
+			} else {
+				throw new Error("not implemented");
+			}
+
+			return cm.linearToSrgb(
+				cm.xyz2degToLinear(
+					this.primariesSockets.map(socket => socket.inValue) as Color
+				),
+			);
 		}
 	}
 
