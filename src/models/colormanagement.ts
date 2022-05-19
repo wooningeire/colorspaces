@@ -74,19 +74,28 @@ export const hsvToRgb = ([hue, sat, value]: Color) => {
 };
 
 
-export const xyz2degToLinear = (xyz: Color, /* illuminantXyz: Color */) => {
+export const xyzToLinear = (xyz: Color, illuminantXy: Vec2) => {
+	const adaptedXyz = math.multiply(
+		chromaticAdaptationMat(
+			xyyToXyz(illuminantXy),
+			xyyToXyz(illuminantsXy["2deg"]["D65"]),
+			chromaticAdaptationTransforms["Bradford"],
+		),
+		xyz,
+	);
+
 	//https://en.wikipedia.org/wiki/SRGB#From_CIE_XYZ_to_sRGB
 	const mat = math.multiply([
 		[+3.2406, -1.5372, -0.4986],
 		[-0.9689, +1.8758, +0.0415],
 		[+0.0557, -0.2040, +1.0570],
-	], xyz);
+	], adaptedXyz);
 
 	return mat as any as Color;
 };
 
 // https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space
-export const xyyToXyz = ([x, y, lum=1]: Color) => y === 0
+export const xyyToXyz = ([x, y, lum=1]: Color | Vec2) => y === 0
 		? [0, 0, 0] as Color
 		: [
 			lum / y * x,

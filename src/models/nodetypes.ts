@@ -232,6 +232,16 @@ export namespace spaces {
 		],
 		defaultValue: "2deg/D65",
 	};
+	const getIlluminant = (socket: Socket<SocketType.Dropdown>) => {
+		const illuminantId = socket.inValue;
+		let illuminant: Vec2;
+		if (illuminantId !== "custom") {
+			const [standard, illuminantName] = illuminantId.split("/"); 
+			return cm.illuminantsXy[standard][illuminantName];
+		} else {
+			throw new Error("not implemented");
+		}
+	};
 
 	export class XyzNode extends Node {
 		static readonly TYPE = Symbol(this.name);
@@ -258,18 +268,12 @@ export namespace spaces {
 		}
 
 		output(): Color {
-			const illuminantId = this.whitePointSocket.inValue;
-			let illuminant: Color;
-			if (illuminantId !== "custom") {
-				const [standard, illuminantName] = illuminantId.split("/"); 
-				illuminant = cm.illuminantsXyz[standard][illuminantName];
-			} else {
-				throw new Error("not implemented");
-			}
+			const illuminant = getIlluminant(this.whitePointSocket);
 
 			return cm.linearToSrgb(
-				cm.xyz2degToLinear(
-					this.primariesSockets.map(socket => socket.inValue) as Color
+				cm.xyzToLinear(
+					this.primariesSockets.map(socket => socket.inValue) as Color,
+					illuminant,
 				),
 			);
 		}
@@ -279,13 +283,14 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "xyY";
 
+		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
 		private readonly primariesSockets: Socket[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions),
+				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
 				...(this.primariesSockets = [
 					new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)"),
 					new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)"),
@@ -299,7 +304,14 @@ export namespace spaces {
 		}
 
 		output(): Color {
-			return cm.linearToSrgb(cm.xyz2degToLinear(cm.xyyToXyz(this.primariesSockets.map(socket => socket.inValue) as Color)));
+			const illuminant = getIlluminant(this.whitePointSocket);
+
+			return cm.linearToSrgb(
+				cm.xyzToLinear(
+					cm.xyyToXyz(this.primariesSockets.map(socket => socket.inValue) as Color),
+					illuminant,
+				),
+			);
 		}
 	}
 
@@ -307,13 +319,14 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "L*a*b*";
 
+		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
 		private readonly primariesSockets: Socket[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions),
+				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
 				...(this.primariesSockets = [
 					new Socket(this, true, Socket.Type.Float, "L*"),
 					new Socket(this, true, Socket.Type.Float, "a*"),
@@ -327,22 +340,15 @@ export namespace spaces {
 		}
 
 		output(): Color {
-			
-			console.log(cm.linearToSrgb(
-				cm.xyz2degToLinear(
-					cm.labToXyz(
-						this.primariesSockets.map(socket => socket.inValue) as Color,
-						cm.illuminantsXyz["2deg"]["D65"],
-					),
-				),
-			));
+			const illuminant = getIlluminant(this.whitePointSocket);
 
 			return cm.linearToSrgb(
-				cm.xyz2degToLinear(
+				cm.xyzToLinear(
 					cm.labToXyz(
 						this.primariesSockets.map(socket => socket.inValue) as Color,
-						cm.illuminantsXyz["2deg"]["D65"],
+						cm.xyyToXyz(illuminant),
 					),
+					illuminant,
 				),
 			);
 		}
