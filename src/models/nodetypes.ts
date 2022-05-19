@@ -358,12 +358,18 @@ export namespace spaces {
 export namespace externals {
 	export class DeviceTransformNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Device transform";
+		static readonly LABEL = "Device buffer";
 		
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
+				new Socket(this, true, Socket.Type.Dropdown, "Device color space", false, {
+					options: [
+						{value: "srgb", text: "sRGB"},
+					],
+					defaultValue: "srgb",
+				}),
 				new Socket(this, true, Socket.Type.ColTransformed, "Color"),
 			);
 
