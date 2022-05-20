@@ -322,7 +322,7 @@ export namespace spaces {
 		static readonly LABEL = "L*a*b*";
 
 		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
-		private readonly primariesSockets: Socket[];
+		private readonly primariesSockets: Socket<SocketType.Float>[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -341,10 +341,12 @@ export namespace spaces {
 			);
 		}
 
-		output(): Color {
+		output(): cm.Lab {
 			const illuminant = getIlluminant(this.whitePointSocket);
 
-			return cm.linearToSrgb(
+			return new cm.Lab(this.primariesSockets.map(socket => socket.inValue) as Vec3, illuminant);
+			
+			cm.linearToSrgb(
 				cm.xyzToLinear(
 					cm.labToXyz(
 						this.primariesSockets.map(socket => socket.inValue) as Color,

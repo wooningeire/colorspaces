@@ -3,6 +3,8 @@ import * as math from "mathjs";
 
 
 export class Col extends Array {
+	static readonly [Symbol.species] = Array;
+
 	constructor(
 		/* readonly */ data: number[],
 		readonly illuminant: Xy,
@@ -19,8 +21,6 @@ export class Col extends Array {
 	toSrgb(): Srgb {
 		return this.toXyz().toSrgb();
 	}
-
-	static readonly [Symbol.species] = Array;
 }
 
 export class Xyz extends Col {
@@ -36,9 +36,10 @@ export class Xyz extends Col {
 		return xyzToLinear(this, this.illuminant).toSrgb();
 	}
 }
+
 export class Srgb extends Col {
-	constructor(data: Vec3, illuminant: Xy=illuminantsXy["2deg"]["D65"]) {
-		super(data, illuminant);
+	constructor(data: Vec3) {
+		super(data, illuminantsXy["2deg"]["D65"]);
 	}
 
 	toSrgb() {
@@ -47,8 +48,8 @@ export class Srgb extends Col {
 }
 
 export class LinearSrgb extends Col {
-	constructor(data: Vec3, illuminant: Xy=illuminantsXy["2deg"]["D65"]) {
-		super(data, illuminant);
+	constructor(data: Vec3) {
+		super(data, illuminantsXy["2deg"]["D65"]);
 	}
 
 	toSrgb() {
@@ -66,9 +67,6 @@ export class Xy extends Col {
 	}
 }
 
-const illuminantE = new Xy([1/3, 1/3], null as any as Xy);
-Object.assign(illuminantE, {illuminant: illuminantE});
-
 export class Xyy extends Col {
 	constructor(data: Vec3, illuminant: Xy=illuminantE) {
 		super(data, illuminant);
@@ -76,6 +74,19 @@ export class Xyy extends Col {
 
 	toXyz(): Xyz {
 		return xyyToXyz(this);
+	}
+}
+
+const illuminantE = new Xy([1/3, 1/3], null as any as Xy);
+Object.assign(illuminantE, {illuminant: illuminantE});
+
+export class Lab extends Col {
+	constructor(data: Vec3, illuminant: Xy) {
+		super(data, illuminant);
+	}
+
+	toXyz(): Xyz {
+		return labToXyz(this, this.illuminant.toXyz());
 	}
 }
 
@@ -183,7 +194,7 @@ export const xyyToXyz = ([x, y, lum=1]: Xy | Xyy) => y === 0
 		]);
 
 // https://en.wikipedia.org/wiki/CIELAB_color_space#From_CIELAB_to_CIEXYZ
-export const labToXyz = ([l, a, b]: Color, referenceWhiteXyz: Color) => {
+export const labToXyz = ([l, a, b]: Lab, referenceWhiteXyz: Xyz) => {
 	const tempY = (l + 16) / 116;
 	const tempX = tempY + a / 500;
 	const tempZ = tempY - b / 200;
@@ -197,7 +208,7 @@ export const labToXyz = ([l, a, b]: Color, referenceWhiteXyz: Color) => {
 		compHelper(tempX) * referenceWhiteXyz[0],
 		compHelper(tempY) * referenceWhiteXyz[1],
 		compHelper(tempZ) * referenceWhiteXyz[2],
-	] as Color;
+	] as Xyz;
 };
 
 // https://www.mathworks.com/help/images/ref/whitepoint.html
