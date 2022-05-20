@@ -36,6 +36,7 @@ export class Tree {
 	}
 
 	unlink(link: Link) {
+		console.log(link);
 		this.unlinkWithoutEvents(link);
 
 		link.srcNode.onSocketUnlink(link.src);
@@ -45,9 +46,10 @@ export class Tree {
 	deleteNode(node: Node) {
 		this.nodes.delete(node);
 
-		[...node.ins, ...node.outs].forEach(socket => {
-			socket.links.forEach(this.unlink, this);
-		});
+		[...node.ins, ...node.outs]
+				.map(socket => socket.links)
+				.flat()
+				.forEach(link => this.unlink(link));
 	}
 }
 
