@@ -1,5 +1,5 @@
 import {Node, Socket, SocketType} from "./Node";
-import {Color, Vec2} from "../util";
+import {Color, Vec2, Vec3} from "../util";
 import * as cm from "./colormanagement";
 import { e } from "mathjs";
 
@@ -183,8 +183,8 @@ export namespace spaces {
 			);
 		}
 
-		output(): Color {
-			return cm.linearToSrgb(this.ins[0].inValue as Color);
+		output() {
+			return new cm.LinearSrgb(this.ins[0].inValue as any as Vec3);
 		}
 	}
 
@@ -192,11 +192,13 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "sRGB";
 
+		readonly inSocket: Socket<SocketType.RgbRaw>;
+
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.RgbRaw, "RGB"),
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRaw, "RGB")),
 			);
 
 			this.outs.push(
@@ -204,8 +206,8 @@ export namespace spaces {
 			);
 		}
 
-		output(): Color {
-			return this.ins[0].inValue as Color;
+		output() {
+			return new cm.Srgb(this.inSocket.inValue);
 		}
 	}
 
@@ -267,12 +269,12 @@ export namespace spaces {
 			);
 		}
 
-		output(): Color {
+		output() {
 			const illuminant = getIlluminant(this.whitePointSocket);
 
 			return cm.linearToSrgb(
 				cm.xyzToLinear(
-					this.primariesSockets.map(socket => socket.inValue) as Color,
+					this.primariesSockets.map(socket => socket.inValue) as cm.Xyz,
 					illuminant,
 				),
 			);
@@ -303,12 +305,12 @@ export namespace spaces {
 			);
 		}
 
-		output(): Color {
+		output() {
 			const illuminant = getIlluminant(this.whitePointSocket);
 
 			return cm.linearToSrgb(
 				cm.xyzToLinear(
-					cm.xyyToXyz(this.primariesSockets.map(socket => socket.inValue) as Color),
+					cm.xyyToXyz(this.primariesSockets.map(socket => socket.inValue) as cm.Xyy),
 					illuminant,
 				),
 			);
@@ -378,9 +380,12 @@ export namespace externals {
 			);
 		}
 
-		output(): Color[] {
+		output(): cm.Srgb[] {
+			console.log(this.ins.filter(socket => socket.links[0])
+			.map(socket => socket.links[0].srcNode.output().toSrgb()));
+
 			return this.ins.filter(socket => socket.links[0])
-					.map(socket => socket.links[0].srcNode.output());
+					.map(socket => socket.links[0].srcNode.output().toSrgb());
 		}
 
 		onSocketLink(socket: Socket) {

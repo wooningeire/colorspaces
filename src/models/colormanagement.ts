@@ -4,11 +4,12 @@ import * as math from "mathjs";
 
 export class Col extends Array {
 	constructor(
-		readonly data: number[],
+		/* readonly */ data: number[],
+		readonly illuminant: Xy,
 	) {
-		super(data.length);
+		super();
 		this.push(...data);
-		Object.freeze(this);
+		// Object.freeze(this);
 	}
 
 	toXyz(): Xyz {
@@ -21,21 +22,21 @@ export class Col extends Array {
 }
 
 export class Xyz extends Col {
-	constructor(data: Vec3) {
-		super(data);
+	constructor(data: Vec3, illuminant: Xy=illuminantsXy["2deg"]["E"]) {
+		super(data, illuminant);
 	}
 
 	toXyz() {
-		return new Xyz(this as any as Vec3);
+		return new Xyz(this as any as Vec3, this.illuminant);
 	}
 
 	toSrgb() {
-		return xyzToLinear(this, illuminantsXy["2deg"]["D65"]).toSrgb();
+		return xyzToLinear(this, this.illuminant).toSrgb();
 	}
 }
-class Srgb extends Col {
-	constructor(data: Vec3) {
-		super(data);
+export class Srgb extends Col {
+	constructor(data: Vec3, illuminant: Xy=illuminantsXy["2deg"]["D65"]) {
+		super(data, illuminant);
 	}
 
 	toSrgb() {
@@ -43,9 +44,9 @@ class Srgb extends Col {
 	}
 }
 
-class LinearSrgb extends Col {
-	constructor(data: Vec3) {
-		super(data);
+export class LinearSrgb extends Col {
+	constructor(data: Vec3, illuminant: Xy=illuminantsXy["2deg"]["D65"]) {
+		super(data, illuminant);
 	}
 
 	toSrgb() {
@@ -54,8 +55,8 @@ class LinearSrgb extends Col {
 }
 
 export class Xy extends Col {
-	constructor(data: Vec2) {
-		super(data);
+	constructor(data: Vec2, illuminant: Xy=illuminantE) {
+		super(data, illuminant);
 	}
 
 	toXyz(): Xyz {
@@ -63,9 +64,12 @@ export class Xy extends Col {
 	}
 }
 
+const illuminantE = new Xy([1/3, 1/3], null as any as Xy);
+Object.assign(illuminantE, {illuminant: illuminantE});
+
 export class Xyy extends Col {
-	constructor(data: Vec3) {
-		super(data);
+	constructor(data: Vec3, illuminant: Xy=illuminantE) {
+		super(data, illuminant);
 	}
 
 	toXyz(): Xyz {
@@ -83,7 +87,7 @@ export const linearCompToSrgb = (comp: number) =>
 				? 12.9232102 * comp
 				: 1.055 * comp**(1/2.4) - 0.055;
 
-export const linearToSrgb = (linear: LinearSrgb) => new Srgb(linear.data.map(linearCompToSrgb) as Vec3);
+export const linearToSrgb = (linear: LinearSrgb) => new Srgb(linear.map(linearCompToSrgb) as Vec3);
 
 /** Inverse transfer function as defined by https://www.w3.org/Graphics/Color/srgb; uses ICC v4 profile formula
  */
@@ -154,7 +158,7 @@ export const xyzToLinear = (xyz: Xyz, illuminantXy: Xy) => {
 			xyyToXyz(illuminantsXy["2deg"]["D65"]),
 			chromaticAdaptationTransforms["Bradford"],
 		),
-		xyz.data,
+		xyz,
 	);
 
 	//https://en.wikipedia.org/wiki/SRGB#From_CIE_XYZ_to_sRGB
@@ -226,7 +230,7 @@ export const illuminantsXy = <{
         "D60": new Xy([0.321616709705268, 0.337619916550817]),
         "D65": new Xy([0.31270, 0.32900]),
         "D75": new Xy([0.29903, 0.31488]),
-        "E": new Xy([1 / 3, 1 / 3]),
+        "E": new Xy([1/3, 1/3]),
 	},
 
 	"10deg": {
@@ -238,7 +242,7 @@ export const illuminantsXy = <{
         "D60": new Xy([0.322986926715820, 0.339275732345997]),
         "D65": new Xy([0.31382, 0.33100]),
         "D75": new Xy([0.29968, 0.31740]),
-        "E": new Xy([1 / 3, 1 / 3]),
+        "E": new Xy([1/3, 1/3]),
 	},
 
 	"": {
