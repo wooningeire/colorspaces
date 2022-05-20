@@ -25,7 +25,7 @@
 						:validate="isFinite" />
 			</template>
 
-			<template v-else-if="socket.type === SocketType.RgbRaw">
+			<template v-else-if="[SocketType.RgbRaw, SocketType.RgbRawOrColTransformed].includes(socket.type)">
 				<EntryRgb v-model="socket.fieldValue"
 						@update:modelValue="$emit('value-change')"
 
@@ -90,9 +90,13 @@ export default defineComponent({
 			// preemptive + stops TypeScript complaint
 			if (!this.draggedSocket) throw new TypeError("Not currently dragging from a socket");
 
+			const [src, dst] = this.socket.isOutput
+					? [this.socket, this.draggedSocket]
+					: [this.draggedSocket, this.socket];
+
             return this.socket.isInput !== this.draggedSocket.isInput
-                && this.socket.node !== this.draggedSocket.node
-                && this.socket.type === this.draggedSocket.type;
+					&& this.socket.node !== this.draggedSocket.node
+					&& Socket.canLinkTypeTo(src.type, dst.type);
         },
 
 		unlinkLinks() {

@@ -1,7 +1,9 @@
 import {Color, Vec2, Vec3, mod} from "../util";
 import * as math from "mathjs";
 
-
+/**
+ * Represents a color in an absolute color space.
+ */
 export class Col extends Array {
 	static readonly [Symbol.species] = Array;
 
@@ -20,6 +22,10 @@ export class Col extends Array {
 
 	toSrgb(): Srgb {
 		return this.toXyz().toSrgb();
+	}
+
+	toLinearSrgb(): LinearSrgb {
+		return xyzToLinear(this.toXyz(), this.illuminant);
 	}
 }
 
@@ -44,6 +50,10 @@ export class Srgb extends Col {
 
 	toSrgb() {
 		return new Srgb(this as any as Vec3);
+	}
+
+	toLinearSrgb() {
+		return srgbToLinear(this);
 	}
 }
 
@@ -204,11 +214,11 @@ export const labToXyz = ([l, a, b]: Lab, referenceWhiteXyz: Xyz) => {
 					? comp**3
 					: 3 * (6/29)**2 * (comp - 4/29);
 
-	return [
+	return new Xyz([
 		compHelper(tempX) * referenceWhiteXyz[0],
 		compHelper(tempY) * referenceWhiteXyz[1],
 		compHelper(tempZ) * referenceWhiteXyz[2],
-	] as Xyz;
+	]);
 };
 
 // https://www.mathworks.com/help/images/ref/whitepoint.html

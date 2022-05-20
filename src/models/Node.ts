@@ -36,7 +36,6 @@ export class Tree {
 	}
 
 	unlink(link: Link) {
-		console.log(link);
 		this.unlinkWithoutEvents(link);
 
 		link.srcNode.onSocketUnlink(link.src);
@@ -83,18 +82,22 @@ export class Node {
 	onDependencyUpdate() {} // doesn't do anything yet
 }
 
+
 export enum SocketType {
 	Unknown,
 	Float,
 	RgbRaw,
+	RgbRawOrColTransformed,
 	ColTransformed,
 	Dropdown,
 }
+const St = SocketType;
 
 export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.Float ? number :
 		St extends SocketType.RgbRaw ? Color :
 		St extends SocketType.ColTransformed ? Color :
+		St extends SocketType.RgbRawOrColTransformed ? Color :
 		St extends SocketType.Dropdown ? string :
 		never;
 
@@ -119,9 +122,21 @@ export class Socket<St extends SocketType=any> {
 
 	static readonly Type = SocketType;
 	private static readonly defaultValues = new Map<SocketType, SocketValue>([
-		[SocketType.Float, 0],
-		[SocketType.RgbRaw, [0, 0, 0]],
+		[St.Float, 0],
+		[St.RgbRaw, [0, 0, 0]],
+		[St.RgbRawOrColTransformed, [0, 0, 0]],
 	]);
+
+	private static readonly typeCanBeLinkedTo = new Map<SocketType, SocketType[]>([
+		[St.RgbRaw, [St.RgbRaw, St.RgbRawOrColTransformed]],
+		[St.ColTransformed, [St.ColTransformed, St.RgbRawOrColTransformed]],
+	]);
+
+	static canLinkTypeTo(srcType: SocketType, dstType: SocketType) {
+		return this.typeCanBeLinkedTo.get(srcType)?.includes(dstType)
+				?? srcType === dstType;
+	}
+
 
 	readonly links: Link[] = [];
 
