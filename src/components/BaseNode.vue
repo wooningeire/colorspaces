@@ -30,9 +30,9 @@
 					:key="socket.id">
 				<div class="color-display-box"
 						v-if="node instanceof externals.DeviceTransformNode
-								&& socket.links[index]"
+								&& socket.links[0]"
 						:style="{
-							'background': `rgb(${node.output()[index].map(x => x * 255)})`,
+							'background': `rgb(${node.output()[index - 1].map(x => x * 255)})`,
 						}"></div>
 
 				<BaseSocket :socket="socket"

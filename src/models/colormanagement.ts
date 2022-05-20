@@ -19,6 +19,8 @@ export class Col extends Array {
 	toSrgb(): Srgb {
 		return this.toXyz().toSrgb();
 	}
+
+	static readonly [Symbol.species] = Array;
 }
 
 export class Xyz extends Col {

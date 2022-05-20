@@ -361,6 +361,8 @@ export namespace externals {
 	export class DeviceTransformNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Device buffer";
+
+		readonly colorSockets: Socket<SocketType.ColTransformed>[];
 		
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -372,7 +374,9 @@ export namespace externals {
 					],
 					defaultValue: "srgb",
 				}),
-				new Socket(this, true, Socket.Type.ColTransformed, "Color"),
+				...(this.colorSockets = [
+					new Socket(this, true, Socket.Type.ColTransformed, "Color"),
+				]),
 			);
 
 			this.outs.push(
@@ -381,25 +385,24 @@ export namespace externals {
 		}
 
 		output(): cm.Srgb[] {
-			console.log(this.ins.filter(socket => socket.links[0])
-			.map(socket => socket.links[0].srcNode.output().toSrgb()));
-
-			return this.ins.filter(socket => socket.links[0])
+			return this.colorSockets.filter(socket => socket.links[0])
 					.map(socket => socket.links[0].srcNode.output().toSrgb());
 		}
 
 		onSocketLink(socket: Socket) {
 			if (!socket.isInput) return;
 
-			this.ins.push(
-				new Socket(this, true, Socket.Type.ColTransformed, "Color"),
-			);
+			const newSocket = new Socket(this, true, Socket.Type.ColTransformed, "Color");
+
+			this.ins.push(newSocket);
+			this.colorSockets.push(newSocket);
 		}
 
 		onSocketUnlink(socket: Socket): void {
 			if (!socket.isInput) return;
 
 			this.ins.splice(this.ins.indexOf(socket), 1);
+			this.colorSockets.splice(this.colorSockets.indexOf(socket), 1);
 		}
 	}
 
