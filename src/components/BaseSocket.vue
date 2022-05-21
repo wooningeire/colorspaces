@@ -17,41 +17,18 @@
 		</div>
 		{{socket.label}}
 
-		<div class="socket-value-editor" v-if="socket.isInput && !socket.links[0]">
-			<template v-if="socket.type === SocketType.Float">
-				<BaseEntry v-model="socket.fieldValue"
-						@update:modelValue="$emit('value-change')"
-						
-						:validate="isFinite" />
-			</template>
-
-			<template v-else-if="[SocketType.RgbRaw, SocketType.RgbRawOrColTransformed].includes(socket.type)">
-				<EntryRgb v-model="socket.fieldValue"
-						@update:modelValue="$emit('value-change')"
-
-						:validate="color => color.every(comp => isFinite(comp))" />
-			</template>
-
-			<template v-else-if="socket.type === SocketType.Dropdown">
-				<select v-model="socket.fieldValue"
-						@change="$emit('value-change')">
-					<option v-for="{text, value, selected} of socket.data.options"
-							:value="value">
-						{{text}}
-					</option>
-				</select>
-			</template>
-		</div>
+		<BaseSocketField v-if="shouldShowFields"
+				:socket="socket" />
 	</div>
 </template>
 
 <script lang="ts">
 import {defineComponent, inject} from "vue";
 
-import BaseEntry from "./input/BaseEntry.vue";
-import EntryRgb from "./input/EntryRgb.vue";
+import BaseSocketField from "./BaseSocketField.vue";
 
 import {Tree, Socket} from "@/models/Node";
+import {externals} from "@/models/nodetypes";
 
 export default defineComponent({
     name: "BaseSocket",
@@ -120,13 +97,10 @@ export default defineComponent({
             return this.$refs.socketHitbox as HTMLDivElement;
         },
 
-		Socket() {
-			return Socket;
+		shouldShowFields() {
+			return this.socket.isInput
+					&& !this.socket.links[0];
 		},
-
-        SocketType() {
-            return Socket.Type;
-        },
     },
 
 	mounted() {
@@ -134,8 +108,7 @@ export default defineComponent({
 	},
 
     components: {
-		BaseEntry,
-		EntryRgb,
+		BaseSocketField,
 	},
 });
 </script>

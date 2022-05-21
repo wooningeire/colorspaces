@@ -59,6 +59,9 @@
 					@unlink="$emit('tree-update'),
 							$emit('potential-socket-position-change')" />
 		</div>
+
+		<!-- <template v-if="node.ins[0].links[0] && ">
+		</template> -->
 	</div>
 </template>
 

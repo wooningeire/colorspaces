@@ -1,7 +1,6 @@
 import {Node, Socket, SocketType} from "./Node";
 import {Color, Vec2, Vec3} from "../util";
 import * as cm from "./colormanagement";
-import { e } from "mathjs";
 
 export namespace images {
 	export class GradientNode extends Node {
@@ -362,7 +361,7 @@ export namespace spaces {
 export namespace externals {
 	export class DeviceTransformNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Device buffer";
+		static readonly LABEL = "Display buffer";
 
 		readonly colorSockets: Socket<SocketType.RgbRawOrColTransformed>[];
 		
