@@ -16,6 +16,10 @@ export class Col extends Array {
 		// Object.freeze(this);
 	}
 
+	static fromXyz(xyz: Xyz): Col {
+		throw new TypeError("Abstract method");
+	}
+
 	toXyz(): Xyz {
 		throw new TypeError("Abstract method");
 	}
@@ -34,6 +38,10 @@ export class Xyz extends Col {
 		super(data, illuminant);
 	}
 
+	static fromXyz(xyz: Xyz): Xyz {
+		return new Xyz(xyz as any as Vec3, xyz.illuminant);
+	}
+
 	toXyz() {
 		return new Xyz(this as any as Vec3, this.illuminant);
 	}
@@ -48,6 +56,10 @@ export class Srgb extends Col {
 		super(data, illuminantsXy["2deg"]["D65"]);
 	}
 
+	static fromXyz(xyz: Xyz): Xyz {
+		return new Xyz(xyz as any as Vec3, xyz.illuminant);
+	}
+
 	toSrgb() {
 		return new Srgb(this as any as Vec3);
 	}
@@ -60,6 +72,10 @@ export class Srgb extends Col {
 export class LinearSrgb extends Col {
 	constructor(data: Vec3) {
 		super(data, illuminantsXy["2deg"]["D65"]);
+	}
+
+	static fromXyz(xyz: Xyz): Xyz {
+		return xyzToLinear(xyz, xyz.illuminant);
 	}
 
 	toSrgb() {
@@ -80,6 +96,10 @@ export class Xy extends Col {
 export class Xyy extends Col {
 	constructor(data: Vec3, illuminant: Xy=illuminantE) {
 		super(data, illuminant);
+	}
+
+	static fromXyz(xyz: Xyz): Xyy {
+		return xyzToXyy(xyz, xyz.illuminant);
 	}
 
 	toXyz(): Xyz {
@@ -202,6 +222,18 @@ export const xyyToXyz = ([x, y, lum=1]: Xy | Xyy, illuminant: Xy=illuminantE) =>
 			lum,
 			lum / y * (1 - x - y),
 		], illuminant);
+
+export const xyzToXyy = ([x, y, z]: Xyz, illuminant: Xy=illuminantE) => {
+	const dot1 = x + y + z;
+
+	return dot1 === 0
+			? new Xyy([0, 0, 0], illuminant)
+			: new Xyy([
+				x / dot1,
+				y / dot1,
+				y,
+			], illuminant);
+};
 
 // https://en.wikipedia.org/wiki/CIELAB_color_space#From_CIELAB_to_CIEXYZ
 export const labToXyz = ([l, a, b]: Lab, referenceWhiteXyz: Xyz) => {
