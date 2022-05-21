@@ -28,7 +28,6 @@ import {defineComponent, inject} from "vue";
 import BaseSocketField from "./BaseSocketField.vue";
 
 import {Tree, Socket} from "@/models/Node";
-import {externals} from "@/models/nodetypes";
 
 export default defineComponent({
     name: "BaseSocket",

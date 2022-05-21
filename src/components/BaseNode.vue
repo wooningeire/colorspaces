@@ -1,3 +1,79 @@
+<script lang="ts" setup>
+import {inject, computed} from "vue";
+
+import BaseSocket from "./BaseSocket.vue";
+import BaseField from "./BaseField.vue";
+
+import {Node} from "@/models/Node";
+import {externals} from "@/models/nodetypes";
+
+import {ModifierKeys, Listen, clearTextSelection} from "@/util";
+
+
+const selectedNodes = inject("selectedNodes") as Set<Node>;
+const modifierKeys = inject("modifierKeys") as ModifierKeys;
+
+const props = defineProps({
+	node: {
+		type: Node,
+		required: true,
+	},
+});
+
+
+const emit = defineEmits([
+	"drag-socket",
+	"link-to-socket",
+	"node-dragged",
+	"potential-socket-position-change",
+	"tree-update",
+	"node-selected",
+]);
+
+
+const isSelected = computed(() => selectedNodes.has(props.node));
+
+
+
+const startDragging = (event: PointerEvent) => {
+	if (shouldCancelDrag(event)) return;
+	
+	const startingPos = props.node.pos;
+	const pointerStartPos = [event.pageX, event.pageY];
+
+	const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
+		clearTextSelection();
+
+		props.node.pos = [
+			startingPos[0] + (moveEvent.pageX - pointerStartPos[0]),
+			startingPos[1] + (moveEvent.pageY - pointerStartPos[1]),
+		];
+
+		emit("node-dragged");
+		emit("potential-socket-position-change");
+	});
+
+	addEventListener("pointerup", () => {
+		moveListener.detach();
+	}, {once: true});
+};
+
+const shouldCancelDrag = (event: PointerEvent) => {
+	// Make this check more sophisticated
+	// return event.target !== this.$el;
+	return ["input", "select"].includes((event.target as Element).tagName.toLowerCase());
+};
+
+const emitNodeSelected = (event: PointerEvent) => {
+	if (modifierKeys.shift) {
+		clearTextSelection();
+		// event.preventDefault();
+	}
+
+	emit("node-selected", props.node, !modifierKeys.shift);
+};
+</script>
+
 <template>
 	<div class="node"
 			@pointerdown="event => {
@@ -64,99 +140,6 @@
 		</template> -->
 	</div>
 </template>
-
-<script lang="ts">
-import {defineComponent, inject} from "vue";
-
-import BaseSocket from "./BaseSocket.vue";
-import BaseField from "./BaseField.vue";
-
-import {Node, Socket} from "@/models/Node";
-import {externals} from "@/models/nodetypes";
-import {clearTextSelection, Listen, ModifierKeys} from "@/util";
-
-export default defineComponent({
-	name: "BaseNode",
-
-	props: {
-		node: {
-			type: Node,
-			required: true,
-		},
-	},
-
-	setup() {
-		return {
-			selectedNodes: inject("selectedNodes") as Set<Node>,
-			modifierKeys: inject("modifierKeys") as ModifierKeys,
-		};
-	},
-
-	emits: [
-		"drag-socket",
-		"link-to-socket",
-		"node-dragged",
-		"potential-socket-position-change",
-		"tree-update",
-		"node-selected",
-	],
-
-	computed: {
-		externals() {
-			return externals;
-		},
-
-		isSelected() {
-			return this.selectedNodes.has(this.node);
-		},
-	},
-
-	methods: {
-		startDragging(event: PointerEvent) {
-			if (this.shouldCancelDrag(event)) return;
-			
-			const startingPos = this.node.pos;
-			const pointerStartPos = [event.pageX, event.pageY];
-
-			const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
-				clearTextSelection();
-
-				this.node.pos = [
-					startingPos[0] + (moveEvent.pageX - pointerStartPos[0]),
-					startingPos[1] + (moveEvent.pageY - pointerStartPos[1]),
-				];
-
-				this.$emit("node-dragged");
-				this.$emit("potential-socket-position-change");
-			});
-
-			addEventListener("pointerup", () => {
-				moveListener.detach();
-			}, {once: true});
-		},
-
-		shouldCancelDrag(event: PointerEvent) {
-			// Make this check more sophisticated
-			// return event.target !== this.$el;
-			return ["input", "select"].includes((event.target as Element).tagName.toLowerCase());
-		},
-
-		emitNodeSelected(event: PointerEvent) {
-			if (this.modifierKeys.shift) {
-				clearTextSelection();
-				// event.preventDefault();
-			}
-
-			this.$emit("node-selected", this.node, !this.modifierKeys.shift);
-		},
-	},
-
-	components: {
-		BaseSocket,
-		BaseField,
-	},
-});
-</script>
 
 <style lang="scss" scoped>
 .node {
