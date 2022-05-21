@@ -5,7 +5,7 @@ import BaseSocket from "./BaseSocket.vue";
 import BaseField from "./BaseField.vue";
 
 import {Node} from "@/models/Node";
-import {externals} from "@/models/nodetypes";
+import {spaces, externals} from "@/models/nodetypes";
 
 import {ModifierKeys, Listen, clearTextSelection} from "@/util";
 
@@ -38,15 +38,15 @@ const isSelected = computed(() => selectedNodes.has(props.node));
 const startDragging = (event: PointerEvent) => {
 	if (shouldCancelDrag(event)) return;
 	
-	const startingPos = props.node.pos;
+	const nodeStartPos = props.node.pos;
 	const pointerStartPos = [event.pageX, event.pageY];
 
 	const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
 		clearTextSelection();
 
 		props.node.pos = [
-			startingPos[0] + (moveEvent.pageX - pointerStartPos[0]),
-			startingPos[1] + (moveEvent.pageY - pointerStartPos[1]),
+			nodeStartPos[0] + (moveEvent.pageX - pointerStartPos[0]),
+			nodeStartPos[1] + (moveEvent.pageY - pointerStartPos[1]),
 		];
 
 		emit("node-dragged");
@@ -72,13 +72,19 @@ const emitNodeSelected = (event: PointerEvent) => {
 
 	emit("node-selected", props.node, !modifierKeys.shift);
 };
+
+
+const shouldDisplayOutput = computed(
+	() => props.node.ins[0].links[0]
+			&& Object.values(spaces).includes(props.node.constructor as any),
+);
 </script>
 
 <template>
 	<div class="node"
 			@pointerdown="event => {
-				startDragging(event);
 				emitNodeSelected(event);
+				startDragging(event);
 			}"
 			:style="{
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
@@ -136,8 +142,9 @@ const emitNodeSelected = (event: PointerEvent) => {
 							$emit('potential-socket-position-change')" />
 		</div>
 
-		<!-- <template v-if="node.ins[0].links[0] && ">
-		</template> -->
+		<template v-if="shouldDisplayOutput">
+			{{node.output()}}
+		</template>
 	</div>
 </template>
 
