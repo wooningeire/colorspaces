@@ -168,6 +168,10 @@ export class Socket<St extends SocketType=any> {
 	get inValue(): SocketValue<St> {
 		return this.links[0]?.srcNode.output() ?? this.fieldValue;
 	}
+
+	get hasLinks() {
+		return this.links.length > 0;
+	}
 }
 
 export class Link {

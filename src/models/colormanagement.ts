@@ -73,7 +73,7 @@ export class Xy extends Col {
 	}
 
 	toXyz(): Xyz {
-		return xyyToXyz(this);
+		return xyyToXyz(this, this.illuminant);
 	}
 }
 
@@ -83,7 +83,7 @@ export class Xyy extends Col {
 	}
 
 	toXyz(): Xyz {
-		return xyyToXyz(this);
+		return xyyToXyz(this, this.illuminant);
 	}
 }
 
@@ -195,13 +195,13 @@ export const xyzToLinear = (xyz: Xyz, illuminantXy: Xy) => {
 };
 
 // https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space
-export const xyyToXyz = ([x, y, lum=1]: Xy | Xyy) => y === 0
-		? new Xyz([0, 0, 0])
+export const xyyToXyz = ([x, y, lum=1]: Xy | Xyy, illuminant: Xy=illuminantE) => y === 0
+		? new Xyz([0, 0, 0], illuminant)
 		: new Xyz([
 			lum / y * x,
 			lum,
 			lum / y * (1 - x - y),
-		]);
+		], illuminant);
 
 // https://en.wikipedia.org/wiki/CIELAB_color_space#From_CIELAB_to_CIEXYZ
 export const labToXyz = ([l, a, b]: Lab, referenceWhiteXyz: Xyz) => {

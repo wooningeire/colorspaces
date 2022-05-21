@@ -285,6 +285,8 @@ export namespace spaces {
 		}
 	}
 
+	const d65 = cm.illuminantsXy["2deg"]["D65"];
+
 	export class XyyNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "xyY";
@@ -298,9 +300,9 @@ export namespace spaces {
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
 				...(this.primariesSockets = [
-					new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)"),
-					new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)"),
-					new Socket(this, true, Socket.Type.Float, "Y (luminance)"),
+					new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
+					new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
+					new Socket(this, true, Socket.Type.Float, "Y (luminance)", true, {defaultValue: 1}),
 				]),
 			);
 

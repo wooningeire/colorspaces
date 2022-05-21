@@ -112,7 +112,7 @@ const shouldDisplayOutput = computed(
 					:key="socket.id">
 				<div class="color-display-box"
 						v-if="node instanceof externals.DeviceTransformNode
-								&& socket.links[0]"
+								&& socket.hasLinks"
 						:style="{
 							'background': `rgb(${node.output()[index - 1].map(x => x * 255)})`,
 						}"></div>
@@ -143,7 +143,7 @@ const shouldDisplayOutput = computed(
 		</div>
 
 		<template v-if="shouldDisplayOutput">
-			{{node.output()}}
+			{{node.output().map((x: number) => x.toFixed(4))}}
 		</template>
 	</div>
 </template>
