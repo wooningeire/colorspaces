@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {rgbModels, math, spaces} from "@/models/nodetypes";
+import {rgbModels, math, spaces, images} from "@/models/nodetypes";
 
 import BaseNode from "./BaseNode.vue";
 
@@ -11,12 +11,13 @@ const labels = new Map<object, string>([
 	[rgbModels, "Models"],
 	[spaces, "Spaces"],
 	[math, "Math"],
+	[images, "Images"],
 ]);
 </script>
 
 <template>
 	<div class="node-tray">
-		<template v-for="nodeNamespace of [rgbModels, spaces, math]">
+		<template v-for="nodeNamespace of [rgbModels, spaces, math, images]">
 			<div class="node-category-label">
 				{{labels.get(nodeNamespace)}}
 			</div>

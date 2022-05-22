@@ -1,14 +1,37 @@
 import {Node, Socket, SocketType} from "./Node";
-import {Color, Vec2, Vec3} from "../util";
 import * as cm from "./colormanagement";
+
+import {Color, Vec2, Vec3, pipe, lerp} from "@/util";
 
 export namespace images {
 	export class GradientNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Value range";
 
+		private readonly boundsSockets: Socket<SocketType.Float>[];
+
+		whichDimension = 0;
+
 		constructor(pos?: Vec2) {
 			super(pos);
+
+			this.ins.push(
+				...(this.boundsSockets = [
+					new Socket(this, true, Socket.Type.Float, "From"),
+					new Socket(this, true, Socket.Type.Float, "To"),
+				]),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.Float, "Values"),
+			);
+		}
+
+		output(...args: number[]): number {
+			const fac = args[this.whichDimension] ?? 0;
+			const value0 = this.boundsSockets[0].inValue;
+			const value1 = this.boundsSockets[1].inValue;
+			return lerp(value0, value1, fac);
 		}
 	}
 }
@@ -33,8 +56,12 @@ export namespace rgbModels {
 			);
 		}
 
-		output(): Color {
-			return this.ins.map(socket => socket.inValue) as Color;
+		output(...args: any[]): Color {
+			return this.ins.map(socket => socket.inValueFn(...args)) as Color;
+		}
+
+		pipeOutput() {
+			return pipe();
 		}
 	}
 
@@ -152,7 +179,7 @@ export namespace math {
 
 			switch (this.methodSocket.inValue) {
 				case "mix":
-					return col0.map((_, i) => col0[i] * (1 - fac) + col1[i] * fac) as Color;
+					return col0.map((_, i) => lerp(col0[i], col1[i], fac)) as Color;
 
 				case "add":
 					return col0.map((_, i) => col0[i] + col1[i] * fac) as Color;
@@ -214,10 +241,7 @@ export namespace spaces {
 		}
 
 		output(): cm.Srgb {
-			const input = this.inSocket.inValue;
-			return input instanceof cm.Col
-					? input.toSrgb()
-					: new cm.Srgb(input);
+			return cm.Srgb.from(this.inSocket.inValue);
 		}
 	}
 
@@ -387,14 +411,19 @@ export namespace externals {
 			);
 		}
 
-		output(): cm.Srgb[] {
-			return this.colorSockets.filter(socket => socket.links[0])
-					.map(socket => {
-						const out = socket.links[0].srcNode.output();
-						return out instanceof cm.Col
-								? out.toSrgb()
-								: new cm.Srgb(out);
-					});
+		output(...args: any[]): cm.Srgb[] {
+			return this.colorSockets.filter(socket => socket.hasLinks)
+					.map(socket => cm.Srgb.from(socket.inValueFn(...args)));
+		}
+
+		pipeOutput() {
+			const node = this.colorSockets[0].node as rgbModels.RgbNode;
+
+			return pipe(node.pipeOutput(), cm.Srgb.from);
+		}
+
+		outputIndex(socket: Socket) {
+			return this.colorSockets.indexOf(socket);
 		}
 
 		onSocketLink(socket: Socket) {

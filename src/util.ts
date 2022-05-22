@@ -60,3 +60,13 @@ export const mod = (a: number, b: number) => (a % b + b) % b;
 export const clearTextSelection = () => {
 	getSelection()?.removeAllRanges();
 };
+
+
+export const pipe = (...fns: Function[]) =>
+		(...args: any[]) =>
+				fns.reduce((currentValue: any, fn: Function) => [fn(...currentValue)], args);
+
+export const curry = null;
+
+
+export const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;

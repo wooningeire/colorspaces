@@ -56,8 +56,14 @@ export class Srgb extends Col {
 		super(data, illuminantsXy["2deg"]["D65"]);
 	}
 
-	static fromXyz(xyz: Xyz): Xyz {
-		return new Xyz(xyz as any as Vec3, xyz.illuminant);
+	static from(dataOrCol: Vec3 | Col): Srgb {
+		return dataOrCol instanceof Col
+				? dataOrCol.toSrgb()
+				: new Srgb(dataOrCol);
+	}
+
+	static fromXyz(xyz: Xyz): Srgb {
+		return xyzToLinear(xyz, xyz.illuminant).toSrgb();
 	}
 
 	toSrgb() {
