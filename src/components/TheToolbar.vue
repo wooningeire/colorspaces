@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-
+import {tree, selectedNodes} from "./store";
 </script>
 
 <template>
 	<div class="toolbar">
-		<button @click="$emit('delete-node')">Delete</button>
+		<button @click="selectedNodes.forEach(tree.deleteNode, tree)">Delete</button>
 	</div>
 </template>
 

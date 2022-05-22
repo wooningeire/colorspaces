@@ -5,35 +5,11 @@ import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
 import BaseLinks from "./BaseLinks.vue";
 
-import {Vec2, Listen, Color, ModifierKeys, clearTextSelection} from "@/util";
-import {externals} from "@/models/nodetypes";
+import {Vec2, Listen, Color, clearTextSelection} from "@/util";
 import {Tree, Socket, Node} from "@/models/Node";
 
-import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor} from "./store";
+import {tree, deviceNodes, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";
 
-
-export interface DeviceNodes {
-	transformNode: externals.DeviceTransformNode;
-	postprocessingNode: externals.DevicePostprocessingNode;
-	environmentNode: externals.EnvironmentNode;
-	visionNode: externals.VisionNode;
-}
-
-const props = defineProps({
-	tree: {
-		type: Tree,
-		required: true,
-	},
-
-	deviceNodes: {
-		type: Object as PropType<DeviceNodes>,
-		required: true,
-	},
-});
-
-
-const selectedNodes = inject("selectedNodes") as Set<Node>;
-const modifierKeys = inject("modifierKeys") as ModifierKeys;
 
 const pos = reactive([0, 0]);
 
@@ -41,7 +17,7 @@ const pointerX = ref(-1);
 const pointerY = ref(-1);
 
 
-provide("tree", props.tree);
+provide("tree", tree);
 
 
 
@@ -79,9 +55,9 @@ const onLinkToSocket = (socketVue: InstanceType<typeof BaseSocket>) => {
 	if (!draggedSocket.value) throw new TypeError("Not currently dragging from a socket");
 
 	if (draggedSocket.value.isInput) {
-		props.tree.linkSockets(socketVue.socket, draggedSocket.value);
+		tree.linkSockets(socketVue.socket, draggedSocket.value);
 	} else {
-		props.tree.linkSockets(draggedSocket.value, socketVue.socket);
+		tree.linkSockets(draggedSocket.value, socketVue.socket);
 	}
 };
 
