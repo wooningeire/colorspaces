@@ -3,6 +3,7 @@ import {inject, computed} from "vue";
 
 import BaseSocket from "./BaseSocket.vue";
 import BaseField from "./BaseField.vue";
+import OutputDisplay from "./OutputDisplay.vue";
 
 import {Node} from "@/models/Node";
 import {spaces, externals} from "@/models/nodetypes";
@@ -109,12 +110,10 @@ const shouldDisplayOutput = computed(
 		<div class="in-sockets">
 			<template v-for="(socket, index) of node.ins"
 					:key="socket.id">
-				<div class="color-display-box"
-						v-if="node instanceof externals.DeviceTransformNode
+				<OutputDisplay v-if="node instanceof externals.DeviceTransformNode
 								&& socket.hasLinks"
-						:style="{
-							'background': `rgb(${node.output()[index - 1].map(x => x * 255)})`,
-						}"></div>
+						:node="node"
+						:outputIndex="node.outputIndex(socket)" />
 
 				<BaseSocket :socket="socket"
 						@drag-socket="socketVue => $emit('drag-socket', socketVue)"
@@ -205,7 +204,7 @@ const shouldDisplayOutput = computed(
 		}
 	}
 
-	.color-display-box {
+	:deep(.color-display-box) {
 		position: absolute;
 		right: .5em;
 		width: 3em;

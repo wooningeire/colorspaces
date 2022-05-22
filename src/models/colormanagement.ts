@@ -56,8 +56,14 @@ export class Srgb extends Col {
 		super(data, illuminantsXy["2deg"]["D65"]);
 	}
 
-	static fromXyz(xyz: Xyz): Xyz {
-		return new Xyz(xyz as any as Vec3, xyz.illuminant);
+	static from(dataOrCol: Vec3 | Col): Srgb {
+		return dataOrCol instanceof Col
+				? dataOrCol.toSrgb()
+				: new Srgb(dataOrCol);
+	}
+
+	static fromXyz(xyz: Xyz): Srgb {
+		return xyzToLinear(xyz, xyz.illuminant).toSrgb();
 	}
 
 	toSrgb() {
@@ -72,6 +78,14 @@ export class Srgb extends Col {
 export class LinearSrgb extends Col {
 	constructor(data: Vec3) {
 		super(data, illuminantsXy["2deg"]["D65"]);
+	}
+
+	static from(dataOrCol: Vec3 | Col): LinearSrgb {
+		return dataOrCol instanceof Col
+				? dataOrCol instanceof Srgb
+						? srgbToLinear(dataOrCol)
+						: dataOrCol.toLinearSrgb()
+				: new LinearSrgb(dataOrCol);
 	}
 
 	static fromXyz(xyz: Xyz): Xyz {
