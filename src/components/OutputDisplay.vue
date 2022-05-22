@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted} from "vue";
+import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch} from "vue";
 
 import {externals} from "@/models/nodetypes";
 
@@ -39,6 +39,10 @@ onMounted(() => {
 });
 
 onUpdated(rerenderCanvas);
+
+watch(() => props.node.output(), () => {
+	rerenderCanvas();
+});
 </script>
 
 <template>
@@ -51,9 +55,6 @@ onUpdated(rerenderCanvas);
 	<canvas class="color-display-box"
 			v-else
 			ref="canvas"
-			height="1"
-			:style="{
-				'color': `rgb(${node.output(0.5)[outputIndex].map(x => x * 255)})`,
-			}"></canvas>
+			height="1"></canvas>
 </template>
 

@@ -6,7 +6,7 @@ import {Color, Vec2, Vec3, pipe, lerp} from "@/util";
 export namespace images {
 	export class GradientNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Value range";
+		static readonly LABEL = "Gradient";
 
 		private readonly boundsSockets: Socket<SocketType.Float>[];
 
