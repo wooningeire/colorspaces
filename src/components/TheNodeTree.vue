@@ -120,7 +120,7 @@ defineExpose({
 	<!-- drag events here are from node tray -->
 	<div class="node-tree"
 			@dragover="event => isDraggingNodeFromNodeTray && event.preventDefault()"
-			@drop="isDraggingNodeFromNodeTray && $emit('add-node', currentlyDraggedNodeConstructor)">
+			@drop="event => isDraggingNodeFromNodeTray && $emit('add-node', currentlyDraggedNodeConstructor, [event.pageX, event.pageY])">
 		<div class="nodes"
 				@pointerdown.self="onPointerDownSelf">
 			<BaseNode v-for="node of tree.nodes"

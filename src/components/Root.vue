@@ -7,16 +7,20 @@ import TheToolbar from "./TheToolbar.vue";
 
 import {Node} from "@/models/Node";
 
+import {Vec2} from "@/util";
+
 import {tree} from "./store";
 
 
 const treeVue = ref(null) as any as Ref<InstanceType<typeof TheNodeTree>>;
 
 
-const addNode = <T extends Node>(nodeConstructor: new () => T) => {
+const addNode = <T extends Node>(nodeConstructor: new () => T, pos: Vec2=[0, 0]) => {
 	const node = new nodeConstructor();
 	tree.nodes.add(node);
 	treeVue.value.selectNode(node);
+
+	node.pos = pos;
 };
 </script>
 
