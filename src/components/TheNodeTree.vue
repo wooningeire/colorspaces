@@ -1,13 +1,15 @@
 <script lang="ts" setup>
-import {defineComponent, computed, PropType, inject, ref, reactive, provide, Ref} from "vue";
+import {computed, PropType, inject, ref, reactive, provide, Ref} from "vue";
 
 import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
 import BaseLinks from "./BaseLinks.vue";
 
 import {Vec2, Listen, Color, ModifierKeys, clearTextSelection} from "@/util";
-import {rgbModels, spaces, externals} from "@/models/nodetypes";
+import {externals} from "@/models/nodetypes";
 import {Tree, Socket, Node} from "@/models/Node";
+
+import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor} from "./store";
 
 
 export interface DeviceNodes {
@@ -118,6 +120,10 @@ const onPointerDownSelf = () => {
 };
 
 
+defineExpose({
+	selectNode,
+});
+
 /* srgbOutput() {
 	const resultSocket = this.deviceNodes.transformNode.ins[0];
 
@@ -135,7 +141,10 @@ const onPointerDownSelf = () => {
 </script>
 
 <template>
-	<div class="node-tree">
+	<!-- drag events here are from node tray -->
+	<div class="node-tree"
+			@dragover="event => isDraggingNodeFromNodeTray && event.preventDefault()"
+			@drop="isDraggingNodeFromNodeTray && $emit('add-node', currentlyDraggedNodeConstructor)">
 		<div class="nodes"
 				@pointerdown.self="onPointerDownSelf">
 			<BaseNode v-for="node of tree.nodes"

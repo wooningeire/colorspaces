@@ -1,6 +1,10 @@
 <script lang="ts" setup>
 import {rgbModels, math, spaces} from "@/models/nodetypes";
 
+import BaseNode from "./BaseNode.vue";
+
+import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor} from "./store";
+
 const emit = defineEmits(["add-node"]);
 
 const labels = new Map<object, string>([
@@ -19,11 +23,22 @@ const labels = new Map<object, string>([
 
 			<div class="button-rack">
 				<button v-for="nodeConstructor of Object.values(nodeNamespace)"
-					@click="emit('add-node', nodeConstructor)">
+						@click="emit('add-node', nodeConstructor)"
+						
+						draggable="true"
+						@dragstart="event => {
+							currentlyDraggedNodeConstructor = nodeConstructor;
+							isDraggingNodeFromNodeTray = true;
+						}"
+						@dragend="isDraggingNodeFromNodeTray = false">
 					{{nodeConstructor.LABEL}}
 				</button>
 			</div>
 		</template>
+
+		<Teleport to="body">
+
+		</Teleport>
 	</div>
 </template>
 

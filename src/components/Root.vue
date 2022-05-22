@@ -8,8 +8,9 @@ import TheToolbar from "./TheToolbar.vue";
 import {Tree, Node} from "@/models/Node";
 import {rgbModels, spaces, externals} from "@/models/nodetypes";
 
+import {tree} from "./store";
+
 const dn = reactive(<DeviceNodes>{});
-const tree = reactive(new Tree());
 
 [
 	new spaces.SrgbNode([450, 50]),
@@ -62,7 +63,8 @@ const addNode = <T extends Node>(nodeConstructor: new () => T) => {
 <template>
 	<TheNodeTree :tree="tree"
 			:deviceNodes="dn"
-			ref="treeVue" />
+			ref="treeVue"
+			@add-node="addNode" />
 	<TheNodeTray @add-node="addNode" />
 
 	<TheToolbar @delete-node="() => {
