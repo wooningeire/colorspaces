@@ -57,14 +57,6 @@ export class Listen {
 export const mod = (a: number, b: number) => (a % b + b) % b;
 
 
-export type ModifierKeys = {
-	shift: boolean,
-	ctrl: boolean,
-	alt: boolean,
-	meta: boolean,
-};
-
-
 export const clearTextSelection = () => {
 	getSelection()?.removeAllRanges();
 };

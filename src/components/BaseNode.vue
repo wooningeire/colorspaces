@@ -7,11 +7,10 @@ import BaseField from "./BaseField.vue";
 import {Node} from "@/models/Node";
 import {spaces, externals} from "@/models/nodetypes";
 
-import {ModifierKeys, Listen, clearTextSelection} from "@/util";
+import {Listen, clearTextSelection} from "@/util";
 
+import {selectedNodes, modifierKeys} from "./store";
 
-const selectedNodes = inject("selectedNodes") as Set<Node>;
-const modifierKeys = inject("modifierKeys") as ModifierKeys;
 
 const props = defineProps({
 	node: {
