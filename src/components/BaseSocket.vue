@@ -1,3 +1,88 @@
+<script lang="ts" setup>
+import {ref, inject, computed, onMounted} from "vue";
+
+import BaseSocketField from "./BaseSocketField.vue";
+
+import {Socket} from "@/models/Node";
+
+import {tree} from "./store";
+
+const props = defineProps({
+	socket: {
+		type: Socket,
+		required: true,
+	},
+});
+
+const emit = defineEmits([
+	"value-change",
+	"drag-socket",
+	"link-to-socket",
+	"unlink",
+]);
+
+const draggedSocket = inject("draggedSocket") as Socket;
+
+
+const shouldShowFields = computed(
+	() => props.socket.isInput && !props.socket.hasLinks
+);
+
+
+const socketVues = inject("socketVues") as WeakMap<Socket, unknown>;
+onMounted(() => {
+	socketVues.set(props.socket, this);
+});
+
+const socketHitbox = ref(null as any as HTMLDivElement);
+const socketEl = computed(() => socketHitbox.value);
+
+const rect = () => socketEl.value.getBoundingClientRect();
+
+const socketPos = () => [
+	(rect().left + rect().right) / 2,
+	(rect().top + rect().bottom) / 2,
+];
+
+
+const unlinkLinks = () => {
+	props.socket.links.forEach(link => tree.unlink(link));
+	emit("unlink");
+};
+
+
+
+const ondragstart = (event: DragEvent) => {
+	event.dataTransfer!.dropEffect = "link";
+	event.dataTransfer!.setDragImage(document.createElement("div"), 0, 0);
+	emit("drag-socket", this);
+};
+const ondrop = (event: DragEvent) => {
+	if (willAcceptLink()) {
+		emit("link-to-socket", this);
+	}
+};
+const willAcceptLink = () => {
+	// preemptive + stops TypeScript complaint
+	if (!draggedSocket) throw new TypeError("Not currently dragging from a socket");
+
+	const [src, dst] = props.socket.isOutput
+			? [props.socket, draggedSocket]
+			: [draggedSocket, props.socket];
+
+	return props.socket.isInput !== draggedSocket.isInput
+			&& props.socket.node !== draggedSocket.node
+			&& Socket.canLinkTypeTo(src.type, dst.type);
+};
+
+
+defineExpose({
+	socketEl,
+	socketPos,
+});
+
+</script>
+
 <template>
 	<div class="socket-container"
 			:class="{'in': socket.isInput}">
@@ -21,96 +106,6 @@
 				:socket="socket" />
 	</div>
 </template>
-
-<script lang="ts">
-import {defineComponent, inject} from "vue";
-
-import BaseSocketField from "./BaseSocketField.vue";
-
-import {Tree, Socket} from "@/models/Node";
-
-export default defineComponent({
-    name: "BaseSocket",
-    props: {
-        socket: {
-            type: Socket,
-            required: true,
-        },
-    },
-
-	emits: ["value-change", "drag-socket", "link-to-socket", "unlink"],
-
-	// For TypeScript
-	setup() {
-		return {
-			tree: inject("tree") as Tree,
-			draggedSocket: inject("draggedSocket") as Socket,
-			socketVues: inject("socketVues") as WeakMap<Socket, unknown>,
-		};
-	},
-
-	// inject: ["tree", "draggedSocket"],
-
-    methods: {
-        ondragstart(event: DragEvent) {
-            event.dataTransfer!.dropEffect = "link";
-            event.dataTransfer!.setDragImage(document.createElement("div"), 0, 0);
-            this.$emit("drag-socket", this);
-        },
-        ondrop(event: DragEvent) {
-            if (this.willAcceptLink()) {
-                this.$emit("link-to-socket", this);
-            }
-        },
-        willAcceptLink() {
-			// preemptive + stops TypeScript complaint
-			if (!this.draggedSocket) throw new TypeError("Not currently dragging from a socket");
-
-			const [src, dst] = this.socket.isOutput
-					? [this.socket, this.draggedSocket]
-					: [this.draggedSocket, this.socket];
-
-            return this.socket.isInput !== this.draggedSocket.isInput
-					&& this.socket.node !== this.draggedSocket.node
-					&& Socket.canLinkTypeTo(src.type, dst.type);
-        },
-
-		unlinkLinks() {
-			this.socket.links.forEach(link => this.tree.unlink(link));
-			this.$emit("unlink");
-		},
-
-		rect() {
-			return this.socketEl.getBoundingClientRect();
-		},
-
-		socketPos() {
-			return [
-				(this.rect().left + this.rect().right) / 2,
-				(this.rect().top + this.rect().bottom) / 2,
-			];
-		},
-    },
-    computed: {
-        socketEl() {
-            return this.$refs.socketHitbox as HTMLDivElement;
-        },
-
-		shouldShowFields() {
-			return this.socket.isInput
-					&& !this.socket.links[0];
-		},
-    },
-
-	mounted() {
-		this.socketVues.set(this.socket, this);
-	},
-
-    components: {
-		BaseSocketField,
-	},
-});
-</script>
 
 <style lang="scss" scoped>
 .socket-container {

@@ -61,3 +61,8 @@ addEventListener("keyup", updateModifierKeys);
 export const isDraggingNodeFromNodeTray = ref(false);
 export const currentlyDraggedNodeConstructor = ref(null as any as new <T extends Node>() => T);
 //#endregion
+
+
+export class SocketHitbox extends HTMLElement {
+
+}

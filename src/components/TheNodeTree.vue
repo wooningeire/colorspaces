@@ -36,6 +36,8 @@ provide("draggingSocket", draggingSocket);
 const onDragSocket = (socketVue: InstanceType<typeof BaseSocket>) => {
 	draggedSocketVue.value = socketVue;
 
+	console.log(draggedSocketVue.value);
+
 	[pointerX.value, pointerY.value] = draggedSocketVue.value.socketPos();
 
 	const dragListener = Listen.for(window, "dragover", (event: DragEvent) => {
