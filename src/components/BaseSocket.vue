@@ -1,11 +1,15 @@
 <script lang="ts" setup>
-import {ref, inject, computed, onMounted} from "vue";
+import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef} from "vue";
 
 import BaseSocketField from "./BaseSocketField.vue";
 
 import {Socket} from "@/models/Node";
 
 import {tree} from "./store";
+
+
+const socketVue = getCurrentInstance()!.proxy;
+
 
 const props = defineProps({
 	socket: {
@@ -21,7 +25,7 @@ const emit = defineEmits([
 	"unlink",
 ]);
 
-const draggedSocket = inject("draggedSocket") as Socket;
+const draggedSocket = inject("draggedSocket") as ComputedRef<Socket>;
 
 
 const shouldShowFields = computed(
@@ -31,7 +35,7 @@ const shouldShowFields = computed(
 
 const socketVues = inject("socketVues") as WeakMap<Socket, unknown>;
 onMounted(() => {
-	socketVues.set(props.socket, this);
+	socketVues.set(props.socket, socketVue);
 });
 
 const socketHitbox = ref(null as any as HTMLDivElement);
@@ -55,11 +59,11 @@ const unlinkLinks = () => {
 const ondragstart = (event: DragEvent) => {
 	event.dataTransfer!.dropEffect = "link";
 	event.dataTransfer!.setDragImage(document.createElement("div"), 0, 0);
-	emit("drag-socket", this);
+	emit("drag-socket", socketVue);
 };
 const ondrop = (event: DragEvent) => {
 	if (willAcceptLink()) {
-		emit("link-to-socket", this);
+		emit("link-to-socket", socketVue);
 	}
 };
 const willAcceptLink = () => {
@@ -67,11 +71,11 @@ const willAcceptLink = () => {
 	if (!draggedSocket) throw new TypeError("Not currently dragging from a socket");
 
 	const [src, dst] = props.socket.isOutput
-			? [props.socket, draggedSocket]
-			: [draggedSocket, props.socket];
+			? [props.socket, draggedSocket.value]
+			: [draggedSocket.value, props.socket];
 
-	return props.socket.isInput !== draggedSocket.isInput
-			&& props.socket.node !== draggedSocket.node
+	return props.socket.isInput !== draggedSocket.value.isInput
+			&& props.socket.node !== draggedSocket.value.node
 			&& Socket.canLinkTypeTo(src.type, dst.type);
 };
 

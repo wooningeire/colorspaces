@@ -1,14 +1,14 @@
 <script lang="ts" setup>
-import {computed, PropType, inject, ref, reactive, provide, Ref} from "vue";
+import {computed, ref, reactive, provide} from "vue";
 
 import BaseNode from "./BaseNode.vue";
 import BaseSocket from "./BaseSocket.vue";
 import BaseLinks from "./BaseLinks.vue";
 
-import {Vec2, Listen, Color, clearTextSelection} from "@/util";
-import {Tree, Socket, Node} from "@/models/Node";
+import {Vec2, Listen, clearTextSelection} from "@/util";
+import {Socket, Node} from "@/models/Node";
 
-import {tree, deviceNodes, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";
+import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";
 
 
 const pos = reactive([0, 0]);
@@ -35,8 +35,6 @@ provide("draggingSocket", draggingSocket);
 
 const onDragSocket = (socketVue: InstanceType<typeof BaseSocket>) => {
 	draggedSocketVue.value = socketVue;
-
-	console.log(draggedSocketVue.value);
 
 	[pointerX.value, pointerY.value] = draggedSocketVue.value.socketPos();
 
