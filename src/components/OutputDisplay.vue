@@ -18,11 +18,7 @@ const props = defineProps({
 const canvas = ref(null as any as HTMLCanvasElement);
 const cx = computed(() => canvas.value.getContext("2d")!);
 
-onMounted(() => {
-	canvas.value.width = canvas.value.offsetWidth;
-})
-
-onUpdated(() => {
+const rerenderCanvas = () => {
 	const width = canvas.value.width;
 
 	const imageData = cx.value.getImageData(0, 0, width, 1);
@@ -35,7 +31,14 @@ onUpdated(() => {
 		imageData.data[i*4 + 3] = 255;
 	}
 	cx.value.putImageData(imageData, 0, 0);
+};
+
+onMounted(() => {
+	canvas.value.width = canvas.value.offsetWidth;
+	rerenderCanvas();
 });
+
+onUpdated(rerenderCanvas);
 </script>
 
 <template>

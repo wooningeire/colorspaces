@@ -80,6 +80,14 @@ export class LinearSrgb extends Col {
 		super(data, illuminantsXy["2deg"]["D65"]);
 	}
 
+	static from(dataOrCol: Vec3 | Col): LinearSrgb {
+		return dataOrCol instanceof Col
+				? dataOrCol instanceof Srgb
+						? srgbToLinear(dataOrCol)
+						: dataOrCol.toLinearSrgb()
+				: new LinearSrgb(dataOrCol);
+	}
+
 	static fromXyz(xyz: Xyz): Xyz {
 		return xyzToLinear(xyz, xyz.illuminant);
 	}

@@ -29,8 +29,8 @@ export namespace images {
 
 		output(...args: number[]): number {
 			const fac = args[this.whichDimension] ?? 0;
-			const value0 = this.boundsSockets[0].inValue;
-			const value1 = this.boundsSockets[1].inValue;
+			const value0 = this.boundsSockets[0].inValueFn(...args);
+			const value1 = this.boundsSockets[1].inValueFn(...args);
 			return lerp(value0, value1, fac);
 		}
 	}
@@ -83,8 +83,8 @@ export namespace rgbModels {
 			);
 		}
 
-		output(): Color {
-			return cm.hslToRgb(this.ins.map(socket => socket.inValue) as Color) as Color;
+		output(...args: number[]): Color {
+			return cm.hslToRgb(this.ins.map(socket => socket.inValueFn(...args)) as Color) as Color;
 		}
 	}
 
@@ -106,8 +106,8 @@ export namespace rgbModels {
 			);
 		}
 
-		output(): Color {
-			return cm.hsvToRgb(this.ins.map(socket => socket.inValue) as Color) as Color;
+		output(...args: number[]): Color {
+			return cm.hsvToRgb(this.ins.map(socket => socket.inValueFn(...args)) as Color) as Color;
 		}
 	}
 
@@ -129,8 +129,8 @@ export namespace rgbModels {
 			);
 		}
 
-		output(): Color {
-			return cm.cmyToRgb(this.ins.map(socket => socket.inValue) as Color) as Color;
+		output(...args: number[]): Color {
+			return cm.cmyToRgb(this.ins.map(socket => socket.inValueFn(...args)) as Color) as Color;
 		}
 	}
 }
@@ -168,12 +168,12 @@ export namespace math {
 			);
 		}
 
-		output(): Color {
-			const fac = this.facSocket.inValue;
+		output(...args: number[]): Color {
+			const fac = this.facSocket.inValueFn(...args);
 
 			// TODO check that inputs are of same type
-			const col0 = this.colorSockets[0].inValue;
-			const col1 = this.colorSockets[1].inValue;
+			const col0 = this.colorSockets[0].inValueFn(...args);
+			const col1 = this.colorSockets[1].inValueFn(...args);
 
 			// and make output the same type as the inputs
 
@@ -214,11 +214,8 @@ export namespace spaces {
 			);
 		}
 
-		output() {
-			const input = this.inSocket.inValue;
-			return input instanceof cm.Col
-					? input.toLinearSrgb()
-					: new cm.LinearSrgb(input);
+		output(...args: number[]) {
+			return cm.LinearSrgb.from(this.inSocket.inValueFn(...args))
 		}
 	}
 
@@ -240,8 +237,8 @@ export namespace spaces {
 			);
 		}
 
-		output(): cm.Srgb {
-			return cm.Srgb.from(this.inSocket.inValue);
+		output(...args: number[]): cm.Srgb {
+			return cm.Srgb.from(this.inSocket.inValueFn(...args));
 		}
 	}
 
@@ -302,10 +299,10 @@ export namespace spaces {
 			);
 		}
 
-		output() {
+		output(...args: number[]) {
 			const illuminant = getIlluminant(this.whitePointSocket);
 
-			return new cm.Xyz(this.primariesSockets.map(socket => socket.inValue) as Vec3, illuminant);
+			return new cm.Xyz(this.primariesSockets.map(socket => socket.inValueFn(...args)) as Vec3, illuminant);
 		}
 	}
 
@@ -335,10 +332,10 @@ export namespace spaces {
 			);
 		}
 
-		output() {
+		output(...args: number[]): cm.Xyy {
 			const illuminant = getIlluminant(this.whitePointSocket);
 
-			return new cm.Xyy(this.primariesSockets.map(socket => socket.inValue) as Vec3, illuminant);
+			return new cm.Xyy(this.primariesSockets.map(socket => socket.inValueFn(...args)) as Vec3, illuminant);
 		}
 	}
 
@@ -366,10 +363,10 @@ export namespace spaces {
 			);
 		}
 
-		output(): cm.Lab {
+		output(...args: number[]): cm.Lab {
 			const illuminant = getIlluminant(this.whitePointSocket);
 
-			return new cm.Lab(this.primariesSockets.map(socket => socket.inValue) as Vec3, illuminant);
+			return new cm.Lab(this.primariesSockets.map(socket => socket.inValueFn(...args)) as Vec3, illuminant);
 			
 			/* cm.linearToSrgb(
 				cm.xyzToLinear(
@@ -411,7 +408,7 @@ export namespace externals {
 			);
 		}
 
-		output(...args: any[]): cm.Srgb[] {
+		output(...args: number[]): cm.Srgb[] {
 			return this.colorSockets.filter(socket => socket.hasLinks)
 					.map(socket => cm.Srgb.from(socket.inValueFn(...args)));
 		}
