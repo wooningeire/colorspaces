@@ -58,9 +58,8 @@ export namespace images {
 		output(...args: number[]) {
 			const imageData = this.inSocket.inValue;
 			if (imageData) {
-				// TODO refactor
-				const x = Math.round(args[0] * 42);
-				const y = Math.round(args[1] * 42);
+				const x = Math.round(args[0] * imageData.width);
+				const y = Math.round(args[1] * imageData.height);
 
 				const index = (x + y * imageData.width) * 4;
 				const colorData = [...imageData.data.slice(index, index + 3)]
