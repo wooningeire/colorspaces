@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import {computed, ref, reactive, provide} from "vue";
 
-import BaseNode from "./BaseNode.vue";
-import BaseSocket from "./BaseSocket.vue";
-import BaseLinks from "./BaseLinks.vue";
+import NodeVue from "./NodeVue.vue";
+import NodeSocket from "./NodeSocket.vue";
+import TheNodeTreeLinks from "./TheNodeTreeLinks.vue";
 
 import {Vec2, Listen, clearTextSelection} from "@/util";
 import {Socket, Node} from "@/models/Node";
@@ -21,10 +21,10 @@ provide("tree", tree);
 
 
 
-const socketVues = new WeakMap<Socket, InstanceType<typeof BaseSocket>>();
+const socketVues = new WeakMap<Socket, InstanceType<typeof NodeSocket>>();
 provide("socketVues", socketVues);
 
-const draggedSocketVue = ref(null as InstanceType<typeof BaseSocket> | null);
+const draggedSocketVue = ref(null as InstanceType<typeof NodeSocket> | null);
 
 const draggedSocket = computed(() => draggedSocketVue.value?.socket);
 const draggingSocket = computed(() => Boolean(draggedSocketVue.value));
@@ -33,7 +33,7 @@ provide("draggedSocket", draggedSocket);
 provide("draggingSocket", draggingSocket);
 
 
-const onDragSocket = (socketVue: InstanceType<typeof BaseSocket>) => {
+const onDragSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 	draggedSocketVue.value = socketVue;
 
 	[pointerX.value, pointerY.value] = draggedSocketVue.value.socketPos();
@@ -50,7 +50,7 @@ const onDragSocket = (socketVue: InstanceType<typeof BaseSocket>) => {
 	}, {once: true});
 };
 
-const onLinkToSocket = (socketVue: InstanceType<typeof BaseSocket>) => {
+const onLinkToSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 	// preemptive + stops TypeScript complaint
 	if (!draggedSocket.value) throw new TypeError("Not currently dragging from a socket");
 
@@ -63,7 +63,7 @@ const onLinkToSocket = (socketVue: InstanceType<typeof BaseSocket>) => {
 
 
 
-const linksComponent = ref(null as any as InstanceType<typeof BaseLinks>);
+const linksComponent = ref(null as any as InstanceType<typeof TheNodeTreeLinks>);
 
 const rerenderLinks = () => {
 	linksComponent.value.$forceUpdate();
@@ -123,7 +123,7 @@ defineExpose({
 			@drop="event => isDraggingNodeFromNodeTray && $emit('add-node', currentlyDraggedNodeConstructor, [event.pageX, event.pageY])">
 		<div class="nodes"
 				@pointerdown.self="onPointerDownSelf">
-			<BaseNode v-for="node of tree.nodes"
+			<NodeVue v-for="node of tree.nodes"
 					:key="node.id"
 					:node="node"
 					@drag-socket="onDragSocket"
@@ -143,7 +143,7 @@ defineExpose({
 					:x2="pointerX"
 					:y2="pointerY" />
 
-			<BaseLinks :socketVues="socketVues"
+			<TheNodeTreeLinks :socketVues="socketVues"
 					ref="linksComponent" />
 		</svg>
 	</div>

@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import {inject, computed} from "vue";
 
-import BaseSocket from "./BaseSocket.vue";
-import BaseField from "./BaseField.vue";
-import OutputDisplay from "./OutputDisplay.vue";
+import NodeSocket from "./NodeSocket.vue";
+import NodeField from "./NodeField.vue";
+import NodeOutputDisplay from "./NodeOutputDisplay.vue";
 
 import {Node} from "@/models/Node";
 import {spaces, externals} from "@/models/nodetypes";
@@ -101,7 +101,7 @@ const shouldDisplayOutput = computed(
 
 		<div class="node-content">
 			<!-- <div class="fields">
-				<BaseField v-for="field of node.fields"
+				<NodeField v-for="field of node.fields"
 						:key="field.id"
 						:field="field" />
 			</div> -->
@@ -110,12 +110,12 @@ const shouldDisplayOutput = computed(
 		<div class="in-sockets">
 			<template v-for="(socket, index) of node.ins"
 					:key="socket.id">
-				<OutputDisplay v-if="node instanceof externals.DeviceTransformNode
+				<NodeOutputDisplay v-if="node instanceof externals.DeviceTransformNode
 								&& socket.hasLinks"
 						:node="node"
 						:outputIndex="node.outputIndex(socket)" />
 
-				<BaseSocket :socket="socket"
+				<NodeSocket :socket="socket"
 						@drag-socket="socketVue => $emit('drag-socket', socketVue)"
 						@link-to-socket="socketVue => ($emit('link-to-socket', socketVue),
 								$emit('tree-update'),
@@ -128,7 +128,7 @@ const shouldDisplayOutput = computed(
 		</div>
 
 		<div class="out-sockets">
-			<BaseSocket v-for="socket of node.outs"
+			<NodeSocket v-for="socket of node.outs"
 					:key="socket.id"
 					:socket="socket"
 					@drag-socket="socketVue => $emit('drag-socket', socketVue)"

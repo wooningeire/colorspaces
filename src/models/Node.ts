@@ -90,6 +90,7 @@ export enum SocketType {
 	RgbRawOrColTransformed,
 	ColTransformed,
 	Dropdown,
+	Image,
 }
 const St = SocketType;
 
@@ -99,6 +100,7 @@ export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.ColTransformed ? Color :
 		St extends SocketType.RgbRawOrColTransformed ? Color :
 		St extends SocketType.Dropdown ? string :
+		St extends SocketType.Image ? ImageData :
 		never;
 
 type SocketData<St extends SocketType=any> = 

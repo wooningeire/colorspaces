@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {computed} from "vue";
+import {ref, computed} from "vue";
 
 import BaseEntry from "./input/BaseEntry.vue";
 import EntryRgb from "./input/EntryRgb.vue";
@@ -13,6 +13,30 @@ const props = defineProps({
 		required: true,
 	},
 });
+
+
+const fileInput = ref(null as any as HTMLInputElement);
+
+const readFile = (): Promise<ImageData> => new Promise(resolve => {
+	const file = fileInput.value.files![0];
+	const reader = new FileReader();
+	reader.addEventListener("load", () => {
+		const canvas = document.createElement("canvas");
+		canvas.width = 42;
+		canvas.height = 42;
+		const cx = canvas.getContext("2d")!;
+
+		const image = new Image();
+		image.addEventListener("load", () => {
+			cx.drawImage(image, 0, 0, 42, 42);
+			resolve(cx.getImageData(0, 0, 42, 42));
+		}, {once: true});
+		image.src = reader.result as string;
+	}, {once: true});
+	reader.readAsDataURL(file);
+});
+
+const console = window.console;
 
 
 const isOutputNode = computed(() => props.socket.node instanceof externals.DeviceTransformNode);
@@ -42,6 +66,16 @@ const isOutputNode = computed(() => props.socket.node instanceof externals.Devic
 					{{text}}
 				</option>
 			</select>
+		</template>
+
+		<template v-else-if="socket.type === St.Image">
+			<input type="file"
+					accept="image/*"
+					ref="fileInput"
+					@change="async () => {
+						socket.fieldValue = await readFile();
+						$emit('value-change');
+					}" />
 		</template>
 	</div>
 </template>

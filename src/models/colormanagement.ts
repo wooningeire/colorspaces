@@ -23,14 +23,6 @@ export class Col extends Array {
 	toXyz(): Xyz {
 		throw new TypeError("Abstract method");
 	}
-
-	toSrgb(): Srgb {
-		return this.toXyz().toSrgb();
-	}
-
-	toLinearSrgb(): LinearSrgb {
-		return xyzToLinear(this.toXyz(), this.illuminant);
-	}
 }
 
 export class Xyz extends Col {
@@ -45,10 +37,6 @@ export class Xyz extends Col {
 	toXyz() {
 		return new Xyz(this as any as Vec3, this.illuminant);
 	}
-
-	toSrgb() {
-		return xyzToLinear(this, this.illuminant).toSrgb();
-	}
 }
 
 export class Srgb extends Col {
@@ -57,21 +45,19 @@ export class Srgb extends Col {
 	}
 
 	static from(dataOrCol: Vec3 | Col): Srgb {
-		return dataOrCol instanceof Col
-				? dataOrCol.toSrgb()
-				: new Srgb(dataOrCol);
+		if (dataOrCol instanceof LinearSrgb) {
+			return linearToSrgb(dataOrCol);
+		} else if (dataOrCol instanceof Srgb) {
+			return new Srgb(dataOrCol as any as Vec3);
+		} else if (dataOrCol instanceof Col) {
+			return this.fromXyz(dataOrCol.toXyz());
+		} else {
+			return new Srgb(dataOrCol);
+		}
 	}
 
 	static fromXyz(xyz: Xyz): Srgb {
-		return xyzToLinear(xyz, xyz.illuminant).toSrgb();
-	}
-
-	toSrgb() {
-		return new Srgb(this as any as Vec3);
-	}
-
-	toLinearSrgb() {
-		return srgbToLinear(this);
+		return linearToSrgb(xyzToLinear(xyz, xyz.illuminant));
 	}
 }
 
@@ -84,16 +70,12 @@ export class LinearSrgb extends Col {
 		return dataOrCol instanceof Col
 				? dataOrCol instanceof Srgb
 						? srgbToLinear(dataOrCol)
-						: dataOrCol.toLinearSrgb()
+						: this.fromXyz(dataOrCol.toXyz())
 				: new LinearSrgb(dataOrCol);
 	}
 
 	static fromXyz(xyz: Xyz): Xyz {
 		return xyzToLinear(xyz, xyz.illuminant);
-	}
-
-	toSrgb() {
-		return linearToSrgb(this);
 	}
 }
 

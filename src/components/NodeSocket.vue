@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef} from "vue";
 
-import BaseSocketField from "./BaseSocketField.vue";
+import NodeSocketField from "./NodeSocketField.vue";
 
 import {Socket} from "@/models/Node";
 
@@ -106,7 +106,7 @@ defineExpose({
 		</div>
 		{{socket.label}}
 
-		<BaseSocketField v-if="shouldShowFields"
+		<NodeSocketField v-if="shouldShowFields"
 				:socket="socket" />
 	</div>
 </template>

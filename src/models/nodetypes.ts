@@ -18,7 +18,7 @@ export namespace images {
 			this.ins.push(
 				...(this.boundsSockets = [
 					new Socket(this, true, Socket.Type.Float, "From"),
-					new Socket(this, true, Socket.Type.Float, "To"),
+					new Socket(this, true, Socket.Type.Float, "To", true, {defaultValue: 1}),
 				]),
 			);
 
@@ -32,6 +32,43 @@ export namespace images {
 			const value0 = this.boundsSockets[0].inValueFn(...args);
 			const value1 = this.boundsSockets[1].inValueFn(...args);
 			return lerp(value0, value1, fac);
+		}
+	}
+
+	export class ImageFileNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Image file";
+
+		private readonly inSocket: Socket<SocketType.Image>;
+
+		whichDimension = 0;
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				(this.inSocket = new Socket(this, true, Socket.Type.Image, "File", false)),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color data"),
+			);
+		}
+
+		output(...args: number[]) {
+			const imageData = this.inSocket.inValue;
+			if (imageData) {
+				// TODO refactor
+				const x = Math.round(args[0] * 42);
+				const y = Math.round(args[1] * 42);
+
+				const index = (x + y * imageData.width) * 4;
+				const colorData = [...imageData.data.slice(index, index + 3)]
+						.map(comp => comp / 255);
+
+				return new cm.Srgb(colorData as Vec3);
+			}
+			return new cm.Srgb([0, 0, 0]);
 		}
 	}
 }
