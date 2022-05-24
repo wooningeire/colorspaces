@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {computed, ref, reactive, provide} from "vue";
+import {computed, ref, reactive, provide, nextTick, onMounted} from "vue";
 
 import NodeVue from "./NodeVue.vue";
 import NodeSocket from "./NodeSocket.vue";
@@ -66,8 +66,13 @@ const onLinkToSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 const linksComponent = ref(null as any as InstanceType<typeof TheNodeTreeLinks>);
 
 const rerenderLinks = () => {
-	linksComponent.value.$forceUpdate();
+	// Delay to next tick because socket positions in DOM have not updated yet
+	nextTick(() => {
+		linksComponent.value.$forceUpdate();
+	});
 };
+
+onMounted(rerenderLinks);
 
 
 const selectNode = (node: Node, clearSelection: boolean=true) => {
