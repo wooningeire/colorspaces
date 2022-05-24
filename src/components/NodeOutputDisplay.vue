@@ -45,11 +45,14 @@ onUpdated(rerenderCanvas);
 watch(() => props.node.output(), () => {
 	rerenderCanvas();
 });
+
+
+const nAxes = computed(() => 1);
 </script>
 
 <template>
 	<div class="color-display-box"
-			v-if="false"
+			v-if="nAxes === 0"
 			:style="{
 				'background': `rgb(${node.output(0.5)[outputIndex].map(x => x * 255)})`,
 			}"></div>

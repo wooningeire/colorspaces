@@ -56,7 +56,17 @@ main {
 	grid-template-rows: 1fr max(20vh, 15em);
 	grid-template-columns: 8em 1fr;
 
-	background: radial-gradient(circle, #4a514e, #2f3432 80%, #1f2321);
+	--grid-size: 16px;
+
+	background:
+			linear-gradient(0deg, #0000000f 2px, #0000 2px),
+			linear-gradient(90deg, #0000000f 2px, #0000 2px),
+			radial-gradient(circle, #4a514e, #2f3432 80%, #1f2321);
+	background-size:
+			var(--grid-size) var(--grid-size),
+			var(--grid-size) var(--grid-size),
+			100%;
+
 	color: #fff;
 
 	> .node-tree {
