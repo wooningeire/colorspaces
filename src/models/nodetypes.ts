@@ -444,9 +444,12 @@ export namespace externals {
 			);
 		}
 
-		output(...args: number[]): cm.Srgb[] {
-			return this.colorSockets.filter(socket => socket.hasLinks)
-					.map(socket => cm.Srgb.from(socket.inValueFn(...args)));
+		output(socketIndex: number, ...args: number[]): cm.Srgb {
+			const color = this.colorSockets[socketIndex]?.inValueFn(...args);
+
+			return color && cm.Srgb.from(color);
+			// return this.colorSockets.filter(socket => socket.hasLinks)
+			// 		.map(socket => cm.Srgb.from(socket.inValueFn(...args)));
 		}
 
 		pipeOutput() {

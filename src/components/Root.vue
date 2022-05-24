@@ -40,6 +40,7 @@ const addNode = <T extends Node>(nodeConstructor: new () => T, pos: Vec2=[0, 0])
 body {
 	margin: 0;
 	font-family: Atkinson Hyperlegible, Overpass, sans-serif;
+	font-weight: 300;
 }
 
 input,

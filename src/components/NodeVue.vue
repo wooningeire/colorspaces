@@ -3,6 +3,7 @@ import {inject, computed} from "vue";
 
 import NodeSocket from "./NodeSocket.vue";
 import NodeField from "./NodeField.vue";
+import NodeOutputValues from "./NodeOutputValues.vue";
 import NodeOutputDisplay from "./NodeOutputDisplay.vue";
 
 import {Node} from "@/models/Node";
@@ -161,9 +162,13 @@ const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value
 							$emit('potential-socket-position-change')" />
 		</div>
 
-		<template v-if="shouldDisplayOutput">
-			{{node.output().map((x: number) => x.toFixed(4))}}
-		</template>
+		<div class="node-output"
+				v-if="shouldDisplayOutput">
+			<!-- {{node.output().map((x: number) => x.toFixed(4))}} -->
+			<NodeOutputValues :values="node.output()"
+					:labels="['R', 'G', 'B']" />
+			<NodeOutputDisplay :node="node" />
+		</div>
 	</div>
 </template>
 
@@ -223,7 +228,24 @@ const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value
 			flex-flow: column;
 		}
 	}
+
+	> .in-sockets :deep(.color-display-box) {
+		position: absolute;
+		right: .5em;
+		height: 1em;
+	}
 	
+
+	> .node-output {
+		display: flex;
+		justify-content: space-evenly;
+		align-items: center;
+
+		:deep(.color-display-box) {
+			height: 3em;
+		} 
+	}
+
 	> .node-border {
 		--node-border-width: 4px;
 
@@ -247,15 +269,6 @@ const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value
 		-webkit-mask-composite: xor;
 
 		pointer-events: none;
-	}
-
-	:deep(.color-display-box) {
-		position: absolute;
-		right: .5em;
-		width: 3em;
-		height: 1em;
-
-		box-shadow: 0 0 0 2px var(--node-border-color);
 	}
 
 	:deep(input) {
