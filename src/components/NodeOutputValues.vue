@@ -21,7 +21,7 @@ const nDecimals = 4;
 	<div class="output-values">
 		<template v-for="(value, index) of values">
 			<div class="header">{{labels[index]}}</div>
-			<div>{{values[index].toFixed(nDecimals)}}</div>
+			<div class="data">{{values[index].toFixed(nDecimals)}}</div>
 		</template>
 	</div>
 </template>
@@ -44,5 +44,8 @@ const nDecimals = 4;
 			content: ":";
 		}
 	}
+
+	// > .data {
+	// }
 }
 </style>

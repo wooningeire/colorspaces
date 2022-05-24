@@ -121,13 +121,13 @@ const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value
 			{{node.label}}
 		</div>
 
-		<div class="node-content">
-			<!-- <div class="fields">
+		<!-- <div class="node-content">
+			<div class="fields">
 				<NodeField v-for="field of node.fields"
 						:key="field.id"
 						:field="field" />
-			</div> -->
-		</div>
+			</div>
+		</div> -->
 
 		<div class="in-sockets">
 			<template v-for="(socket, index) of node.ins"
@@ -178,8 +178,8 @@ const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value
 	// display: inline grid;
 	display: flex;
 	flex-direction: column;
-	width: 160px;
-	padding-bottom: 1em;
+	width: 140px;
+	padding: 0.5em 0;
 
 	background: #2e3331df;
 	box-shadow: 0 4px 40px -20px #000000af;
@@ -213,9 +213,12 @@ const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value
 	}
 
 	> .label {
-		text-align: center;
+		position: absolute;
+		bottom: calc(100% + 0.25em);
+
+		// text-align: center;
 		padding: 0 0.25em;
-		font-weight: 800;
+		// font-weight: 800;
 
 		// pointer-events: none;
 	}
