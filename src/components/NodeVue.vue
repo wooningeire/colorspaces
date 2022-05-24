@@ -6,7 +6,7 @@ import NodeField from "./NodeField.vue";
 import NodeOutputDisplay from "./NodeOutputDisplay.vue";
 
 import {Node} from "@/models/Node";
-import {spaces, externals} from "@/models/nodetypes";
+import {rgbModels, spaces, math, images, externals} from "@/models/nodetypes";
 
 import {Listen, clearTextSelection} from "@/util";
 
@@ -78,6 +78,24 @@ const shouldDisplayOutput = computed(
 	() => props.node.ins[0].links[0]
 			&& Object.values(spaces).includes(props.node.constructor as any),
 );
+
+
+const nodeCategories = new Map([rgbModels, spaces, math, images, externals]
+		.map(category =>
+				Object.values(category)
+						.map(nodeType => [nodeType.TYPE, category]))
+		.flat() as [symbol, unknown][]);
+
+
+const nodeCategoryColors = new Map<unknown, string>([
+	[rgbModels, "linear-gradient(hsl(-20deg 40% 60%), hsl(30deg 40% 50%))"],
+	[spaces, "linear-gradient(hsl(260deg 40% 60%), hsl(300deg 40% 60%))"],
+	[math, "linear-gradient(hsl(50deg 40% 60%), hsl(90deg 40% 60%))"],
+	[images, "linear-gradient(hsl(165deg 10% 50%), hsl(185deg 10% 60%)"],
+	[externals, "linear-gradient(hsl(220deg 40% 50%), hsl(200deg 40% 50%)"],
+]);
+const nodeCategory = computed(() => nodeCategories.get(props.node.type));
+const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value) ?? "#ffffff3f");
 </script>
 
 <template>
@@ -88,13 +106,16 @@ const shouldDisplayOutput = computed(
 			}"
 			:style="{
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
-			}"
+				'--node-border-background': nodeBorderColor,
+			} as any"
 			:class="{
 				'subtle': node instanceof externals.DevicePostprocessingNode
 						|| node instanceof externals.EnvironmentNode
 						|| node instanceof externals.VisionNode,
 				'selected': isSelected,
 			}">
+		<div class="node-border"></div>
+
 		<div class="label">
 			{{node.label}}
 		</div>
@@ -152,11 +173,9 @@ const shouldDisplayOutput = computed(
 	// display: inline grid;
 	display: flex;
 	flex-direction: column;
-	border: 4px solid var(--node-border-color);
 	width: 160px;
 	padding-bottom: 1em;
 
-	border-radius: 1em;
 	background: #2e3331df;
 	box-shadow: 0 4px 40px -20px #000000af;
 
@@ -164,6 +183,7 @@ const shouldDisplayOutput = computed(
 
 	cursor: default;
 
+	--node-border-background: linear-gradient(#9c20aa, #fb3570);
 	--node-border-color: #ffffff3f;
 
 	// grid-template-areas:
@@ -183,8 +203,8 @@ const shouldDisplayOutput = computed(
 		}
 	}
 
-	&.selected {
-		border-color: #80efff;
+	&.selected > .node-border {
+		--node-border-background: #80efff;
 	}
 
 	> .label {
@@ -202,6 +222,31 @@ const shouldDisplayOutput = computed(
 			display: flex;
 			flex-flow: column;
 		}
+	}
+	
+	> .node-border {
+		--node-border-width: 4px;
+
+		position: absolute;
+
+		inset: calc(-1 * var(--node-border-width));
+		padding: var(--node-border-width);
+		border-radius: 1em;
+
+		background: var(--node-border-background);
+
+		// Border mask boilerplate from https://stackoverflow.com/a/51496341
+		mask: 
+				linear-gradient(#fff 0 0) content-box, 
+				linear-gradient(#fff 0 0);
+		mask-composite: exclude;
+
+		-webkit-mask: 
+				linear-gradient(#fff 0 0) content-box, 
+				linear-gradient(#fff 0 0);
+		-webkit-mask-composite: xor;
+
+		pointer-events: none;
 	}
 
 	:deep(.color-display-box) {

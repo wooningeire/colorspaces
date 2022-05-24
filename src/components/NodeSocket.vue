@@ -2,10 +2,9 @@
 import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef} from "vue";
 
 import NodeSocketField from "./NodeSocketField.vue";
-
-import {Socket} from "@/models/Node";
-
 import {tree} from "./store";
+
+import {Socket, SocketType as St} from "@/models/Node";
 
 
 const socketVue = getCurrentInstance()!.proxy;
@@ -80,6 +79,15 @@ const willAcceptLink = () => {
 };
 
 
+const socketTypeColors = new Map([
+	[St.Float, "#aaa"],
+	[St.RgbRaw, "#75d"],
+	[St.ColTransformed, "#dd3"],
+	[St.RgbRawOrColTransformed, "linear-gradient(45deg, #75d 50%, #dd3 50%)"],
+]);
+const socketColor = computed(() => socketTypeColors.get(props.socket.type) ?? "");
+
+
 defineExpose({
 	socketEl,
 	socketPos,
@@ -102,7 +110,8 @@ defineExpose({
 				@pointerdown.stop
 
 				@dblclick="unlinkLinks">
-			<div class="socket-display"></div>
+			<div class="socket-display"
+					:style="{'--socket-color': socketColor} as any"></div>
 		</div>
 		{{socket.label}}
 
@@ -122,7 +131,7 @@ defineExpose({
 
 	> .socket {
 		--socket-box-size: 20px;
-		--socket-size: 10px;
+		--socket-size: 12px;
 		--socket-offset: -12px;
 
 		width: var(--socket-box-size);
@@ -139,8 +148,10 @@ defineExpose({
 			height: var(--socket-size);
 
 			border-radius: 50%;
-			background: currentcolor;
+			background: var(--socket-color);
 			box-shadow: 0 0 0 4px #2f3432;
+
+			--socket-color: currentcolor;
 		}
 	}
 
