@@ -1,5 +1,121 @@
-import {Color, Vec2, mod} from "../util";
+import {Color, Vec2, Vec3, mod} from "../util";
 import * as math from "mathjs";
+
+/**
+ * Represents a color in an absolute color space.
+ */
+export class Col extends Array {
+	static readonly [Symbol.species] = Array;
+
+	constructor(
+		/* readonly */ data: number[],
+		readonly illuminant: Xy,
+	) {
+		super();
+		this.push(...data);
+		// Object.freeze(this);
+	}
+
+	static fromXyz(xyz: Xyz): Col {
+		throw new TypeError("Abstract method");
+	}
+
+	toXyz(): Xyz {
+		throw new TypeError("Abstract method");
+	}
+}
+
+export class Xyz extends Col {
+	constructor(data: Vec3, illuminant: Xy=illuminantsXy["2deg"]["E"]) {
+		super(data, illuminant);
+	}
+
+	static fromXyz(xyz: Xyz): Xyz {
+		return new Xyz(xyz as any as Vec3, xyz.illuminant);
+	}
+
+	toXyz() {
+		return new Xyz(this as any as Vec3, this.illuminant);
+	}
+}
+
+export class Srgb extends Col {
+	constructor(data: Vec3) {
+		super(data, illuminantsXy["2deg"]["D65"]);
+	}
+
+	static from(dataOrCol: Vec3 | Col): Srgb {
+		if (dataOrCol instanceof LinearSrgb) {
+			return linearToSrgb(dataOrCol);
+		} else if (dataOrCol instanceof Srgb) {
+			return new Srgb(dataOrCol as any as Vec3);
+		} else if (dataOrCol instanceof Col) {
+			return this.fromXyz(dataOrCol.toXyz());
+		} else {
+			return new Srgb(dataOrCol);
+		}
+	}
+
+	static fromXyz(xyz: Xyz): Srgb {
+		return linearToSrgb(xyzToLinear(xyz, xyz.illuminant));
+	}
+}
+
+export class LinearSrgb extends Col {
+	constructor(data: Vec3) {
+		super(data, illuminantsXy["2deg"]["D65"]);
+	}
+
+	static from(dataOrCol: Vec3 | Col): LinearSrgb {
+		return dataOrCol instanceof Col
+				? dataOrCol instanceof Srgb
+						? srgbToLinear(dataOrCol)
+						: this.fromXyz(dataOrCol.toXyz())
+				: new LinearSrgb(dataOrCol);
+	}
+
+	static fromXyz(xyz: Xyz): Xyz {
+		return xyzToLinear(xyz, xyz.illuminant);
+	}
+}
+
+export class Xy extends Col {
+	constructor(data: Vec2, illuminant: Xy=illuminantE) {
+		super(data, illuminant);
+	}
+
+	toXyz(): Xyz {
+		return xyyToXyz(this, this.illuminant);
+	}
+}
+
+export class Xyy extends Col {
+	constructor(data: Vec3, illuminant: Xy=illuminantE) {
+		super(data, illuminant);
+	}
+
+	static fromXyz(xyz: Xyz): Xyy {
+		return xyzToXyy(xyz, xyz.illuminant);
+	}
+
+	toXyz(): Xyz {
+		return xyyToXyz(this, this.illuminant);
+	}
+}
+
+const illuminantE = new Xy([1/3, 1/3], null as any as Xy);
+Object.assign(illuminantE, {illuminant: illuminantE});
+
+export class Lab extends Col {
+	constructor(data: Vec3, illuminant: Xy) {
+		super(data, illuminant);
+	}
+
+	toXyz(): Xyz {
+		return labToXyz(this, this.illuminant.toXyz());
+	}
+}
+
 
 /** Transfer function as defined by https://www.w3.org/Graphics/Color/srgb
  * 
@@ -10,7 +126,7 @@ export const linearCompToSrgb = (comp: number) =>
 				? 12.9232102 * comp
 				: 1.055 * comp**(1/2.4) - 0.055;
 
-export const linearToSrgb = (linear: Color) => linear.map(linearCompToSrgb) as Color;
+export const linearToSrgb = (linear: LinearSrgb) => new Srgb(linear.map(linearCompToSrgb) as Vec3);
 
 /** Inverse transfer function as defined by https://www.w3.org/Graphics/Color/srgb; uses ICC v4 profile formula
  */
@@ -26,7 +142,7 @@ export const srgbCompToLinear = (comp: number) =>
 				? comp / 12.9232102
 				: ((comp + 0.055) / 1.055)**(2.4);
 
-export const srgbToLinear = (linear: Color) => linear.map(srgbCompToLinear) as Color;
+export const srgbToLinear = (linear: Srgb) => new LinearSrgb(linear.map(srgbCompToLinear) as any as Vec3);
 
 
 export const cmyToRgb = (vec: Color) => vec.map(comp => 1 - comp);
@@ -74,7 +190,7 @@ export const hsvToRgb = ([hue, sat, value]: Color) => {
 };
 
 
-export const xyzToLinear = (xyz: Color, illuminantXy: Vec2) => {
+export const xyzToLinear = (xyz: Xyz, illuminantXy: Xy) => {
 	const adaptedXyz = math.multiply(
 		chromaticAdaptationMat(
 			xyyToXyz(illuminantXy),
@@ -91,20 +207,32 @@ export const xyzToLinear = (xyz: Color, illuminantXy: Vec2) => {
 		[+0.0557, -0.2040, +1.0570],
 	], adaptedXyz);
 
-	return mat as any as Color;
+	return new LinearSrgb(mat as any as Vec3);
 };
 
 // https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space
-export const xyyToXyz = ([x, y, lum=1]: Color | Vec2) => y === 0
-		? [0, 0, 0] as Color
-		: [
+export const xyyToXyz = ([x, y, lum=1]: Xy | Xyy, illuminant: Xy=illuminantE) => y === 0
+		? new Xyz([0, 0, 0], illuminant)
+		: new Xyz([
 			lum / y * x,
 			lum,
 			lum / y * (1 - x - y),
-		] as Color;
+		], illuminant);
+
+export const xyzToXyy = ([x, y, z]: Xyz, illuminant: Xy=illuminantE) => {
+	const dot1 = x + y + z;
+
+	return dot1 === 0
+			? new Xyy([0, 0, 0], illuminant)
+			: new Xyy([
+				x / dot1,
+				y / dot1,
+				y,
+			], illuminant);
+};
 
 // https://en.wikipedia.org/wiki/CIELAB_color_space#From_CIELAB_to_CIEXYZ
-export const labToXyz = ([l, a, b]: Color, referenceWhite: Color) => {
+export const labToXyz = ([l, a, b]: Lab, referenceWhiteXyz: Xyz) => {
 	const tempY = (l + 16) / 116;
 	const tempX = tempY + a / 500;
 	const tempZ = tempY - b / 200;
@@ -114,11 +242,11 @@ export const labToXyz = ([l, a, b]: Color, referenceWhite: Color) => {
 					? comp**3
 					: 3 * (6/29)**2 * (comp - 4/29);
 
-	return [
-		compHelper(tempX) * referenceWhite[0],
-		compHelper(tempY) * referenceWhite[1],
-		compHelper(tempZ) * referenceWhite[2],
-	] as Color;
+	return new Xyz([
+		compHelper(tempX) * referenceWhiteXyz[0],
+		compHelper(tempY) * referenceWhiteXyz[1],
+		compHelper(tempZ) * referenceWhiteXyz[2],
+	]);
 };
 
 // https://www.mathworks.com/help/images/ref/whitepoint.html
@@ -141,31 +269,31 @@ export const illuminantsXyz = <{
 
 export const illuminantsXy = <{
 	[standard: string]: {
-		[illuminant: string]: Vec2,
+		[illuminant: string]: Xy,
 	},
 }>{
 	"2deg": {
-		"A": [0.44758, 0.40745],
-        "B": [0.34842, 0.35161],
-        "C": [0.31006, 0.31616],
-        "D50": [0.34570, 0.35850],
-        "D55": [0.33243, 0.34744],
-        "D60": [0.321616709705268, 0.337619916550817],
-        "D65": [0.31270, 0.32900],
-        "D75": [0.29903, 0.31488],
-        "E": [1 / 3, 1 / 3],
+		"A": new Xy([0.44758, 0.40745]),
+        "B": new Xy([0.34842, 0.35161]),
+        "C": new Xy([0.31006, 0.31616]),
+        "D50": new Xy([0.34570, 0.35850]),
+        "D55": new Xy([0.33243, 0.34744]),
+        "D60": new Xy([0.321616709705268, 0.337619916550817]),
+        "D65": new Xy([0.31270, 0.32900]),
+        "D75": new Xy([0.29903, 0.31488]),
+        "E": new Xy([1/3, 1/3]),
 	},
 
 	"10deg": {
-		"A": [0.45117, 0.40594],
-        "B": [0.34980, 0.35270],
-        "C": [0.31039, 0.31905],
-        "D50": [0.34773, 0.35952],
-        "D55": [0.33412, 0.34877],
-        "D60": [0.322986926715820, 0.339275732345997],
-        "D65": [0.31382, 0.33100],
-        "D75": [0.29968, 0.31740],
-        "E": [1 / 3, 1 / 3],
+		"A": new Xy([0.45117, 0.40594]),
+        "B": new Xy([0.34980, 0.35270]),
+        "C": new Xy([0.31039, 0.31905]),
+        "D50": new Xy([0.34773, 0.35952]),
+        "D55": new Xy([0.33412, 0.34877]),
+        "D60": new Xy([0.322986926715820, 0.339275732345997]),
+        "D65": new Xy([0.31382, 0.33100]),
+        "D75": new Xy([0.29968, 0.31740]),
+        "E": new Xy([1/3, 1/3]),
 	},
 
 	"": {
@@ -187,7 +315,7 @@ const chromaticAdaptationTransforms = {
 /**
  * Adapted from https://github.com/colour-science/colour/blob/develop/colour/adaptation/vonkries.py#L44
  */
-const chromaticAdaptationMat = (testWhiteXyz: Color, refWhiteXyz: Color, adaptationMatrix: number[][]) => {
+const chromaticAdaptationMat = (testWhiteXyz: Xyz, refWhiteXyz: Xyz, adaptationMatrix: number[][]) => {
 	const newTestWhiteXyz = math.multiply(adaptationMatrix, testWhiteXyz);
 	const newRefWhiteXyz = math.multiply(adaptationMatrix, refWhiteXyz);
 

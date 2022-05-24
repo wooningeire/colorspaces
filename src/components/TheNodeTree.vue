@@ -1,8 +1,129 @@
+<script lang="ts" setup>
+import {computed, ref, reactive, provide} from "vue";
+
+import NodeVue from "./NodeVue.vue";
+import NodeSocket from "./NodeSocket.vue";
+import TheNodeTreeLinks from "./TheNodeTreeLinks.vue";
+
+import {Vec2, Listen, clearTextSelection} from "@/util";
+import {Socket, Node} from "@/models/Node";
+
+import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";
+
+
+const pos = reactive([0, 0]);
+
+const pointerX = ref(-1);
+const pointerY = ref(-1);
+
+
+provide("tree", tree);
+
+
+
+const socketVues = new WeakMap<Socket, InstanceType<typeof NodeSocket>>();
+provide("socketVues", socketVues);
+
+const draggedSocketVue = ref(null as InstanceType<typeof NodeSocket> | null);
+
+const draggedSocket = computed(() => draggedSocketVue.value?.socket);
+const draggingSocket = computed(() => Boolean(draggedSocketVue.value));
+
+provide("draggedSocket", draggedSocket);
+provide("draggingSocket", draggingSocket);
+
+
+const onDragSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
+	draggedSocketVue.value = socketVue;
+
+	[pointerX.value, pointerY.value] = draggedSocketVue.value.socketPos();
+
+	const dragListener = Listen.for(window, "dragover", (event: DragEvent) => {
+		pointerX.value = event.pageX;
+		pointerY.value = event.pageY;
+	});
+
+	socketVue.socketEl.addEventListener("dragend", () => {
+		draggedSocketVue.value = null;
+
+		dragListener.detach();
+	}, {once: true});
+};
+
+const onLinkToSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
+	// preemptive + stops TypeScript complaint
+	if (!draggedSocket.value) throw new TypeError("Not currently dragging from a socket");
+
+	if (draggedSocket.value.isInput) {
+		tree.linkSockets(socketVue.socket, draggedSocket.value);
+	} else {
+		tree.linkSockets(draggedSocket.value, socketVue.socket);
+	}
+};
+
+
+
+const linksComponent = ref(null as any as InstanceType<typeof TheNodeTreeLinks>);
+
+const rerenderLinks = () => {
+	linksComponent.value.$forceUpdate();
+};
+
+
+const selectNode = (node: Node, clearSelection: boolean=true) => {
+	if (clearSelection) {
+		selectedNodes.clear();
+	}
+	selectedNodes.add(node);
+
+	// For layering purposes — places node at top
+	// this.tree.nodes.delete(node);
+	// this.tree.nodes.add(node);
+};
+
+const cancelSelect = () => {
+	selectedNodes.clear();
+};
+
+const onPointerDownSelf = () => {
+	if (modifierKeys.shift) {
+		clearTextSelection();
+	}
+
+	if (!modifierKeys.shift) {
+		cancelSelect();
+	}
+};
+
+
+defineExpose({
+	selectNode,
+});
+
+/* srgbOutput() {
+	const resultSocket = this.deviceNodes.transformNode.ins[0];
+
+	for (const link of resultSocket.links) {
+		if (link.src.type !== Socket.Type.ColTransformed) continue;
+		return link.src.node.output();
+	}
+
+	return [1, 1, 1];
+}, */
+
+// recomputeOutputColor() {
+// 	const displayColor = this.srgbOutput() as Color;
+// },
+</script>
+
 <template>
-	<div class="node-tree">
+	<!-- drag events here are from node tray -->
+	<div class="node-tree"
+			@dragover="event => isDraggingNodeFromNodeTray && event.preventDefault()"
+			@drop="event => isDraggingNodeFromNodeTray && $emit('add-node', currentlyDraggedNodeConstructor, [event.pageX, event.pageY])">
 		<div class="nodes"
 				@pointerdown.self="onPointerDownSelf">
-			<BaseNode v-for="node of tree.nodes"
+			<NodeVue v-for="node of tree.nodes"
 					:key="node.id"
 					:node="node"
 					@drag-socket="onDragSocket"
@@ -22,179 +143,11 @@
 					:x2="pointerX"
 					:y2="pointerY" />
 
-			<BaseLinks :socketVues="socketVues"
+			<TheNodeTreeLinks :socketVues="socketVues"
 					ref="linksComponent" />
 		</svg>
 	</div>
 </template>
-
-<script lang="ts">
-import {defineComponent, computed, PropType, inject} from "vue";
-
-import BaseNode from "./BaseNode.vue";
-import BaseSocket from "./BaseSocket.vue";
-import BaseLinks from "./BaseLinks.vue";
-
-import {Tree, Socket, Node} from "../models/Node";
-import {rgbModels, spaces, externals} from "../models/nodetypes";
-import {Vec2, Listen, Color, ModifierKeys, clearTextSelection} from "../util";
-
-export interface DeviceNodes {
-	transformNode: externals.DeviceTransformNode;
-	postprocessingNode: externals.DevicePostprocessingNode;
-	environmentNode: externals.EnvironmentNode;
-	visionNode: externals.VisionNode;
-}
-
-export default defineComponent({
-	name: "TheNodeTree",
-
-	data: () => (<{
-		pos: Vec2,
-
-		draggedSocketVue: InstanceType<typeof BaseSocket> | null,
-		socketVues: WeakMap<Socket, InstanceType<typeof BaseSocket>>,
-
-		pointerX: number,
-		pointerY: number,
-	}>{
-		pos: [0, 0],
-
-		draggedSocketVue: null,
-		socketVues: new WeakMap(),
-
-		pointerX: -1,
-		pointerY: -1,
-	}),
-
-	props: {
-		tree: {
-			type: Tree,
-			required: true,
-		},
-
-		deviceNodes: {
-			type: Object as PropType<DeviceNodes>,
-			required: true,
-		},
-	},
-
-	setup() {
-		return {
-			selectedNodes: inject("selectedNodes") as Set<Node>,
-			modifierKeys: inject("modifierKeys") as ModifierKeys,
-		};
-	},
-
-	provide() {
-		return {
-			draggedSocket: computed(() => this.draggedSocket),
-			draggingSocket: computed(() => this.draggingSocket),
-			tree: this.tree,
-			socketVues: this.socketVues,
-		};
-	},
-
-	methods: {
-		/* srgbOutput() {
-			const resultSocket = this.deviceNodes.transformNode.ins[0];
-
-			for (const link of resultSocket.links) {
-				if (link.src.type !== Socket.Type.ColTransformed) continue;
-				return link.src.node.output();
-			}
-
-			return [1, 1, 1];
-		}, */
-
-		//#region Events
-		rerenderLinks() {
-			(this.$refs.linksComponent as InstanceType<typeof BaseLinks>).$forceUpdate();
-		},
-
-		onDragSocket(socketVue: InstanceType<typeof BaseSocket>) {
-			this.draggedSocketVue = socketVue;
-
-			[this.pointerX, this.pointerY] = this.draggedSocketVue.socketPos();
-
-			const dragListener = Listen.for(window, "dragover", (event: DragEvent) => {
-				this.pointerX = event.pageX;
-				this.pointerY = event.pageY;
-			});
-
-			socketVue.socketEl.addEventListener("dragend", () => {
-				this.draggedSocketVue = null;
-
-				dragListener.detach();
-			}, {once: true});
-		},
-
-		onLinkToSocket(socketVue: InstanceType<typeof BaseSocket>) {
-			// preemptive + stops TypeScript complaint
-			if (!this.draggedSocket) throw new TypeError("Not currently dragging from a socket");
-
-			if (this.draggedSocket.isInput) {
-				this.tree.linkSockets(socketVue.socket, this.draggedSocket);
-			} else {
-				this.tree.linkSockets(this.draggedSocket, socketVue.socket);
-			}
-		},
-		//#endregion
-
-		getSocketVue(socket: Socket) {
-			return this.socketVues.get(socket);
-		},
-
-		// recomputeOutputColor() {
-		// 	const displayColor = this.srgbOutput() as Color;
-		// },
-
-		selectNode(node: Node, clearSelection: boolean=true) {
-			if (clearSelection) {
-				this.selectedNodes.clear();
-			}
-			this.selectedNodes.add(node);
-
-			// For layering purposes — places node at top
-			// this.tree.nodes.delete(node);
-			// this.tree.nodes.add(node);
-		},
-
-		cancelSelect() {
-			this.selectedNodes.clear();
-		},
-		
-		onPointerDownSelf() {
-			if (this.modifierKeys.shift) {
-				clearTextSelection();
-			}
-
-			if (!this.modifierKeys.shift) {
-				this.cancelSelect();
-			}
-		},
-	},
-
-	computed: {
-		draggedSocket() {
-			return this.draggedSocketVue?.socket;
-		},
-
-		draggingSocket() {
-			return Boolean(this.draggedSocketVue);
-		},
-
-		externals() {
-			return externals;
-		},
-	},
-
-	components: {
-		BaseNode,
-		BaseLinks,
-	},
-});
-</script>
 
 <style lang="scss" scoped>
 .node-tree {

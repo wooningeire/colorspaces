@@ -45,9 +45,10 @@ export class Tree {
 	deleteNode(node: Node) {
 		this.nodes.delete(node);
 
-		[...node.ins, ...node.outs].forEach(socket => {
-			socket.links.forEach(this.unlink, this);
-		});
+		[...node.ins, ...node.outs]
+				.map(socket => socket.links)
+				.flat()
+				.forEach(link => this.unlink(link));
 	}
 }
 
@@ -70,7 +71,7 @@ export class Node {
 		public label: string=new.target.LABEL,
 	) {}
 
-	output(): any {
+	output(...args: any[]): any {
 		throw new TypeError("Abstract method; call on child class");
 	}
 
@@ -81,19 +82,25 @@ export class Node {
 	onDependencyUpdate() {} // doesn't do anything yet
 }
 
+
 export enum SocketType {
 	Unknown,
 	Float,
 	RgbRaw,
+	RgbRawOrColTransformed,
 	ColTransformed,
 	Dropdown,
+	Image,
 }
+const St = SocketType;
 
 export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.Float ? number :
 		St extends SocketType.RgbRaw ? Color :
 		St extends SocketType.ColTransformed ? Color :
+		St extends SocketType.RgbRawOrColTransformed ? Color :
 		St extends SocketType.Dropdown ? string :
+		St extends SocketType.Image ? ImageData :
 		never;
 
 type SocketData<St extends SocketType=any> = 
@@ -117,9 +124,21 @@ export class Socket<St extends SocketType=any> {
 
 	static readonly Type = SocketType;
 	private static readonly defaultValues = new Map<SocketType, SocketValue>([
-		[SocketType.Float, 0],
-		[SocketType.RgbRaw, [0, 0, 0]],
+		[St.Float, 0],
+		[St.RgbRaw, [0, 0, 0]],
+		[St.RgbRawOrColTransformed, [0, 0, 0]],
 	]);
+
+	private static readonly typeCanBeLinkedTo = new Map<SocketType, SocketType[]>([
+		[St.RgbRaw, [St.RgbRaw, St.RgbRawOrColTransformed]],
+		[St.ColTransformed, [St.ColTransformed, St.RgbRawOrColTransformed]],
+	]);
+
+	static canLinkTypeTo(srcType: SocketType, dstType: SocketType) {
+		return this.typeCanBeLinkedTo.get(srcType)?.includes(dstType)
+				?? srcType === dstType;
+	}
+
 
 	readonly links: Link[] = [];
 
@@ -150,6 +169,14 @@ export class Socket<St extends SocketType=any> {
 
 	get inValue(): SocketValue<St> {
 		return this.links[0]?.srcNode.output() ?? this.fieldValue;
+	}
+
+	inValueFn(...args: any[]): SocketValue<St> {
+		return this.links[0]?.srcNode.output(...args) ?? this.fieldValue;
+	}
+
+	get hasLinks() {
+		return this.links.length > 0;
 	}
 }
 

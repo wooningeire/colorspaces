@@ -1,15 +1,73 @@
 import {Node, Socket, SocketType} from "./Node";
-import {Color, Vec2} from "../util";
 import * as cm from "./colormanagement";
-import { e } from "mathjs";
+
+import {Color, Vec2, Vec3, pipe, lerp} from "@/util";
 
 export namespace images {
 	export class GradientNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Value range";
+		static readonly LABEL = "Gradient";
+
+		private readonly boundsSockets: Socket<SocketType.Float>[];
+
+		whichDimension = 0;
 
 		constructor(pos?: Vec2) {
 			super(pos);
+
+			this.ins.push(
+				...(this.boundsSockets = [
+					new Socket(this, true, Socket.Type.Float, "From"),
+					new Socket(this, true, Socket.Type.Float, "To", true, {defaultValue: 1}),
+				]),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.Float, "Values"),
+			);
+		}
+
+		output(...args: number[]): number {
+			const fac = args[this.whichDimension] ?? 0;
+			const value0 = this.boundsSockets[0].inValueFn(...args);
+			const value1 = this.boundsSockets[1].inValueFn(...args);
+			return lerp(value0, value1, fac);
+		}
+	}
+
+	export class ImageFileNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Image file";
+
+		private readonly inSocket: Socket<SocketType.Image>;
+
+		whichDimension = 0;
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				(this.inSocket = new Socket(this, true, Socket.Type.Image, "File", false)),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color data"),
+			);
+		}
+
+		output(...args: number[]) {
+			const imageData = this.inSocket.inValue;
+			if (imageData) {
+				const x = Math.round(args[0] * imageData.width);
+				const y = Math.round(args[1] * imageData.height);
+
+				const index = (x + y * imageData.width) * 4;
+				const colorData = [...imageData.data.slice(index, index + 3)]
+						.map(comp => comp / 255);
+
+				return new cm.Srgb(colorData as Vec3);
+			}
+			return new cm.Srgb([0, 0, 0]);
 		}
 	}
 }
@@ -34,8 +92,12 @@ export namespace rgbModels {
 			);
 		}
 
-		output(): Color {
-			return this.ins.map(socket => socket.inValue) as Color;
+		output(...args: any[]): Color {
+			return this.ins.map(socket => socket.inValueFn(...args)) as Color;
+		}
+
+		pipeOutput() {
+			return pipe();
 		}
 	}
 
@@ -57,8 +119,8 @@ export namespace rgbModels {
 			);
 		}
 
-		output(): Color {
-			return cm.hslToRgb(this.ins.map(socket => socket.inValue) as Color) as Color;
+		output(...args: number[]): Color {
+			return cm.hslToRgb(this.ins.map(socket => socket.inValueFn(...args)) as Color) as Color;
 		}
 	}
 
@@ -80,8 +142,8 @@ export namespace rgbModels {
 			);
 		}
 
-		output(): Color {
-			return cm.hsvToRgb(this.ins.map(socket => socket.inValue) as Color) as Color;
+		output(...args: number[]): Color {
+			return cm.hsvToRgb(this.ins.map(socket => socket.inValueFn(...args)) as Color) as Color;
 		}
 	}
 
@@ -103,8 +165,8 @@ export namespace rgbModels {
 			);
 		}
 
-		output(): Color {
-			return cm.cmyToRgb(this.ins.map(socket => socket.inValue) as Color) as Color;
+		output(...args: number[]): Color {
+			return cm.cmyToRgb(this.ins.map(socket => socket.inValueFn(...args)) as Color) as Color;
 		}
 	}
 }
@@ -116,7 +178,7 @@ export namespace math {
 
 		private readonly methodSocket: Socket<SocketType.Dropdown>;
 		private readonly facSocket: Socket<SocketType.Float>;
-		private readonly colorSockets: Socket<SocketType.RgbRaw>[];
+		private readonly colorSockets: Socket<SocketType.RgbRawOrColTransformed>[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -132,8 +194,8 @@ export namespace math {
 				})),
 				(this.facSocket = new Socket(this, true, Socket.Type.Float, "Blend amount")),
 				...(this.colorSockets = [
-					new Socket(this, true, Socket.Type.RgbRaw, "RGB"),
-					new Socket(this, true, Socket.Type.RgbRaw, "RGB"),
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color"),
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color"),
 				]),
 			);
 
@@ -142,15 +204,18 @@ export namespace math {
 			);
 		}
 
-		output(): Color {
-			const fac = this.facSocket.inValue;
+		output(...args: number[]): Color {
+			const fac = this.facSocket.inValueFn(...args);
 
-			const col0 = this.colorSockets[0].inValue;
-			const col1 = this.colorSockets[1].inValue;
+			// TODO check that inputs are of same type
+			const col0 = this.colorSockets[0].inValueFn(...args);
+			const col1 = this.colorSockets[1].inValueFn(...args);
+
+			// and make output the same type as the inputs
 
 			switch (this.methodSocket.inValue) {
 				case "mix":
-					return col0.map((_, i) => col0[i] * (1 - fac) + col1[i] * fac) as Color;
+					return col0.map((_, i) => lerp(col0[i], col1[i], fac)) as Color;
 
 				case "add":
 					return col0.map((_, i) => col0[i] + col1[i] * fac) as Color;
@@ -171,11 +236,13 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Linear sRGB";
 
+		readonly inSocket: Socket<SocketType.RgbRawOrColTransformed>;
+
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.RgbRaw, "RGB"),
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
 			);
 
 			this.outs.push(
@@ -183,8 +250,8 @@ export namespace spaces {
 			);
 		}
 
-		output(): Color {
-			return cm.linearToSrgb(this.ins[0].inValue as Color);
+		output(...args: number[]) {
+			return cm.LinearSrgb.from(this.inSocket.inValueFn(...args))
 		}
 	}
 
@@ -192,11 +259,13 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "sRGB";
 
+		readonly inSocket: Socket<SocketType.RgbRawOrColTransformed>;
+
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.RgbRaw, "RGB"),
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
 			);
 
 			this.outs.push(
@@ -204,8 +273,8 @@ export namespace spaces {
 			);
 		}
 
-		output(): Color {
-			return this.ins[0].inValue as Color;
+		output(...args: number[]): cm.Srgb {
+			return cm.Srgb.from(this.inSocket.inValueFn(...args));
 		}
 	}
 
@@ -234,7 +303,6 @@ export namespace spaces {
 	};
 	const getIlluminant = (socket: Socket<SocketType.Dropdown>) => {
 		const illuminantId = socket.inValue;
-		let illuminant: Vec2;
 		if (illuminantId !== "custom") {
 			const [standard, illuminantName] = illuminantId.split("/"); 
 			return cm.illuminantsXy[standard][illuminantName];
@@ -267,24 +335,21 @@ export namespace spaces {
 			);
 		}
 
-		output(): Color {
+		output(...args: number[]) {
 			const illuminant = getIlluminant(this.whitePointSocket);
 
-			return cm.linearToSrgb(
-				cm.xyzToLinear(
-					this.primariesSockets.map(socket => socket.inValue) as Color,
-					illuminant,
-				),
-			);
+			return new cm.Xyz(this.primariesSockets.map(socket => socket.inValueFn(...args)) as Vec3, illuminant);
 		}
 	}
+
+	const d65 = cm.illuminantsXy["2deg"]["D65"];
 
 	export class XyyNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "xyY";
 
 		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
-		private readonly primariesSockets: Socket[];
+		private readonly primariesSockets: Socket<SocketType.Float>[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -292,9 +357,9 @@ export namespace spaces {
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
 				...(this.primariesSockets = [
-					new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)"),
-					new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)"),
-					new Socket(this, true, Socket.Type.Float, "Y (luminance)"),
+					new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
+					new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
+					new Socket(this, true, Socket.Type.Float, "Y (luminance)", true, {defaultValue: 1}),
 				]),
 			);
 
@@ -303,15 +368,10 @@ export namespace spaces {
 			);
 		}
 
-		output(): Color {
+		output(...args: number[]): cm.Xyy {
 			const illuminant = getIlluminant(this.whitePointSocket);
 
-			return cm.linearToSrgb(
-				cm.xyzToLinear(
-					cm.xyyToXyz(this.primariesSockets.map(socket => socket.inValue) as Color),
-					illuminant,
-				),
-			);
+			return new cm.Xyy(this.primariesSockets.map(socket => socket.inValueFn(...args)) as Vec3, illuminant);
 		}
 	}
 
@@ -320,7 +380,7 @@ export namespace spaces {
 		static readonly LABEL = "L*a*b*";
 
 		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
-		private readonly primariesSockets: Socket[];
+		private readonly primariesSockets: Socket<SocketType.Float>[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -339,10 +399,12 @@ export namespace spaces {
 			);
 		}
 
-		output(): Color {
+		output(...args: number[]): cm.Lab {
 			const illuminant = getIlluminant(this.whitePointSocket);
 
-			return cm.linearToSrgb(
+			return new cm.Lab(this.primariesSockets.map(socket => socket.inValueFn(...args)) as Vec3, illuminant);
+			
+			/* cm.linearToSrgb(
 				cm.xyzToLinear(
 					cm.labToXyz(
 						this.primariesSockets.map(socket => socket.inValue) as Color,
@@ -350,7 +412,7 @@ export namespace spaces {
 					),
 					illuminant,
 				),
-			);
+			); */
 		}
 	}
 }
@@ -358,13 +420,23 @@ export namespace spaces {
 export namespace externals {
 	export class DeviceTransformNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Device transform";
+		static readonly LABEL = "Display buffer";
+
+		readonly colorSockets: Socket<SocketType.RgbRawOrColTransformed>[];
 		
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.ColTransformed, "Color"),
+				new Socket(this, true, Socket.Type.Dropdown, "Device color space", false, {
+					options: [
+						{value: "srgb", text: "sRGB"},
+					],
+					defaultValue: "srgb",
+				}),
+				...(this.colorSockets = [
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Color"),
+				]),
 			);
 
 			this.outs.push(
@@ -372,23 +444,35 @@ export namespace externals {
 			);
 		}
 
-		output(): Color[] {
-			return this.ins.filter(socket => socket.links[0])
-					.map(socket => socket.links[0].srcNode.output());
+		output(...args: number[]): cm.Srgb[] {
+			return this.colorSockets.filter(socket => socket.hasLinks)
+					.map(socket => cm.Srgb.from(socket.inValueFn(...args)));
+		}
+
+		pipeOutput() {
+			const node = this.colorSockets[0].node as rgbModels.RgbNode;
+
+			return pipe(node.pipeOutput(), cm.Srgb.from);
+		}
+
+		outputIndex(socket: Socket) {
+			return this.colorSockets.indexOf(socket);
 		}
 
 		onSocketLink(socket: Socket) {
 			if (!socket.isInput) return;
 
-			this.ins.push(
-				new Socket(this, true, Socket.Type.ColTransformed, "Color"),
-			);
+			const newSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Color");
+
+			this.ins.push(newSocket);
+			this.colorSockets.push(newSocket);
 		}
 
 		onSocketUnlink(socket: Socket): void {
 			if (!socket.isInput) return;
 
 			this.ins.splice(this.ins.indexOf(socket), 1);
+			this.colorSockets.splice(this.colorSockets.indexOf(socket), 1);
 		}
 	}
 

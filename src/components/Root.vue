@@ -1,74 +1,35 @@
 <script lang="ts" setup>
 import {ref, reactive, onMounted, provide, Ref} from "vue";
 
-import TheNodeTree, {DeviceNodes} from "./TheNodeTree.vue";
+import TheNodeTree from "./TheNodeTree.vue";
 import TheNodeTray from "./TheNodeTray.vue";
 import TheToolbar from "./TheToolbar.vue";
 
-import {Tree, Node} from "@/models/Node";
-import {rgbModels, spaces, externals} from "@/models/nodetypes";
+import {Node} from "@/models/Node";
 
-const dn = reactive(<DeviceNodes>{});
-const tree = reactive(new Tree());
+import {Vec2} from "@/util";
 
-[
-	new spaces.SrgbNode([450, 50]),
-	(dn.transformNode = new externals.DeviceTransformNode([800, 100])),
-	(dn.postprocessingNode = new externals.DevicePostprocessingNode([1000, 100])),
-	(dn.environmentNode = new externals.EnvironmentNode([1000, 250])),
-	(dn.visionNode = new externals.VisionNode([1000, 400])),
-].forEach(tree.nodes.add, tree.nodes);
-
-tree.linkSockets(dn.transformNode.outs[0], dn.postprocessingNode.ins[0]);
-tree.linkSockets(dn.postprocessingNode.outs[0], dn.environmentNode.ins[0]);
-tree.linkSockets(dn.environmentNode.outs[0], dn.visionNode.ins[0]);
-
-
-const selectedNodes = reactive(new Set<Node>());
-provide("selectedNodes", selectedNodes);
+import {tree} from "./store";
 
 
 const treeVue = ref(null) as any as Ref<InstanceType<typeof TheNodeTree>>;
 
 
-const modifierKeys = reactive({
-	ctrl: false,
-	shift: false,
-	alt: false,
-	meta: false,
-});
-provide("modifierKeys", modifierKeys);
-
-const updateModifierKeys = (event: KeyboardEvent) => {
-	Object.assign(modifierKeys, {
-		ctrl: event.ctrlKey,
-		shift: event.shiftKey,
-		alt: event.altKey,
-		meta: event.metaKey,
-	});
-};
-
-addEventListener("keydown", updateModifierKeys);
-addEventListener("keyup", updateModifierKeys);
-
-
-const addNode = <T extends Node>(nodeConstructor: new () => T) => {
+const addNode = <T extends Node>(nodeConstructor: new () => T, pos: Vec2=[0, 0]) => {
 	const node = new nodeConstructor();
 	tree.nodes.add(node);
 	treeVue.value.selectNode(node);
+
+	node.pos = pos;
 };
 </script>
 
 <template>
-	<TheNodeTree :tree="tree"
-			:deviceNodes="dn"
-			ref="treeVue" />
+	<TheNodeTree ref="treeVue"
+			@add-node="addNode" />
 	<TheNodeTray @add-node="addNode" />
 
-	<TheToolbar @delete-node="() => {
-		selectedNodes.forEach(tree.deleteNode, tree);
-		// treeVue.recomputeOutputColor();
-	}" />
+	<TheToolbar />
 </template>
 
 <style lang="scss">
@@ -95,7 +56,17 @@ main {
 	grid-template-rows: 1fr max(20vh, 15em);
 	grid-template-columns: 8em 1fr;
 
-	background: radial-gradient(circle, #4a514e, #2f3432 80%, #1f2321);
+	--grid-size: 16px;
+
+	background:
+			linear-gradient(0deg, #0000000f 2px, #0000 2px),
+			linear-gradient(90deg, #0000000f 2px, #0000 2px),
+			radial-gradient(circle, #4a514e, #2f3432 80%, #1f2321);
+	background-size:
+			var(--grid-size) var(--grid-size),
+			var(--grid-size) var(--grid-size),
+			100%;
+
 	color: #fff;
 
 	> .node-tree {
