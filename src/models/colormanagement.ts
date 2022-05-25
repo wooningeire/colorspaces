@@ -1,6 +1,7 @@
 import {Color, Vec2, Vec3, mod} from "../util";
 import * as math from "mathjs";
 
+//#region Color data types
 /**
  * Represents a color in an absolute color space.
  */
@@ -64,6 +65,10 @@ export class Srgb extends Col {
 	static fromXyz(xyz: Xyz): Srgb {
 		return linearToSrgb(xyzToLinear(xyz, xyz.illuminant));
 	}
+
+	toXyz() {
+		return linearToXyz(srgbToLinear(this));
+	}
 }
 
 export class LinearSrgb extends Col {
@@ -83,6 +88,62 @@ export class LinearSrgb extends Col {
 
 	static fromXyz(xyz: Xyz): Xyz {
 		return xyzToLinear(xyz, xyz.illuminant);
+	}
+
+	toXyz() {
+		return linearToXyz(this);
+	}
+}
+
+export class AdobeRgb extends Col {
+	static readonly labels = ["R", "G", "B"];
+
+	constructor(data: Vec3) {
+		super(data, illuminantsXy["2deg"]["D65"]);
+	}
+
+	static from(dataOrCol: Vec3 | Col): AdobeRgb {
+		if (dataOrCol instanceof LinearAdobeRgb) {
+			return linearToSrgb(dataOrCol);
+		} else if (dataOrCol instanceof AdobeRgb) {
+			return new AdobeRgb(dataOrCol as any as Vec3);
+		} else if (dataOrCol instanceof Col) {
+			return this.fromXyz(dataOrCol.toXyz());
+		} else {
+			return new AdobeRgb(dataOrCol);
+		}
+	}
+
+	static fromXyz(xyz: Xyz): AdobeRgb {
+		return linearToAdobeRgb(xyzToLinAdobeRgb(xyz, xyz.illuminant));
+	}
+
+	toXyz() {
+		return linAdobeRgbToXyz(gammaToLinAdobeRgb(this));
+	}
+}
+
+export class LinearAdobeRgb extends Col {
+	static readonly labels = ["R", "G", "B"];
+
+	constructor(data: Vec3) {
+		super(data, illuminantsXy["2deg"]["D65"]);
+	}
+
+	static from(dataOrCol: Vec3 | Col): LinearAdobeRgb {
+		return dataOrCol instanceof Col
+				? dataOrCol instanceof AdobeRgb
+						? gammaToLinAdobeRgb(dataOrCol)
+						: this.fromXyz(dataOrCol.toXyz())
+				: new LinearAdobeRgb(dataOrCol);
+	}
+
+	static fromXyz(xyz: Xyz): LinearAdobeRgb {
+		return xyzToLinAdobeRgb(xyz, xyz.illuminant);
+	}
+
+	toXyz() {
+		return linAdobeRgbToXyz(this);
 	}
 }
 
@@ -126,18 +187,20 @@ export class Lab extends Col {
 		return labToXyz(this, this.illuminant.toXyz());
 	}
 }
+//#endregion
 
 
+//#region Conversion functions
 /** Transfer function as defined by https://www.w3.org/Graphics/Color/srgb
  * 
  *  More precise constants as specified in https://en.wikipedia.org/wiki/SRGB
  */
-export const linearCompToSrgb = (comp: number) =>
+const linearCompToSrgb = (comp: number) =>
 		comp <= 0.0031308
 				? 12.9232102 * comp
 				: 1.055 * comp**(1/2.4) - 0.055;
 
-export const linearToSrgb = (linear: LinearSrgb) => new Srgb(linear.map(linearCompToSrgb) as Vec3);
+const linearToSrgb = (linear: LinearSrgb) => new Srgb(linear.map(linearCompToSrgb) as Vec3);
 
 /** Inverse transfer function as defined by https://www.w3.org/Graphics/Color/srgb; uses ICC v4 profile formula
  */
@@ -148,12 +211,12 @@ export const linearToSrgb = (linear: LinearSrgb) => new Srgb(linear.map(linearCo
 
 /** Inverse transfer function as defined by https://www.w3.org/Graphics/Color/srgb; uses ICC v2 profile formula
  */
-export const srgbCompToLinear = (comp: number) =>
+const srgbCompToLinear = (comp: number) =>
 		comp <= 0.04045
 				? comp / 12.9232102
 				: ((comp + 0.055) / 1.055)**(2.4);
 
-export const srgbToLinear = (linear: Srgb) => new LinearSrgb(linear.map(srgbCompToLinear) as any as Vec3);
+const srgbToLinear = (linear: Srgb) => new LinearSrgb(linear.map(srgbCompToLinear) as any as Vec3);
 
 
 export const cmyToRgb = (vec: Color) => vec.map(comp => 1 - comp);
@@ -213,12 +276,25 @@ export const xyzToLinear = (xyz: Xyz, illuminantXy: Xy) => {
 
 	//https://en.wikipedia.org/wiki/SRGB#From_CIE_XYZ_to_sRGB
 	const mat = math.multiply([
-		[+3.2406, -1.5372, -0.4986],
-		[-0.9689, +1.8758, +0.0415],
-		[+0.0557, -0.2040, +1.0570],
+		[+3.2404542, -1.5371385, -0.4985314],
+		[-0.9692660, +1.8760108, +0.0415560],
+		[+0.0556434, -0.2040259, +1.0572252],
 	], adaptedXyz);
 
 	return new LinearSrgb(mat as any as Vec3);
+};
+
+export const linearToXyz = (linear: LinearSrgb) => {
+	// assume D65 illuminant
+
+	//http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+	const mat = math.multiply([
+		[+0.4124564, +0.3575761, +0.1804375],
+		[+0.2126729, +0.7151522, +0.0721750],
+		[+0.0193339, +0.1191920, +0.9503041],
+	], linear);
+
+	return new Xyz(mat as any as Vec3);
 };
 
 // https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space
@@ -243,7 +319,7 @@ export const xyzToXyy = ([x, y, z]: Xyz, illuminant: Xy=illuminantE) => {
 };
 
 // https://en.wikipedia.org/wiki/CIELAB_color_space#From_CIELAB_to_CIEXYZ
-export const labToXyz = ([l, a, b]: Lab, referenceWhiteXyz: Xyz) => {
+const labToXyz = ([l, a, b]: Lab, referenceWhiteXyz: Xyz) => {
 	const tempY = (l + 16) / 116;
 	const tempX = tempY + a / 500;
 	const tempZ = tempY - b / 200;
@@ -259,6 +335,47 @@ export const labToXyz = ([l, a, b]: Lab, referenceWhiteXyz: Xyz) => {
 		compHelper(tempZ) * referenceWhiteXyz[2],
 	]);
 };
+
+const xyzToLinAdobeRgb = (xyz: Xyz, illuminantXy: Xy) => {
+	const adaptedXyz = math.multiply(
+		chromaticAdaptationMat(
+			xyyToXyz(illuminantXy),
+			xyyToXyz(illuminantsXy["2deg"]["D65"]),
+			chromaticAdaptationTransforms["Bradford"],
+		),
+		xyz,
+	);
+
+	//http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+	const mat = math.multiply([
+		[+2.0413690, -0.5649464, -0.3446944],
+		[-0.9692660, +1.8760108, +0.0415560],
+		[+0.0134474, -0.1183897, +1.0154096],
+	], adaptedXyz);
+
+	return new LinearAdobeRgb(mat as any as Vec3);
+};
+
+const linAdobeRgbToXyz = (linAdobe: LinearAdobeRgb) => {
+	// assume D65
+
+	//http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+	const mat = math.multiply([
+		[+0.5767309, +0.1855540, +0.1881852],
+		[+0.2973769, +0.6273491, +0.0752741],
+		[+0.0270343, +0.0706872, +0.9911085],
+	], linAdobe);
+
+	return new Xyz(mat as any as Vec3);
+};
+
+// https://www.adobe.com/digitalimag/pdfs/AdobeRGB1998.pdf sec 4.3.1.2
+const linearCompToAdobeRgb = (comp: number) => comp**(1 / (2 + 51/256));
+const gammaCompToLinAdobeRgb = (comp: number) => comp**(2 + 51/256);
+
+const linearToAdobeRgb = (linear: LinearAdobeRgb) => new AdobeRgb(linear.map(linearCompToAdobeRgb) as Vec3);
+const gammaToLinAdobeRgb = (adobe: AdobeRgb) => new LinearAdobeRgb(adobe.map(gammaCompToLinAdobeRgb) as Vec3);
+
 
 // https://www.mathworks.com/help/images/ref/whitepoint.html
 export const illuminantsXyz = <{

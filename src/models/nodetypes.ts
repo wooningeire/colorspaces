@@ -251,7 +251,7 @@ export namespace spaces {
 		}
 
 		output(...contextArgs: number[]) {
-			return cm.LinearSrgb.from(this.inSocket.inValue(...contextArgs))
+			return cm.LinearSrgb.from(this.inSocket.inValue(...contextArgs));
 		}
 	}
 
@@ -413,6 +413,52 @@ export namespace spaces {
 					illuminant,
 				),
 			); */
+		}
+	}
+
+	export class LinearAdobeRgbNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Linear Adobe RGB 1998";
+
+		readonly inSocket: Socket<SocketType.RgbRawOrColTransformed>;
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+			);
+		}
+
+		output(...contextArgs: number[]) {
+			return cm.LinearAdobeRgb.from(this.inSocket.inValue(...contextArgs));
+		}
+	}
+
+	export class AdobeRgbNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Adobe RGB 1998";
+
+		readonly inSocket: Socket<SocketType.RgbRawOrColTransformed>;
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+			);
+		}
+
+		output(...contextArgs: number[]): cm.AdobeRgb {
+			return cm.AdobeRgb.from(this.inSocket.inValue(...contextArgs));
 		}
 	}
 }
