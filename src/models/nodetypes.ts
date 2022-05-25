@@ -170,7 +170,7 @@ export namespace models {
 		}
 	}
 
-	export class XyzModelNode extends Node {
+	/* export class XyzModelNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "XYZ (model)";
 
@@ -185,6 +185,52 @@ export namespace models {
 
 			this.outs.push(
 				new Socket(this, false, Socket.Type.RgbRaw, "XYZ"),
+			);
+		}
+
+		output(...contextArgs: number[]): Color {
+			return this.ins.map(socket => socket.inValue(...contextArgs)) as Color;
+		}
+	} */
+
+	export class VectorNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Vector";
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Float, ""),
+				new Socket(this, true, Socket.Type.Float, ""),
+				new Socket(this, true, Socket.Type.Float, ""),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.RgbRaw, "Vector"),
+			);
+		}
+
+		output(...contextArgs: number[]): Color {
+			return this.ins.map(socket => socket.inValue(...contextArgs)) as Color;
+		}
+	}
+
+	export class GetComponentsNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Get components";
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Color or vector"),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.Float, "1"),
+				new Socket(this, false, Socket.Type.Float, "2"),
+				new Socket(this, false, Socket.Type.Float, "3"),
 			);
 		}
 
@@ -368,18 +414,20 @@ export namespace spaces {
 		static readonly LABEL = "xyY";
 
 		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
-		private readonly primariesSockets: Socket<SocketType.Float>[];
+		private readonly colorSocket: Socket<SocketType.RgbRawOrColTransformed>;
+		// private readonly primariesSockets: Socket<SocketType.Float>[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				...(this.primariesSockets = [
-					new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
-					new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
-					new Socket(this, true, Socket.Type.Float, "Y (luminance)", true, {defaultValue: 1}),
-				]),
+				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "XYZ or color", true, {defaultValue: [d65[0], d65[1], 1]})),
+				// ...(this.primariesSockets = [
+				// 	new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
+				// 	new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
+				// 	new Socket(this, true, Socket.Type.Float, "Y (luminance)", true, {defaultValue: 1}),
+				// ]),
 			);
 
 			this.outs.push(
@@ -390,7 +438,7 @@ export namespace spaces {
 		output(...contextArgs: number[]): cm.Xyy {
 			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
 
-			return new cm.Xyy(this.primariesSockets.map(socket => socket.inValue(...contextArgs)) as Vec3, illuminant);
+			return cm.Xyy.from(this.colorSocket.inValue(...contextArgs), illuminant);
 		}
 	}
 

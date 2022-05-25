@@ -4,6 +4,7 @@ import * as math from "mathjs";
 //#region Color data types
 /**
  * Represents a color in an absolute color space.
+ * Subclasses should implement the methods `static fromXyz` and `toXyz`.
  */
 export class Col extends Array {
 	static readonly [Symbol.species] = Array;
@@ -18,15 +19,19 @@ export class Col extends Array {
 		// Object.freeze(this);
 	}
 
-	static from(dataOrCol: Vec3 | Col, illuminantXy: Xy): Col {
-		throw new TypeError("Abstract method");
+	static from(dataOrCol: Vec3 | Col, illuminantXy: Xy): InstanceType<typeof this> {
+		if (dataOrCol instanceof Col) {
+			return this.fromXyz(dataOrCol.toXyz(illuminantXy));
+		} else {
+			return new this(dataOrCol, illuminantXy);
+		}
 	}
 
 	static fromXyz(xyz: Xyz): Col {
 		throw new TypeError("Abstract method");
 	}
 
-	toXyz(illuminantXy: Xy): Xyz {
+	toXyz(illuminantXy: Xy=this.illuminant): Xyz {
 		throw new TypeError("Abstract method");
 	}
 }
@@ -50,7 +55,7 @@ export class Xyz extends Col {
 		return new Xyz(xyz as any as Vec3, xyz.illuminant);
 	}
 
-	toXyz(illuminantXy: Xy) {
+	toXyz(illuminantXy: Xy=this.illuminant) {
 		const adaptedXyz = math.multiply(
 			chromaticAdaptationMat(
 				xyyToXyz(this.illuminant),
@@ -87,8 +92,8 @@ export class Srgb extends Col {
 		return linearToSrgb(xyzToLinear(xyz, xyz.illuminant));
 	}
 
-	toXyz() {
-		return linearToXyz(srgbToLinear(this));
+	toXyz(illuminantXy: Xy=this.illuminant) {
+		return linearToXyz(srgbToLinear(this), illuminantXy);
 	}
 }
 
@@ -111,8 +116,8 @@ export class LinearSrgb extends Col {
 		return xyzToLinear(xyz, xyz.illuminant);
 	}
 
-	toXyz() {
-		return linearToXyz(this);
+	toXyz(illuminantXy: Xy=this.illuminant) {
+		return linearToXyz(this, illuminantXy);
 	}
 }
 
@@ -139,8 +144,8 @@ export class AdobeRgb extends Col {
 		return linearToAdobeRgb(xyzToLinAdobeRgb(xyz, xyz.illuminant));
 	}
 
-	toXyz() {
-		return linAdobeRgbToXyz(gammaToLinAdobeRgb(this));
+	toXyz(illuminantXy: Xy=this.illuminant) {
+		return linAdobeRgbToXyz(gammaToLinAdobeRgb(this), illuminantXy);
 	}
 }
 
@@ -163,8 +168,8 @@ export class LinearAdobeRgb extends Col {
 		return xyzToLinAdobeRgb(xyz, xyz.illuminant);
 	}
 
-	toXyz() {
-		return linAdobeRgbToXyz(this);
+	toXyz(illuminantXy: Xy=this.illuminant) {
+		return linAdobeRgbToXyz(this, illuminantXy);
 	}
 }
 
@@ -173,8 +178,8 @@ export class Xy extends Col {
 		super(data, illuminant);
 	}
 
-	toXyz(): Xyz {
-		return xyyToXyz(this, this.illuminant);
+	toXyz(illuminantXy: Xy=this.illuminant): Xyz {
+		return xyyToXyz(this, illuminantXy);
 	}
 }
 
@@ -189,8 +194,8 @@ export class Xyy extends Col {
 		return xyzToXyy(xyz, xyz.illuminant);
 	}
 
-	toXyz(): Xyz {
-		return xyyToXyz(this, this.illuminant);
+	toXyz(illuminantXy: Xy=this.illuminant): Xyz {
+		return xyyToXyz(this, illuminantXy);
 	}
 }
 
@@ -204,7 +209,7 @@ export class Lab extends Col {
 		super(data, illuminant);
 	}
 
-	toXyz(): Xyz {
+	toXyz(illuminantXy: Xy=this.illuminant): Xyz {
 		return labToXyz(this, this.illuminant.toXyz());
 	}
 }
@@ -305,7 +310,7 @@ export const xyzToLinear = (xyz: Xyz, illuminantXy: Xy) => {
 	return new LinearSrgb(mat as any as Vec3);
 };
 
-export const linearToXyz = (linear: LinearSrgb) => {
+export const linearToXyz = (linear: LinearSrgb, illuminantXy: Xy) => {
 	// assume D65 illuminant
 
 	//http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
@@ -315,7 +320,7 @@ export const linearToXyz = (linear: LinearSrgb) => {
 		[+0.0193339, +0.1191920, +0.9503041],
 	], linear);
 
-	return new Xyz(mat as any as Vec3, illuminantsXy["2deg"]["D65"]);
+	return adaptXyz(new Xyz(mat as any as Vec3, illuminantsXy["2deg"]["D65"]), illuminantXy);
 };
 
 // https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space
@@ -377,9 +382,7 @@ const xyzToLinAdobeRgb = (xyz: Xyz, illuminantXy: Xy) => {
 	return new LinearAdobeRgb(mat as any as Vec3);
 };
 
-const linAdobeRgbToXyz = (linAdobe: LinearAdobeRgb) => {
-	// assume D65
-
+const linAdobeRgbToXyz = (linAdobe: LinearAdobeRgb, illuminantXy: Xy) => {
 	//http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
 	const mat = math.multiply([
 		[+0.5767309, +0.1855540, +0.1881852],
@@ -387,7 +390,7 @@ const linAdobeRgbToXyz = (linAdobe: LinearAdobeRgb) => {
 		[+0.0270343, +0.0706872, +0.9911085],
 	], linAdobe);
 
-	return new Xyz(mat as any as Vec3, illuminantsXy["2deg"]["D65"]);
+	return adaptXyz(new Xyz(mat as any as Vec3, illuminantsXy["2deg"]["D65"]), illuminantXy);
 };
 
 // https://www.adobe.com/digitalimag/pdfs/AdobeRGB1998.pdf sec 4.3.1.2
@@ -473,3 +476,12 @@ const chromaticAdaptationMat = (testWhiteXyz: Xyz, refWhiteXyz: Xyz, adaptationM
 	const adaptationShifterMatrix = math.multiply(math.inv(adaptationMatrix), scalarMatrix);
 	return math.multiply(adaptationShifterMatrix, adaptationMatrix);
 };
+
+const adaptXyz = (origColor: Xyz, targetIlluminant: Xy) => new Xyz(math.multiply(
+	chromaticAdaptationMat(
+		xyyToXyz(origColor.illuminant),
+		xyyToXyz(targetIlluminant),
+		chromaticAdaptationTransforms["Bradford"],
+	),
+	origColor,
+) as any as Vec3, targetIlluminant);
