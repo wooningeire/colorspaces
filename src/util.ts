@@ -66,7 +66,19 @@ export const pipe = (...fns: Function[]) =>
 		(...args: any[]) =>
 				fns.reduce((currentValue: any, fn: Function) => [fn(...currentValue)], args);
 
-const curry = null;
+class Option<T> {
+	static readonly None = new Option(null) as Option<any>;
+	
+	static Some<T>(value: T) {
+		return new Option(value);
+	}
+
+	private constructor(private value: T) {}
+
+	getElse(alt: T): T {
+		return this === Option.None ? alt : this.value;
+	}
+}
 
 
 export const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;

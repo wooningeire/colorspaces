@@ -22,11 +22,19 @@ const tree = inject("tree") as Tree;
 				'subtle': link.dstNode instanceof externals.DevicePostprocessingNode
 						|| link.dstNode instanceof externals.EnvironmentNode
 						|| link.dstNode instanceof externals.VisionNode,
+				'invalid': link.causesCircularDependency,
 			}" />
 </template>
 
 <style lang="scss" scoped>
-.subtle {
-	opacity: 0.25;
+line {
+	&.subtle {
+		opacity: 0.25;
+	}
+
+	&.invalid {
+		stroke: #f26;
+		stroke-dasharray: 4px;
+	}
 }
 </style>

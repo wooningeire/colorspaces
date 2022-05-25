@@ -24,8 +24,8 @@ export class Tree {
 		this.links.add(link);
 
 		if (!existingDstLink) {
-			src.node.onSocketLink(src);
-			dst.node.onSocketLink(dst);
+			src.node.onSocketLink(src, link);
+			dst.node.onSocketLink(dst, link);
 		}
 	}
 
@@ -38,8 +38,8 @@ export class Tree {
 	unlink(link: Link) {
 		this.unlinkWithoutEvents(link);
 
-		link.srcNode.onSocketUnlink(link.src);
-		link.dstNode.onSocketUnlink(link.dst);
+		link.srcNode.onSocketUnlink(link.src, link);
+		link.dstNode.onSocketUnlink(link.dst, link);
 	}
 
 	deleteNode(node: Node) {
@@ -71,15 +71,69 @@ export class Node {
 		public label: string=new.target.LABEL,
 	) {}
 
-	output(...args: any[]): any {
+	output(...args: number[]): any {
 		throw new TypeError("Abstract method; call on child class");
 	}
 
-	onSocketLink(socket: Socket) {}
+	onSocketLink(socket: Socket, link: Link) {
+		for (const link of this.getCyclicalLinks()) {
+			link.causesCircularDependency = true;
+		}
+	}
 
-	onSocketUnlink(socket: Socket) {}
+	onSocketUnlink(socket: Socket, link: Link) {}
 
 	onDependencyUpdate() {} // doesn't do anything yet
+
+	hasCircularDependency(visitedNodes=new Set<Node>()): boolean {
+		if (visitedNodes.has(this)) return true;
+		visitedNodes.add(this);
+
+		for (const socket of this.ins) {
+			for (const link of socket.links) {
+				const cyclesFound = link.srcNode.hasCircularDependency(new Set(visitedNodes));
+				if (cyclesFound) return true;
+			}
+		}
+
+		return false;
+	}
+
+	getCyclicalNodes(visitedNodes=new Set<Node>(), duplicateNodes=new Set<Node>()): Set<Node> {
+		if (duplicateNodes.has(this)) {
+			return duplicateNodes;
+		} else if (visitedNodes.has(this)) {
+			duplicateNodes.add(this);
+		} else {
+			visitedNodes.add(this);
+		}
+
+		for (const socket of this.ins) {
+			for (const link of socket.links) {
+				link.srcNode.getCyclicalNodes(new Set(visitedNodes), duplicateNodes);
+			}
+		}
+
+		return duplicateNodes;
+	}
+
+	getCyclicalLinks(visitedLinks=new Set<Link>(), duplicateLinks=new Set<Link>()): Set<Link> {
+		for (const socket of this.ins) {
+			for (const link of socket.links) {
+				if (duplicateLinks.has(link)) {
+					continue;
+				} else if (visitedLinks.has(link)) {
+					duplicateLinks.add(link);
+				} else {
+					visitedLinks.add(link);
+				}
+
+				link.srcNode.getCyclicalLinks(new Set(visitedLinks), duplicateLinks);
+			}
+		}
+
+		return duplicateLinks;
+	}
 }
 
 
@@ -183,6 +237,11 @@ export class Socket<St extends SocketType=any> {
 export class Link {
 	private static nextId = 0;
 	readonly id = Link.nextId++;
+
+	/**
+	 * Set in the event listener of a node.
+	 */
+	causesCircularDependency = false;
 
 	constructor(
 		/** Source socket. */
