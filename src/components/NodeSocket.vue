@@ -114,7 +114,9 @@ defineExpose({
 			<div class="socket-display"
 					:style="{'--socket-color': socketColor} as any"></div>
 		</div>
-		{{socket.label}}
+		<div class="socket-label">
+			{{socket.label}}
+		</div>
 
 		<NodeSocketField v-if="shouldShowFields"
 				:socket="socket" />
@@ -127,6 +129,8 @@ defineExpose({
 	margin-bottom: .25em;
 
 	padding: 0 var(--socket-text-padding);
+
+	min-height: 1.5em;
 
 	--socket-text-padding: 8px;
 

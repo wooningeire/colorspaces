@@ -72,7 +72,7 @@ export class Node {
 	) {}
 
 	output(...contextArgs: number[]): any {
-		throw new TypeError("Abstract method; call on child class");
+		throw new TypeError("Abstract method / not implemented");
 	}
 
 	onSocketLink(socket: Socket, link: Link) {

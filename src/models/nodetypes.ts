@@ -234,9 +234,9 @@ export namespace models {
 			);
 		}
 
-		output(...contextArgs: number[]): Color {
-			return this.ins.map(socket => socket.inValue(...contextArgs)) as Color;
-		}
+		// output(...contextArgs: number[]): Color {
+		// 	return this.ins.map(socket => socket.inValue(...contextArgs)) as Color;
+		// }
 	}
 }
 
@@ -446,18 +446,20 @@ export namespace spaces {
 		static readonly LABEL = "L*a*b*";
 
 		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
-		private readonly primariesSockets: Socket<SocketType.Float>[];
+		private readonly colorSocket: Socket<SocketType.RgbRawOrColTransformed>;
+		// private readonly primariesSockets: Socket<SocketType.Float>[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				...(this.primariesSockets = [
-					new Socket(this, true, Socket.Type.Float, "L*"),
-					new Socket(this, true, Socket.Type.Float, "a*"),
-					new Socket(this, true, Socket.Type.Float, "b*"),
-				]),
+				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color", true, {defaultValue: [50, 50, 50]})),
+				// ...(this.primariesSockets = [
+				// 	new Socket(this, true, Socket.Type.Float, "L*"),
+				// 	new Socket(this, true, Socket.Type.Float, "a*"),
+				// 	new Socket(this, true, Socket.Type.Float, "b*"),
+				// ]),
 			);
 
 			this.outs.push(
@@ -467,8 +469,7 @@ export namespace spaces {
 
 		output(...contextArgs: number[]): cm.Lab {
 			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
-
-			return new cm.Lab(this.primariesSockets.map(socket => socket.inValue(...contextArgs)) as Vec3, illuminant);
+			return cm.Lab.from(this.colorSocket.inValue(...contextArgs), illuminant);
 			
 			/* cm.linearToSrgb(
 				cm.xyzToLinear(
