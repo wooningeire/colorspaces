@@ -13,6 +13,7 @@ const props = defineProps({
 
 	outputIndex: {
 		type: Number,
+		default: 0,
 	},
 });
 
@@ -36,10 +37,10 @@ const rerenderCanvas = () => {
 
 	const imageData = cx.value.getImageData(0, 0, width, height);
 	for (let xPixels = 0; xPixels < width; xPixels++) {
-		const xFacFrac = xPixels / (width - 1);
+		const xFacFrac = (xPixels + 0.5) / width;
 
 		for (let yPixels = 0; yPixels < height; yPixels++) {
-			const yFacFrac = yPixels / (height - 1);
+			const yFacFrac = (yPixels + 0.5) / height;
 	
 			const colorData = dataOutput(xFacFrac, yFacFrac);
 			if (!colorData) return; // Deals with extraneous call from watcher when nodes are deleted; not ideal

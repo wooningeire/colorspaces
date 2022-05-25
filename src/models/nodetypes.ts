@@ -67,7 +67,7 @@ export namespace images {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
 			);
 		}
 
@@ -81,9 +81,11 @@ export namespace images {
 				const colorData = [...imageData.data.slice(index, index + 3)]
 						.map(comp => comp / 255);
 
-				return new cm.Srgb(colorData as Vec3);
+				if (colorData.length === 0) return [0, 0, 0];
+
+				return colorData;
 			}
-			return new cm.Srgb([0, 0, 0]);
+			return [0, 0, 0];
 		}
 	}
 }

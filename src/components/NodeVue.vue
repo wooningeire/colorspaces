@@ -114,6 +114,9 @@ const isSubtle = computed(() =>
 		|| props.node instanceof externals.EnvironmentNode
 		|| props.node instanceof externals.VisionNode
 );
+
+
+const hasConstantOutput = computed(() => props.node.getDependencyAxes().size === 0);
 </script>
 
 <template>
@@ -184,7 +187,8 @@ const isSubtle = computed(() =>
 		<div class="node-output"
 				v-if="shouldDisplayOutput">
 			<!-- {{node.output().map((x: number) => x.toFixed(4))}} -->
-			<NodeOutputValues :values="node.output()" />
+			<NodeOutputValues :values="node.output(0, 0)"
+					v-if="hasConstantOutput" />
 			<NodeOutputDisplay :node="node" />
 		</div>
 	</div>

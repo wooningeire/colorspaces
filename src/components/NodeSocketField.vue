@@ -19,6 +19,8 @@ const fileInput = ref(null as any as HTMLInputElement);
 
 const readFile = (): Promise<ImageData> => new Promise(resolve => {
 	const file = fileInput.value.files![0];
+	if (!file) return;
+
 	const reader = new FileReader();
 	reader.addEventListener("load", () => {
 		const canvas = document.createElement("canvas");
