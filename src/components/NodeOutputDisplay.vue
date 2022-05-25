@@ -16,8 +16,8 @@ const props = defineProps({
 	},
 });
 
-const canvas = ref(null as any as HTMLCanvasElement);
-const cx = computed(() => canvas.value.getContext("2d")!);
+const canvas = ref(null as HTMLCanvasElement | null);
+const cx = computed(() => canvas.value?.getContext("2d")!);
 
 
 // TODO decouple
@@ -26,46 +26,51 @@ const dataOutput = (...args: number[]) => props.node instanceof externals.Device
 		: props.node.output(...args);
 
 
+// Performance bottleneck
 const rerenderCanvas = () => {
-	const width = canvas.value.width;
+	if (!canvas.value) return;
 
-	const imageData = cx.value.getImageData(0, 0, width, 1);
-	for (let i = 0; i < width; i++) {
-		const facFrac = i / (width - 1);
+	const axes = props.node.getDependencyAxes();
+	const width = canvas.value.width = axes.has(0) ? canvas.value.offsetWidth : 1;
+	const height = canvas.value.height = axes.has(1) ? canvas.value.offsetHeight : 1;
+
+	const imageData = cx.value.getImageData(0, 0, width, height);
+	for (let xPixels = 0; xPixels < width; xPixels++) {
+		const xFacFrac = xPixels / (width - 1);
+
+		for (let yPixels = 0; yPixels < height; yPixels++) {
+			const yFacFrac = yPixels / (height - 1);
 	
-		const colorData = dataOutput(facFrac, 0);
-		if (!colorData) return; // Deals with extraneous call from watcher when nodes are deleted; not ideal
+			const colorData = dataOutput(xFacFrac, yFacFrac);
+			if (!colorData) return; // Deals with extraneous call from watcher when nodes are deleted; not ideal
 
-		const color = cm.Srgb.from(colorData);
+			const color = cm.Srgb.from(colorData);
 
-		imageData.data[i*4] = color[0] * 255;
-		imageData.data[i*4 + 1] = color[1] * 255;
-		imageData.data[i*4 + 2] = color[2] * 255;
-		imageData.data[i*4 + 3] = 255;
+			const index = (xPixels + yPixels * imageData.width) * 4;
+
+			imageData.data[index] = color[0] * 255;
+			imageData.data[index + 1] = color[1] * 255;
+			imageData.data[index + 2] = color[2] * 255;
+			imageData.data[index + 3] = 255;
+		}
 	}
 	cx.value.putImageData(imageData, 0, 0);
 };
 
-onMounted(() => {
-	canvas.value.width = canvas.value.offsetWidth;
-	rerenderCanvas();
-});
-
+onMounted(rerenderCanvas);
 onUpdated(rerenderCanvas);
 
-watch(dataOutput, () => {
-	rerenderCanvas();
-});
+watch(dataOutput, rerenderCanvas);
 
 
-const nAxes = computed(() => 1);
+const nAxes = computed(() => props.node.getDependencyAxes().size);
 </script>
 
 <template>
 	<div class="color-display-box"
 			v-if="nAxes === 0"
 			:style="{
-				'background': `rgb(${node.output(outputIndex, 0.5).map((x: number) => x * 255)})`,
+				'background': `rgb(${cm.Srgb.from(node.output(outputIndex, 0, 0)).map((x: number) => x * 255)})`,
 			}"></div>
 
 	<canvas class="color-display-box"

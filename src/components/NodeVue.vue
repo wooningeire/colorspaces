@@ -98,9 +98,9 @@ const nodeBorderColors = new Map<unknown, string>([
 	[externals, "linear-gradient(hsl(220deg 40% 50%), hsl(200deg 40% 50%))"],
 ]);
 const nodeBackgroundColors = new Map<unknown, string>([
-	[models, "hsl(-20deg 5% 20% / 0.8745)"],
-	[spaces, "hsl(260deg 5% 20% / 0.8745)"],
-	[math, "hsl(80deg 5% 20% / 0.8745)"],
+	[models, "hsl(-20deg 20% 20% / 0.8745)"],
+	[spaces, "hsl(260deg 20% 20% / 0.8745)"],
+	[math, "hsl(80deg 15% 18% / 0.8745)"],
 	[images, "hsl(165deg 10% 20% / 0.8745)"],
 	[externals, "hsl(220deg 25% 20% / 0.8745)"],
 ]);

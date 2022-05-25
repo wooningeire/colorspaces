@@ -126,26 +126,52 @@ export class Node {
 	} */
 
 	findCyclicalLinks(visitedLinks=new Set<Link>(), duplicateLinks=new Set<Link>(), allVisitedLinks=new Set<Link>()) {
-		for (const socket of this.ins) {
-			for (const link of socket.links) {
-				if (duplicateLinks.has(link)) {
-					continue;
-				} else if (visitedLinks.has(link)) {
-					duplicateLinks.add(link);
-				} else {
-					visitedLinks.add(link);
-					allVisitedLinks.add(link);
-				}
-
-				link.srcNode.findCyclicalLinks(new Set(visitedLinks), duplicateLinks, allVisitedLinks);
+		this.forEachInLink(link => {
+			if (duplicateLinks.has(link)) {
+				return;
+			} else if (visitedLinks.has(link)) {
+				duplicateLinks.add(link);
+			} else {
+				visitedLinks.add(link);
+				allVisitedLinks.add(link);
 			}
-		}
+
+			link.srcNode.findCyclicalLinks(new Set(visitedLinks), duplicateLinks, allVisitedLinks);
+		});
 
 		return {
 			duplicateLinks,
 			allVisitedLinks,
 		};
 	}
+
+	isAxisNode(): this is AxisNode {
+		return "axes" in this;
+	}
+
+	getDependencyAxes(axes=new Set<number>()) {
+		if (this.isAxisNode()) {
+			this.axes.forEach(axis => axes.add(axis));
+		}
+
+		this.forEachInLink(link => {
+			if (link.causesCircularDependency) return;
+			link.srcNode.getDependencyAxes(axes);
+		});
+		return axes;
+	}
+
+	forEachInLink(fn: (link: Link) => void) {
+		for (const socket of this.ins) {
+			for (const link of socket.links) {
+				fn(link);
+			}
+		}
+	}
+}
+
+export interface AxisNode extends Node {
+	readonly axes: number[];
 }
 
 
@@ -153,6 +179,7 @@ export enum SocketType {
 	Unknown,
 	Any,
 	Float,
+	Integer,
 	RgbRaw,
 	RgbRawOrColTransformed,
 	ColTransformed,
@@ -163,6 +190,7 @@ const St = SocketType;
 
 export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.Float ? number :
+		St extends SocketType.Integer ? number :
 		St extends SocketType.RgbRaw ? Color :
 		St extends SocketType.ColTransformed ? Color :
 		St extends SocketType.RgbRawOrColTransformed ? Color :

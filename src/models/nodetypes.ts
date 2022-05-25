@@ -1,21 +1,31 @@
-import {Tree, Node, Socket, SocketType as St, Link} from "./Node";
+import {Tree, Node, Socket, SocketType as St, Link, AxisNode} from "./Node";
 import * as cm from "./colormanagement";
 
 import {Color, Vec2, Vec3, pipe, lerp} from "@/util";
 
 export namespace images {
-	export class GradientNode extends Node {
+	export class GradientNode extends Node implements AxisNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Gradient";
 
+		private readonly axisSocket: Socket<St.Dropdown>;
 		private readonly boundsSockets: Socket<St.Float>[];
 
-		whichDimension = 0;
+		get axes() {
+			return [this.whichDimension];
+		}
 
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
+				(this.axisSocket = new Socket(this, true, Socket.Type.Dropdown, "Axis", false, {
+					options: [
+						{text: "X", value: "0"},
+						{text: "Y", value: "1"},
+					],
+					defaultValue: "0",
+				})),
 				...(this.boundsSockets = [
 					new Socket(this, true, Socket.Type.Float, "From"),
 					new Socket(this, true, Socket.Type.Float, "To", true, {defaultValue: 1}),
@@ -27,6 +37,10 @@ export namespace images {
 			);
 		}
 
+		get whichDimension() {
+			return Number(this.axisSocket.inValue());
+		}
+
 		output(...contextArgs: number[]): number {
 			const fac = contextArgs[this.whichDimension] ?? 0;
 			const value0 = this.boundsSockets[0].inValue(...contextArgs);
@@ -35,13 +49,15 @@ export namespace images {
 		}
 	}
 
-	export class ImageFileNode extends Node {
+	export class ImageFileNode extends Node implements AxisNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Image file";
 
 		private readonly inSocket: Socket<St.Image>;
 
-		whichDimension = 0;
+		get axes() {
+			return [0, 1];
+		}
 
 		constructor(pos?: Vec2) {
 			super(pos);
