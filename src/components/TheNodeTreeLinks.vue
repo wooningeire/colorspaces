@@ -34,7 +34,7 @@ line {
 
 	&.invalid {
 		stroke: #f26;
-		stroke-dasharray: 4px;
+		stroke-dasharray: 8px;
 	}
 }
 </style>

@@ -1,26 +1,27 @@
 <script lang="ts" setup>
-import { PropType } from 'vue';
+import {PropType} from 'vue';
+
+import {Col} from "@/models/colormanagement";
 
 const props = defineProps({
 	values: {
-		type: Array as PropType<number[]>,
-		required: true,
-	},
-
-	labels: {
-		type: Array as PropType<string[]>,
+		type: Col,
 		required: true,
 	},
 });
 
 const nDecimals = 4;
 
+const labels = (props.values.constructor as typeof Col).labels;
+
 </script>
 
 <template>
 	<div class="output-values">
 		<template v-for="(value, index) of values">
-			<div class="header">{{labels[index]}}</div>
+			<div class="header">
+				{{index < labels.length ? labels[index] : ""}}
+			</div>
 			<div class="data">{{values[index].toFixed(nDecimals)}}</div>
 		</template>
 	</div>
@@ -40,9 +41,9 @@ const nDecimals = 4;
 	> .header {
 		font-weight: 700;
 
-		&::after {
-			content: ":";
-		}
+		// &:not(:empty)::after {
+		// 	content: ":";
+		// }
 	}
 
 	// > .data {

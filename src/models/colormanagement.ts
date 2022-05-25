@@ -6,6 +6,7 @@ import * as math from "mathjs";
  */
 export class Col extends Array {
 	static readonly [Symbol.species] = Array;
+	static readonly labels: string[] = [];
 
 	constructor(
 		/* readonly */ data: number[],
@@ -26,6 +27,8 @@ export class Col extends Array {
 }
 
 export class Xyz extends Col {
+	static readonly labels = ["X", "Y", "Z"];
+
 	constructor(data: Vec3, illuminant: Xy=illuminantsXy["2deg"]["E"]) {
 		super(data, illuminant);
 	}
@@ -40,6 +43,8 @@ export class Xyz extends Col {
 }
 
 export class Srgb extends Col {
+	static readonly labels = ["R", "G", "B"];
+
 	constructor(data: Vec3) {
 		super(data, illuminantsXy["2deg"]["D65"]);
 	}
@@ -62,6 +67,8 @@ export class Srgb extends Col {
 }
 
 export class LinearSrgb extends Col {
+	static readonly labels = ["R", "G", "B"];
+	
 	constructor(data: Vec3) {
 		super(data, illuminantsXy["2deg"]["D65"]);
 	}
@@ -90,6 +97,8 @@ export class Xy extends Col {
 }
 
 export class Xyy extends Col {
+	static readonly labels = ["x", "y", "Y"];
+
 	constructor(data: Vec3, illuminant: Xy=illuminantE) {
 		super(data, illuminant);
 	}
@@ -107,6 +116,8 @@ const illuminantE = new Xy([1/3, 1/3], null as any as Xy);
 Object.assign(illuminantE, {illuminant: illuminantE});
 
 export class Lab extends Col {
+	static readonly labels = ["L*", "a*", "b*"];
+
 	constructor(data: Vec3, illuminant: Xy) {
 		super(data, illuminant);
 	}

@@ -76,8 +76,7 @@ const emitNodeSelected = (event: PointerEvent) => {
 
 
 const shouldDisplayOutput = computed(
-	() => props.node.ins[0].links[0]
-			&& Object.values(spaces).includes(props.node.constructor as any),
+	() => Object.values(spaces).includes(props.node.constructor as any),
 );
 
 
@@ -88,15 +87,23 @@ const nodeCategories = new Map([rgbModels, spaces, math, images, externals]
 		.flat() as [symbol, unknown][]);
 
 
-const nodeCategoryColors = new Map<unknown, string>([
+const nodeBorderColors = new Map<unknown, string>([
 	[rgbModels, "linear-gradient(hsl(-20deg 40% 60%), hsl(30deg 40% 50%))"],
 	[spaces, "linear-gradient(hsl(260deg 40% 60%), hsl(300deg 40% 60%))"],
 	[math, "linear-gradient(hsl(50deg 40% 60%), hsl(90deg 40% 60%))"],
-	[images, "linear-gradient(hsl(165deg 10% 50%), hsl(185deg 10% 60%)"],
-	[externals, "linear-gradient(hsl(220deg 40% 50%), hsl(200deg 40% 50%)"],
+	[images, "linear-gradient(hsl(165deg 10% 50%), hsl(185deg 10% 60%))"],
+	[externals, "linear-gradient(hsl(220deg 40% 50%), hsl(200deg 40% 50%))"],
+]);
+const nodeBackgroundColors = new Map<unknown, string>([
+	[rgbModels, "hsl(-20deg 5% 20% / 0.8745)"],
+	[spaces, "hsl(260deg 5% 20% / 0.8745)"],
+	[math, "hsl(80deg 5% 20% / 0.8745)"],
+	[images, "hsl(165deg 10% 20% / 0.8745)"],
+	[externals, "hsl(220deg 25% 20% / 0.8745)"],
 ]);
 const nodeCategory = computed(() => nodeCategories.get(props.node.type));
-const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value) ?? "#ffffff3f");
+const nodeBorderColor = computed(() => nodeBorderColors.get(nodeCategory.value) ?? "#ffffff3f");
+const nodeBackgroundColor = computed(() => nodeBackgroundColors.get(nodeCategory.value) ?? "#2e3331df");
 </script>
 
 <template>
@@ -108,6 +115,7 @@ const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value
 			:style="{
 				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
 				'--node-border-background': nodeBorderColor,
+				'--node-background': nodeBackgroundColor,
 			} as any"
 			:class="{
 				'subtle': node instanceof externals.DevicePostprocessingNode
@@ -165,8 +173,7 @@ const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value
 		<div class="node-output"
 				v-if="shouldDisplayOutput">
 			<!-- {{node.output().map((x: number) => x.toFixed(4))}} -->
-			<NodeOutputValues :values="node.output()"
-					:labels="['R', 'G', 'B']" />
+			<NodeOutputValues :values="node.output()" />
 			<NodeOutputDisplay :node="node" />
 		</div>
 	</div>
@@ -181,7 +188,8 @@ const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value
 	width: 140px;
 	padding: 0.5em 0;
 
-	background: #2e3331df;
+	background: var(--node-background);
+
 	box-shadow: 0 4px 40px -20px #000000af;
 
 	font-size: calc(14/16 * 1em);
@@ -190,6 +198,7 @@ const nodeBorderColor = computed(() => nodeCategoryColors.get(nodeCategory.value
 
 	--node-border-background: linear-gradient(#9c20aa, #fb3570);
 	--node-border-color: #ffffff3f;
+	--node-background: #2e3331df;
 
 	// grid-template-areas:
 	// 		"A A"
