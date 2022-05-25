@@ -33,6 +33,9 @@ const labels = (props.values.constructor as typeof Col).labels;
 	grid-template-columns: auto 1fr;
 	gap: 0 1em;
 
+	max-width: 100%;
+	overflow-x: auto;
+
 	font-family: Ubunto Mono, monospace;
 	font-size: 0.75em;
 

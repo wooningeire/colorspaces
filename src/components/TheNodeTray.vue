@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {models, math, spaces, images} from "@/models/nodetypes";
+import {models, math, spaces, images, organization} from "@/models/nodetypes";
 
 import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor} from "./store";
 
@@ -10,12 +10,13 @@ const labels = new Map<object, string>([
 	[spaces, "Spaces"],
 	[math, "Math"],
 	[images, "Images"],
+	[organization, "Other"],
 ]);
 </script>
 
 <template>
 	<div class="node-tray">
-		<template v-for="nodeNamespace of [models, spaces, math, images]">
+		<template v-for="nodeNamespace of [models, spaces, math, images, organization]">
 			<div class="node-category-label">
 				{{labels.get(nodeNamespace)}}
 			</div>

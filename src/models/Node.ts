@@ -23,9 +23,9 @@ export class Tree {
 
 		this.links.add(link);
 
+		src.node.onSocketLink(src, link, this);
 		if (!existingDstLink) {
-			src.node.onSocketLink(src, link);
-			dst.node.onSocketLink(dst, link);
+			dst.node.onSocketLink(dst, link, this);
 		}
 	}
 
@@ -38,8 +38,8 @@ export class Tree {
 	unlink(link: Link) {
 		this.unlinkWithoutEvents(link);
 
-		link.srcNode.onSocketUnlink(link.src, link);
-		link.dstNode.onSocketUnlink(link.dst, link);
+		link.srcNode.onSocketUnlink(link.src, link, this);
+		link.dstNode.onSocketUnlink(link.dst, link, this);
 	}
 
 	deleteNode(node: Node) {
@@ -64,6 +64,8 @@ export class Node {
 	private static nextId = 0;
 	readonly id = Node.nextId++;
 
+	width = 140;
+
 	// Note: If subclass constructor is called, `new.target` is the subclass
 	constructor(
 		public pos: Vec2=[0, 0],
@@ -75,15 +77,15 @@ export class Node {
 		throw new TypeError("Abstract method / not implemented");
 	}
 
-	onSocketLink(socket: Socket, link: Link) {
+	onSocketLink(socket: Socket, link: Link, tree: Tree) {
 		const {duplicateLinks, allVisitedLinks} = this.findCyclicalLinks();
 		for (const link of allVisitedLinks) {
 			link.causesCircularDependency = duplicateLinks.has(link);
 		}
 	}
 
-	onSocketUnlink(socket: Socket, link: Link) {
-		Node.prototype.onSocketLink.call(this, socket, link);
+	onSocketUnlink(socket: Socket, link: Link, tree: Tree) {
+		Node.prototype.onSocketLink.call(this, socket, link, tree);
 	}
 
 	onDependencyUpdate() {} // doesn't do anything yet
@@ -147,6 +149,7 @@ export class Node {
 
 export enum SocketType {
 	Unknown,
+	Any,
 	Float,
 	RgbRaw,
 	RgbRawOrColTransformed,
@@ -197,8 +200,9 @@ export class Socket<St extends SocketType=any> {
 	]);
 
 	static canLinkTypeTo(srcType: SocketType, dstType: SocketType) {
-		return this.typeCanBeLinkedTo.get(srcType)?.includes(dstType)
-				?? srcType === dstType;
+		return dstType === St.Any
+				|| (this.typeCanBeLinkedTo.get(srcType)?.includes(dstType)
+				?? srcType === dstType);
 	}
 
 
@@ -211,7 +215,7 @@ export class Socket<St extends SocketType=any> {
 	constructor(
 		readonly node: Node,
 		readonly isInput: boolean,
-		readonly type: St,
+		public type: St,
 
 		public label: string="",
 

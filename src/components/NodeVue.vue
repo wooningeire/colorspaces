@@ -7,7 +7,7 @@ import NodeOutputValues from "./NodeOutputValues.vue";
 import NodeOutputDisplay from "./NodeOutputDisplay.vue";
 
 import {Node} from "@/models/Node";
-import {models, spaces, math, images, externals} from "@/models/nodetypes";
+import {models, spaces, math, images, externals, organization} from "@/models/nodetypes";
 
 import {Listen, clearTextSelection} from "@/util";
 
@@ -75,12 +75,14 @@ const emitNodeSelected = (event: PointerEvent) => {
 };
 
 
+const shouldDisplayLabel = computed(() => !(props.node instanceof organization.RerouteNode))
+
 const shouldDisplayOutput = computed(
 	() => Object.values(spaces).includes(props.node.constructor as any),
 );
 
 
-const nodeCategories = new Map([models, spaces, math, images, externals]
+const nodeCategories = new Map([models, spaces, math, images, externals, organization]
 		.map(category =>
 				Object.values(category)
 						.map(nodeType => [nodeType.TYPE, category]))
@@ -113,9 +115,11 @@ const nodeBackgroundColor = computed(() => nodeBackgroundColors.get(nodeCategory
 				startDragging(event);
 			}"
 			:style="{
-				'left': `${node.pos[0] ?? 0}px`, 'top': `${node.pos[1] ?? 0}px`,
+				'left': `${node.pos[0] ?? 0}px`,
+				'top': `${node.pos[1] ?? 0}px`,
 				'--node-border-background': nodeBorderColor,
 				'--node-background': nodeBackgroundColor,
+				'--node-width': `${node.width}px`,
 			} as any"
 			:class="{
 				'subtle': node instanceof externals.DevicePostprocessingNode
@@ -125,7 +129,8 @@ const nodeBackgroundColor = computed(() => nodeBackgroundColors.get(nodeCategory
 			}">
 		<div class="node-border"></div>
 
-		<div class="label">
+		<div class="label"
+				v-if="shouldDisplayLabel">
 			{{node.label}}
 		</div>
 
@@ -185,7 +190,7 @@ const nodeBackgroundColor = computed(() => nodeBackgroundColors.get(nodeCategory
 	// display: inline grid;
 	display: flex;
 	flex-direction: column;
-	width: 140px;
+	width: var(--node-width);
 	padding: 0.5em 0;
 
 	background: var(--node-background);
@@ -199,6 +204,8 @@ const nodeBackgroundColor = computed(() => nodeBackgroundColors.get(nodeCategory
 	--node-border-background: linear-gradient(#9c20aa, #fb3570);
 	--node-border-color: #ffffff3f;
 	--node-background: #2e3331df;
+
+	--node-width: 40px;
 
 	// grid-template-areas:
 	// 		"A A"
@@ -252,6 +259,8 @@ const nodeBackgroundColor = computed(() => nodeBackgroundColors.get(nodeCategory
 		display: flex;
 		justify-content: space-evenly;
 		align-items: center;
+
+		width: 100%;
 
 		:deep(.color-display-box) {
 			height: 3em;

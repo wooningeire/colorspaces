@@ -1,4 +1,4 @@
-import {Node, Socket, SocketType, Link} from "./Node";
+import {Tree, Node, Socket, SocketType as St, Link} from "./Node";
 import * as cm from "./colormanagement";
 
 import {Color, Vec2, Vec3, pipe, lerp} from "@/util";
@@ -8,7 +8,7 @@ export namespace images {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Gradient";
 
-		private readonly boundsSockets: Socket<SocketType.Float>[];
+		private readonly boundsSockets: Socket<St.Float>[];
 
 		whichDimension = 0;
 
@@ -39,7 +39,7 @@ export namespace images {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Image file";
 
-		private readonly inSocket: Socket<SocketType.Image>;
+		private readonly inSocket: Socket<St.Image>;
 
 		whichDimension = 0;
 
@@ -245,9 +245,9 @@ export namespace math {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "RGB blend";
 
-		private readonly methodSocket: Socket<SocketType.Dropdown>;
-		private readonly facSocket: Socket<SocketType.Float>;
-		private readonly colorSockets: Socket<SocketType.RgbRawOrColTransformed>[];
+		private readonly methodSocket: Socket<St.Dropdown>;
+		private readonly facSocket: Socket<St.Float>;
+		private readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -305,7 +305,7 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Linear sRGB";
 
-		readonly inSocket: Socket<SocketType.RgbRawOrColTransformed>;
+		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -328,7 +328,7 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "sRGB";
 
-		readonly inSocket: Socket<SocketType.RgbRawOrColTransformed>;
+		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -370,7 +370,7 @@ export namespace spaces {
 		],
 		defaultValue: "2deg/D65",
 	};
-	const getIlluminant = (socket: Socket<SocketType.Dropdown>, contextArgs: number[]) => {
+	const getIlluminant = (socket: Socket<St.Dropdown>, contextArgs: number[]) => {
 		const illuminantId = socket.inValue(...contextArgs);
 		if (illuminantId !== "custom") {
 			const [standard, illuminantName] = illuminantId.split("/"); 
@@ -384,8 +384,8 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "XYZ";
 
-		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
-		private readonly colorSocket: Socket<SocketType.RgbRawOrColTransformed>;
+		private readonly whitePointSocket: Socket<St.Dropdown>;
+		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -413,8 +413,8 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "xyY";
 
-		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
-		private readonly colorSocket: Socket<SocketType.RgbRawOrColTransformed>;
+		private readonly whitePointSocket: Socket<St.Dropdown>;
+		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
 		// private readonly primariesSockets: Socket<SocketType.Float>[];
 
 		constructor(pos?: Vec2) {
@@ -445,8 +445,8 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "L*a*b*";
 
-		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
-		private readonly colorSocket: Socket<SocketType.RgbRawOrColTransformed>;
+		private readonly whitePointSocket: Socket<St.Dropdown>;
+		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
 		// private readonly primariesSockets: Socket<SocketType.Float>[];
 
 		constructor(pos?: Vec2) {
@@ -487,7 +487,7 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Linear Adobe RGB 1998";
 
-		readonly inSocket: Socket<SocketType.RgbRawOrColTransformed>;
+		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -510,7 +510,7 @@ export namespace spaces {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Adobe RGB 1998";
 
-		readonly inSocket: Socket<SocketType.RgbRawOrColTransformed>;
+		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -535,7 +535,7 @@ export namespace externals {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Display buffer";
 
-		readonly colorSockets: Socket<SocketType.RgbRawOrColTransformed>[];
+		readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
 		
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -575,8 +575,8 @@ export namespace externals {
 			return this.colorSockets.indexOf(socket);
 		}
 
-		onSocketLink(socket: Socket, link: Link) {
-			super.onSocketLink(socket, link);
+		onSocketLink(socket: Socket, link: Link, tree: Tree) {
+			super.onSocketLink(socket, link, tree);
 
 			if (!socket.isInput) return;
 
@@ -586,8 +586,8 @@ export namespace externals {
 			this.colorSockets.push(newSocket);
 		}
 
-		onSocketUnlink(socket: Socket, link: Link): void {
-			super.onSocketUnlink(socket, link);
+		onSocketUnlink(socket: Socket, link: Link, tree: Tree): void {
+			super.onSocketUnlink(socket, link, tree);
 
 			if (!socket.isInput) return;
 
@@ -640,6 +640,47 @@ export namespace externals {
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Unknown, "Light"),
 			);
+		}
+	}
+}
+
+export namespace organization {
+	export class RerouteNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Reroute";
+		
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Any, ""),
+			);
+
+			this.width = 30;
+		}
+
+		output(...contextArgs: number[]) {
+			return this.ins[0].inValue(...contextArgs);
+		}
+
+		onSocketLink(socket: Socket, link: Link, tree: Tree) {
+			super.onSocketLink(socket, link, tree);
+
+			if (socket.isOutput) return;
+			const type = link.src.type;
+			this.ins[0].type = type;
+
+			this.outs.push(new Socket(this, false, type, ""));
+		}
+
+		onSocketUnlink(socket: Socket, link: Link, tree: Tree) {
+			super.onSocketUnlink(socket, link, tree);
+
+			if (socket.isOutput) return;
+
+			this.outs[0].links.forEach(link => tree.unlink(link));
+			this.outs.pop();
+			this.ins[0].type = St.Any;
 		}
 	}
 }
