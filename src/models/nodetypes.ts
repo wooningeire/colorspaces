@@ -422,7 +422,7 @@ export namespace spaces {
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "XYZ or color", true, {defaultValue: [d65[0], d65[1], 1]})),
+				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "xyY or color", true, {defaultValue: [d65[0], d65[1], 1]})),
 				// ...(this.primariesSockets = [
 				// 	new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
 				// 	new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
@@ -437,7 +437,6 @@ export namespace spaces {
 
 		output(...contextArgs: number[]): cm.Xyy {
 			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
-
 			return cm.Xyy.from(this.colorSocket.inValue(...contextArgs), illuminant);
 		}
 	}

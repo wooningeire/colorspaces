@@ -56,16 +56,7 @@ export class Xyz extends Col {
 	}
 
 	toXyz(illuminantXy: Xy=this.illuminant) {
-		const adaptedXyz = math.multiply(
-			chromaticAdaptationMat(
-				xyyToXyz(this.illuminant),
-				xyyToXyz(illuminantXy),
-				chromaticAdaptationTransforms["Bradford"],
-			),
-			this,
-		);
-
-		return new Xyz(adaptedXyz as any as Vec3, illuminantXy);
+		return adaptXyz(this, illuminantXy);
 	}
 }
 
@@ -78,7 +69,7 @@ export class Srgb extends Col {
 
 	static from(dataOrCol: Vec3 | Col): Srgb {
 		if (dataOrCol instanceof LinearSrgb) {
-			return linearToSrgb(dataOrCol);
+			return linToGammaSrgb(dataOrCol);
 		} else if (dataOrCol instanceof Srgb) {
 			return new Srgb(dataOrCol as any as Vec3);
 		} else if (dataOrCol instanceof Col) {
@@ -89,11 +80,11 @@ export class Srgb extends Col {
 	}
 
 	static fromXyz(xyz: Xyz): Srgb {
-		return linearToSrgb(xyzToLinear(xyz, xyz.illuminant));
+		return linToGammaSrgb(xyzToLinear(xyz, xyz.illuminant));
 	}
 
 	toXyz(illuminantXy: Xy=this.illuminant) {
-		return linearToXyz(srgbToLinear(this), illuminantXy);
+		return linearToXyz(gammaToLinSrgb(this), illuminantXy);
 	}
 }
 
@@ -107,7 +98,7 @@ export class LinearSrgb extends Col {
 	static from(dataOrCol: Vec3 | Col): LinearSrgb {
 		return dataOrCol instanceof Col
 				? dataOrCol instanceof Srgb
-						? srgbToLinear(dataOrCol)
+						? gammaToLinSrgb(dataOrCol)
 						: this.fromXyz(dataOrCol.toXyz(illuminantsXy["2deg"]["D65"]))
 				: new LinearSrgb(dataOrCol);
 	}
@@ -130,7 +121,7 @@ export class AdobeRgb extends Col {
 
 	static from(dataOrCol: Vec3 | Col): AdobeRgb {
 		if (dataOrCol instanceof LinearAdobeRgb) {
-			return linearToSrgb(dataOrCol);
+			return linToGammaSrgb(dataOrCol);
 		} else if (dataOrCol instanceof AdobeRgb) {
 			return new AdobeRgb(dataOrCol as any as Vec3);
 		} else if (dataOrCol instanceof Col) {
@@ -141,7 +132,7 @@ export class AdobeRgb extends Col {
 	}
 
 	static fromXyz(xyz: Xyz): AdobeRgb {
-		return linearToAdobeRgb(xyzToLinAdobeRgb(xyz, xyz.illuminant));
+		return linToGammaAdobeRgb(xyzToLinAdobeRgb(xyz, xyz.illuminant));
 	}
 
 	toXyz(illuminantXy: Xy=this.illuminant) {
@@ -221,12 +212,12 @@ export class Lab extends Col {
  * 
  *  More precise constants as specified in https://en.wikipedia.org/wiki/SRGB
  */
-const linearCompToSrgb = (comp: number) =>
+const linCompToGammaSrgb = (comp: number) =>
 		comp <= 0.0031308
 				? 12.9232102 * comp
 				: 1.055 * comp**(1/2.4) - 0.055;
 
-const linearToSrgb = (linear: LinearSrgb) => new Srgb(linear.map(linearCompToSrgb) as Vec3);
+const linToGammaSrgb = (linear: LinearSrgb) => new Srgb(linear.map(linCompToGammaSrgb) as Vec3);
 
 /** Inverse transfer function as defined by https://www.w3.org/Graphics/Color/srgb; uses ICC v4 profile formula
  */
@@ -237,12 +228,12 @@ const linearToSrgb = (linear: LinearSrgb) => new Srgb(linear.map(linearCompToSrg
 
 /** Inverse transfer function as defined by https://www.w3.org/Graphics/Color/srgb; uses ICC v2 profile formula
  */
-const srgbCompToLinear = (comp: number) =>
+const gammaCompToLinSrgb = (comp: number) =>
 		comp <= 0.04045
 				? comp / 12.9232102
 				: ((comp + 0.055) / 1.055)**(2.4);
 
-const srgbToLinear = (linear: Srgb) => new LinearSrgb(linear.map(srgbCompToLinear) as any as Vec3);
+const gammaToLinSrgb = (linear: Srgb) => new LinearSrgb(linear.map(gammaCompToLinSrgb) as any as Vec3);
 
 
 export const cmyToRgb = (vec: Color) => vec.map(comp => 1 - comp);
@@ -293,8 +284,8 @@ export const hsvToRgb = ([hue, sat, value]: Color) => {
 export const xyzToLinear = (xyz: Xyz, illuminantXy: Xy) => {
 	const adaptedXyz = math.multiply(
 		chromaticAdaptationMat(
-			xyyToXyz(illuminantXy),
-			xyyToXyz(illuminantsXy["2deg"]["D65"]),
+			xyyToXyzNoAdapt(illuminantXy),
+			xyyToXyzNoAdapt(illuminantsXy["2deg"]["D65"]),
 			chromaticAdaptationTransforms["Bradford"],
 		),
 		xyz,
@@ -311,8 +302,6 @@ export const xyzToLinear = (xyz: Xyz, illuminantXy: Xy) => {
 };
 
 export const linearToXyz = (linear: LinearSrgb, illuminantXy: Xy) => {
-	// assume D65 illuminant
-
 	//http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
 	const mat = math.multiply([
 		[+0.4124564, +0.3575761, +0.1804375],
@@ -324,15 +313,35 @@ export const linearToXyz = (linear: LinearSrgb, illuminantXy: Xy) => {
 };
 
 // https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space
-export const xyyToXyz = ([x, y, lum=1]: Xy | Xyy, illuminant: Xy=illuminantE) => y === 0
-		? new Xyz([0, 0, 0], illuminant)
-		: new Xyz([
-			lum / y * x,
-			lum,
-			lum / y * (1 - x - y),
-		], illuminant);
+export const xyyToXyz = (xyy: Xy | Xyy, illuminant: Xy=xyy.illuminant) => {
+	const [x, y, lum=1] = xyy;
+	
+	const xyz = y === 0
+			? new Xyz([0, 0, 0], xyy.illuminant)
+			: new Xyz([
+				lum / y * x,
+				lum,
+				lum / y * (1 - x - y),
+			], xyy.illuminant);
 
-export const xyzToXyy = ([x, y, z]: Xyz, illuminant: Xy=illuminantE) => {
+	return adaptXyz(xyz, illuminant);
+};
+
+const xyyToXyzNoAdapt = (xyy: Xy | Xyy) => {
+	const [x, y, lum=1] = xyy;
+	
+	return y === 0
+			? new Xyz([0, 0, 0], xyy.illuminant)
+			: new Xyz([
+				lum / y * x,
+				lum,
+				lum / y * (1 - x - y),
+			], xyy.illuminant);
+};
+
+export const xyzToXyy = (xyz: Xyz, illuminant: Xy=xyz.illuminant) => {
+	const [x, y, z] = adaptXyz(xyz, illuminant);
+
 	const dot1 = x + y + z;
 
 	return dot1 === 0
@@ -365,8 +374,8 @@ const labToXyz = ([l, a, b]: Lab, referenceWhiteXyz: Xyz) => {
 const xyzToLinAdobeRgb = (xyz: Xyz, illuminantXy: Xy) => {
 	const adaptedXyz = math.multiply(
 		chromaticAdaptationMat(
-			xyyToXyz(illuminantXy),
-			xyyToXyz(illuminantsXy["2deg"]["D65"]),
+			xyyToXyzNoAdapt(illuminantXy),
+			xyyToXyzNoAdapt(illuminantsXy["2deg"]["D65"]),
 			chromaticAdaptationTransforms["Bradford"],
 		),
 		xyz,
@@ -394,10 +403,10 @@ const linAdobeRgbToXyz = (linAdobe: LinearAdobeRgb, illuminantXy: Xy) => {
 };
 
 // https://www.adobe.com/digitalimag/pdfs/AdobeRGB1998.pdf sec 4.3.1.2
-const linearCompToAdobeRgb = (comp: number) => comp**(1 / (2 + 51/256));
+const linCompToGammaAdobeRgb = (comp: number) => comp**(1 / (2 + 51/256));
 const gammaCompToLinAdobeRgb = (comp: number) => comp**(2 + 51/256);
 
-const linearToAdobeRgb = (linear: LinearAdobeRgb) => new AdobeRgb(linear.map(linearCompToAdobeRgb) as Vec3);
+const linToGammaAdobeRgb = (linear: LinearAdobeRgb) => new AdobeRgb(linear.map(linCompToGammaAdobeRgb) as Vec3);
 const gammaToLinAdobeRgb = (adobe: AdobeRgb) => new LinearAdobeRgb(adobe.map(gammaCompToLinAdobeRgb) as Vec3);
 
 
@@ -477,10 +486,10 @@ const chromaticAdaptationMat = (testWhiteXyz: Xyz, refWhiteXyz: Xyz, adaptationM
 	return math.multiply(adaptationShifterMatrix, adaptationMatrix);
 };
 
-const adaptXyz = (origColor: Xyz, targetIlluminant: Xy) => new Xyz(math.multiply(
+const adaptXyz = (origColor: Xyz, targetIlluminant: Xy): Xyz => new Xyz(math.multiply(
 	chromaticAdaptationMat(
-		xyyToXyz(origColor.illuminant),
-		xyyToXyz(targetIlluminant),
+		xyyToXyzNoAdapt(origColor.illuminant),
+		xyyToXyzNoAdapt(targetIlluminant),
 		chromaticAdaptationTransforms["Bradford"],
 	),
 	origColor,

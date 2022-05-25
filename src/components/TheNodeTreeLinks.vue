@@ -33,8 +33,8 @@ line {
 	}
 
 	&.invalid {
-		stroke: #f26;
-		stroke-dasharray: 8px;
+		stroke: #f68;
+		stroke-dasharray: 4px;
 	}
 }
 </style>
