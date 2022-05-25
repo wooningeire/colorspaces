@@ -294,7 +294,7 @@ export const linearToXyz = (linear: LinearSrgb) => {
 		[+0.0193339, +0.1191920, +0.9503041],
 	], linear);
 
-	return new Xyz(mat as any as Vec3);
+	return new Xyz(mat as any as Vec3, illuminantsXy["2deg"]["D65"]);
 };
 
 // https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space
@@ -366,7 +366,7 @@ const linAdobeRgbToXyz = (linAdobe: LinearAdobeRgb) => {
 		[+0.0270343, +0.0706872, +0.9911085],
 	], linAdobe);
 
-	return new Xyz(mat as any as Vec3);
+	return new Xyz(mat as any as Vec3, illuminantsXy["2deg"]["D65"]);
 };
 
 // https://www.adobe.com/digitalimag/pdfs/AdobeRGB1998.pdf sec 4.3.1.2
