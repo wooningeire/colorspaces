@@ -1,4 +1,4 @@
-import {Node, Socket, SocketType} from "./Node";
+import {Node, Socket, SocketType, Link} from "./Node";
 import * as cm from "./colormanagement";
 
 import {Color, Vec2, Vec3, pipe, lerp} from "@/util";
@@ -462,7 +462,9 @@ export namespace externals {
 			return this.colorSockets.indexOf(socket);
 		}
 
-		onSocketLink(socket: Socket) {
+		onSocketLink(socket: Socket, link: Link) {
+			super.onSocketLink(socket, link);
+
 			if (!socket.isInput) return;
 
 			const newSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Color");
@@ -471,7 +473,9 @@ export namespace externals {
 			this.colorSockets.push(newSocket);
 		}
 
-		onSocketUnlink(socket: Socket): void {
+		onSocketUnlink(socket: Socket, link: Link): void {
+			super.onSocketUnlink(socket, link);
+
 			if (!socket.isInput) return;
 
 			this.ins.splice(this.ins.indexOf(socket), 1);

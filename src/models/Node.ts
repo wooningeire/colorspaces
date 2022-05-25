@@ -76,16 +76,20 @@ export class Node {
 	}
 
 	onSocketLink(socket: Socket, link: Link) {
-		for (const link of this.getCyclicalLinks()) {
-			link.causesCircularDependency = true;
+		const {duplicateLinks, allVisitedLinks} = this.findCyclicalLinks();
+		for (const link of allVisitedLinks) {
+			link.causesCircularDependency = duplicateLinks.has(link);
 		}
 	}
 
-	onSocketUnlink(socket: Socket, link: Link) {}
+	onSocketUnlink(socket: Socket, link: Link) {
+		Node.prototype.onSocketLink.call(this, socket, link);
+	}
 
 	onDependencyUpdate() {} // doesn't do anything yet
 
-	hasCircularDependency(visitedNodes=new Set<Node>()): boolean {
+	// Eventually adapted into `findCyclicalLinks`
+	/* hasCircularDependency(visitedNodes=new Set<Node>()): boolean {
 		if (visitedNodes.has(this)) return true;
 		visitedNodes.add(this);
 
@@ -115,9 +119,9 @@ export class Node {
 		}
 
 		return duplicateNodes;
-	}
+	} */
 
-	getCyclicalLinks(visitedLinks=new Set<Link>(), duplicateLinks=new Set<Link>()): Set<Link> {
+	findCyclicalLinks(visitedLinks=new Set<Link>(), duplicateLinks=new Set<Link>(), allVisitedLinks=new Set<Link>()) {
 		for (const socket of this.ins) {
 			for (const link of socket.links) {
 				if (duplicateLinks.has(link)) {
@@ -126,13 +130,17 @@ export class Node {
 					duplicateLinks.add(link);
 				} else {
 					visitedLinks.add(link);
+					allVisitedLinks.add(link);
 				}
 
-				link.srcNode.getCyclicalLinks(new Set(visitedLinks), duplicateLinks);
+				link.srcNode.findCyclicalLinks(new Set(visitedLinks), duplicateLinks, allVisitedLinks);
 			}
 		}
 
-		return duplicateLinks;
+		return {
+			duplicateLinks,
+			allVisitedLinks,
+		};
 	}
 }
 
