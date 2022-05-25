@@ -15,6 +15,10 @@ export class Tree {
 			this.unlinkWithoutEvents(existingDstLink);
 		}
 
+		if (existingDstLink && src !== existingDstLink.src) {
+			existingDstLink.srcNode.onSocketUnlink(existingDstLink.src, existingDstLink, this);
+		}
+
 
 		const link = new Link(src, dst);
 
@@ -23,10 +27,11 @@ export class Tree {
 
 		this.links.add(link);
 
-		src.node.onSocketLink(src, link, this);
 		if (!existingDstLink) {
 			dst.node.onSocketLink(dst, link, this);
 		}
+
+		src.node.onSocketLink(src, link, this);
 	}
 
 	private unlinkWithoutEvents(link: Link) {
@@ -79,6 +84,9 @@ export class Node {
 		throw new TypeError("Abstract method / not implemented");
 	}
 
+	/**
+	 * Called when a new link is added to any socket on this node, but not if the link is immediately replaced
+	 */
 	onSocketLink(socket: Socket, link: Link, tree: Tree) {
 		const {duplicateLinks, allVisitedLinks} = this.findCyclicalLinks();
 		for (const link of allVisitedLinks) {
@@ -86,11 +94,25 @@ export class Node {
 		}
 	}
 
+	// /**
+	//  * Called when a link to any socket on this node is replaced with another
+	//  */
+	// onSocketReplace(socket: Socket, link: Link, tree: Tree) {
+	// 	Node.prototype.onSocketLink.call(this, socket, link, tree);
+	// }
+
+	/**
+	 * Called when a link is removed from any socket in this node, but not if the link is immediately replaced
+	 * @param socket 
+	 * @param link 
+	 * @param tree 
+	 */
 	onSocketUnlink(socket: Socket, link: Link, tree: Tree) {
 		Node.prototype.onSocketLink.call(this, socket, link, tree);
 	}
 
-	onDependencyUpdate() {} // doesn't do anything yet
+	onDependencyUpdate() { // doesn't do anything yet
+	}
 
 	// Eventually adapted into `findCyclicalLinks`
 	/* hasCircularDependency(visitedNodes=new Set<Node>()): boolean {
