@@ -1,7 +1,7 @@
 import {ref, reactive} from "vue";
 
 import {Tree, Node} from "@/models/Node";
-import {rgbModels, spaces, externals} from "@/models/nodetypes";
+import {models, spaces, externals} from "@/models/nodetypes";
 
 
 //#region Node tree

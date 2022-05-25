@@ -1,14 +1,12 @@
 <script lang="ts" setup>
-import {rgbModels, math, spaces, images} from "@/models/nodetypes";
-
-import BaseNode from "./BaseNode.vue";
+import {models, math, spaces, images} from "@/models/nodetypes";
 
 import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor} from "./store";
 
 const emit = defineEmits(["add-node"]);
 
 const labels = new Map<object, string>([
-	[rgbModels, "Models"],
+	[models, "Models"],
 	[spaces, "Spaces"],
 	[math, "Math"],
 	[images, "Images"],
@@ -17,7 +15,7 @@ const labels = new Map<object, string>([
 
 <template>
 	<div class="node-tray">
-		<template v-for="nodeNamespace of [rgbModels, spaces, math, images]">
+		<template v-for="nodeNamespace of [models, spaces, math, images]">
 			<div class="node-category-label">
 				{{labels.get(nodeNamespace)}}
 			</div>

@@ -7,7 +7,7 @@ import NodeOutputValues from "./NodeOutputValues.vue";
 import NodeOutputDisplay from "./NodeOutputDisplay.vue";
 
 import {Node} from "@/models/Node";
-import {rgbModels, spaces, math, images, externals} from "@/models/nodetypes";
+import {models, spaces, math, images, externals} from "@/models/nodetypes";
 
 import {Listen, clearTextSelection} from "@/util";
 
@@ -80,7 +80,7 @@ const shouldDisplayOutput = computed(
 );
 
 
-const nodeCategories = new Map([rgbModels, spaces, math, images, externals]
+const nodeCategories = new Map([models, spaces, math, images, externals]
 		.map(category =>
 				Object.values(category)
 						.map(nodeType => [nodeType.TYPE, category]))
@@ -88,14 +88,14 @@ const nodeCategories = new Map([rgbModels, spaces, math, images, externals]
 
 
 const nodeBorderColors = new Map<unknown, string>([
-	[rgbModels, "linear-gradient(hsl(-20deg 40% 60%), hsl(30deg 40% 50%))"],
+	[models, "linear-gradient(hsl(-20deg 40% 60%), hsl(30deg 40% 50%))"],
 	[spaces, "linear-gradient(hsl(260deg 40% 60%), hsl(300deg 40% 60%))"],
 	[math, "linear-gradient(hsl(50deg 40% 60%), hsl(90deg 40% 60%))"],
 	[images, "linear-gradient(hsl(165deg 10% 50%), hsl(185deg 10% 60%))"],
 	[externals, "linear-gradient(hsl(220deg 40% 50%), hsl(200deg 40% 50%))"],
 ]);
 const nodeBackgroundColors = new Map<unknown, string>([
-	[rgbModels, "hsl(-20deg 5% 20% / 0.8745)"],
+	[models, "hsl(-20deg 5% 20% / 0.8745)"],
 	[spaces, "hsl(260deg 5% 20% / 0.8745)"],
 	[math, "hsl(80deg 5% 20% / 0.8745)"],
 	[images, "hsl(165deg 10% 20% / 0.8745)"],

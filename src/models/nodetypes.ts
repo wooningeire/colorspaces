@@ -51,7 +51,7 @@ export namespace images {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color data"),
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
 			);
 		}
 
@@ -72,7 +72,7 @@ export namespace images {
 	}
 }
 
-export namespace rgbModels {
+export namespace models {
 	//TODO code duplication
 	export class RgbNode extends Node {
 		static readonly TYPE = Symbol(this.name);
@@ -88,7 +88,7 @@ export namespace rgbModels {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "RGB data"),
+				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
 			);
 		}
 
@@ -115,7 +115,7 @@ export namespace rgbModels {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "RGB data"),
+				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
 			);
 		}
 
@@ -138,7 +138,7 @@ export namespace rgbModels {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "RGB data"),
+				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
 			);
 		}
 
@@ -161,12 +161,35 @@ export namespace rgbModels {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "RGB data"),
+				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
 			);
 		}
 
 		output(...contextArgs: number[]): Color {
 			return cm.cmyToRgb(this.ins.map(socket => socket.inValue(...contextArgs)) as Color) as Color;
+		}
+	}
+
+	export class XyzModelNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "XYZ (model)";
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Float, "X"),
+				new Socket(this, true, Socket.Type.Float, "Y"),
+				new Socket(this, true, Socket.Type.Float, "Z"),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.RgbRaw, "XYZ"),
+			);
+		}
+
+		output(...contextArgs: number[]): Color {
+			return this.ins.map(socket => socket.inValue(...contextArgs)) as Color;
 		}
 	}
 }
@@ -316,18 +339,14 @@ export namespace spaces {
 		static readonly LABEL = "XYZ";
 
 		private readonly whitePointSocket: Socket<SocketType.Dropdown>;
-		private readonly primariesSockets: Socket<SocketType.Float>[];
+		private readonly colorSocket: Socket<SocketType.RgbRawOrColTransformed>;
 
 		constructor(pos?: Vec2) {
 			super(pos);
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				...(this.primariesSockets = [
-					new Socket(this, true, Socket.Type.Float, "X"),
-					new Socket(this, true, Socket.Type.Float, "Y"),
-					new Socket(this, true, Socket.Type.Float, "Z"),
-				]),
+				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "XYZ or color")),
 			);
 
 			this.outs.push(
@@ -338,7 +357,7 @@ export namespace spaces {
 		output(...contextArgs: number[]) {
 			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
 
-			return new cm.Xyz(this.primariesSockets.map(socket => socket.inValue(...contextArgs)) as Vec3, illuminant);
+			return cm.Xyz.from(this.colorSocket.inValue(...contextArgs), illuminant);
 		}
 	}
 
@@ -499,7 +518,7 @@ export namespace externals {
 		}
 
 		pipeOutput() {
-			const node = this.colorSockets[0].node as rgbModels.RgbNode;
+			const node = this.colorSockets[0].node as models.RgbNode;
 
 			return pipe(node.pipeOutput(), cm.Srgb.from);
 		}

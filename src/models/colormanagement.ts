@@ -18,11 +18,15 @@ export class Col extends Array {
 		// Object.freeze(this);
 	}
 
+	static from(dataOrCol: Vec3 | Col, illuminantXy: Xy): Col {
+		throw new TypeError("Abstract method");
+	}
+
 	static fromXyz(xyz: Xyz): Col {
 		throw new TypeError("Abstract method");
 	}
 
-	toXyz(): Xyz {
+	toXyz(illuminantXy: Xy): Xyz {
 		throw new TypeError("Abstract method");
 	}
 }
@@ -34,12 +38,29 @@ export class Xyz extends Col {
 		super(data, illuminant);
 	}
 
+	static from(dataOrCol: Vec3 | Col, illuminantXy: Xy): Xyz {
+		if (dataOrCol instanceof Col) {
+			return dataOrCol.toXyz(illuminantXy);
+		} else {
+			return new Xyz(dataOrCol, illuminantXy);
+		}
+	}
+
 	static fromXyz(xyz: Xyz): Xyz {
 		return new Xyz(xyz as any as Vec3, xyz.illuminant);
 	}
 
-	toXyz() {
-		return new Xyz(this as any as Vec3, this.illuminant);
+	toXyz(illuminantXy: Xy) {
+		const adaptedXyz = math.multiply(
+			chromaticAdaptationMat(
+				xyyToXyz(this.illuminant),
+				xyyToXyz(illuminantXy),
+				chromaticAdaptationTransforms["Bradford"],
+			),
+			this,
+		);
+
+		return new Xyz(adaptedXyz as any as Vec3, illuminantXy);
 	}
 }
 
@@ -56,7 +77,7 @@ export class Srgb extends Col {
 		} else if (dataOrCol instanceof Srgb) {
 			return new Srgb(dataOrCol as any as Vec3);
 		} else if (dataOrCol instanceof Col) {
-			return this.fromXyz(dataOrCol.toXyz());
+			return this.fromXyz(dataOrCol.toXyz(illuminantsXy["2deg"]["D65"]));
 		} else {
 			return new Srgb(dataOrCol);
 		}
@@ -82,11 +103,11 @@ export class LinearSrgb extends Col {
 		return dataOrCol instanceof Col
 				? dataOrCol instanceof Srgb
 						? srgbToLinear(dataOrCol)
-						: this.fromXyz(dataOrCol.toXyz())
+						: this.fromXyz(dataOrCol.toXyz(illuminantsXy["2deg"]["D65"]))
 				: new LinearSrgb(dataOrCol);
 	}
 
-	static fromXyz(xyz: Xyz): Xyz {
+	static fromXyz(xyz: Xyz): LinearSrgb {
 		return xyzToLinear(xyz, xyz.illuminant);
 	}
 
@@ -108,7 +129,7 @@ export class AdobeRgb extends Col {
 		} else if (dataOrCol instanceof AdobeRgb) {
 			return new AdobeRgb(dataOrCol as any as Vec3);
 		} else if (dataOrCol instanceof Col) {
-			return this.fromXyz(dataOrCol.toXyz());
+			return this.fromXyz(dataOrCol.toXyz(illuminantsXy["2deg"]["D65"]));
 		} else {
 			return new AdobeRgb(dataOrCol);
 		}
@@ -134,7 +155,7 @@ export class LinearAdobeRgb extends Col {
 		return dataOrCol instanceof Col
 				? dataOrCol instanceof AdobeRgb
 						? gammaToLinAdobeRgb(dataOrCol)
-						: this.fromXyz(dataOrCol.toXyz())
+						: this.fromXyz(dataOrCol.toXyz(illuminantsXy["2deg"]["D65"]))
 				: new LinearAdobeRgb(dataOrCol);
 	}
 
