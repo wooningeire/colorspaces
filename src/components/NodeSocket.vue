@@ -28,7 +28,8 @@ const draggedSocket = inject("draggedSocket") as ComputedRef<Socket>;
 
 
 const shouldShowFields = computed(
-	() => props.socket.isInput && !props.socket.hasLinks
+	() => props.socket.isInput
+			&& (!props.socket.hasLinks || props.socket.links[0].causesCircularDependency)
 );
 
 

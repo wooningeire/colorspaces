@@ -71,7 +71,7 @@ export class Node {
 		public label: string=new.target.LABEL,
 	) {}
 
-	output(...args: number[]): any {
+	output(...contextArgs: number[]): any {
 		throw new TypeError("Abstract method; call on child class");
 	}
 
@@ -229,12 +229,10 @@ export class Socket<St extends SocketType=any> {
 		return !this.isInput;
 	}
 
-	get inValue(): SocketValue<St> {
-		return this.links[0]?.srcNode.output() ?? this.fieldValue;
-	}
-
-	inValueFn(...args: any[]): SocketValue<St> {
-		return this.links[0]?.srcNode.output(...args) ?? this.fieldValue;
+	inValue(...contextArgs: number[]): SocketValue<St> {
+		return this.links[0]?.causesCircularDependency
+				? this.fieldValue
+				: this.links[0]?.srcNode.output(...contextArgs) ?? this.fieldValue;
 	}
 
 	get hasLinks() {

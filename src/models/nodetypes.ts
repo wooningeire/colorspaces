@@ -27,10 +27,10 @@ export namespace images {
 			);
 		}
 
-		output(...args: number[]): number {
-			const fac = args[this.whichDimension] ?? 0;
-			const value0 = this.boundsSockets[0].inValueFn(...args);
-			const value1 = this.boundsSockets[1].inValueFn(...args);
+		output(...contextArgs: number[]): number {
+			const fac = contextArgs[this.whichDimension] ?? 0;
+			const value0 = this.boundsSockets[0].inValue(...contextArgs);
+			const value1 = this.boundsSockets[1].inValue(...contextArgs);
 			return lerp(value0, value1, fac);
 		}
 	}
@@ -55,11 +55,11 @@ export namespace images {
 			);
 		}
 
-		output(...args: number[]) {
-			const imageData = this.inSocket.inValue;
+		output(...contextArgs: number[]) {
+			const imageData = this.inSocket.inValue(...contextArgs);
 			if (imageData) {
-				const x = Math.round(args[0] * imageData.width);
-				const y = Math.round(args[1] * imageData.height);
+				const x = Math.round(contextArgs[0] * imageData.width);
+				const y = Math.round(contextArgs[1] * imageData.height);
 
 				const index = (x + y * imageData.width) * 4;
 				const colorData = [...imageData.data.slice(index, index + 3)]
@@ -92,8 +92,8 @@ export namespace rgbModels {
 			);
 		}
 
-		output(...args: any[]): Color {
-			return this.ins.map(socket => socket.inValueFn(...args)) as Color;
+		output(...contextArgs: any[]): Color {
+			return this.ins.map(socket => socket.inValue(...contextArgs)) as Color;
 		}
 
 		pipeOutput() {
@@ -119,8 +119,8 @@ export namespace rgbModels {
 			);
 		}
 
-		output(...args: number[]): Color {
-			return cm.hslToRgb(this.ins.map(socket => socket.inValueFn(...args)) as Color) as Color;
+		output(...contextArgs: number[]): Color {
+			return cm.hslToRgb(this.ins.map(socket => socket.inValue(...contextArgs)) as Color) as Color;
 		}
 	}
 
@@ -142,8 +142,8 @@ export namespace rgbModels {
 			);
 		}
 
-		output(...args: number[]): Color {
-			return cm.hsvToRgb(this.ins.map(socket => socket.inValueFn(...args)) as Color) as Color;
+		output(...contextArgs: number[]): Color {
+			return cm.hsvToRgb(this.ins.map(socket => socket.inValue(...contextArgs)) as Color) as Color;
 		}
 	}
 
@@ -165,8 +165,8 @@ export namespace rgbModels {
 			);
 		}
 
-		output(...args: number[]): Color {
-			return cm.cmyToRgb(this.ins.map(socket => socket.inValueFn(...args)) as Color) as Color;
+		output(...contextArgs: number[]): Color {
+			return cm.cmyToRgb(this.ins.map(socket => socket.inValue(...contextArgs)) as Color) as Color;
 		}
 	}
 }
@@ -204,16 +204,16 @@ export namespace math {
 			);
 		}
 
-		output(...args: number[]): Color {
-			const fac = this.facSocket.inValueFn(...args);
+		output(...contextArgs: number[]): Color {
+			const fac = this.facSocket.inValue(...contextArgs);
 
 			// TODO check that inputs are of same type
-			const col0 = this.colorSockets[0].inValueFn(...args);
-			const col1 = this.colorSockets[1].inValueFn(...args);
+			const col0 = this.colorSockets[0].inValue(...contextArgs);
+			const col1 = this.colorSockets[1].inValue(...contextArgs);
 
 			// and make output the same type as the inputs
 
-			switch (this.methodSocket.inValue) {
+			switch (this.methodSocket.inValue(...contextArgs)) {
 				case "mix":
 					return col0.map((_, i) => lerp(col0[i], col1[i], fac)) as Color;
 
@@ -250,8 +250,8 @@ export namespace spaces {
 			);
 		}
 
-		output(...args: number[]) {
-			return cm.LinearSrgb.from(this.inSocket.inValueFn(...args))
+		output(...contextArgs: number[]) {
+			return cm.LinearSrgb.from(this.inSocket.inValue(...contextArgs))
 		}
 	}
 
@@ -273,8 +273,8 @@ export namespace spaces {
 			);
 		}
 
-		output(...args: number[]): cm.Srgb {
-			return cm.Srgb.from(this.inSocket.inValueFn(...args));
+		output(...contextArgs: number[]): cm.Srgb {
+			return cm.Srgb.from(this.inSocket.inValue(...contextArgs));
 		}
 	}
 
@@ -301,8 +301,8 @@ export namespace spaces {
 		],
 		defaultValue: "2deg/D65",
 	};
-	const getIlluminant = (socket: Socket<SocketType.Dropdown>) => {
-		const illuminantId = socket.inValue;
+	const getIlluminant = (socket: Socket<SocketType.Dropdown>, contextArgs: number[]) => {
+		const illuminantId = socket.inValue(...contextArgs);
 		if (illuminantId !== "custom") {
 			const [standard, illuminantName] = illuminantId.split("/"); 
 			return cm.illuminantsXy[standard][illuminantName];
@@ -335,10 +335,10 @@ export namespace spaces {
 			);
 		}
 
-		output(...args: number[]) {
-			const illuminant = getIlluminant(this.whitePointSocket);
+		output(...contextArgs: number[]) {
+			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
 
-			return new cm.Xyz(this.primariesSockets.map(socket => socket.inValueFn(...args)) as Vec3, illuminant);
+			return new cm.Xyz(this.primariesSockets.map(socket => socket.inValue(...contextArgs)) as Vec3, illuminant);
 		}
 	}
 
@@ -368,10 +368,10 @@ export namespace spaces {
 			);
 		}
 
-		output(...args: number[]): cm.Xyy {
-			const illuminant = getIlluminant(this.whitePointSocket);
+		output(...contextArgs: number[]): cm.Xyy {
+			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
 
-			return new cm.Xyy(this.primariesSockets.map(socket => socket.inValueFn(...args)) as Vec3, illuminant);
+			return new cm.Xyy(this.primariesSockets.map(socket => socket.inValue(...contextArgs)) as Vec3, illuminant);
 		}
 	}
 
@@ -399,15 +399,15 @@ export namespace spaces {
 			);
 		}
 
-		output(...args: number[]): cm.Lab {
-			const illuminant = getIlluminant(this.whitePointSocket);
+		output(...contextArgs: number[]): cm.Lab {
+			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
 
-			return new cm.Lab(this.primariesSockets.map(socket => socket.inValueFn(...args)) as Vec3, illuminant);
+			return new cm.Lab(this.primariesSockets.map(socket => socket.inValue(...contextArgs)) as Vec3, illuminant);
 			
 			/* cm.linearToSrgb(
 				cm.xyzToLinear(
 					cm.labToXyz(
-						this.primariesSockets.map(socket => socket.inValue) as Color,
+						this.primariesSockets.map(socket => socket.inValueFn(...contextArgs)) as Color,
 						cm.xyyToXyz(illuminant),
 					),
 					illuminant,
@@ -444,12 +444,12 @@ export namespace externals {
 			);
 		}
 
-		output(socketIndex: number, ...args: number[]): cm.Srgb {
-			const color = this.colorSockets[socketIndex]?.inValueFn(...args);
+		output(socketIndex: number, ...contextArgs: number[]): cm.Srgb {
+			const color = this.colorSockets[socketIndex]?.inValue(...contextArgs);
 
 			return color && cm.Srgb.from(color);
 			// return this.colorSockets.filter(socket => socket.hasLinks)
-			// 		.map(socket => cm.Srgb.from(socket.inValueFn(...args)));
+			// 		.map(socket => cm.Srgb.from(socket.inValueFn(...contextArgs)));
 		}
 
 		pipeOutput() {
