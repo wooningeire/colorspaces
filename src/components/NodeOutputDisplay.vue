@@ -32,8 +32,11 @@ const rerenderCanvas = () => {
 	const imageData = cx.value.getImageData(0, 0, width, 1);
 	for (let i = 0; i < width; i++) {
 		const facFrac = i / (width - 1);
-		const color = cm.Srgb.from(dataOutput(facFrac, 0));
-		if (!color) return; // Deals with extraneous call from watcher when nodes are deleted; not ideal
+	
+		const colorData = dataOutput(facFrac, 0);
+		if (!colorData) return; // Deals with extraneous call from watcher when nodes are deleted; not ideal
+
+		const color = cm.Srgb.from(colorData);
 
 		imageData.data[i*4] = color[0] * 255;
 		imageData.data[i*4 + 1] = color[1] * 255;

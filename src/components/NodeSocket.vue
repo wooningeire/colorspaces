@@ -50,13 +50,21 @@ const socketPos = () => [
 
 
 const unlinkLinks = () => {
-	props.socket.links.forEach(link => tree.unlink(link));
+	props.socket.links.forEach(link => {
+		if (!link.srcNode.canEditLinks || !link.dstNode.canEditLinks) return;
+		tree.unlink(link);
+	});
 	emit("unlink");
 };
 
 
 
 const ondragstart = (event: DragEvent) => {
+	if (!props.socket.node.canEditLinks) {
+		event.preventDefault();
+		return;
+	}
+
 	event.dataTransfer!.dropEffect = "link";
 	event.dataTransfer!.setDragImage(document.createElement("div"), 0, 0);
 	emit("drag-socket", socketVue);
@@ -76,7 +84,9 @@ const willAcceptLink = () => {
 
 	return props.socket.isInput !== draggedSocket.value.isInput
 			&& props.socket.node !== draggedSocket.value.node
-			&& Socket.canLinkTypeTo(src.type, dst.type);
+			&& Socket.canLinkTypeTo(src.type, dst.type)
+			&& props.socket.node.canEditLinks
+			&& draggedSocket.value.node.canEditLinks;
 };
 
 

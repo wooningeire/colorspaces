@@ -65,6 +65,8 @@ export class Node {
 	readonly id = Node.nextId++;
 
 	width = 140;
+	canMove = true;
+	canEditLinks = true;
 
 	// Note: If subclass constructor is called, `new.target` is the subclass
 	constructor(

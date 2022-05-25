@@ -555,6 +555,8 @@ export namespace externals {
 			this.outs.push(
 				new Socket(this, false, Socket.Type.Unknown, "Color data"),
 			);
+
+			this.canMove = false;
 		}
 
 		output(socketIndex: number, ...contextArgs: number[]): cm.Srgb {
@@ -610,6 +612,9 @@ export namespace externals {
 			this.outs.push(
 				new Socket(this, false, Socket.Type.Unknown, "Screen image"),
 			);
+
+			this.canMove = false;
+			this.canEditLinks = false;
 		}
 	}
 
@@ -627,6 +632,9 @@ export namespace externals {
 			this.outs.push(
 				new Socket(this, false, Socket.Type.Unknown, "Radiation"),
 			);
+
+			this.canMove = false;
+			this.canEditLinks = false;
 		}
 	}
 
@@ -640,6 +648,9 @@ export namespace externals {
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Unknown, "Light"),
 			);
+
+			this.canMove = false;
+			this.canEditLinks = false;
 		}
 	}
 }

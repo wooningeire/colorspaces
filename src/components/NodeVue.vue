@@ -62,7 +62,8 @@ const startDragging = (event: PointerEvent) => {
 const shouldCancelDrag = (event: PointerEvent) => {
 	// Make this check more sophisticated
 	// return event.target !== this.$el;
-	return ["input", "select"].includes((event.target as Element).tagName.toLowerCase());
+	return ["input", "select"].includes((event.target as Element).tagName.toLowerCase())
+			|| !props.node.canMove;
 };
 
 const emitNodeSelected = (event: PointerEvent) => {
@@ -106,6 +107,13 @@ const nodeBackgroundColors = new Map<unknown, string>([
 const nodeCategory = computed(() => nodeCategories.get(props.node.type));
 const nodeBorderColor = computed(() => nodeBorderColors.get(nodeCategory.value) ?? "#ffffff3f");
 const nodeBackgroundColor = computed(() => nodeBackgroundColors.get(nodeCategory.value) ?? "#2e3331df");
+
+
+const isSubtle = computed(() => 
+		props.node instanceof externals.DevicePostprocessingNode
+		|| props.node instanceof externals.EnvironmentNode
+		|| props.node instanceof externals.VisionNode
+);
 </script>
 
 <template>
@@ -122,9 +130,7 @@ const nodeBackgroundColor = computed(() => nodeBackgroundColors.get(nodeCategory
 				'--node-width': `${node.width}px`,
 			} as any"
 			:class="{
-				'subtle': node instanceof externals.DevicePostprocessingNode
-						|| node instanceof externals.EnvironmentNode
-						|| node instanceof externals.VisionNode,
+				'subtle': isSubtle,
 				'selected': isSelected,
 			}">
 		<div class="node-border"></div>
