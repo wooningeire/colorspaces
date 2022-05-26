@@ -26,6 +26,11 @@ const props = defineProps({
 		default: identity,
 	},
 
+	hasBounds: {
+		type: Boolean,
+		default: true,
+	},
+
 	min: {
 		type: Number,
 		default: 0,
@@ -38,7 +43,12 @@ const props = defineProps({
 
 	step: {
 		type: Number,
-		default: 1e-2,
+		default: 1e-3,
+	},
+
+	unboundedChangePerPixel: {
+		type: Number,
+		default: 0.03125,
 	},
 });
 
@@ -93,18 +103,22 @@ const onBlur = () => {
 
 const dragTolerance = 4;
 
-const beginSliderInput = (event: PointerEvent) => {
+const getAmountPerPixel = () => {
 	const min = props.convertIn(props.min);
 	const max = props.convertIn(props.max);
+	return (max - min) / textbox.value!.offsetWidth;
+}
+
+const beginSliderInput = (event: PointerEvent) => {
 	const step = props.convertIn(props.step);
 
-	const amountPerPixel = (max - min) / textbox.value!.offsetWidth;
+	const amountPerPixel = props.hasBounds ? getAmountPerPixel() : props.unboundedChangePerPixel;
 	const input = event.currentTarget! as HTMLInputElement;
 
 	let hasPassedTolerance = false;
 	let displacementX = 0;
 
-	const moveListener = Listen.for(input, "pointermove", (moveEvent: PointerEvent) => {
+	const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
 		clearTextSelection();
 
 		displacementX += moveEvent.movementX;
@@ -154,7 +168,7 @@ watch(() => props.modelValue, () => {
 			}"
 			
 			:style="{
-				'--slider-progress': progress,
+				'--slider-progress': hasBounds ? progress : 0,
 			} as any" />
 </template>
 

@@ -220,6 +220,14 @@ export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.Image ? ImageData :
 		never;
 
+type SliderProps = {
+	hasBounds?: boolean,
+	min?: number,
+	max?: number,
+	step?: number,
+	unboundedChangePerPixel?: number,
+};
+
 type SocketData<St extends SocketType=any> = 
 		// St extends SocketType.Float ? {defaultValue?: SocketValue<St>} :
 		St extends SocketType.Dropdown ? {
@@ -228,12 +236,18 @@ type SocketData<St extends SocketType=any> =
 				text: string,
 			}[],
 		} :
+		St extends SocketType.Float ? {
+			sliderProps?: SliderProps,
+		} :
+		St extends SocketType.RgbRaw ? {
+			sliderProps?: SliderProps[],
+		} :
+		St extends SocketType.RgbRawOrColTransformed ? {
+			sliderProps?: SliderProps[],
+		} :
 		{};
 
-type SocketOptions<St extends SocketType=any> = 
-		{defaultValue: SocketValue<St>} &
-		(St extends SocketType.Dropdown ? SocketData<St> :
-		{});
+type SocketOptions<St extends SocketType=any> = {defaultValue?: SocketValue<St>} & SocketData<St>;
 
 export class Socket<St extends SocketType=any> {
 	private static nextId = 0;
@@ -278,7 +292,7 @@ export class Socket<St extends SocketType=any> {
 		const {defaultValue, ...data} = options;
 
 		this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
-		this.data = data;
+		this.data = data as any as SocketData<St>;
 	}
 
 	get isOutput() {

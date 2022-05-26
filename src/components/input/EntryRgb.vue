@@ -27,6 +27,11 @@ const props = defineProps({
 		type: Function as PropType<<T>(value: T) => T>,
 		default: cloneArray,
 	},
+
+	sliderProps: {
+		type: Array,
+		default: [],
+	},
 });
 
 
@@ -83,11 +88,14 @@ watch(() => props.modelValue, () => {
 			@blur.capture="onBlur"
 			:class="{invalid: !proposedValueIsValid}">
 		<EntrySlider v-model="displayValue[0]"
-				@update:modelValue="emitValueIfValid" />
+				@update:modelValue="emitValueIfValid"
+				v-bind="sliderProps[0]" />
 		<EntrySlider v-model="displayValue[1]"
-				@update:modelValue="emitValueIfValid" />
+				@update:modelValue="emitValueIfValid"
+				v-bind="sliderProps[1]" />
 		<EntrySlider v-model="displayValue[2]"
-				@update:modelValue="emitValueIfValid" />
+				@update:modelValue="emitValueIfValid"
+				v-bind="sliderProps[2]" />
 	</div>
 </template>
 

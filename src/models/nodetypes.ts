@@ -27,8 +27,17 @@ export namespace images {
 					defaultValue: "0",
 				})),
 				...(this.boundsSockets = [
-					new Socket(this, true, Socket.Type.Float, "From"),
-					new Socket(this, true, Socket.Type.Float, "To", true, {defaultValue: 1}),
+					new Socket(this, true, Socket.Type.Float, "From", true, {
+						sliderProps: {
+							hasBounds: false,
+						},
+					}),
+					new Socket(this, true, Socket.Type.Float, "To", true, {
+						defaultValue: 1,
+						sliderProps: {
+							hasBounds: false,
+						},
+					}),
 				]),
 			);
 
@@ -219,9 +228,21 @@ export namespace models {
 			super(pos);
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, ""),
-				new Socket(this, true, Socket.Type.Float, ""),
-				new Socket(this, true, Socket.Type.Float, ""),
+				new Socket(this, true, Socket.Type.Float, "", true, {
+					sliderProps: {
+						hasBounds: false,
+					},
+				}),
+				new Socket(this, true, Socket.Type.Float, "", true, {
+					sliderProps: {
+						hasBounds: false,
+					},
+				}),
+				new Socket(this, true, Socket.Type.Float, "", true, {
+					sliderProps: {
+						hasBounds: false,
+					},
+				}),
 			);
 
 			this.outs.push(
@@ -472,7 +493,22 @@ export namespace spaces {
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color", true, {defaultValue: [50, 50, 50]})),
+				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color", true, {
+					defaultValue: [50, 0, 0],
+					sliderProps: [
+						{
+							max: 100,
+						},
+						{
+							hasBounds: false,
+							unboundedChangePerPixel: 1,
+						},
+						{
+							hasBounds: false,
+							unboundedChangePerPixel: 1,
+						},
+					],
+				})),
 				// ...(this.primariesSockets = [
 				// 	new Socket(this, true, Socket.Type.Float, "L*"),
 				// 	new Socket(this, true, Socket.Type.Float, "a*"),
