@@ -42,7 +42,7 @@ line {
 				stroke-dashoffset: 0;
 			}
 			100% {
-				stroke-dashoffset: -200%;
+				stroke-dashoffset: -8px;
 			}
 		}
 	}
