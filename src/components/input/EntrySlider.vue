@@ -2,6 +2,7 @@
 import {computed, PropType, ref, watch} from "vue";
 
 import {acceptAlways, identity} from "./base-functions";
+import {modifierKeys} from "../store";
 
 import {Listen, clearTextSelection} from "@/util";
 
@@ -44,6 +45,11 @@ const props = defineProps({
 	step: {
 		type: Number,
 		default: 1e-3,
+	},
+
+	nDecimals: {
+		type: Number,
+		default: 3,
 	},
 
 	unboundedChangePerPixel: {
@@ -101,13 +107,16 @@ const onBlur = () => {
 	userIsInputing.value = false;
 };
 
+
 const dragTolerance = 4;
 
 const getAmountPerPixel = () => {
 	const min = props.convertIn(props.min);
 	const max = props.convertIn(props.max);
 	return (max - min) / textbox.value!.offsetWidth;
-}
+};
+
+const roundToStep = (value: number, step: number) => Math.round(value / step) * step;
 
 const beginSliderInput = (event: PointerEvent) => {
 	const step = props.convertIn(props.step);
@@ -129,9 +138,14 @@ const beginSliderInput = (event: PointerEvent) => {
 			hasPassedTolerance = true;
 		}
 
+		const fac =
+				modifierKeys.shift ? 1/8 :
+				modifierKeys.ctrl ? 8 :
+				1;
+
 		// const newValue = (moveEvent.pageX - textbox.value!.getBoundingClientRect().left) * amountPerPixel;
-		const newValue = props.modelValue + moveEvent.movementX * amountPerPixel;
-		emit("update:modelValue", Math.round(newValue / step) * step);
+		const newValue = props.modelValue + moveEvent.movementX * amountPerPixel * fac;
+		emit("update:modelValue", Number(roundToStep(newValue, step).toFixed(props.nDecimals)));
 	});
 
 	addEventListener("pointerup", () => {

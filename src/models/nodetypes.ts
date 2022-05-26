@@ -337,6 +337,36 @@ export namespace math {
 
 		}
 	}
+
+	export class DeltaE1976Node extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Color difference (ΔE* 1976)";
+
+		private readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				...(this.colorSockets = [
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color"),
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color"),
+				]),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.Float, "Difference"),
+			);
+		}
+
+		output(...contextArgs: number[]): number {
+			// TODO check that inputs are of same type
+			const col0 = this.colorSockets[0].inValue(...contextArgs);
+			const col1 = this.colorSockets[1].inValue(...contextArgs);
+
+			return cm.difference.deltaE1976(col0, col1);
+		}
+	}
 }
 
 export namespace spaces {

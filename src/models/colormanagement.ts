@@ -533,3 +533,12 @@ const adaptXyz = (origColor: Xyz, targetIlluminant: Xy): Xyz => new Xyz(math.mul
 	),
 	origColor,
 ) as any as Vec3, targetIlluminant);
+
+export namespace difference {
+	export const deltaE1976 = (col1: Vec3 | Col, col2: Vec3 | Col) => {
+		const lab1 = Lab.from(col1, col1 instanceof Col ? col1.illuminant : illuminantE);
+		const lab2 = Lab.from(col2, col2 instanceof Col ? col2.illuminant : illuminantE);
+
+		return Math.hypot(...lab1.map((comp, i) => lab2[i] - lab1[i]));
+	}
+}
