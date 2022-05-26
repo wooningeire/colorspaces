@@ -11,3 +11,34 @@
 #   stage: test
 # include:
 # - template: Security/SAST.gitlab-ci.yml
+
+image: node:latest
+
+cache:
+  paths:
+    - node_modules/
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  script: 
+    - npm ci
+    - npm run build.public
+  artifacts:
+    paths:
+      - dist/
+  only:
+    - main
+
+pages:
+  stage: deploy
+  script:
+    - mv dist public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
