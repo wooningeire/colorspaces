@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {defineComponent, reactive, PropType, ref, watch} from "vue";
 
-import BaseEntry from "./BaseEntry.vue";
+import EntrySlider from "./EntrySlider.vue";
 
 import {acceptAlways, cloneArray} from "./base-functions";
 
@@ -49,6 +49,10 @@ const setDisplayToTrueValue = () => {
 
 const onInput = () => {
 	userIsInputing.value = true;
+	emitValueIfValid();
+};
+
+const emitValueIfValid = () => {
 	const proposedValue = props.convertOut(displayValue.value);
 
 	proposedValueIsValid.value = props.validate(proposedValue);
@@ -75,13 +79,15 @@ watch(() => props.modelValue, () => {
 </script>
 
 <template>
-	<div @input="onInput"
-			@change.stop="onChange"
+	<div @change.stop="onChange"
 			@blur.capture="onBlur"
 			:class="{invalid: !proposedValueIsValid}">
-		<BaseEntry v-model="displayValue[0]" />
-		<BaseEntry v-model="displayValue[1]" />
-		<BaseEntry v-model="displayValue[2]" />
+		<EntrySlider v-model="displayValue[0]"
+				@update:modelValue="emitValueIfValid" />
+		<EntrySlider v-model="displayValue[1]"
+				@update:modelValue="emitValueIfValid" />
+		<EntrySlider v-model="displayValue[2]"
+				@update:modelValue="emitValueIfValid" />
 	</div>
 </template>
 

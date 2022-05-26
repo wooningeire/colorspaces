@@ -12,6 +12,7 @@ import {models, spaces, math, images, externals, organization} from "@/models/no
 import {Listen, clearTextSelection} from "@/util";
 
 import {selectedNodes, modifierKeys} from "./store";
+import getDragHandler from "./draggable";
 
 
 const props = defineProps({

@@ -38,7 +38,7 @@ const props = defineProps({
 
 	step: {
 		type: Number,
-		default: 1e-4,
+		default: 1e-2,
 	},
 });
 
@@ -99,28 +99,24 @@ const beginSliderInput = (event: PointerEvent) => {
 	const step = props.convertIn(props.step);
 
 	const amountPerPixel = (max - min) / textbox.value!.offsetWidth;
-	
-	const startValue = props.modelValue;
-	const pointerStartPos = [event.pageX, event.pageY];
+	const input = event.currentTarget! as HTMLInputElement;
 
 	let hasPassedTolerance = false;
-
-	(event.currentTarget as HTMLInputElement).requestPointerLock();
-
 	let displacementX = 0;
 
-	const moveListener = Listen.for(event.currentTarget!, "pointermove", (moveEvent: PointerEvent) => {
+	const moveListener = Listen.for(input, "pointermove", (moveEvent: PointerEvent) => {
 		clearTextSelection();
 
 		displacementX += moveEvent.movementX;
 		if (!hasPassedTolerance && Math.abs(displacementX) <= dragTolerance) {
 			return;
+		} else if (!hasPassedTolerance) {
+			input.requestPointerLock();
+			hasPassedTolerance = true;
 		}
 
-		hasPassedTolerance = true;
-
 		// const newValue = (moveEvent.pageX - textbox.value!.getBoundingClientRect().left) * amountPerPixel;
-		const newValue = startValue + displacementX * amountPerPixel;
+		const newValue = props.modelValue + moveEvent.movementX * amountPerPixel;
 		emit("update:modelValue", Math.round(newValue / step) * step);
 	});
 
@@ -149,7 +145,7 @@ watch(() => props.modelValue, () => {
 			v-model="displayValue"
 			@input="onInput"
 			@change="onChange"
-			@pointerdown="beginSliderInput"
+			@pointerdown="event => !userIsInputing && beginSliderInput(event)"
 			@click="event => !userIsInputing && beginTextInput(event)"
 			@blur="onBlur"
 			:class="{
@@ -184,7 +180,7 @@ input {
 
 	&:hover {
 		--col-slider-progress: #dd4f96;
-		--col-slider-empty: #747977;
+		--col-slider-empty: #666b69;
 	}
 	
 	&.inputing {
