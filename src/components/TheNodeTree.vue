@@ -43,7 +43,7 @@ const onDragSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 		pointerY.value = event.pageY;
 	});
 
-	socketVue.socketEl.addEventListener("dragend", () => {
+	(socketVue.socketEl.value ?? socketVue.socketEl).addEventListener("dragend", () => {
 		draggedSocketVue.value = null;
 
 		dragListener.detach();

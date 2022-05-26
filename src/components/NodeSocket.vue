@@ -104,6 +104,15 @@ defineExpose({
 	socketPos,
 });
 
+Object.defineProperties(socketVue, {
+	socketEl: {
+		value: socketEl,
+	},
+	socketPos: {
+		value: socketPos,
+	},
+});
+
 </script>
 
 <template>
