@@ -195,6 +195,8 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 </template>
 
 <style lang="scss" scoped>
+@import "./mixins.scss";
+
 .node {
 	position: absolute;
 	// display: inline grid;
@@ -280,26 +282,7 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 	> .node-border {
 		--node-border-width: 4px;
 
-		position: absolute;
-
-		inset: calc(-1 * var(--node-border-width));
-		padding: var(--node-border-width);
-		border-radius: 1em;
-
-		background: var(--node-border-background);
-
-		// Border mask boilerplate from https://stackoverflow.com/a/51496341
-		mask: 
-				linear-gradient(#fff 0 0) content-box, 
-				linear-gradient(#fff 0 0);
-		mask-composite: exclude;
-
-		-webkit-mask: 
-				linear-gradient(#fff 0 0) content-box, 
-				linear-gradient(#fff 0 0);
-		-webkit-mask-composite: xor;
-
-		pointer-events: none;
+		@include gradient-border(var(--node-border-width), var(--node-border-background));
 	}
 
 	:deep(input) {

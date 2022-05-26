@@ -101,6 +101,25 @@ const onPointerDownSelf = () => {
 };
 
 
+const beginDragCamera = (event: PointerEvent) => {
+	/* const startPos = [...pos];
+	const pointerStartPos = [event.pageX, event.pageY];
+
+	const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
+		clearTextSelection();
+
+		[pos[0], pos[1]] = [
+			startPos[0] + (moveEvent.pageX - pointerStartPos[0]),
+			startPos[1] + (moveEvent.pageY - pointerStartPos[1]),
+		];
+	});
+
+	addEventListener("pointerup", () => {
+		moveListener.detach();
+	}, {once: true}); */
+};
+
+
 defineExpose({
 	selectNode,
 });
@@ -125,9 +144,15 @@ defineExpose({
 	<!-- drag events here are from node tray -->
 	<div class="node-tree"
 			@dragover="event => isDraggingNodeFromNodeTray && event.preventDefault()"
-			@drop="event => isDraggingNodeFromNodeTray && $emit('add-node', currentlyDraggedNodeConstructor, [event.pageX, event.pageY])">
+			@drop="event => isDraggingNodeFromNodeTray && $emit('add-node', currentlyDraggedNodeConstructor, [event.pageX, event.pageY])"
+			
+			:style="{
+				'--pos-x': `${pos[0]}px`,
+				'--pos-y': `${pos[1]}px`,	
+			} as any">
 		<div class="nodes"
-				@pointerdown.self="onPointerDownSelf">
+				@pointerdown.self="onPointerDownSelf"
+				@pointerdown="event => event.button === 1 && beginDragCamera(event)">
 			<NodeVue v-for="node of tree.nodes"
 					:key="node.id"
 					:node="node"
@@ -164,6 +189,9 @@ defineExpose({
 	place-items: center;
 
 	overflow: hidden;
+
+	--pos-x: 0;
+	--pos-y: 0;
 	
 	> * {
 		grid-area: 1 / 1;
@@ -174,6 +202,11 @@ defineExpose({
 		width: 100%;
 		height: 100%;
 	}
+
+	// > .nodes :deep(.node),
+	// > svg {
+	// 	transform: translate(var(--pos-x), var(--pos-y));
+	// }
 
 	> svg.links {
 		stroke: currentcolor;

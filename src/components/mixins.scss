@@ -1,0 +1,22 @@
+@mixin gradient-border($border-width, $background) {
+	position: absolute;
+
+	inset: calc(-1 * $border-width);
+	padding: $border-width;
+	border-radius: 1em;
+
+	background: $background;
+
+	// Border mask boilerplate from https://stackoverflow.com/a/51496341
+	mask: 
+			linear-gradient(#fff 0 0) content-box, 
+			linear-gradient(#fff 0 0);
+	mask-composite: exclude;
+
+	-webkit-mask: 
+			linear-gradient(#fff 0 0) content-box, 
+			linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+
+	pointer-events: none;
+}

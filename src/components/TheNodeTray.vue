@@ -82,6 +82,8 @@ const labels = new Map<object, string>([
 			color: #ffffff7f;
 
 			font-size: 1em;
+			
+			border-radius: 0.5em;
 
 			&:hover {
 				background: #ffffff3f;

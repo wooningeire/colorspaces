@@ -4,7 +4,7 @@ import * as math from "mathjs";
 //#region Color data types
 /**
  * Represents a color in an absolute color space.
- * Subclasses should implement the methods `static fromXyz` and `toXyz`.
+ * Subclasses should implement the methods `static from`, `static fromXyz`, and `toXyz`.
  */
 export class Col extends Array {
 	static readonly [Symbol.species] = Array;
@@ -208,6 +208,14 @@ export class Lab extends Col {
 
 	toXyz(illuminant: Xy=this.illuminant): Xyz {
 		return labToXyz(this, illuminant);
+	}
+}
+
+export class LchAb extends Col {
+	static readonly labels = ["L*", "C", "h"];
+
+	constructor(data: Vec3, illuminant: Xy) {
+		super(data, illuminant);
 	}
 }
 //#endregion
