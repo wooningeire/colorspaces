@@ -68,15 +68,15 @@ const nAxes = computed(() => props.node.getDependencyAxes().size);
 </script>
 
 <template>
-	<div class="color-display-box"
+	<!-- <div class="color-display-box"
 			v-if="nAxes === 0"
 			:style="{
 				'background': `rgb(${cm.Srgb.from(node.output(outputIndex, 0, 0)).map((x: number) => x * 255)})`,
-			}"></div>
+			}"></div> -->
 
 	<canvas class="color-display-box"
-			v-else
 			ref="canvas"
+			width="1"
 			height="1"></canvas>
 </template>
 

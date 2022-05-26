@@ -1,104 +1,89 @@
+<script lang="ts" setup>
+import {defineComponent, reactive, PropType, ref, watch} from "vue";
+
+import BaseEntry from "./BaseEntry.vue";
+
+import {acceptAlways, cloneArray} from "./base-functions";
+
+import {Vec3} from "@/util";
+
+const props = defineProps({
+	modelValue: {
+		type: Array as any as PropType<Vec3>,
+		required: true,
+	},
+
+	validate: {
+		type: Function as PropType<<T>(proposedValue: T) => boolean>,
+		default: acceptAlways,
+	},
+
+	convertIn: {
+		type: Function as PropType<<T>(value: T) => T>,
+		default: cloneArray,
+	},
+
+	convertOut: {
+		type: Function as PropType<<T>(value: T) => T>,
+		default: cloneArray,
+	},
+});
+
+
+const displayValue = ref(props.convertIn(props.modelValue));
+
+
+const proposedValueIsValid = ref(true);
+const userIsInputing = ref(false);
+
+
+const emit = defineEmits([
+	"update:modelValue",
+]);
+
+
+const setDisplayToTrueValue = () => {
+	displayValue.value = props.convertIn(props.modelValue);
+};
+
+
+const onInput = () => {
+	userIsInputing.value = true;
+	const proposedValue = props.convertOut(displayValue.value);
+
+	proposedValueIsValid.value = props.validate(proposedValue);
+	if (proposedValueIsValid.value) {
+		emit("update:modelValue", proposedValue);
+	}
+};
+
+const onChange = () => {
+	userIsInputing.value = false;
+	setDisplayToTrueValue();
+	proposedValueIsValid.value = true;
+};
+
+const onBlur = () => {
+	userIsInputing.value = false;
+};
+
+	
+watch(() => props.modelValue, () => {
+	if (userIsInputing.value) return;
+	setDisplayToTrueValue();
+});
+</script>
+
 <template>
 	<div @input="onInput"
 			@change.stop="onChange"
-			@focus.capture="onFocus"
 			@blur.capture="onBlur"
 			:class="{invalid: !proposedValueIsValid}">
-		<BaseEntry v-model="displayColor[0]" />
-		<BaseEntry v-model="displayColor[1]" />
-		<BaseEntry v-model="displayColor[2]" />
+		<BaseEntry v-model="displayValue[0]" />
+		<BaseEntry v-model="displayValue[1]" />
+		<BaseEntry v-model="displayValue[2]" />
 	</div>
 </template>
-
-<script lang="ts">
-import {defineComponent, reactive} from "vue";
-import converterMixin from "./converterMixin";
-import BaseEntry from "./BaseEntry.vue";
-
-import {Color} from "@/util";
-
-const acceptAlways = () => true;
-
-export default defineComponent({
-	name: "EntryRgb",
-
-	mixins: [converterMixin],
-
-	props: {
-		validate: {
-			type: Function,
-			default: acceptAlways,
-		},
-
-		modelValue: {
-			type: Array,
-			required: true,
-		},
-
-		convertIn: {
-			type: Function,
-			default: (value: number[]) => [...value],
-		},
-
-		convertOut: {
-			type: Function,
-			default: (value: number[]) => [...value],
-		},
-	},
-	data() {
-		return {
-			proposedValueIsValid: true,
-			isFocused: false,
-
-			displayColor: this.convertIn(this.modelValue),
-		};
-	},
-
-	methods: {
-		onInput(event: InputEvent) {
-			const proposedValue = this.convertOut(this.displayColor);
-
-			this.proposedValueIsValid = this.validate(proposedValue);
-			if (this.proposedValueIsValid) {
-				this.$emit("update:modelValue", proposedValue);
-			} else {
-				event.stopPropagation();
-			}
-		},
-
-		updateDisplayValue() {
-			this.displayColor = this.convertIn(this.modelValue);
-		},
-
-		onChange() {
-			this.updateDisplayValue();
-			this.proposedValueIsValid = true;
-		},
-
-		onFocus() {
-			this.isFocused = true;
-		},
-
-		onBlur() {
-			this.isFocused = false;
-		},
-	},
-	
-	watch: {
-		modelValue() {
-			if (this.isFocused) return;
-			this.updateDisplayValue();
-		},
-	},
-	components: {
-		BaseEntry,
-	},
-
-	/* created() {
-		this.displayColor = this.modelValue;
-	}, */
-});
-</script>
 
 <style scoped>
 .invalid :deep(input) {
