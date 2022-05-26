@@ -80,7 +80,7 @@ watch(() => props.modelValue, () => {
 
 <style lang="scss" scoped>
 input {
-	background: rgb(85, 88, 87);
+	background: #555857;
 	border: none;
 	color: inherit;
 
@@ -88,7 +88,7 @@ input {
 	border-radius: 4px;
 
 	&.invalid {
-		color: red;
+		color: var(--col-invalid-input);
 	}
 }
 </style>

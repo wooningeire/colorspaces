@@ -87,6 +87,6 @@ watch(() => props.modelValue, () => {
 
 <style scoped>
 .invalid :deep(input) {
-	color: red;
+	color: var(--col-invalid-input);
 }
 </style>

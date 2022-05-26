@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {computed, ref, reactive, provide, nextTick, onMounted} from "vue";
+import {computed, ref, reactive, provide, nextTick, onMounted, Ref} from "vue";
 
 import NodeVue from "./NodeVue.vue";
 import NodeSocket from "./NodeSocket.vue";
@@ -43,7 +43,8 @@ const onDragSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 		pointerY.value = event.pageY;
 	});
 
-	(socketVue.socketEl.value ?? socketVue.socketEl).addEventListener("dragend", () => {
+	((socketVue.socketEl as any as Ref<HTMLDivElement>).value 
+			?? socketVue.socketEl).addEventListener("dragend", () => {
 		draggedSocketVue.value = null;
 
 		dragListener.detach();

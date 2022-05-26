@@ -37,6 +37,10 @@ const addNode = <T extends Node>(nodeConstructor: new () => T, pos: Vec2=[0, 0])
 	box-sizing: border-box;
 }
 
+:root {
+	--col-invalid-input: #f57;
+}
+
 body {
 	margin: 0;
 	font-family: Atkinson Hyperlegible, Overpass, sans-serif;
