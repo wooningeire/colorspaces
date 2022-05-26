@@ -1,15 +1,16 @@
 <script lang="ts" setup>
-import {ref, computed} from "vue";
+import {ref, computed, PropType} from "vue";
 
 import BaseEntry from "./input/BaseEntry.vue";
 import EntryRgb from "./input/EntryRgb.vue";
+import EntrySlider from "./input/EntrySlider.vue";
 
 import {Socket, SocketType as St} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
 
 const props = defineProps({
 	socket: {
-		type: Socket,
+		type: Socket as PropType<Socket<any>>,
 		required: true,
 	},
 });
@@ -38,26 +39,34 @@ const readFile = (): Promise<ImageData> => new Promise(resolve => {
 	reader.readAsDataURL(file);
 });
 
-const console = window.console;
+
+const isOutputNode = props.socket.node instanceof externals.DeviceTransformNode;
 
 
-const isOutputNode = computed(() => props.socket.node instanceof externals.DeviceTransformNode);
+const isFloat = props.socket.type === St.Float;
+const isVector = [St.RgbRaw, St.RgbRawOrColTransformed].includes(props.socket.type) && !isOutputNode;
+
+const isEntry = isFloat || isVector;
 </script>
 
 <template>
 	<div class="socket-value-editor">
-		<template v-if="socket.type === St.Float">
-			<BaseEntry v-model="socket.fieldValue"
+		<template v-if="isFloat">
+			<EntrySlider v-model="(socket as Socket<St.Float>).fieldValue"
 					@update:modelValue="$emit('value-change')"
 					
-					:validate="isFinite" />
+					:validate="isFinite"
+					
+					v-bind="(socket as Socket<St.Float>).data.sliderProps" />
 		</template>
 
-		<template v-else-if="[St.RgbRaw, St.RgbRawOrColTransformed].includes(socket.type) && !isOutputNode">
+		<template v-else-if="isVector">
 			<EntryRgb v-model="(socket as Socket<St.RgbRaw | St.RgbRawOrColTransformed>).fieldValue"
 					@update:modelValue="$emit('value-change')"
 
-					:validate="(color: number[]) => color.every(comp => isFinite(comp))" />
+					:validate="(color: number[]) => color.every(comp => isFinite(comp))"
+					
+					:sliderProps="(socket as Socket<St.RgbRaw | St.RgbRawOrColTransformed>).data.sliderProps" />
 		</template>
 
 		<template v-else-if="socket.type === St.Dropdown">
@@ -81,3 +90,10 @@ const isOutputNode = computed(() => props.socket.node instanceof externals.Devic
 		</template>
 	</div>
 </template>
+
+<!-- <style lang="scss">
+.socket-value-editor.entry {
+	border-radius: 4px;
+	overflow: hidden;
+}
+</style> -->
