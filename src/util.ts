@@ -82,3 +82,9 @@ class Option<T> {
 
 
 export const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;
+
+const matrixDotVector3 = (matrix: number[][], vector: number[]) => [
+	matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2] * vector[2],
+	matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2] * vector[2],
+	matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2] * vector[2],
+];

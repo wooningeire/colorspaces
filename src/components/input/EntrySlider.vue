@@ -174,7 +174,7 @@ watch(() => props.modelValue, () => {
 			@input="onInput"
 			@change="onChange"
 			@pointerdown="event => !userIsInputing && beginSliderInput(event)"
-			@click="event => !userIsInputing && beginTextInput(event)"
+			@click="event => !userIsInputing && beginTextInput(event as any as PointerEvent)"
 			@blur="onBlur"
 			:class="{
 				'invalid': !proposedValueIsValid,
