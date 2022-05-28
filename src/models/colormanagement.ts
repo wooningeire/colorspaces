@@ -9,6 +9,8 @@ export {Srgb, LinearSrgb} from "./colormanagement/srgb";
 export {AdobeRgb, LinearAdobeRgb} from "./colormanagement/adobe-rgb";
 export {Lab, LchAb} from "./colormanagement/lab";
 
+export {spectralPowerDistribution} from "./colormanagement/spectral-power-distribution";
+
 
 //#region Conversion functions
 

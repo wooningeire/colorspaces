@@ -277,6 +277,23 @@ export namespace models {
 		// 	return this.ins.map(socket => socket.inValue(...contextArgs)) as Color;
 		// }
 	}
+
+	export class SpectralPowerDistributionNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Spectral power distribution";
+
+		constructor(pos?: Vec2) {
+			super(pos);
+			
+			this.outs.push(
+				new Socket(this, false, Socket.Type.RgbRaw, "XYZ"),
+			);
+		}
+
+		output(...contextArgs: number[]): Vec3 {
+			return cm.spectralPowerDistribution({}) as any as Vec3;
+		}
+	}
 }
 
 export namespace math {
