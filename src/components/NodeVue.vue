@@ -9,10 +9,10 @@ import NodeOutputDisplay from "./NodeOutputDisplay.vue";
 import {Node} from "@/models/Node";
 import {models, spaces, math, images, externals, organization} from "@/models/nodetypes";
 
-import {Listen, clearTextSelection} from "@/util";
+import {Listen, clearTextSelection, Vec2} from "@/util";
 
 import {selectedNodes, modifierKeys} from "./store";
-import getDragHandler from "./draggable";
+import makeDragListener from "./draggable";
 
 
 const props = defineProps({
@@ -36,36 +36,23 @@ const emit = defineEmits([
 const isSelected = computed(() => selectedNodes.has(props.node));
 
 
+const beginDrag = makeDragListener({
+	shouldCancel(event: PointerEvent) {
+		// Make this check more sophisticated
+		// return event.target !== this.$el;
+		return ["input", "select"].includes((event.target as Element).tagName.toLowerCase())
+				|| !props.node.canMove;
+	},
 
-const startDragging = (event: PointerEvent) => {
-	if (shouldCancelDrag(event)) return;
-	
-	const nodeStartPos = props.node.pos;
-	const pointerStartPos = [event.pageX, event.pageY];
-
-	const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
-		clearTextSelection();
-
-		props.node.pos = [
-			nodeStartPos[0] + (moveEvent.pageX - pointerStartPos[0]),
-			nodeStartPos[1] + (moveEvent.pageY - pointerStartPos[1]),
-		];
+	onDrag(moveEvent) {
+		props.node.pos[0] += moveEvent.movementX;
+		props.node.pos[1] += moveEvent.movementY;
 
 		emit("node-dragged");
 		emit("potential-socket-position-change");
-	});
+	},
+});
 
-	addEventListener("pointerup", () => {
-		moveListener.detach();
-	}, {once: true});
-};
-
-const shouldCancelDrag = (event: PointerEvent) => {
-	// Make this check more sophisticated
-	// return event.target !== this.$el;
-	return ["input", "select"].includes((event.target as Element).tagName.toLowerCase())
-			|| !props.node.canMove;
-};
 
 const emitNodeSelected = (event: PointerEvent) => {
 	if (modifierKeys.shift) {
@@ -124,11 +111,11 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 	<div class="node"
 			@pointerdown="event => {
 				emitNodeSelected(event);
-				startDragging(event);
+				beginDrag(event);
 			}"
 			:style="{
-				'left': `${node.pos[0] ?? 0}px`,
-				'top': `${node.pos[1] ?? 0}px`,
+				'left': `${node.pos[0]}px`,
+				'top': `${node.pos[1]}px`,
 				'--node-border-background': nodeBorderColor,
 				'--node-background': nodeBackgroundColor,
 				'--node-width': `${node.width}px`,
@@ -162,13 +149,15 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 
 				<NodeSocket :socket="socket"
 						@drag-socket="socketVue => $emit('drag-socket', socketVue)"
-						@link-to-socket="socketVue => ($emit('link-to-socket', socketVue),
-								$emit('tree-update'),
-								$emit('potential-socket-position-change'))"
+						@link-to-socket="socketVue => (
+							$emit('link-to-socket', socketVue),
+							$emit('tree-update'),
+							$emit('potential-socket-position-change'))"
 
 						@value-change="$emit('tree-update')"
-						@unlink="$emit('tree-update'),
-								$emit('potential-socket-position-change')" />
+						@unlink="
+							$emit('tree-update'),
+							$emit('potential-socket-position-change')" />
 			</template>
 		</div>
 
@@ -177,12 +166,14 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 					:key="socket.id"
 					:socket="socket"
 					@drag-socket="socketVue => $emit('drag-socket', socketVue)"
-					@link-to-socket="socketVue => ($emit('link-to-socket', socketVue),
-							$emit('tree-update'),
-							$emit('potential-socket-position-change'))"
+					@link-to-socket="socketVue => (
+						$emit('link-to-socket', socketVue),
+						$emit('tree-update'),
+						$emit('potential-socket-position-change'))"
 
-					@unlink="$emit('tree-update'),
-							$emit('potential-socket-position-change')" />
+					@unlink="
+						$emit('tree-update'),
+						$emit('potential-socket-position-change')" />
 		</div>
 
 		<div class="node-output"

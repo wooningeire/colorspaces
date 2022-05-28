@@ -3,8 +3,7 @@ import {computed, PropType, ref, watch} from "vue";
 
 import {acceptAlways, identity} from "./base-functions";
 import {modifierKeys} from "../store";
-
-import {Listen, clearTextSelection} from "@/util";
+import makeDragListener from "../draggable";
 
 const props = defineProps({
 	modelValue: {
@@ -59,13 +58,16 @@ const props = defineProps({
 });
 
 
-const progress = computed(() => {
-	const min = props.convertIn(props.min);
-	const max = props.convertIn(props.max);
-	const current = props.convertIn(props.modelValue);
+const sliderMin = computed(() => props.convertIn(props.min));
+const sliderMax = computed(() => props.convertIn(props.max));
+const sliderStep = computed(() => props.convertIn(props.step));
+const sliderCurrent = computed(() => props.convertIn(props.modelValue));
 
-	return (current - min) / (max - min);
-});
+const progress = computed(() => (sliderCurrent.value - sliderMin.value) / (sliderMax.value - sliderMin.value));
+
+
+const amountPerPixel = computed(() => (sliderMax.value - sliderMin.value) / textbox.value!.offsetWidth);
+
 
 const displayValue = ref(props.convertIn(props.modelValue).toString());
 
@@ -107,54 +109,27 @@ const onBlur = () => {
 	userIsInputing.value = false;
 };
 
-
-const dragTolerance = 4;
-
-const getAmountPerPixel = () => {
-	const min = props.convertIn(props.min);
-	const max = props.convertIn(props.max);
-	return (max - min) / textbox.value!.offsetWidth;
-};
-
 const roundToStep = (value: number, step: number) => Math.round(value / step) * step;
 
-const beginSliderInput = (event: PointerEvent) => {
-	const step = props.convertIn(props.step);
+const beginSliderInput = makeDragListener({
+	onPassTolerance(downEvent) {
+		(downEvent.target! as HTMLInputElement).requestPointerLock();
+	},
 
-	const amountPerPixel = props.hasBounds ? getAmountPerPixel() : props.unboundedChangePerPixel;
-	const input = event.currentTarget! as HTMLInputElement;
-
-	let hasPassedTolerance = false;
-	let displacementX = 0;
-
-	const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
-		clearTextSelection();
-
-		displacementX += moveEvent.movementX;
-		if (!hasPassedTolerance && Math.abs(displacementX) <= dragTolerance) {
-			return;
-		} else if (!hasPassedTolerance) {
-			input.requestPointerLock();
-			hasPassedTolerance = true;
-		}
-
+	onDrag(moveEvent) {
 		const fac =
 				modifierKeys.shift ? 1/8 :
 				modifierKeys.ctrl ? 8 :
 				1;
+	
+		const newValue = props.modelValue + moveEvent.movementX * amountPerPixel.value * fac;
+		emit("update:modelValue", Number(roundToStep(newValue, props.step).toFixed(props.nDecimals)));
+	},
 
-		// const newValue = (moveEvent.pageX - textbox.value!.getBoundingClientRect().left) * amountPerPixel;
-		const newValue = props.modelValue + moveEvent.movementX * amountPerPixel * fac;
-		emit("update:modelValue", Number(roundToStep(newValue, step).toFixed(props.nDecimals)));
-	});
-
-	addEventListener("pointerup", () => {
-		clearTextSelection();
-		moveListener.detach();
-
+	onUp() {
 		document.exitPointerLock();
-	}, {once: true});
-};
+	},
+});
 
 const beginTextInput = (event: PointerEvent) => {
 	userIsInputing.value = true;
