@@ -46,11 +46,6 @@ const props = defineProps({
 		default: 1e-3,
 	},
 
-	nDecimals: {
-		type: Number,
-		default: 3,
-	},
-
 	unboundedChangePerPixel: {
 		type: Number,
 		default: 0.03125,
@@ -58,22 +53,20 @@ const props = defineProps({
 });
 
 
-const sliderMin = computed(() => props.convertIn(props.min));
-const sliderMax = computed(() => props.convertIn(props.max));
-const sliderStep = computed(() => props.convertIn(props.step));
-const sliderCurrent = computed(() => props.convertIn(props.modelValue));
-
-const progress = computed(() => (sliderCurrent.value - sliderMin.value) / (sliderMax.value - sliderMin.value));
-
-
-const amountPerPixel = computed(() => (sliderMax.value - sliderMin.value) / textbox.value!.offsetWidth);
-
-
-const displayValue = ref(props.convertIn(props.modelValue).toString());
+const progress = computed(() => (props.modelValue - props.min) / (props.max - props.min));
+const amountPerPixel = computed(() => (props.max - props.min) / textbox.value!.offsetWidth);
 
 
 const proposedValueIsValid = ref(true);
-const userIsInputing = ref(false);
+const isUsingEntry = ref(false);
+
+
+const tempValue = ref(props.convertIn(props.modelValue).toString());
+
+const displayValue = computed({
+	get: () => isUsingEntry.value ? tempValue.value : Number(Number(tempValue.value).toFixed(4)).toString(),
+	set: value => tempValue.value = value,
+});
 
 
 const textbox = ref(null as HTMLInputElement | null);
@@ -85,13 +78,13 @@ const emit = defineEmits([
 
 
 const setDisplayToTrueValue = () => {
-	displayValue.value = props.convertIn(props.modelValue).toString();
+	tempValue.value = props.convertIn(props.modelValue).toString();
 };
 
 
 const onInput = () => {
-	userIsInputing.value = true;
-	const proposedValue = props.convertOut(Number(displayValue.value));
+	isUsingEntry.value = true;
+	const proposedValue = props.convertOut(Number(tempValue.value));
 
 	proposedValueIsValid.value = props.validate(proposedValue);
 	if (proposedValueIsValid.value) {
@@ -100,13 +93,13 @@ const onInput = () => {
 };
 
 const onChange = () => {
-	userIsInputing.value = false;
+	isUsingEntry.value = false;
 	setDisplayToTrueValue();
 	proposedValueIsValid.value = true;
 };
 
 const onBlur = () => {
-	userIsInputing.value = false;
+	isUsingEntry.value = false;
 };
 
 const roundToStep = (value: number, step: number) => Math.round(value / step) * step;
@@ -123,7 +116,7 @@ const beginSliderInput = makeDragListener({
 				1;
 	
 		const newValue = props.modelValue + moveEvent.movementX * amountPerPixel.value * fac;
-		emit("update:modelValue", Number(roundToStep(newValue, props.step).toFixed(props.nDecimals)));
+		emit("update:modelValue", roundToStep(newValue, props.step));
 	},
 
 	onUp() {
@@ -132,12 +125,12 @@ const beginSliderInput = makeDragListener({
 });
 
 const beginTextInput = (event: PointerEvent) => {
-	userIsInputing.value = true;
+	isUsingEntry.value = true;
 	textbox.value!.select();
 };
 
 watch(() => props.modelValue, () => {
-	if (userIsInputing.value) return;
+	if (isUsingEntry.value) return;
 	setDisplayToTrueValue();
 });
 </script>
@@ -148,12 +141,12 @@ watch(() => props.modelValue, () => {
 			v-model="displayValue"
 			@input="onInput"
 			@change="onChange"
-			@pointerdown="event => !userIsInputing && beginSliderInput(event)"
-			@click="event => !userIsInputing && beginTextInput(event as any as PointerEvent)"
+			@pointerdown="event => !isUsingEntry && beginSliderInput(event)"
+			@click="event => !isUsingEntry && beginTextInput(event as any as PointerEvent)"
 			@blur="onBlur"
 			:class="{
 				'invalid': !proposedValueIsValid,
-				'inputing': userIsInputing,
+				'inputing': isUsingEntry,
 			}"
 			
 			:style="{
