@@ -570,7 +570,7 @@ export namespace spaces {
 
 	export class LchAbNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "L*Ch(ab)";
+		static readonly LABEL = "L*C*h(ab)";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
 		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
@@ -580,7 +580,7 @@ export namespace spaces {
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*Ch or color", true, {
+				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*C*h or color", true, {
 					defaultValue: [50, 0, 0],
 					sliderProps: [
 						{
@@ -603,6 +603,85 @@ export namespace spaces {
 		output(...contextArgs: number[]): cm.Lab {
 			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
 			return cm.LchAb.from(this.colorSocket.inValue(...contextArgs), illuminant);
+		}
+	}
+
+	export class LuvNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "L*u*v*";
+
+		private readonly whitePointSocket: Socket<St.Dropdown>;
+		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
+				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*u*v* or color", true, {
+					defaultValue: [50, 0, 0],
+					sliderProps: [
+						{
+							max: 100,
+						},
+						{
+							hasBounds: false,
+							unboundedChangePerPixel: 1,
+						},
+						{
+							hasBounds: false,
+							unboundedChangePerPixel: 1,
+						},
+					],
+				})),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+			);
+		}
+
+		output(...contextArgs: number[]): cm.Luv {
+			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
+			return cm.Luv.from(this.colorSocket.inValue(...contextArgs), illuminant);
+		}
+	}
+
+	export class LchUvNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "L*C*h(uv)";
+
+		private readonly whitePointSocket: Socket<St.Dropdown>;
+		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
+				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*C*h or color", true, {
+					defaultValue: [50, 0, 0],
+					sliderProps: [
+						{
+							max: 100,
+						},
+						{
+							hasBounds: false,
+							unboundedChangePerPixel: 2,
+						},
+						{},
+					],
+				})),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+			);
+		}
+
+		output(...contextArgs: number[]): cm.LchUv {
+			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
+			return cm.LchUv.from(this.colorSocket.inValue(...contextArgs), illuminant);
 		}
 	}
 

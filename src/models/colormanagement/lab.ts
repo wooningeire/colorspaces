@@ -25,7 +25,7 @@ export class Lab extends Col {
 }
 
 export class LchAb extends Col {
-	static readonly labels = ["L*", "C", "h"];
+	static readonly labels = ["L*", "C*", "h"];
 
 	constructor(data: Vec3, illuminant: Xy) {
 		super(data, illuminant);
@@ -69,7 +69,6 @@ const labToXyz = (lab: Lab, illuminant: Xy) => {
 
 const xyzToLab = (xyz: Xyz, illuminant: Xy) => {
 	const adaptedXyz = adaptXyz(xyz, illuminant);
-
 	const referenceWhiteXyz = xyyToXyzNoAdapt(illuminant);
 
 	const tempXyz = adaptedXyz.map((comp, i) => adaptedXyz[i] / referenceWhiteXyz[i]);
