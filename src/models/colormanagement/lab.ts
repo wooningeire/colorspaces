@@ -1,4 +1,4 @@
-import {Vec3} from "@/util";
+import {Vec3, mod} from "@/util";
 
 import {Col, Xyz, Xy, adaptXyz, xyyToXyzNoAdapt} from "./col-xyz-xyy-illuminants";
 
@@ -18,6 +18,10 @@ export class Lab extends Col {
 	toXyz(illuminant: Xy=this.illuminant): Xyz {
 		return labToXyz(this, illuminant);
 	}
+
+	get l() { return this[0]; }
+	get a() { return this[1]; }
+	get b() { return this[2]; }
 }
 
 export class LchAb extends Col {
@@ -26,6 +30,18 @@ export class LchAb extends Col {
 	constructor(data: Vec3, illuminant: Xy) {
 		super(data, illuminant);
 	}
+
+	static fromXyz(xyz: Xyz): LchAb {
+		return labToLchAb(xyzToLab(xyz, xyz.illuminant));
+	}
+
+	toXyz(illuminant: Xy=this.illuminant): Xyz {
+		return labToXyz(lchAbToLab(this), illuminant);
+	}
+
+	get l() { return this[0]; }
+	get c() { return this[1]; }
+	get h() { return this[2]; }
 }
 //#endregion
 
@@ -45,9 +61,9 @@ const labToXyz = (lab: Lab, illuminant: Xy) => {
 	const referenceWhiteXyz = xyyToXyzNoAdapt(lab.illuminant);
 
 	return adaptXyz(new Xyz([
-		compHelper(tempX) * referenceWhiteXyz[0],
-		compHelper(tempY) * referenceWhiteXyz[1],
-		compHelper(tempZ) * referenceWhiteXyz[2],
+		compHelper(tempX) * referenceWhiteXyz.x,
+		compHelper(tempY) * referenceWhiteXyz.y,
+		compHelper(tempZ) * referenceWhiteXyz.z,
 	], lab.illuminant), illuminant);
 };
 
@@ -71,4 +87,18 @@ const xyzToLab = (xyz: Xyz, illuminant: Xy) => {
 		200 * (newXyz[1] - newXyz[2]),
 	], illuminant);
 };
+
+const turn = 2 * Math.PI;
+
+const labToLchAb = (lab: Lab) => new LchAb([
+	lab.l,
+	Math.hypot(lab.a, lab.b),
+	mod(Math.atan2(lab.b, lab.a) / turn, 2), // radians to [0, 1)
+], lab.illuminant);
+
+const lchAbToLab = (lch: LchAb) => new Lab([
+	lch.l,
+	Math.cos(lch.h * turn) * lch.c,
+	Math.sin(lch.h * turn) * lch.c,
+], lch.illuminant);
 //#endregion

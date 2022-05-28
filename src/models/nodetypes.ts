@@ -533,7 +533,6 @@ export namespace spaces {
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
 		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
-		// private readonly primariesSockets: Socket<SocketType.Float>[];
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -556,11 +555,6 @@ export namespace spaces {
 						},
 					],
 				})),
-				// ...(this.primariesSockets = [
-				// 	new Socket(this, true, Socket.Type.Float, "L*"),
-				// 	new Socket(this, true, Socket.Type.Float, "a*"),
-				// 	new Socket(this, true, Socket.Type.Float, "b*"),
-				// ]),
 			);
 
 			this.outs.push(
@@ -571,16 +565,44 @@ export namespace spaces {
 		output(...contextArgs: number[]): cm.Lab {
 			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
 			return cm.Lab.from(this.colorSocket.inValue(...contextArgs), illuminant);
-			
-			/* cm.linearToSrgb(
-				cm.xyzToLinear(
-					cm.labToXyz(
-						this.primariesSockets.map(socket => socket.inValueFn(...contextArgs)) as Color,
-						cm.xyyToXyz(illuminant),
-					),
-					illuminant,
-				),
-			); */
+		}
+	}
+
+	export class LchAbNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "L*Ch(ab)";
+
+		private readonly whitePointSocket: Socket<St.Dropdown>;
+		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
+				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*Ch or color", true, {
+					defaultValue: [50, 0, 0],
+					sliderProps: [
+						{
+							max: 100,
+						},
+						{
+							hasBounds: false,
+							unboundedChangePerPixel: 2,
+						},
+						{},
+					],
+				})),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+			);
+		}
+
+		output(...contextArgs: number[]): cm.Lab {
+			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
+			return cm.LchAb.from(this.colorSocket.inValue(...contextArgs), illuminant);
 		}
 	}
 

@@ -54,7 +54,7 @@ const props = defineProps({
 
 
 const progress = computed(() => (props.modelValue - props.min) / (props.max - props.min));
-const amountPerPixel = computed(() => (props.max - props.min) / textbox.value!.offsetWidth);
+const amountPerPixel = computed(() => props.hasBounds ? (props.max - props.min) / textbox.value!.offsetWidth : props.unboundedChangePerPixel);
 
 
 const proposedValueIsValid = ref(true);

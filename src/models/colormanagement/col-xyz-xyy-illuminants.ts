@@ -61,6 +61,10 @@ export class Xyz extends Col {
 	toXyz(illuminant: Xy=this.illuminant) {
 		return adaptXyz(this, illuminant);
 	}
+
+	get x() { return this[0]; }
+	get y() { return this[1]; }
+	get z() { return this[2]; }
 }
 
 export class Xyy extends Col {
@@ -77,6 +81,10 @@ export class Xyy extends Col {
 	toXyz(illuminant: Xy=this.illuminant): Xyz {
 		return xyyToXyz(this, illuminant);
 	}
+
+	get x() { return this[0]; }
+	get y() { return this[1]; }
+	get lum() { return this[2]; }
 }
 
 export class Xy extends Col {
@@ -87,6 +95,9 @@ export class Xy extends Col {
 	toXyz(illuminant: Xy=this.illuminant): Xyz {
 		return xyyToXyz(this, illuminant);
 	}
+
+	get x() { return this[0]; }
+	get y() { return this[1]; }
 }
 //#endregion
 
