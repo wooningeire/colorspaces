@@ -334,7 +334,7 @@ export namespace math {
 
 	export class GetComponentsNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Get components";
+		static readonly LABEL = "Explode";
 
 		private readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 
@@ -656,7 +656,7 @@ export namespace spaces {
 
 	export class LchUvNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "L*C*h(uv)";
+		static readonly LABEL = "L\\*C\\*h<sub>uv</sub>";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
 		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;

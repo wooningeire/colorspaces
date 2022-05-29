@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import {models, math, spaces, images, organization} from "@/models/nodetypes";
+import * as marked from "marked";
 
 import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor} from "./store";
 
@@ -30,8 +31,9 @@ const labels = new Map<object, string>([
 							currentlyDraggedNodeConstructor = nodeConstructor;
 							isDraggingNodeFromNodeTray = true;
 						}"
-						@dragend="isDraggingNodeFromNodeTray = false">
-					{{nodeConstructor.LABEL}}
+						@dragend="isDraggingNodeFromNodeTray = false"
+						
+						v-html="marked.parseInline(nodeConstructor.LABEL)">
 				</button>
 			</div>
 		</template>
