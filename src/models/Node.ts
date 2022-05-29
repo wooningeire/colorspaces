@@ -80,7 +80,7 @@ export class Node {
 		public label: string=new.target.LABEL,
 	) {}
 
-	output(...contextArgs: number[]): any {
+	output(context: NodeEvalContext={}): any {
 		throw new TypeError("Abstract method / not implemented");
 	}
 
@@ -196,6 +196,11 @@ export interface AxisNode extends Node {
 	readonly axes: number[];
 }
 
+export interface NodeEvalContext {
+	readonly coords?: Vec2;
+	readonly socket?: Socket;
+}
+
 
 export enum SocketType {
 	Unknown,
@@ -299,10 +304,19 @@ export class Socket<St extends SocketType=any> {
 		return !this.isInput;
 	}
 
-	inValue(...contextArgs: number[]): SocketValue<St> {
+	inValue(context: NodeEvalContext={}): SocketValue<St> {
 		return this.links[0]?.causesCircularDependency
 				? this.fieldValue
-				: this.links[0]?.srcNode.output(...contextArgs) ?? this.fieldValue;
+				: (this.links[0]?.src.outValue(context) as SocketValue<St>) ?? this.fieldValue;
+	}
+
+	outValue(context: NodeEvalContext={}): SocketValue<St> {
+		const newContext = {
+			...context,
+			socket: this,
+		};
+
+		return this.node.output(newContext);
 	}
 
 	get hasLinks() {

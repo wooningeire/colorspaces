@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch} from "vue";
 
-import {Node} from "@/models/Node";
+import {Node, Socket, NodeEvalContext} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
 import * as cm from "@/models/colormanagement";
 import { tree } from "./store";
@@ -12,9 +12,9 @@ const props = defineProps({
 		required: true,
 	},
 
-	outputIndex: {
-		type: Number,
-		default: 0,
+	socket: {
+		type: Socket,
+		default: null,
 	},
 });
 
@@ -22,10 +22,7 @@ const canvas = ref(null as HTMLCanvasElement | null);
 const cx = computed(() => canvas.value?.getContext("2d")!);
 
 
-// TODO decouple
-const dataOutput = (...args: number[]) => props.node instanceof externals.DeviceTransformNode
-		? props.node.output(props.outputIndex!, ...args)
-		: props.node.output(...args);
+const dataOutput = (context: NodeEvalContext) => props.node.output(context);
 
 
 // Performance bottleneck
@@ -43,7 +40,7 @@ const rerenderCanvas = () => {
 		for (let yPixels = 0; yPixels < height; yPixels++) {
 			const yFacFrac = (yPixels + 0.5) / height;
 	
-			const colorData = dataOutput(xFacFrac, yFacFrac);
+			const colorData = dataOutput({coords: [xFacFrac, yFacFrac], socket: props.socket});
 			if (!colorData) return; // Deals with extraneous call from watcher when nodes are deleted; not ideal
 
 			const color = cm.Srgb.from(colorData);
@@ -62,7 +59,7 @@ const rerenderCanvas = () => {
 onMounted(rerenderCanvas);
 onUpdated(rerenderCanvas);
 
-watch(dataOutput, rerenderCanvas);
+watch(() => dataOutput({socket: props.socket}), rerenderCanvas);
 
 
 const nAxes = computed(() => props.node.getDependencyAxes().size);

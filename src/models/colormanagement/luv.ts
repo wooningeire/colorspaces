@@ -45,7 +45,7 @@ export class LchUv extends Col {
 }
 //#endregion
 
-//#region Conversion functions// https://en.wikipedia.org/wiki/CIELAB_color_space#From_CIELAB_to_CIEXYZ
+//#region Conversion functions
 const uv = (xyz: Xyz) => {
 	const denominator = xyz.x + (15 * xyz.y) + (3 * xyz.z);
 
@@ -70,7 +70,7 @@ const luvToXyz = (luv: Luv, illuminant: Xy) => {
 	const tempU = luv.u / (13 * luv.l) + referenceU;
 	const tempV = luv.v / (13 * luv.l) + referenceV;
 	
-	const x = -9 * y * tempU / ((tempU - 4 ) * tempV - tempU * tempV);
+	const x = -9 * y * tempU / ((tempU - 4) * tempV - tempU * tempV);
 	const z = (9 * y - (15 * tempV * y) - (tempV * x)) / (3 * tempV);
 
 	return adaptXyz(new Xyz([x, y, z], luv.illuminant), illuminant);
@@ -80,12 +80,12 @@ const xyzToLuv = (xyz: Xyz, illuminant: Xy) => {
 	const adaptedXyz = adaptXyz(xyz, illuminant);
 	const referenceWhite = xyyToXyzNoAdapt(illuminant);
 
-	const tempY = adaptedXyz.y / referenceWhite.y;
+	const relativeLum = adaptedXyz.y / referenceWhite.y;
 
 	const l =
-			tempY > (6/29)**3
-					? tempY**(1/3) * 116 - 16
-					: tempY * (29/3)**3;
+			relativeLum > (6/29)**3
+					? relativeLum**(1/3) * 116 - 16
+					: relativeLum * (29/3)**3;
 
 	const [tempU, tempV] = uv(adaptedXyz);
 	const [referenceU, referenceV] = uv(referenceWhite);

@@ -145,7 +145,7 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 				<NodeOutputDisplay v-if="node instanceof externals.DeviceTransformNode
 								&& socket.hasLinks"
 						:node="node"
-						:outputIndex="node.outputIndex(socket)" />
+						:socket="socket" />
 
 				<NodeSocket :socket="socket"
 						@drag-socket="socketVue => $emit('drag-socket', socketVue)"
@@ -179,7 +179,7 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 		<div class="node-output"
 				v-if="shouldDisplayOutput">
 			<!-- {{node.output().map((x: number) => x.toFixed(4))}} -->
-			<NodeOutputValues :values="node.output(0, 0)"
+			<NodeOutputValues :values="node.output({coords: [0, 0]})"
 					v-if="hasConstantOutput" />
 			<NodeOutputDisplay :node="node" />
 		</div>

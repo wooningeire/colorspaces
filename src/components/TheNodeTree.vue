@@ -64,12 +64,12 @@ const onLinkToSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 
 
 
-const linksComponent = ref(null as any as InstanceType<typeof TheNodeTreeLinks>);
+const linksComponent = ref(null as InstanceType<typeof TheNodeTreeLinks> | null);
 
 const rerenderLinks = () => {
 	// Delay to next tick because socket positions in DOM have not updated yet
 	nextTick(() => {
-		linksComponent.value.$forceUpdate();
+		linksComponent.value?.$forceUpdate();
 	});
 };
 

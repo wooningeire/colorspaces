@@ -1,4 +1,4 @@
-import {Tree, Node, Socket, SocketType as St, Link, AxisNode} from "./Node";
+import {Tree, Node, Socket, SocketType as St, Link, AxisNode, NodeEvalContext} from "./Node";
 import * as cm from "./colormanagement";
 
 import {Color, Vec2, Vec3, pipe, lerp} from "@/util";
@@ -50,10 +50,10 @@ export namespace images {
 			return Number(this.axisSocket.inValue());
 		}
 
-		output(...contextArgs: number[]): number {
-			const fac = contextArgs[this.whichDimension] ?? 0;
-			const value0 = this.boundsSockets[0].inValue(...contextArgs);
-			const value1 = this.boundsSockets[1].inValue(...contextArgs);
+		output(context: NodeEvalContext): number {
+			const fac = context.coords?.[this.whichDimension] ?? 0;
+			const value0 = this.boundsSockets[0].inValue(context);
+			const value1 = this.boundsSockets[1].inValue(context);
 			return lerp(value0, value1, fac);
 		}
 	}
@@ -80,11 +80,11 @@ export namespace images {
 			);
 		}
 
-		output(...contextArgs: number[]) {
-			const imageData = this.inSocket.inValue(...contextArgs);
+		output(context: NodeEvalContext) {
+			const imageData = this.inSocket.inValue(context);
 			if (imageData) {
-				const x = Math.round(contextArgs[0] * imageData.width);
-				const y = Math.round(contextArgs[1] * imageData.height);
+				const x = Math.round((context.coords?.[0] ?? 0) * imageData.width);
+				const y = Math.round((context.coords?.[1] ?? 0) * imageData.height);
 
 				const index = (x + y * imageData.width) * 4;
 				const colorData = [...imageData.data.slice(index, index + 3)]
@@ -119,8 +119,8 @@ export namespace models {
 			);
 		}
 
-		output(...contextArgs: any[]): Color {
-			return this.ins.map(socket => socket.inValue(...contextArgs)) as Color;
+		output(context: NodeEvalContext): Color {
+			return this.ins.map(socket => socket.inValue(context)) as Color;
 		}
 
 		pipeOutput() {
@@ -146,8 +146,8 @@ export namespace models {
 			);
 		}
 
-		output(...contextArgs: number[]): Color {
-			return cm.hslToRgb(this.ins.map(socket => socket.inValue(...contextArgs)) as Color) as Color;
+		output(context: NodeEvalContext): Color {
+			return cm.hslToRgb(this.ins.map(socket => socket.inValue(context)) as Color) as Color;
 		}
 	}
 
@@ -169,8 +169,8 @@ export namespace models {
 			);
 		}
 
-		output(...contextArgs: number[]): Color {
-			return cm.hsvToRgb(this.ins.map(socket => socket.inValue(...contextArgs)) as Color) as Color;
+		output(context: NodeEvalContext): Color {
+			return cm.hsvToRgb(this.ins.map(socket => socket.inValue(context)) as Color) as Color;
 		}
 	}
 
@@ -192,8 +192,8 @@ export namespace models {
 			);
 		}
 
-		output(...contextArgs: number[]): Color {
-			return cm.cmyToRgb(this.ins.map(socket => socket.inValue(...contextArgs)) as Color) as Color;
+		output(context: NodeEvalContext): Color {
+			return cm.cmyToRgb(this.ins.map(socket => socket.inValue(context)) as Color) as Color;
 		}
 	}
 
@@ -215,8 +215,8 @@ export namespace models {
 			);
 		}
 
-		output(...contextArgs: number[]): Color {
-			return this.ins.map(socket => socket.inValue(...contextArgs)) as Color;
+		output(context: NodeEvalContext): Color {
+			return this.ins.map(socket => socket.inValue(context)) as Color;
 		}
 	} */
 
@@ -250,32 +250,9 @@ export namespace models {
 			);
 		}
 
-		output(...contextArgs: number[]): Color {
-			return this.ins.map(socket => socket.inValue(...contextArgs)) as Color;
+		output(context: NodeEvalContext): Color {
+			return this.ins.map(socket => socket.inValue(context)) as Color;
 		}
-	}
-
-	export class GetComponentsNode extends Node {
-		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Get components";
-
-		constructor(pos?: Vec2) {
-			super(pos);
-
-			this.ins.push(
-				new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Color or vector"),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.Float, "1"),
-				new Socket(this, false, Socket.Type.Float, "2"),
-				new Socket(this, false, Socket.Type.Float, "3"),
-			);
-		}
-
-		// output(...contextArgs: number[]): Color {
-		// 	return this.ins.map(socket => socket.inValue(...contextArgs)) as Color;
-		// }
 	}
 
 	export class SpectralPowerDistributionNode extends Node {
@@ -290,7 +267,7 @@ export namespace models {
 			);
 		}
 
-		output(...contextArgs: number[]): Vec3 {
+		output(context: NodeEvalContext): Vec3 {
 			return cm.spectralPowerDistribution({}) as any as Vec3;
 		}
 	}
@@ -329,16 +306,16 @@ export namespace math {
 			);
 		}
 
-		output(...contextArgs: number[]): Color {
-			const fac = this.facSocket.inValue(...contextArgs);
+		output(context: NodeEvalContext): Color {
+			const fac = this.facSocket.inValue(context);
 
 			// TODO check that inputs are of same type
-			const col0 = this.colorSockets[0].inValue(...contextArgs);
-			const col1 = this.colorSockets[1].inValue(...contextArgs);
+			const col0 = this.colorSockets[0].inValue(context);
+			const col1 = this.colorSockets[1].inValue(context);
 
 			// and make output the same type as the inputs
 
-			switch (this.methodSocket.inValue(...contextArgs)) {
+			switch (this.methodSocket.inValue(context)) {
 				case "mix":
 					return col0.map((_, i) => lerp(col0[i], col1[i], fac)) as Color;
 
@@ -353,6 +330,36 @@ export namespace math {
 			}
 
 		}
+	}
+
+	export class GetComponentsNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Get components";
+
+		private readonly inSocket: Socket<St.RgbRawOrColTransformed>;
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Color or vector")),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.Float, "1"),
+				new Socket(this, false, Socket.Type.Float, "2"),
+				new Socket(this, false, Socket.Type.Float, "3"),
+			);
+		}
+
+		output(context: NodeEvalContext): number {
+			const value = this.inSocket.inValue(context);
+			return value[this.outs.indexOf(context.socket!)];
+		}
+
+		// output(context: NodeEvalContext): Color {
+		// 	return this.ins.map(socket => socket.inValue(context)) as Color;
+		// }
 	}
 
 	export class DeltaE1976Node extends Node {
@@ -376,10 +383,10 @@ export namespace math {
 			);
 		}
 
-		output(...contextArgs: number[]): number {
+		output(context: NodeEvalContext): number {
 			// TODO check that inputs are of same type
-			const col0 = this.colorSockets[0].inValue(...contextArgs);
-			const col1 = this.colorSockets[1].inValue(...contextArgs);
+			const col0 = this.colorSockets[0].inValue(context);
+			const col1 = this.colorSockets[1].inValue(context);
 
 			return cm.difference.deltaE1976(col0, col1);
 		}
@@ -405,8 +412,8 @@ export namespace spaces {
 			);
 		}
 
-		output(...contextArgs: number[]) {
-			return cm.LinearSrgb.from(this.inSocket.inValue(...contextArgs));
+		output(context: NodeEvalContext) {
+			return cm.LinearSrgb.from(this.inSocket.inValue(context));
 		}
 	}
 
@@ -428,8 +435,8 @@ export namespace spaces {
 			);
 		}
 
-		output(...contextArgs: number[]): cm.Srgb {
-			return cm.Srgb.from(this.inSocket.inValue(...contextArgs));
+		output(context: NodeEvalContext): cm.Srgb {
+			return cm.Srgb.from(this.inSocket.inValue(context));
 		}
 	}
 
@@ -456,8 +463,8 @@ export namespace spaces {
 		],
 		defaultValue: "2deg/D65",
 	};
-	const getIlluminant = (socket: Socket<St.Dropdown>, contextArgs: number[]) => {
-		const illuminantId = socket.inValue(...contextArgs);
+	const getIlluminant = (socket: Socket<St.Dropdown>, context: NodeEvalContext) => {
+		const illuminantId = socket.inValue(context);
 		if (illuminantId !== "custom") {
 			const [standard, illuminantName] = illuminantId.split("/"); 
 			return cm.illuminantsXy[standard][illuminantName];
@@ -486,10 +493,10 @@ export namespace spaces {
 			);
 		}
 
-		output(...contextArgs: number[]) {
+		output(context: NodeEvalContext) {
 			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
 
-			return cm.Xyz.from(this.colorSocket.inValue(...contextArgs), illuminant);
+			return cm.Xyz.from(this.colorSocket.inValue(context), illuminant);
 		}
 	}
 
@@ -521,9 +528,9 @@ export namespace spaces {
 			);
 		}
 
-		output(...contextArgs: number[]): cm.Xyy {
-			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
-			return cm.Xyy.from(this.colorSocket.inValue(...contextArgs), illuminant);
+		output(context: NodeEvalContext): cm.Xyy {
+			const illuminant = getIlluminant(this.whitePointSocket, context);
+			return cm.Xyy.from(this.colorSocket.inValue(context), illuminant);
 		}
 	}
 
@@ -562,9 +569,9 @@ export namespace spaces {
 			);
 		}
 
-		output(...contextArgs: number[]): cm.Lab {
-			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
-			return cm.Lab.from(this.colorSocket.inValue(...contextArgs), illuminant);
+		output(context: NodeEvalContext): cm.Lab {
+			const illuminant = getIlluminant(this.whitePointSocket, context);
+			return cm.Lab.from(this.colorSocket.inValue(context), illuminant);
 		}
 	}
 
@@ -600,9 +607,9 @@ export namespace spaces {
 			);
 		}
 
-		output(...contextArgs: number[]): cm.Lab {
-			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
-			return cm.LchAb.from(this.colorSocket.inValue(...contextArgs), illuminant);
+		output(context: NodeEvalContext): cm.Lab {
+			const illuminant = getIlluminant(this.whitePointSocket, context);
+			return cm.LchAb.from(this.colorSocket.inValue(context), illuminant);
 		}
 	}
 
@@ -641,9 +648,9 @@ export namespace spaces {
 			);
 		}
 
-		output(...contextArgs: number[]): cm.Luv {
-			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
-			return cm.Luv.from(this.colorSocket.inValue(...contextArgs), illuminant);
+		output(context: NodeEvalContext): cm.Luv {
+			const illuminant = getIlluminant(this.whitePointSocket, context);
+			return cm.Luv.from(this.colorSocket.inValue(context), illuminant);
 		}
 	}
 
@@ -679,9 +686,9 @@ export namespace spaces {
 			);
 		}
 
-		output(...contextArgs: number[]): cm.LchUv {
-			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
-			return cm.LchUv.from(this.colorSocket.inValue(...contextArgs), illuminant);
+		output(context: NodeEvalContext): cm.LchUv {
+			const illuminant = getIlluminant(this.whitePointSocket, context);
+			return cm.LchUv.from(this.colorSocket.inValue(context), illuminant);
 		}
 	}
 
@@ -703,8 +710,8 @@ export namespace spaces {
 			);
 		}
 
-		output(...contextArgs: number[]) {
-			return cm.LinearAdobeRgb.from(this.inSocket.inValue(...contextArgs));
+		output(context: NodeEvalContext) {
+			return cm.LinearAdobeRgb.from(this.inSocket.inValue(context));
 		}
 	}
 
@@ -726,8 +733,8 @@ export namespace spaces {
 			);
 		}
 
-		output(...contextArgs: number[]): cm.AdobeRgb {
-			return cm.AdobeRgb.from(this.inSocket.inValue(...contextArgs));
+		output(context: NodeEvalContext): cm.AdobeRgb {
+			return cm.AdobeRgb.from(this.inSocket.inValue(context));
 		}
 	}
 }
@@ -761,22 +768,18 @@ export namespace externals {
 			this.canMove = false;
 		}
 
-		output(socketIndex: number, ...contextArgs: number[]): cm.Srgb {
-			const color = this.colorSockets[socketIndex]?.inValue(...contextArgs);
+		output(context: NodeEvalContext): cm.Srgb {
+			const color = (context.socket! as Socket<St.RgbRawOrColTransformed>).inValue(context);
 
 			return color && cm.Srgb.from(color);
 			// return this.colorSockets.filter(socket => socket.hasLinks)
-			// 		.map(socket => cm.Srgb.from(socket.inValueFn(...contextArgs)));
+			// 		.map(socket => cm.Srgb.from(socket.inValueFn(context)));
 		}
 
 		pipeOutput() {
 			const node = this.colorSockets[0].node as models.RgbNode;
 
 			return pipe(node.pipeOutput(), cm.Srgb.from);
-		}
-
-		outputIndex(socket: Socket) {
-			return this.colorSockets.indexOf(socket);
 		}
 
 		onSocketLink(socket: Socket, link: Link, tree: Tree) {
@@ -872,8 +875,8 @@ export namespace organization {
 			this.width = 30;
 		}
 
-		output(...contextArgs: number[]) {
-			return this.ins[0].inValue(...contextArgs);
+		output(context: NodeEvalContext) {
+			return this.ins[0].inValue(context);
 		}
 
 		onSocketLink(socket: Socket, link: Link, tree: Tree) {
