@@ -1,12 +1,10 @@
 import { Vec3 } from "@/util";
 import {Xyz} from "./col-xyz-xyy-illuminants";
 
-export const spectralPowerDistribution = (data: {
-	[key: number]: number;
-}) => new Xyz(
+export const spectralPowerDistribution = (data: number[]) => new Xyz(
 	Array(3).fill(0).map((_, i) =>
 		[...colorMatchingFunctions2deg]
-				.reduce((cumsum, [wavelength, cmf]) => cumsum + (data[wavelength] ?? 0) * cmf[i], 0)
+				.reduce((cumsum, [wavelength, cmf]) => cumsum + (data[wavelength - 360] ?? 0) * cmf[i], 0)
 	).map((comp, i) => comp / colorMatchingFunctions2degIntegrals[i]) as Vec3,
 );
 

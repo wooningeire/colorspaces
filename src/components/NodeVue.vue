@@ -3,6 +3,7 @@ import {inject, computed} from "vue";
 
 import NodeSocket from "./NodeSocket.vue";
 import NodeField from "./NodeField.vue";
+import NodeSpecialInput from "./NodeSpecialInput.vue";
 import NodeOutputValues from "./NodeOutputValues.vue";
 import NodeOutputDisplay from "./NodeOutputDisplay.vue";
 
@@ -130,6 +131,8 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 				v-if="shouldDisplayLabel">
 			{{node.label}}
 		</div>
+
+		<NodeSpecialInput :node="node" />
 
 		<!-- <div class="node-content">
 			<div class="fields">
