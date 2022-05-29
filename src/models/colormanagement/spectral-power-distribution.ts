@@ -1,4 +1,4 @@
-import { Vec3 } from "@/util";
+import {Vec3} from "@/util";
 import {Xyz} from "./col-xyz-xyy-illuminants";
 
 export const spectralPowerDistribution = (data: number[]) => new Xyz(
@@ -7,6 +7,8 @@ export const spectralPowerDistribution = (data: number[]) => new Xyz(
 				.reduce((cumsum, [wavelength, cmf]) => cumsum + (data[wavelength - 360] ?? 0) * cmf[i], 0)
 	).map((comp, i) => comp / colorMatchingFunctions2degIntegrals[i]) as Vec3,
 );
+
+export const singleWavelength = (wavelength: number) => new Xyz(colorMatchingFunctions2deg.get(wavelength) as Vec3);
 
 
 // https://web.archive.org/web/20161203232101/http://www.cis.rit.edu/research/mcsl2/online/CIE/all_1nm_data.htm

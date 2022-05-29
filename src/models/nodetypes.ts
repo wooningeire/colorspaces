@@ -259,7 +259,8 @@ export namespace models {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Spectral power distribution";
 
-		distribution: number[] = Array(830 - 360 + 1).fill(0);
+		distribution: number[] = Array(830 - 360 + 1).fill(0)
+				.map((_, x) => Math.E**-(((x - 235) / 90)**2));
 
 		constructor(pos?: Vec2) {
 			super(pos);
@@ -267,7 +268,7 @@ export namespace models {
 			this.outs.push(
 				new Socket(this, false, Socket.Type.RgbRaw, "XYZ"),
 			);
-			this.width = 500;
+			this.width = 503;
 		}
 
 		output(context: NodeEvalContext): Vec3 {

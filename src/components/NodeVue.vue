@@ -79,23 +79,14 @@ const nodeCategories = new Map([models, spaces, math, images, externals, organiz
 		.flat() as [symbol, unknown][]);
 
 
-const nodeBorderColors = new Map<unknown, string>([
-	[models, "linear-gradient(hsl(-20deg 40% 60%), hsl(30deg 40% 50%))"],
-	[spaces, "linear-gradient(hsl(260deg 40% 60%), hsl(300deg 40% 60%))"],
-	[math, "linear-gradient(hsl(50deg 40% 60%), hsl(90deg 40% 60%))"],
-	[images, "linear-gradient(hsl(165deg 10% 50%), hsl(185deg 10% 60%))"],
-	[externals, "linear-gradient(hsl(220deg 40% 50%), hsl(200deg 40% 50%))"],
+const categoryNames = new Map<unknown, string>([
+	[models, "models"],
+	[spaces, "spaces"],
+	[math, "math"],
+	[images, "images"],
+	[externals, "externals"],
 ]);
-const nodeBackgroundColors = new Map<unknown, string>([
-	[models, "hsl(-20deg 20% 20% / 0.8745)"],
-	[spaces, "hsl(260deg 20% 20% / 0.8745)"],
-	[math, "hsl(80deg 15% 18% / 0.8745)"],
-	[images, "hsl(165deg 10% 20% / 0.8745)"],
-	[externals, "hsl(220deg 25% 20% / 0.8745)"],
-]);
-const nodeCategory = computed(() => nodeCategories.get(props.node.type));
-const nodeBorderColor = computed(() => nodeBorderColors.get(nodeCategory.value) ?? "#ffffff3f");
-const nodeBackgroundColor = computed(() => nodeBackgroundColors.get(nodeCategory.value) ?? "#2e3331df");
+const nodeCategoryName = computed(() => `category--${categoryNames.get(nodeCategories.get(props.node.type))}`);
 
 
 const isSubtle = computed(() => 
@@ -117,14 +108,12 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 			:style="{
 				'left': `${node.pos[0]}px`,
 				'top': `${node.pos[1]}px`,
-				'--node-border-background': nodeBorderColor,
-				'--node-background': nodeBackgroundColor,
 				'--node-width': `${node.width}px`,
 			} as any"
-			:class="{
+			:class="[{
 				'subtle': isSubtle,
 				'selected': isSelected,
-			}">
+			}, nodeCategoryName]">
 		<div class="node-border"></div>
 
 		<div class="label"
@@ -208,8 +197,7 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 
 	cursor: default;
 
-	--node-border-background: linear-gradient(#9c20aa, #fb3570);
-	--node-border-color: #ffffff3f;
+	--node-border-background: #ffffff3f; //linear-gradient(#9c20aa, #fb3570);
 	--node-background: #2e3331df;
 
 	--node-width: 40px;
@@ -280,8 +268,29 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 		@include gradient-border(var(--node-border-width), var(--node-border-background));
 	}
 
-	:deep(input) {
+	:deep(input[type="text"]) {
 		width: 100%;
+	}
+
+	&.category--models {
+		--node-border-background: linear-gradient(hsl(-20deg 40% 60%), hsl(30deg 40% 50%));
+		--node-background: hsl(-20deg 20% 20% / 0.8745);
+	}
+	&.category--spaces {
+		--node-border-background: linear-gradient(hsl(260deg 40% 60%), hsl(300deg 40% 60%));
+		--node-background: hsl(260deg 20% 20% / 0.8745);
+	}
+	&.category--math {
+		--node-border-background: linear-gradient(hsl(50deg 40% 60%), hsl(90deg 40% 60%));
+		--node-background: hsl(80deg 15% 18% / 0.8745);
+	}
+	&.category--images {
+		--node-border-background: linear-gradient(hsl(165deg 10% 50%), hsl(185deg 10% 60%));
+		--node-background: hsl(165deg 10% 20% / 0.8745);
+	}
+	&.category--externals {
+		--node-border-background: linear-gradient(hsl(220deg 40% 50%), hsl(200deg 40% 50%));
+		--node-background: hsl(220deg 25% 20% / 0.8745);
 	}
 }
 </style>

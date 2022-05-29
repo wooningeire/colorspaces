@@ -33,10 +33,9 @@ const deleteSelectedNodes = () => {
 
 	button {
 		background: none;
-		border: none;
-		color: #ffffff7f;
-
 		padding: 0.5em;
+
+		border-radius: 0;
 
 		&:hover {
 			background: #ffffff3f;
