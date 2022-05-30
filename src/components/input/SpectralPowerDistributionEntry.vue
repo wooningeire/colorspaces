@@ -83,6 +83,8 @@ const setWhite = () => {
 };
 
 const onchangeDatasetId = () => {
+	props.node.flushCache();
+
 	rerenderSpectrum();
 	emit("update:datasetId", props.datasetId);
 };

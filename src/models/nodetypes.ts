@@ -260,7 +260,7 @@ export namespace models {
 		static readonly LABEL = "Spectral power distribution";
 
 		distribution: number[] = Array(830 - 360 + 1).fill(0)
-				.map((_, x) => Math.E**-(((x - 235) / 90)**2));
+				.map((_, x) => Math.exp(-(((x - 235) / 90)**2)));
 
 		colorMatchingDataset: "2deg" | "10deg" = "2deg";
 
@@ -282,6 +282,45 @@ export namespace models {
 
 		flushCache() {
 			this.cachedOutput = null;
+		}
+	}
+
+	export class BlackbodyNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Blackbody";
+
+		private readonly inSocket: Socket<St.Float>;
+		private readonly datasetSocket: Socket<St.Dropdown>;
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				(this.inSocket = new Socket(this, true, Socket.Type.Float, "Temperature (K)", true, {
+					sliderProps: {
+						hasBounds: false,
+						unboundedChangePerPixel: 10,
+					},
+					defaultValue: 1750,
+				})),
+				(this.datasetSocket = new Socket(this, true, Socket.Type.Dropdown, "Dataset", false, {
+					defaultValue: "2deg",
+					options: [
+						{value: "2deg", text: "CIE 2° observer (1931)"},
+						{value: "10deg", text: "CIE 10° observer (1964)"},
+					],
+				})),
+			);
+			
+			this.outs.push(
+				new Socket(this, false, Socket.Type.RgbRaw, "XYZ"),
+			);
+
+			this.width = 180;
+		}
+
+		output(context: NodeEvalContext): Vec3 {
+			return [...cm.blackbody(this.inSocket.inValue(context), this.datasetSocket.inValue(context) as "2deg" | "10deg")] as any as Vec3;
 		}
 	}
 }
@@ -347,7 +386,7 @@ export namespace math {
 
 	export class GetComponentsNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Get components";
+		static readonly LABEL = "Explode";
 
 		private readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 

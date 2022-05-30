@@ -11,6 +11,7 @@ export {Lab, LchAb} from "./colormanagement/lab";
 export {Luv, LchUv} from "./colormanagement/luv";
 
 export {spectralPowerDistribution, singleWavelength} from "./colormanagement/spectral-power-distribution";
+export {blackbody} from "./colormanagement/blackbody";
 
 
 //#region Conversion functions
