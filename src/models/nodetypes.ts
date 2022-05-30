@@ -259,16 +259,22 @@ export namespace models {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Spectral power distribution";
 
+		distribution: number[] = Array(830 - 360 + 1).fill(0)
+				.map((_, x) => Math.E**-(((x - 235) / 90)**2));
+
+		colorMatchingDataset: "2deg" | "10deg" = "2deg";
+
 		constructor(pos?: Vec2) {
 			super(pos);
 			
 			this.outs.push(
 				new Socket(this, false, Socket.Type.RgbRaw, "XYZ"),
 			);
+			this.width = 503;
 		}
 
 		output(context: NodeEvalContext): Vec3 {
-			return cm.spectralPowerDistribution({}) as any as Vec3;
+			return [...cm.spectralPowerDistribution(this.distribution, this.colorMatchingDataset)] as any as Vec3;
 		}
 	}
 }
@@ -494,7 +500,7 @@ export namespace spaces {
 		}
 
 		output(context: NodeEvalContext) {
-			const illuminant = getIlluminant(this.whitePointSocket, contextArgs);
+			const illuminant = getIlluminant(this.whitePointSocket, context);
 
 			return cm.Xyz.from(this.colorSocket.inValue(context), illuminant);
 		}

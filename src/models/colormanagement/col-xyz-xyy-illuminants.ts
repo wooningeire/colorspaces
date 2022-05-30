@@ -10,16 +10,18 @@ export class Col extends Array {
 	static readonly [Symbol.species] = Array;
 	static readonly labels: string[] = [];
 
+	static readonly defaultIlluminant: Xy = null!; //illuminantE; // set later
+
 	constructor(
 		/* readonly */ data: number[],
-		readonly illuminant: Xy,
+		readonly illuminant: Xy=new.target.defaultIlluminant,
 	) {
 		super();
 		this.push(...data);
 		// Object.freeze(this);
 	}
 
-	static from(dataOrCol: Vec3 | Col, illuminant: Xy): InstanceType<typeof this> {
+	static from(dataOrCol: Vec3 | Col, illuminant: Xy=this.defaultIlluminant): InstanceType<typeof this> {
 		if (dataOrCol instanceof Col) {
 			return this.fromXyz(dataOrCol.toXyz(illuminant));
 		} else {
@@ -40,7 +42,7 @@ export class Col extends Array {
 export class Xyz extends Col {
 	static readonly labels = ["X", "Y", "Z"];
 
-	constructor(data: Vec3, illuminant: Xy=illuminantsXy["2deg"]["E"]) {
+	constructor(data: Vec3, illuminant: Xy=illuminantE) {
 		if (data.length !== 3) throw new TypeError("Data must have 3 components");
 
 		super(data, illuminant);
@@ -104,6 +106,7 @@ export class Xy extends Col {
 //#region Illuminants
 export const illuminantE = new Xy([1/3, 1/3], null as any as Xy);
 Object.assign(illuminantE, {illuminant: illuminantE});
+Object.assign(Col, {defaultIlluminant: illuminantE});
 
 export const illuminantsXy = <{
 	[standard: string]: {

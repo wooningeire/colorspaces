@@ -10,7 +10,7 @@ export {AdobeRgb, LinearAdobeRgb} from "./colormanagement/adobe-rgb";
 export {Lab, LchAb} from "./colormanagement/lab";
 export {Luv, LchUv} from "./colormanagement/luv";
 
-export {spectralPowerDistribution} from "./colormanagement/spectral-power-distribution";
+export {spectralPowerDistribution, singleWavelength} from "./colormanagement/spectral-power-distribution";
 
 
 //#region Conversion functions
