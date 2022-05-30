@@ -2,6 +2,7 @@
 import { computed, onMounted, PropType, reactive, ref, watch } from 'vue';
 
 import makeDragListener from "../draggable";
+import {settings} from '../store';
 
 import {Listen, clearTextSelection, lerp, clamp} from "@/util";
 import * as cm from "@/models/colormanagement";
@@ -9,25 +10,35 @@ import * as cm from "@/models/colormanagement";
 const props = defineProps({
 	modelValue: {
 		type: Array as PropType<number[]>,
-		default: Array(830 - 360 + 1).fill(0),
+		required: true,
+	},
+
+	datasetId: {
+		type: String as PropType<"2deg" | "10deg">,
+		required: true,
 	},
 });
 
+const WIDTH = 830 - 360 + 1;
 const HEIGHT = 81;
+
+const emit = defineEmits<{
+	(name: "update:datasetId", id: typeof props.datasetId): void,
+}>();
 
 
 const modelValue = reactive(props.modelValue);
 
-const d = computed(() => `M 0,0 ${modelValue.map((intensity, i) => `L ${i},${intensity * HEIGHT}`).join(" ")} L 471,0`);
+const d = computed(() => `M0,0${modelValue.map((intensity, i) => `L${i},${intensity * HEIGHT}`).join(" ")}L${WIDTH},0`);
 
 
 
 const svgContainer = ref(null as HTMLDivElement | null);
 
 
-const chromaReferenceCanvas = ref(null as HTMLCanvasElement | null);
-onMounted(() => {
-	const canvas = chromaReferenceCanvas.value!;
+const spectrumCanvas = ref(null as HTMLCanvasElement | null);
+const rerenderSpectrum = () => {
+	const canvas = spectrumCanvas.value!;
 	canvas.width = canvas.offsetWidth;
 
 	const context = canvas.getContext("2d", {alpha: false})!;
@@ -37,7 +48,7 @@ onMounted(() => {
 	for (let i = 0; i < canvas.width; i++) {
 		const wavelength = Math.round(lerp(360, 830, i / (canvas.width - 1)));
 
-		const color = cm.Srgb.fromXyz(cm.singleWavelength(wavelength));
+		const color = settings.deviceSpace.fromXyz(cm.singleWavelength(wavelength, props.datasetId));
 
 		imageData.data[i*4] = color[0] * 255;
 		imageData.data[i*4 + 1] = color[1] * 255;
@@ -45,12 +56,14 @@ onMounted(() => {
 	}
 
 	context.putImageData(imageData, 0, 0);
-});
+};
+onMounted(rerenderSpectrum);
 
 
 
 const shouldClampMax = ref(true);
 watch(shouldClampMax, () => {
+	if (!shouldClampMax.value) return;
 	Object.assign(modelValue, modelValue.map(intensity => clamp(intensity, 0, 1)));
 });
 
@@ -60,6 +73,11 @@ const setBlack = () => {
 
 const setWhite = () => {
 	modelValue.fill(1);
+};
+
+const onchangeDatasetId = () => {
+	rerenderSpectrum();
+	emit("update:datasetId", props.datasetId);
 };
 
 
@@ -113,7 +131,7 @@ const beginInput = (downEvent: PointerEvent) => {
 				@pointerdown.stop="beginInput">
 			<div ref="svgContainer">
 				<svg :viewbox="`0 0 471 ${HEIGHT}`"
-						width="471"
+						:width="WIDTH"
 						:height="HEIGHT">
 					<path :d="d" />
 				</svg>
@@ -121,7 +139,7 @@ const beginInput = (downEvent: PointerEvent) => {
 
 			<canvas class="chroma-reference"
 					height="1"
-					ref="chromaReferenceCanvas"></canvas>
+					ref="spectrumCanvas"></canvas>
 
 			<div class="wavelength-label">
 				<div class="tickmark">360</div>
@@ -131,15 +149,30 @@ const beginInput = (downEvent: PointerEvent) => {
 		</div>
 
 		<div class="controls">
-			<div>
-				<input type="checkbox"
-						v-model="shouldClampMax" />
-				<label>Limit maximum power</label>
+			<div class="control-row">
+				<div>
+					<input type="checkbox"
+							v-model="shouldClampMax" />
+					<label>Limit maximum power</label>
+				</div>
+
+				<div>
+					<button @click="setBlack"
+							@pointerdown.stop>Black</button>
+					<button @click="setWhite"
+							@pointerdown.stop>White</button>
+				</div>
 			</div>
 
-			<div>
-				<button @click="setBlack">Black</button>
-				<button @click="setWhite">White</button>
+			<div class="control-row">
+				<div>
+					<label>Dataset</label>
+					<select v-model="datasetId"
+							@change="onchangeDatasetId">
+						<option value="2deg">CIE 2° observer (1931)</option>
+						<option value="10deg">CIE 10° observer (1964)</option>
+					</select>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -189,14 +222,20 @@ const beginInput = (downEvent: PointerEvent) => {
 
 	> .controls {
 		display: flex;
-		justify-content: space-between;
+		flex-flow: column;
+		gap: 0.5em;
 
 		padding: 0 var(--spd-graph-padding);
 
-		> div {
+		> .control-row {
 			display: flex;
-			flex-flow: row;
-			gap: 0.25em;
+			justify-content: space-between;
+
+			> div {
+				display: flex;
+				flex-flow: row;
+				gap: 0.25em;
+			}
 		}
 	}
 }

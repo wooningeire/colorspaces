@@ -15,7 +15,8 @@ const props = defineProps({
 
 <template class="special-input">
 	<SpectralPowerDistributionEntry v-if="node instanceof models.SpectralPowerDistributionNode"
-			v-model="node.distribution" />
+			v-model="node.distribution"
+			v-model:datasetId="node.colorMatchingDataset" />
 </template>
 
 <style lang="scss" scoped>

@@ -8,6 +8,8 @@ import {Col, Xyz, Xy, illuminantsXy, chromaticAdaptationMat, adaptXyz, xyyToXyzN
 export class Srgb extends Col {
 	static readonly labels = ["R", "G", "B"];
 
+	static readonly defaultIlluminant = illuminantsXy["2deg"]["D65"];
+
 	constructor(data: Vec3) {
 		super(data, illuminantsXy["2deg"]["D65"]);
 	}

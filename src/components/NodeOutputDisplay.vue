@@ -4,7 +4,7 @@ import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch}
 import {Node, Socket, NodeEvalContext} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
 import * as cm from "@/models/colormanagement";
-import { tree } from "./store";
+import {tree, settings} from "./store";
 
 const props = defineProps({
 	node: {
@@ -43,7 +43,7 @@ const rerenderCanvas = () => {
 			const colorData = dataOutput({coords: [xFacFrac, yFacFrac], socket: props.socket});
 			if (!colorData) return; // Deals with extraneous call from watcher when nodes are deleted; not ideal
 
-			const color = cm.Srgb.from(colorData);
+			const color = settings.deviceSpace.from(colorData);
 
 			const index = (xPixels + yPixels * imageData.width) * 4;
 
@@ -69,7 +69,7 @@ const nAxes = computed(() => props.node.getDependencyAxes().size);
 	<!-- <div class="color-display-box"
 			v-if="nAxes === 0"
 			:style="{
-				'background': `rgb(${cm.Srgb.from(node.output(outputIndex, 0, 0)).map((x: number) => x * 255)})`,
+				'background': `rgb(${settings.deviceSpace.from(node.output(outputIndex, 0, 0)).map((x: number) => x * 255)})`,
 			}"></div> -->
 
 	<canvas class="color-display-box"
