@@ -55,6 +55,8 @@ export class Listen {
 
 
 export const mod = (a: number, b: number) => (a % b + b) % b;
+export const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;
+export const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 
 export const clearTextSelection = () => {
@@ -81,7 +83,7 @@ class Option<T> {
 }
 
 
-export const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;
+
 
 const matrixDotVector3 = (matrix: number[][], vector: number[]) => [
 	matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2] * vector[2],

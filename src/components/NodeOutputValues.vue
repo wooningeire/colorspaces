@@ -36,7 +36,7 @@ const labels = (props.values.constructor as typeof Col).labels;
 	max-width: 100%;
 	overflow-x: auto;
 
-	font-family: Ubunto Mono, monospace;
+	font-family: var(--font-mono);
 	font-size: 0.75em;
 
 	text-align: right;

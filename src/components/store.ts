@@ -2,6 +2,7 @@ import {ref, reactive} from "vue";
 
 import {Tree, Node} from "@/models/Node";
 import {models, spaces, externals} from "@/models/nodetypes";
+import * as cm from "@/models/colormanagement";
 
 
 //#region Node tree
@@ -62,6 +63,14 @@ export const isDraggingNodeFromNodeTray = ref(false);
 export const currentlyDraggedNodeConstructor = ref(null as any as new <T extends Node>() => T);
 //#endregion
 
+
+//#region Global settings
+export const settings = <{
+	deviceSpace: typeof cm.Col,
+}>{
+	deviceSpace: cm.Srgb,
+};
+//#endregion
 
 export class SocketHitbox extends HTMLElement {
 

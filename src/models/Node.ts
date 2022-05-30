@@ -29,6 +29,7 @@ export class Tree {
 
 		if (!existingDstLink) {
 			dst.node.onSocketLink(dst, link, this);
+			dst.node.onDependencyUpdate();
 		}
 
 		src.node.onSocketLink(src, link, this);
@@ -45,6 +46,7 @@ export class Tree {
 
 		link.srcNode.onSocketUnlink(link.src, link, this);
 		link.dstNode.onSocketUnlink(link.dst, link, this);
+		link.dstNode.onDependencyUpdate();
 	}
 
 	deleteNode(node: Node) {

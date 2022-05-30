@@ -8,6 +8,8 @@ import {Col, Xyz, Xy, illuminantsXy, chromaticAdaptationMat, adaptXyz, xyyToXyzN
 export class Srgb extends Col {
 	static readonly labels = ["R", "G", "B"];
 
+	static readonly defaultIlluminant = illuminantsXy["2deg"]["D65"];
+
 	constructor(data: Vec3) {
 		super(data, illuminantsXy["2deg"]["D65"]);
 	}
@@ -18,7 +20,7 @@ export class Srgb extends Col {
 		} else if (dataOrCol instanceof Srgb) {
 			return new Srgb(dataOrCol as any as Vec3);
 		} else if (dataOrCol instanceof Col) {
-			return this.fromXyz(dataOrCol.toXyz(illuminantsXy["2deg"]["D65"]));
+			return this.fromXyz(dataOrCol.toXyz(this.defaultIlluminant));
 		} else {
 			return new Srgb(dataOrCol);
 		}
@@ -44,7 +46,7 @@ export class LinearSrgb extends Col {
 		return dataOrCol instanceof Col
 				? dataOrCol instanceof Srgb
 						? gammaToLinSrgb(dataOrCol)
-						: this.fromXyz(dataOrCol.toXyz(illuminantsXy["2deg"]["D65"]))
+						: this.fromXyz(dataOrCol.toXyz(this.defaultIlluminant))
 				: new LinearSrgb(dataOrCol);
 	}
 
@@ -54,6 +56,36 @@ export class LinearSrgb extends Col {
 
 	toXyz(illuminant: Xy=this.illuminant) {
 		return linearToXyz(this, illuminant);
+	}
+}
+
+export class Rec709 extends Col {
+	static readonly labels = ["R", "G", "B"];
+
+	static readonly defaultIlluminant = illuminantsXy["2deg"]["D65"];
+
+	constructor(data: Vec3) {
+		super(data, new.target.defaultIlluminant);
+	}
+
+	static from(dataOrCol: Vec3 | Col): Rec709 {
+		if (dataOrCol instanceof LinearSrgb) {
+			return linToRec709(dataOrCol);
+		} else if (dataOrCol instanceof Rec709) {
+			return new Rec709(dataOrCol as any as Vec3);
+		} else if (dataOrCol instanceof Col) {
+			return this.fromXyz(dataOrCol.toXyz(this.defaultIlluminant));
+		} else {
+			return new Rec709(dataOrCol);
+		}
+	}
+
+	static fromXyz(xyz: Xyz): Rec709 {
+		return linToRec709(xyzToLinear(xyz, xyz.illuminant));
+	}
+
+	toXyz(illuminant: Xy=this.illuminant) {
+		return linearToXyz(rec709ToLin(this), illuminant);
 	}
 }
 
@@ -83,7 +115,21 @@ const gammaCompToLinSrgb = (comp: number) =>
 				? comp / 12.9232102
 				: ((comp + 0.055) / 1.055)**(2.4);
 
-const gammaToLinSrgb = (linear: Srgb) => new LinearSrgb(linear.map(gammaCompToLinSrgb) as any as Vec3);
+const gammaToLinSrgb = (srgb: Srgb) => new LinearSrgb(srgb.map(gammaCompToLinSrgb) as any as Vec3);
+
+const linCompToRec709 = (comp: number) =>
+		comp < 0.018
+				? 4.5 * comp
+				: 1.099 * comp**(1/2.2) - 0.099;
+
+const linToRec709 = (linear: LinearSrgb) => new Rec709(linear.map(linCompToRec709) as Vec3);
+
+const rec709CompToLin = (comp: number) =>
+		comp < 0.081
+				? comp / 4.5
+				: ((comp + 0.099) / 1.099)**2.2;
+
+const rec709ToLin = (rec709: Rec709) => new LinearSrgb(rec709.map(rec709CompToLin) as Vec3);
 
 
 export const xyzToLinear = (xyz: Xyz, illuminant: Xy) => {

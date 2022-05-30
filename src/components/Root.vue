@@ -38,7 +38,10 @@ const addNode = <T extends Node>(nodeConstructor: new () => T, pos: Vec2=[0, 0])
 }
 
 :root {
+	--node-border-color: #ffffff3f;
 	--col-invalid-input: #f57;
+
+	--font-mono: Ubunto Mono, monospace;
 }
 
 body {
@@ -85,6 +88,19 @@ main {
 	> .node-tray {
 		grid-area: 2/2;
 		z-index: 1;
+	}
+}
+
+button {
+	background: #000000cf;
+	border: none;
+	color: #ffffff7f;
+
+	border-radius: 0.5em;
+
+	&:hover {
+		background: #ffffff3f;
+		color: #fff;
 	}
 }
 </style>
