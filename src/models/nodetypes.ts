@@ -273,8 +273,15 @@ export namespace models {
 			this.width = 503;
 		}
 
+		private cachedOutput: Vec3 | null = null;
+
 		output(context: NodeEvalContext): Vec3 {
-			return [...cm.spectralPowerDistribution(this.distribution, this.colorMatchingDataset)] as any as Vec3;
+			return this.cachedOutput
+					?? (this.cachedOutput = [...cm.spectralPowerDistribution(this.distribution, this.colorMatchingDataset)] as any as Vec3);
+		}
+
+		flushCache() {
+			this.cachedOutput = null;
 		}
 	}
 }
@@ -741,6 +748,29 @@ export namespace spaces {
 
 		output(context: NodeEvalContext): cm.AdobeRgb {
 			return cm.AdobeRgb.from(this.inSocket.inValue(context));
+		}
+	}
+
+	export class Rec709Node extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Rec. 709";
+
+		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
+
+		constructor(pos?: Vec2) {
+			super(pos);
+
+			this.ins.push(
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+			);
+		}
+
+		output(context: NodeEvalContext): cm.Rec709 {
+			return cm.Rec709.from(this.inSocket.inValue(context));
 		}
 	}
 }

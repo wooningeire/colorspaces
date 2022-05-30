@@ -4,10 +4,16 @@ import { computed, onMounted, PropType, reactive, ref, watch } from 'vue';
 import makeDragListener from "../draggable";
 import {settings} from '../store';
 
+import {models} from "@/models/nodetypes";
 import {Listen, clearTextSelection, lerp, clamp} from "@/util";
 import * as cm from "@/models/colormanagement";
 
 const props = defineProps({
+	node: {
+		type: models.SpectralPowerDistributionNode,
+		required: true,
+	},
+
 	modelValue: {
 		type: Array as PropType<number[]>,
 		required: true,
@@ -28,8 +34,9 @@ const emit = defineEmits<{
 
 
 const modelValue = reactive(props.modelValue);
+watch(modelValue, () => props.node.flushCache());
 
-const d = computed(() => `M0,0${modelValue.map((intensity, i) => `L${i},${intensity * HEIGHT}`).join(" ")}L${WIDTH},0`);
+const d = computed(() => `M0,0${modelValue.map((intensity, i) => `L${i},${intensity * HEIGHT}`).join("")}L${WIDTH},0`);
 
 
 
