@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import {models, math, spaces, images, organization} from "@/models/nodetypes";
+import { ref } from "vue";
 
-import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor} from "./store";
+import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, tooltipData} from "./store";
 
 const emit = defineEmits(["add-node"]);
 
@@ -12,10 +13,22 @@ const labels = new Map<object, string>([
 	[images, "Images"],
 	[organization, "Other"],
 ]);
+
+
+const tray = ref(null as HTMLDivElement | null);
+
+const showButtonTooltip = (event: PointerEvent) => {
+	const rect = tray.value!.getBoundingClientRect();
+	tooltipData.showTooltip("test", {
+		left: `calc(${rect.left}px + 1em)`,
+		bottom: `calc(${rect.height}px + 0.5em)`,
+	});
+};
 </script>
 
 <template>
-	<div class="node-tray">
+	<div class="node-tray"
+			ref="tray">
 		<template v-for="nodeNamespace of [models, spaces, math, images, organization]">
 			<div class="node-category-label">
 				{{labels.get(nodeNamespace)}}
@@ -30,7 +43,10 @@ const labels = new Map<object, string>([
 							currentlyDraggedNodeConstructor = nodeConstructor;
 							isDraggingNodeFromNodeTray = true;
 						}"
-						@dragend="isDraggingNodeFromNodeTray = false">
+						@dragend="isDraggingNodeFromNodeTray = false"
+						
+						@pointerenter="showButtonTooltip"
+						@pointerleave="tooltipData.hideTooltip()">
 					{{nodeConstructor.LABEL}}
 				</button>
 			</div>

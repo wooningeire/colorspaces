@@ -72,6 +72,27 @@ export const settings = <{
 };
 //#endregion
 
+
+//#region Tooltip
+export const tooltipData = reactive({
+	text: "",
+	visible: false,
+	pos: {},
+
+	showTooltip(text: string, pos: object) {
+		this.text = text;
+		this.visible = true;
+		this.pos = pos;
+	},
+
+	hideTooltip() {
+		this.text = "";
+		this.visible = false;
+		this.pos = {};
+	},
+});
+//#endregion
+
 export class SocketHitbox extends HTMLElement {
 
 }

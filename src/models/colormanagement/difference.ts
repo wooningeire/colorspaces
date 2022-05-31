@@ -76,5 +76,8 @@ export const contrastRatio = (col1: Vec3 | Col, col2: Vec3 | Col) => {
 	const xyz1 = Xyz.from(col1);
 	const xyz2 = Xyz.from(col2, col1 instanceof Col ? col1.illuminant : undefined);
 
-	return (xyz1.y + 0.05) / (xyz2.y + 0.05);
+	const lum1 = Math.max(xyz1.y, xyz2.y);
+	const lum2 = Math.min(xyz1.y, xyz2.y);
+
+	return (lum1 + 0.05) / (lum2 + 0.05);
 };
