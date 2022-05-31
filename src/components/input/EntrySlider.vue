@@ -105,6 +105,10 @@ const onBlur = () => {
 const roundToStep = (value: number, step: number) => Math.round(value / step) * step;
 
 const beginSliderInput = makeDragListener({
+	shouldCancel(event: PointerEvent) {
+		return event.button !== 0;
+	},
+
 	onPassTolerance(downEvent) {
 		(downEvent.target! as HTMLInputElement).requestPointerLock();
 	},

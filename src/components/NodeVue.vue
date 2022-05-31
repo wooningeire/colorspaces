@@ -42,7 +42,8 @@ const beginDrag = makeDragListener({
 		// Make this check more sophisticated
 		// return event.target !== this.$el;
 		return ["input", "select"].includes((event.target as Element).tagName.toLowerCase())
-				|| !props.node.canMove;
+				|| !props.node.canMove
+				|| event.button !== 0;
 	},
 
 	onDrag(moveEvent) {

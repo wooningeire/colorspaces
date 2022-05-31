@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {computed, ref, reactive, provide, nextTick, onMounted, Ref} from "vue";
+import {computed, ref, reactive, provide, nextTick, onMounted, Ref, inject} from "vue";
 
 import NodeVue from "./NodeVue.vue";
 import NodeSocket from "./NodeSocket.vue";
@@ -11,10 +11,11 @@ import {Socket, Node} from "@/models/Node";
 import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";
 
 
-const pos = reactive([0, 0]);
-
 const pointerX = ref(-1);
 const pointerY = ref(-1);
+
+const viewportPos = inject("treeViewportPos") as number[];
+const screenToViewport = inject("screenToViewport") as (screenPos: number[]) => number[];
 
 
 provide("tree", tree);
@@ -39,8 +40,9 @@ const onDragSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 	[pointerX.value, pointerY.value] = draggedSocketVue.value.socketPos();
 
 	const dragListener = Listen.for(window, "dragover", (event: DragEvent) => {
-		pointerX.value = event.pageX;
-		pointerY.value = event.pageY;
+		const pos = screenToViewport([event.pageX, event.pageY]);
+		pointerX.value = pos[0];
+		pointerY.value = pos[1];
 	});
 
 	((socketVue.socketEl as any as Ref<HTMLDivElement>).value 
@@ -103,13 +105,13 @@ const onPointerDownSelf = () => {
 
 
 const beginDragCamera = (event: PointerEvent) => {
-	/* const startPos = [...pos];
+	const startPos = [...viewportPos];
 	const pointerStartPos = [event.pageX, event.pageY];
 
 	const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
 		clearTextSelection();
 
-		[pos[0], pos[1]] = [
+		[viewportPos[0], viewportPos[1]] = [
 			startPos[0] + (moveEvent.pageX - pointerStartPos[0]),
 			startPos[1] + (moveEvent.pageY - pointerStartPos[1]),
 		];
@@ -117,7 +119,7 @@ const beginDragCamera = (event: PointerEvent) => {
 
 	addEventListener("pointerup", () => {
 		moveListener.detach();
-	}, {once: true}); */
+	}, {once: true});
 };
 
 
@@ -148,8 +150,8 @@ defineExpose({
 			@drop="event => isDraggingNodeFromNodeTray && $emit('add-node', currentlyDraggedNodeConstructor, [event.pageX, event.pageY])"
 			
 			:style="{
-				'--pos-x': `${pos[0]}px`,
-				'--pos-y': `${pos[1]}px`,	
+				'--pos-x': `${viewportPos[0]}px`,
+				'--pos-y': `${viewportPos[1]}px`,	
 			} as any">
 		<div class="nodes"
 				@pointerdown.self="onPointerDownSelf"
@@ -204,10 +206,10 @@ defineExpose({
 		height: 100%;
 	}
 
-	// > .nodes :deep(.node),
-	// > svg {
-	// 	transform: translate(var(--pos-x), var(--pos-y));
-	// }
+	> .nodes > :deep(*),
+	> svg {
+		transform: translate(var(--pos-x), var(--pos-y));
+	}
 
 	> svg.links {
 		stroke: currentcolor;

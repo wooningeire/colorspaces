@@ -15,12 +15,16 @@ import {tree} from "./store";
 const treeVue = ref(null as InstanceType<typeof TheNodeTree> | null);
 
 
-const addNode = <T extends Node>(nodeConstructor: new () => T, pos: Vec2=[0, 0]) => {
-	const node = new nodeConstructor();
+const viewportPos = reactive([0, 0]);
+const screenToViewport = (screenPos: number[]) => screenPos.map((coord, i) => coord - viewportPos[i]);
+provide("treeViewportPos", viewportPos);
+provide("screenToViewport", screenToViewport);
+
+
+const addNode = <T extends Node>(nodeConstructor: new () => T, screenPos: Vec2=[0, 0]) => {
+	const node = new nodeConstructor().setPos(screenToViewport(screenPos) as Vec2);
 	tree.nodes.add(node);
 	treeVue.value!.selectNode(node);
-
-	node.pos = pos;
 };
 </script>
 
@@ -98,7 +102,7 @@ button {
 
 	border-radius: 0.5em;
 
-	&:hover {
+	&:is(:hover, :focus) {
 		background: #ffffff3f;
 		color: #fff;
 	}

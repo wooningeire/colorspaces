@@ -38,15 +38,17 @@ onMounted(() => {
 	socketVues.set(props.socket, socketVue);
 });
 
-const socketHitbox = ref(null as any as HTMLDivElement);
+const socketHitbox = ref(null as HTMLDivElement | null);
 const socketEl = computed(() => socketHitbox.value);
 
-const rect = () => socketEl.value.getBoundingClientRect();
+const screenToViewport = inject("screenToViewport") as (screenPos: number[]) => number[];
 
-const socketPos = () => [
+const rect = () => socketEl.value!.getBoundingClientRect();
+
+const socketPos = () => screenToViewport([
 	(rect().left + rect().right) / 2,
 	(rect().top + rect().bottom) / 2,
-];
+]);
 
 
 const unlinkLinks = () => {
