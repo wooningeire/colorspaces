@@ -7,6 +7,11 @@ const deleteSelectedNodes = () => {
 		tree.deleteNode(node);
 	});
 };
+
+addEventListener("keydown", event => {
+	if (event.key !== "Delete") return;
+	deleteSelectedNodes();
+});
 </script>
 
 <template>

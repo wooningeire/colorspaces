@@ -6,6 +6,7 @@ import {Vec2, Vec3} from "@/util";
  * Represents a color in an absolute color space.
  * Subclasses should implement the methods `static from`, `static fromXyz`, and `toXyz`.
  */
+//@ts-ignore
 export class Col extends Array {
 	static readonly [Symbol.species] = Array;
 	static readonly labels: string[] = [];
@@ -21,7 +22,13 @@ export class Col extends Array {
 		// Object.freeze(this);
 	}
 
-	static from(dataOrCol: Vec3 | Col, illuminant: Xy=this.defaultIlluminant): InstanceType<typeof this> {
+	/**
+	 * Converts a general color to this color type.
+	 * @param dataOrCol A color or vector to convert from.
+	 * @param illuminant The result illuminant of the color; if `dataOrCol` is a `Col`, then its illuminant, otherwise the color's default illuminant
+	 * @returns A color of this type.
+	 */
+	static from(dataOrCol: Vec3 | Col, illuminant: Xy=dataOrCol instanceof Col ? dataOrCol.illuminant : this.defaultIlluminant): InstanceType<typeof this> {
 		if (dataOrCol instanceof Col) {
 			return this.fromXyz(dataOrCol.toXyz(illuminant));
 		} else {
@@ -48,7 +55,7 @@ export class Xyz extends Col {
 		super(data, illuminant);
 	}
 
-	static from(dataOrCol: Vec3 | Col, illuminant: Xy): Xyz {
+	static from(dataOrCol: Vec3 | Col, illuminant: Xy=dataOrCol instanceof Col ? dataOrCol.illuminant : this.defaultIlluminant): Xyz {
 		if (dataOrCol instanceof Col) {
 			return dataOrCol.toXyz(illuminant);
 		} else {

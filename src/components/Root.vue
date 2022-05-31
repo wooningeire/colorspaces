@@ -9,16 +9,17 @@ import {Node} from "@/models/Node";
 
 import {Vec2} from "@/util";
 
-import {tree} from "./store";
+import {tree, tooltipData} from "./store";
+import ObjectTooltip from "./ObjectTooltip.vue";
 
 
-const treeVue = ref(null) as any as Ref<InstanceType<typeof TheNodeTree>>;
+const treeVue = ref(null as InstanceType<typeof TheNodeTree> | null);
 
 
 const addNode = <T extends Node>(nodeConstructor: new () => T, pos: Vec2=[0, 0]) => {
 	const node = new nodeConstructor();
 	tree.nodes.add(node);
-	treeVue.value.selectNode(node);
+	treeVue.value!.selectNode(node);
 
 	node.pos = pos;
 };
@@ -30,6 +31,11 @@ const addNode = <T extends Node>(nodeConstructor: new () => T, pos: Vec2=[0, 0])
 	<TheNodeTray @add-node="addNode" />
 
 	<TheToolbar />
+
+	<div class="tooltips">
+		<ObjectTooltip :text="tooltipData.text"
+				:pos="tooltipData.pos" />
+	</div>
 </template>
 
 <style lang="scss">
@@ -87,6 +93,17 @@ main {
 
 	> .node-tray {
 		grid-area: 2/2;
+		z-index: 1;
+	}
+
+	> .tooltips {
+		grid-area: 1/1 / -1/-1;
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		
+		pointer-events: none;
+
 		z-index: 1;
 	}
 }

@@ -1,5 +1,5 @@
 import {Vec3} from "@/util";
-import {Xyz} from "./col-xyz-xyy-illuminants";
+import {Xyz} from "./spaces/col-xyz-xyy-illuminants";
 
 export const spectralPowerDistribution = (data: number[], datasetId: keyof typeof datasets) => new Xyz(
 	Array(3).fill(0).map((_, i) =>
@@ -8,7 +8,8 @@ export const spectralPowerDistribution = (data: number[], datasetId: keyof typeo
 	).map((comp, i) => comp / datasets[datasetId].colorMatchingFunctionsIntegrals[i]) as Vec3,
 );
 
-export const singleWavelength = (wavelength: number, datasetId: keyof typeof datasets) => new Xyz(datasets[datasetId].colorMatchingFunctions.get(wavelength) as Vec3);
+export const singleWavelength = (wavelength: number, datasetId: keyof typeof datasets) =>
+		new Xyz(datasets[datasetId].colorMatchingFunctions.get(Math.round(wavelength)) as Vec3 ?? [0, 0, 0]);
 
 /*
 https://web.archive.org/web/20161203232101/http://www.cis.rit.edu/research/mcsl2/online/CIE/all_1nm_data.htm
@@ -26,7 +27,7 @@ $0.value = [...document.querySelectorAll("tr")]
 Array(3).fill().map((_, i) => [...colorMatchingFunctions10deg.values()].reduce((s, v) => s + v[i], 0))
  */
 
-const datasets = {
+export const datasets = {
 	"2deg": {
 		colorMatchingFunctions: new Map([
 			[360, [0.0001299, 3.917E-06, 0.0006061]],

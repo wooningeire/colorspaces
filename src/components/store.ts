@@ -20,11 +20,11 @@ export interface DeviceNodes {
 export const deviceNodes = reactive(<DeviceNodes>{});
 const dn = deviceNodes;
 [
-	new spaces.SrgbNode([450, 50]),
-	(dn.transformNode = new externals.DeviceTransformNode([1000, 100])),
-	(dn.postprocessingNode = new externals.DevicePostprocessingNode([1200, 100])),
-	(dn.environmentNode = new externals.EnvironmentNode([1200, 250])),
-	(dn.visionNode = new externals.VisionNode([1200, 400])),
+	new spaces.SrgbNode().setPos([450, 50]),
+	(dn.transformNode = new externals.DeviceTransformNode().setPos([1000, 100])),
+	(dn.postprocessingNode = new externals.DevicePostprocessingNode().setPos([1200, 100])),
+	(dn.environmentNode = new externals.EnvironmentNode().setPos([1200, 250])),
+	(dn.visionNode = new externals.VisionNode().setPos([1200, 400])),
 ].forEach(tree.nodes.add, tree.nodes);
 
 tree.linkSockets(dn.transformNode.outs[0], dn.postprocessingNode.ins[0]);
@@ -70,6 +70,24 @@ export const settings = <{
 }>{
 	deviceSpace: cm.Srgb,
 };
+//#endregion
+
+
+//#region Tooltip
+export const tooltipData = reactive({
+	text: "",
+	pos: {},
+
+	showTooltip(text: string, pos: object) {
+		this.text = text;
+		this.pos = pos;
+	},
+
+	hideTooltip() {
+		this.text = "";
+		this.pos = {};
+	},
+});
 //#endregion
 
 export class SocketHitbox extends HTMLElement {
