@@ -14,8 +14,8 @@ export namespace images {
 			return [this.whichDimension];
 		}
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.axisSocket = new Socket(this, true, Socket.Type.Dropdown, "Axis", false, {
@@ -67,8 +67,8 @@ export namespace images {
 			return [0, 1];
 		}
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.inSocket = new Socket(this, true, Socket.Type.Image, "File", false)),

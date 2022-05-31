@@ -4,8 +4,8 @@ import {inject, computed} from "vue";
 import NodeSocket from "./NodeSocket.vue";
 import NodeField from "./NodeField.vue";
 import NodeSpecialInput from "./NodeSpecialInput.vue";
-import NodeOutputValues from "./NodeOutputValues.vue";
-import NodeOutputDisplay from "./NodeOutputDisplay.vue";
+import NodeOutput from "./NodeOutput.vue";
+import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 
 import {Node} from "@/models/Node";
 import {models, spaces, math, images, externals, organization} from "@/models/nodetypes";
@@ -67,10 +67,6 @@ const emitNodeSelected = (event: PointerEvent) => {
 
 const shouldDisplayLabel = computed(() => !(props.node instanceof organization.RerouteNode))
 
-const shouldDisplayOutput = computed(
-	() => Object.values(spaces).includes(props.node.constructor as any),
-);
-
 
 const nodeCategories = new Map([models, spaces, math, images, externals, organization]
 		.map(category =>
@@ -79,6 +75,8 @@ const nodeCategories = new Map([models, spaces, math, images, externals, organiz
 		.flat() as [symbol, unknown][]);
 
 
+const category = computed(() => nodeCategories.get(props.node.type));
+
 const categoryNames = new Map<unknown, string>([
 	[models, "models"],
 	[spaces, "spaces"],
@@ -86,7 +84,11 @@ const categoryNames = new Map<unknown, string>([
 	[images, "images"],
 	[externals, "externals"],
 ]);
-const nodeCategoryName = computed(() => `category--${categoryNames.get(nodeCategories.get(props.node.type))}`);
+const nodeCategoryClass = computed(() =>
+		categoryNames.has(category.value)
+				? `category--${categoryNames.get(category.value)}`
+				: ""
+);
 
 
 const isSubtle = computed(() => 
@@ -95,8 +97,6 @@ const isSubtle = computed(() =>
 		|| props.node instanceof externals.VisionNode
 );
 
-
-const hasConstantOutput = computed(() => props.node.getDependencyAxes().size === 0);
 </script>
 
 <template>
@@ -113,7 +113,7 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 			:class="[{
 				'subtle': isSubtle,
 				'selected': isSelected,
-			}, nodeCategoryName]">
+			}, nodeCategoryClass]">
 		<div class="node-border"></div>
 
 		<div class="label"
@@ -134,7 +134,7 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 		<div class="in-sockets">
 			<template v-for="(socket, index) of node.ins"
 					:key="socket.id">
-				<NodeOutputDisplay v-if="node instanceof externals.DeviceTransformNode
+				<NodeOutputColorDisplay v-if="node instanceof externals.DeviceTransformNode
 								&& socket.hasLinks"
 						:node="node"
 						:socket="socket" />
@@ -168,13 +168,8 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 						$emit('potential-socket-position-change')" />
 		</div>
 
-		<div class="node-output"
-				v-if="shouldDisplayOutput">
-			<!-- {{node.output().map((x: number) => x.toFixed(4))}} -->
-			<NodeOutputValues :values="node.output({coords: [0, 0]})"
-					v-if="hasConstantOutput" />
-			<NodeOutputDisplay :node="node" />
-		</div>
+		<!-- {{node.output().map((x: number) => x.toFixed(4))}} -->
+		<NodeOutput :node="node" />
 	</div>
 </template>
 
@@ -192,11 +187,13 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 	background: var(--node-background);
 
 	box-shadow: 0 4px 40px -20px #000000af;
+	border-radius: calc(1em - var(--node-border-width));
 
 	font-size: calc(14/16 * 1em);
 
 	cursor: default;
 
+	--node-border-width: 4px;
 	--node-border-background: #ffffff3f; //linear-gradient(#9c20aa, #fb3570);
 	--node-background: #2e3331df;
 
@@ -263,8 +260,6 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 	}
 
 	> .node-border {
-		--node-border-width: 4px;
-
 		@include gradient-border(var(--node-border-width), var(--node-border-background));
 	}
 

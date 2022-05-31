@@ -59,6 +59,12 @@ export class Tree {
 	}
 }
 
+export enum OutputDisplayType {
+	None,
+	Float,
+	Color,
+}
+
 export class Node {
 	static readonly TYPE: symbol = Symbol();
 	static readonly LABEL: string = "";
@@ -66,18 +72,20 @@ export class Node {
 	readonly ins: Socket[] = [];
 	readonly outs: Socket[] = [];
 
-	readonly fields: Field[] = [];
-
 	private static nextId = 0;
 	readonly id = Node.nextId++;
+	
+	static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.None;
+
 
 	width = 140;
 	canMove = true;
 	canEditLinks = true;
+	pos: Vec2 = [0, 0];
+	setPos(pos: Vec2) { this.pos = pos; return this; }
 
 	// Note: If subclass constructor is called, `new.target` is the subclass
 	constructor(
-		public pos: Vec2=[0, 0],
 		readonly type: symbol=new.target.TYPE,
 		public label: string=new.target.LABEL,
 	) {}

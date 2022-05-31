@@ -7,8 +7,8 @@ export namespace organization {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Reroute";
 		
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Any, ""),

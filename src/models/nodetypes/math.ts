@@ -1,7 +1,8 @@
-import {Node, Socket, SocketType as St, NodeEvalContext} from "../Node";
+import {labSliderProps} from "./spaces";
+import {Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType} from "../Node";
 import * as cm from "../colormanagement";
 
-import {Color, Vec2, Vec3, lerp} from "@/util";
+import {Color, lerp} from "@/util";
 
 export namespace math {
 	export class LerpNode extends Node {
@@ -12,8 +13,8 @@ export namespace math {
 		private readonly facSocket: Socket<St.Float>;
 		private readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.methodSocket = new Socket(this, true, Socket.Type.Dropdown, "", false, {
@@ -68,8 +69,8 @@ export namespace math {
 
 		private readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Color or vector")),
@@ -98,13 +99,19 @@ export namespace math {
 
 		private readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
+
+		constructor() {
+			super();
 
 			this.ins.push(
 				...(this.colorSockets = [
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color"),
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color"),
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color", true, {
+						sliderProps: labSliderProps,
+					}),
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color", true, {
+						sliderProps: labSliderProps,
+					}),
 				]),
 			);
 
@@ -128,13 +135,19 @@ export namespace math {
 
 		private readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
+
+		constructor() {
+			super();
 
 			this.ins.push(
 				...(this.colorSockets = [
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Sample L*a*b* or color"),
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Target L*a*b* or color"),
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Sample L*a*b* or color", true, {
+						sliderProps: labSliderProps,
+					}),
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Target L*a*b* or color", true, {
+						sliderProps: labSliderProps,
+					}),
 				]),
 			);
 

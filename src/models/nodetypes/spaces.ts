@@ -1,17 +1,34 @@
-import {Node, Socket, SocketType as St, NodeEvalContext} from "../Node";
+import {Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType} from "../Node";
 import * as cm from "../colormanagement";
 
-import {Vec2} from "@/util";
+
+class SpaceNode extends Node { 
+	static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Color;
+}
+
+export const labSliderProps = [
+	{
+		max: 100,
+	},
+	{
+		hasBounds: false,
+		unboundedChangePerPixel: 0.25,
+	},
+	{
+		hasBounds: false,
+		unboundedChangePerPixel: 0.25,
+	},
+];
 
 export namespace spaces {
-	export class LinearNode extends Node {
+	export class LinearNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Linear sRGB";
 
 		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
@@ -27,14 +44,14 @@ export namespace spaces {
 		}
 	}
 
-	export class SrgbNode extends Node {
+	export class SrgbNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "sRGB";
 
 		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
@@ -83,15 +100,15 @@ export namespace spaces {
 		}
 	};
 
-	export class XyzNode extends Node {
+	export class XyzNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "XYZ";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
 		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
@@ -112,7 +129,7 @@ export namespace spaces {
 
 	const d65 = cm.illuminantsXy["2deg"]["D65"];
 
-	export class XyyNode extends Node {
+	export class XyyNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "xyY";
 
@@ -120,8 +137,8 @@ export namespace spaces {
 		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
 		// private readonly primariesSockets: Socket<SocketType.Float>[];
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
@@ -144,33 +161,21 @@ export namespace spaces {
 		}
 	}
 
-	export class LabNode extends Node {
+	export class LabNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "L*a*b*";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
 		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
 				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color", true, {
 					defaultValue: [50, 0, 0],
-					sliderProps: [
-						{
-							max: 100,
-						},
-						{
-							hasBounds: false,
-							unboundedChangePerPixel: 1,
-						},
-						{
-							hasBounds: false,
-							unboundedChangePerPixel: 1,
-						},
-					],
+					sliderProps: labSliderProps,
 				})),
 			);
 
@@ -185,15 +190,15 @@ export namespace spaces {
 		}
 	}
 
-	export class LchAbNode extends Node {
+	export class LchAbNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "L*C*h(ab)";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
 		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
@@ -223,33 +228,21 @@ export namespace spaces {
 		}
 	}
 
-	export class LuvNode extends Node {
+	export class LuvNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "L*u*v*";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
 		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
 				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*u*v* or color", true, {
 					defaultValue: [50, 0, 0],
-					sliderProps: [
-						{
-							max: 100,
-						},
-						{
-							hasBounds: false,
-							unboundedChangePerPixel: 1,
-						},
-						{
-							hasBounds: false,
-							unboundedChangePerPixel: 1,
-						},
-					],
+					sliderProps: labSliderProps,
 				})),
 			);
 
@@ -264,15 +257,15 @@ export namespace spaces {
 		}
 	}
 
-	export class LchUvNode extends Node {
+	export class LchUvNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "L*C*h(uv)";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
 		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
@@ -302,14 +295,14 @@ export namespace spaces {
 		}
 	}
 
-	export class LinearAdobeRgbNode extends Node {
+	export class LinearAdobeRgbNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Linear Adobe RGB 1998";
 
 		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
@@ -325,14 +318,14 @@ export namespace spaces {
 		}
 	}
 
-	export class AdobeRgbNode extends Node {
+	export class AdobeRgbNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Adobe RGB 1998";
 
 		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
@@ -348,14 +341,14 @@ export namespace spaces {
 		}
 	}
 
-	export class Rec709Node extends Node {
+	export class Rec709Node extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Rec. 709";
 
 		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),

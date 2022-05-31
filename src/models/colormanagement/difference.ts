@@ -5,7 +5,7 @@ import {Lab, LchAb} from "./lab";
 
 export const deltaE1976 = (col1: Vec3 | Col, col2: Vec3 | Col) => {
 	const lab1 = Lab.from(col1) as Lab;
-	const lab2 = Lab.from(col2) as Lab;
+	const lab2 = Lab.from(col2, col1 instanceof Col ? col1.illuminant : undefined) as Lab;
 
 	return Math.hypot(...lab1.map((comp, i) => lab2[i] - lab1[i]));
 };
@@ -16,7 +16,7 @@ const elseNan = (value: number, fallback: number) => isNaN(value) ? fallback : v
 
 export const deltaE2000 = (col1: Vec3 | Col, col2: Vec3 | Col, kL=1, kC=1, kH=1) => {
 	const lab1 = Lab.from(col1) as Lab;
-	const lab2 = Lab.from(col2) as Lab;
+	const lab2 = Lab.from(col2, col1 instanceof Col ? col1.illuminant : undefined) as Lab;
 
 	const lch1 = LchAb.from(lab1) as LchAb;
 	const lch2 = LchAb.from(lab2) as LchAb;

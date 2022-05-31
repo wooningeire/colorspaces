@@ -9,8 +9,8 @@ export namespace models {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "RGB";
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Float, "Red"),
@@ -36,8 +36,8 @@ export namespace models {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HSL";
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Float, "Hue"),
@@ -59,8 +59,8 @@ export namespace models {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HSV";
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Float, "Hue"),
@@ -82,8 +82,8 @@ export namespace models {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "CMY";
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Float, "Cyan"),
@@ -105,8 +105,8 @@ export namespace models {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "XYZ (model)";
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Float, "X"),
@@ -128,8 +128,8 @@ export namespace models {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Vector";
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Float, "", true, {
@@ -168,8 +168,8 @@ export namespace models {
 
 		colorMatchingDataset: "2deg" | "10deg" = "2deg";
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 			
 			this.outs.push(
 				new Socket(this, false, Socket.Type.RgbRaw, "XYZ"),
@@ -196,8 +196,8 @@ export namespace models {
 		private readonly inSocket: Socket<St.Float>;
 		private readonly datasetSocket: Socket<St.Dropdown>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.inSocket = new Socket(this, true, Socket.Type.Float, "Wavelength (nm)", true, {
@@ -236,8 +236,8 @@ export namespace models {
 		private readonly inSocket: Socket<St.Float>;
 		private readonly datasetSocket: Socket<St.Dropdown>;
 
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				(this.inSocket = new Socket(this, true, Socket.Type.Float, "Temperature (K)", true, {

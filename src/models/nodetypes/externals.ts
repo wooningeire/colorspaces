@@ -10,9 +10,9 @@ export namespace externals {
 
 		readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
 		
-		constructor(pos?: Vec2) {
-			super(pos);
-
+		constructor() {
+			super();
+			
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Dropdown, "Device color space", false, {
 					options: [
@@ -71,8 +71,8 @@ export namespace externals {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Device postprocessing";
 		
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Unknown, "Color data"),
@@ -91,8 +91,8 @@ export namespace externals {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Environmental conditions";
 		
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Unknown, "Radiation"),
@@ -111,8 +111,8 @@ export namespace externals {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Human vision";
 		
-		constructor(pos?: Vec2) {
-			super(pos);
+		constructor() {
+			super();
 
 			this.ins.push(
 				new Socket(this, true, Socket.Type.Unknown, "Light"),

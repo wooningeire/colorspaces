@@ -12,13 +12,13 @@ import {Vec2} from "@/util";
 import {tree} from "./store";
 
 
-const treeVue = ref(null) as any as Ref<InstanceType<typeof TheNodeTree>>;
+const treeVue = ref(null as InstanceType<typeof TheNodeTree> | null);
 
 
 const addNode = <T extends Node>(nodeConstructor: new () => T, pos: Vec2=[0, 0]) => {
 	const node = new nodeConstructor();
 	tree.nodes.add(node);
-	treeVue.value.selectNode(node);
+	treeVue.value!.selectNode(node);
 
 	node.pos = pos;
 };

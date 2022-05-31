@@ -2,8 +2,6 @@
 import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch} from "vue";
 
 import {Node, Socket, NodeEvalContext} from "@/models/Node";
-import {externals} from "@/models/nodetypes";
-import * as cm from "@/models/colormanagement";
 import {tree, settings} from "./store";
 
 const props = defineProps({
