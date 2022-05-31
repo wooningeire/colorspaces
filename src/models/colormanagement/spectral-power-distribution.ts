@@ -8,7 +8,8 @@ export const spectralPowerDistribution = (data: number[], datasetId: keyof typeo
 	).map((comp, i) => comp / datasets[datasetId].colorMatchingFunctionsIntegrals[i]) as Vec3,
 );
 
-export const singleWavelength = (wavelength: number, datasetId: keyof typeof datasets) => new Xyz(datasets[datasetId].colorMatchingFunctions.get(wavelength) as Vec3);
+export const singleWavelength = (wavelength: number, datasetId: keyof typeof datasets) =>
+		new Xyz(datasets[datasetId].colorMatchingFunctions.get(Math.round(wavelength)) as Vec3 ?? [0, 0, 0]);
 
 /*
 https://web.archive.org/web/20161203232101/http://www.cis.rit.edu/research/mcsl2/online/CIE/all_1nm_data.htm
