@@ -1,5 +1,5 @@
 import {Vec3} from "@/util";
-import {Xyz} from "./col-xyz-xyy-illuminants";
+import {Xyz} from "./spaces/col-xyz-xyy-illuminants";
 
 export const spectralPowerDistribution = (data: number[], datasetId: keyof typeof datasets) => new Xyz(
 	Array(3).fill(0).map((_, i) =>

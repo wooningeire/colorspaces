@@ -1,5 +1,5 @@
 import {datasets} from "./spectral-power-distribution";
-import {Xyz} from "./col-xyz-xyy-illuminants";
+import {Xyz} from "./spaces/col-xyz-xyy-illuminants";
 
 import {Vec3} from "@/util";
 

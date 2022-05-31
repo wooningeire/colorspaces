@@ -78,6 +78,29 @@ export namespace models {
 		}
 	}
 
+	export class HwbNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "HWB";
+
+		constructor() {
+			super();
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Float, "Hue"),
+				new Socket(this, true, Socket.Type.Float, "Whiteness"),
+				new Socket(this, true, Socket.Type.Float, "Blackness"),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
+			);
+		}
+
+		output(context: NodeEvalContext): Color {
+			return cm.hwbToRgb(this.ins.map(socket => socket.inValue(context)) as Color) as Color;
+		}
+	}
+
 	export class CmyNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "CMY";

@@ -55,7 +55,7 @@ export class Xyz extends Col {
 		super(data, illuminant);
 	}
 
-	static from(dataOrCol: Vec3 | Col, illuminant: Xy): Xyz {
+	static from(dataOrCol: Vec3 | Col, illuminant: Xy=dataOrCol instanceof Col ? dataOrCol.illuminant : this.defaultIlluminant): Xyz {
 		if (dataOrCol instanceof Col) {
 			return dataOrCol.toXyz(illuminant);
 		} else {

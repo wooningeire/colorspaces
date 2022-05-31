@@ -1,7 +1,7 @@
 import {mod, Vec3} from "@/util";
 
-import {Col} from "./col-xyz-xyy-illuminants";
-import {Lab, LchAb} from "./lab";
+import {Col, Xyz} from "./spaces/col-xyz-xyy-illuminants";
+import {Lab, LchAb} from "./spaces/lab";
 
 export const deltaE1976 = (col1: Vec3 | Col, col2: Vec3 | Col) => {
 	const lab1 = Lab.from(col1) as Lab;
@@ -69,4 +69,12 @@ export const deltaE2000 = (col1: Vec3 | Col, col2: Vec3 | Col, kL=1, kC=1, kH=1)
 		+ hFinalDiff**2
 		+ hueRot * cFinalDiff * hFinalDiff
 	);
+};
+
+// https://www.w3.org/TR/WCAG20/#contrast-ratiodef
+export const contrastRatio = (col1: Vec3 | Col, col2: Vec3 | Col) => {
+	const xyz1 = Xyz.from(col1);
+	const xyz2 = Xyz.from(col2, col1 instanceof Col ? col1.illuminant : undefined);
+
+	return (xyz1.y + 0.05) / (xyz2.y + 0.05);
 };

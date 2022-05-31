@@ -121,7 +121,6 @@ export namespace math {
 		}
 
 		output(context: NodeEvalContext): number {
-			// TODO check that inputs are of same type
 			const col0 = this.colorSockets[0].inValue(context);
 			const col1 = this.colorSockets[1].inValue(context);
 
@@ -157,11 +156,41 @@ export namespace math {
 		}
 
 		output(context: NodeEvalContext): number {
-			// TODO check that inputs are of same type
 			const col0 = this.colorSockets[0].inValue(context);
 			const col1 = this.colorSockets[1].inValue(context);
 
 			return cm.difference.deltaE2000(col0, col1);
+		}
+	}
+
+	export class ContrastRatioNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Contrast ratio";
+
+		private readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
+
+		static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
+
+		constructor() {
+			super();
+
+			this.ins.push(
+				...(this.colorSockets = [
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "XYZ or color"),
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "XYZ or color"),
+				]),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.Float, "Ratio"),
+			);
+		}
+
+		output(context: NodeEvalContext): number {
+			const col0 = this.colorSockets[0].inValue(context);
+			const col1 = this.colorSockets[1].inValue(context);
+
+			return cm.difference.contrastRatio(col0, col1);
 		}
 	}
 }
