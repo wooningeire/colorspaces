@@ -13,6 +13,8 @@ export {Luv, LchUv} from "./colormanagement/luv";
 export {spectralPowerDistribution, singleWavelength} from "./colormanagement/spectral-power-distribution";
 export {blackbody} from "./colormanagement/blackbody";
 
+export * as difference from "./colormanagement/difference";
+
 
 //#region Conversion functions
 
@@ -59,14 +61,3 @@ export const hsvToRgb = ([hue, sat, value]: Color) => {
 	else if (hue < 5) return [rising,  valley,  plateau];
 	else              return [plateau, valley,  falling];
 };
-
-
-
-export namespace difference {
-	export const deltaE1976 = (col1: Vec3 | Col, col2: Vec3 | Col) => {
-		const lab1 = Lab.from(col1, col1 instanceof Col ? col1.illuminant : illuminantE);
-		const lab2 = Lab.from(col2, col2 instanceof Col ? col2.illuminant : illuminantE);
-
-		return Math.hypot(...lab1.map((comp, i) => lab2[i] - lab1[i]));
-	}
-}

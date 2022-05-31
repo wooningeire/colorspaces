@@ -10,8 +10,6 @@ const boltzmann = 1.380_649e-23;
 const radConst1 = 2 * Math.PI * planck * speedOfLight**2;
 const radConst2 = planck * speedOfLight / boltzmann;
 
-console.log(radConst1, radConst2);
-
 /**
  * 
  * @param wavelength in nm
