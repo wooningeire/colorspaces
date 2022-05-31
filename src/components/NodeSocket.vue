@@ -2,9 +2,10 @@
 import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef} from "vue";
 
 import NodeSocketField from "./NodeSocketField.vue";
-import {tree} from "./store";
+import {tree, tooltipData} from "./store";
 
 import {Socket, SocketType as St} from "@/models/Node";
+import getString from "@/strings";
 
 
 const socketVue = getCurrentInstance()!.proxy;

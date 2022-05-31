@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import {inject, computed} from "vue";
+import * as marked from "marked";
 
 import NodeSocket from "./NodeSocket.vue";
 import NodeField from "./NodeField.vue";
@@ -11,6 +12,8 @@ import {Node} from "@/models/Node";
 import {models, spaces, math, images, externals, organization} from "@/models/nodetypes";
 
 import {Listen, clearTextSelection, Vec2} from "@/util";
+
+import getString from "@/strings";
 
 import {selectedNodes, modifierKeys} from "./store";
 import makeDragListener from "./draggable";
@@ -117,8 +120,8 @@ const isSubtle = computed(() =>
 		<div class="node-border"></div>
 
 		<div class="label"
-				v-if="shouldDisplayLabel">
-			{{node.label}}
+				v-if="shouldDisplayLabel"
+				v-html="marked.parseInline(node.label)">
 		</div>
 
 		<NodeSpecialInput :node="node" />

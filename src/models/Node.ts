@@ -1,4 +1,4 @@
-import {StringKey} from "./strings";
+import {StringKey, NO_DESC} from "../strings";
 import {Color, Vec2} from "../util";
 
 export class Tree {
@@ -70,7 +70,7 @@ export class Node {
 	static readonly TYPE: symbol = Symbol();
 	static readonly LABEL: string = "";
 
-	static readonly DESC: StringKey = "";
+	static readonly DESC: StringKey = NO_DESC;
 
 	readonly ins: Socket[] = [];
 	readonly outs: Socket[] = [];

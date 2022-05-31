@@ -6,6 +6,7 @@ export namespace images {
 	export class GradientNode extends Node implements AxisNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Gradient";
+		static readonly DESC = "desc.node.gradient";
 
 		private readonly axisSocket: Socket<St.Dropdown>;
 		private readonly boundsSockets: Socket<St.Float>[];
@@ -60,6 +61,7 @@ export namespace images {
 	export class ImageFileNode extends Node implements AxisNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Image file";
+		static readonly DESC = "desc.node.imageFile";
 
 		private readonly inSocket: Socket<St.Image>;
 

@@ -169,6 +169,8 @@ export namespace math {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Contrast ratio";
 
+		static readonly DESC = "desc.node.contrastRatio";
+
 		private readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
 
 		static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;

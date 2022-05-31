@@ -5,7 +5,7 @@ import * as marked from "marked";
 import {models, math, spaces, images, organization} from "@/models/nodetypes";
 import {Node} from "@/models/Node";
 
-import getString from "@/models/strings";
+import getString from "@/strings";
 
 import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, tooltipData} from "./store";
 

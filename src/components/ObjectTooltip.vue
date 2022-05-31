@@ -30,7 +30,7 @@ const isVisible = computed(() => Boolean(props.text));
 	padding: 0.5em;
 	border-radius: 0.5em;
 
-	font-size: 0.875em;
+	font-size: calc(14/16 * 1em);
 	max-width: 80ch;
 
 	background: #000000cf;

@@ -1,6 +1,6 @@
 import {Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType} from "../Node";
 import * as cm from "../colormanagement";
-import {StringKey} from "../strings";
+import {StringKey} from "@/strings";
 
 
 class SpaceNode extends Node { 
@@ -172,8 +172,7 @@ export namespace spaces {
 
 	export class LabNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "L*a*b*";
-
+		static readonly LABEL = "L\\*a\\*b\\*";
 		static readonly DESC = "desc.node.lab";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
@@ -203,8 +202,7 @@ export namespace spaces {
 
 	export class LchAbNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "L*C*h(ab)";
-
+		static readonly LABEL = "L\\*C\\*h<sub>ab</sub>";
 		static readonly DESC = "desc.node.lchab";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
@@ -243,7 +241,8 @@ export namespace spaces {
 
 	export class LuvNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "L*u*v*";
+		static readonly LABEL = "L\\*u\\*v\\*";
+		static readonly DESC = "desc.node.luv";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
 		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
@@ -272,7 +271,8 @@ export namespace spaces {
 
 	export class LchUvNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "L*C*h(uv)";
+		static readonly LABEL = "L\\*C\\*h<sub>uv</sub>";
+		static readonly DESC = "desc.node.lchuv";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
 		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
