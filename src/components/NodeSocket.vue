@@ -4,7 +4,7 @@ import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef} from 
 import NodeSocketField from "./NodeSocketField.vue";
 import {tree} from "./store";
 
-import {Socket, SocketType as St} from "@/models/Node";
+import {Tree, Socket, SocketType as St} from "@/models/Node";
 
 
 const socketVue = getCurrentInstance()!.proxy;
@@ -141,7 +141,7 @@ Object.defineProperties(socketVue, {
 
 		<NodeSocketField v-if="shouldShowFields"
 				:socket="socket"
-				@value-change="socket.node.onSocketFieldValueChange(socket, tree)" />
+				@value-change="socket.node.onSocketFieldValueChange(socket, tree as Tree)" />
 	</div>
 </template>
 
