@@ -25,22 +25,26 @@ export class Col extends Array {
 	/**
 	 * Converts a general color to this color type.
 	 * @param dataOrCol A color or vector to convert from.
-	 * @param illuminant The result illuminant of the color; if `dataOrCol` is a `Col`, then its illuminant, otherwise the color's default illuminant
+	 * @param newIlluminant The result illuminant of the color; if `dataOrCol` is a `Col`, then its illuminant, otherwise the color's default illuminant
 	 * @returns A color of this type.
 	 */
-	static from(dataOrCol: Vec3 | Col, illuminant: Xy=dataOrCol instanceof Col ? dataOrCol.illuminant : this.defaultIlluminant): InstanceType<typeof this> {
+	static from(dataOrCol: Vec3 | Col, newIlluminant: Xy=dataOrCol instanceof Col ? dataOrCol.illuminant : this.defaultIlluminant) {
 		if (dataOrCol instanceof Col) {
-			return this.fromXyz(dataOrCol.toXyz(illuminant));
+			return this.fromCol(dataOrCol, newIlluminant);
 		} else {
-			return new this(dataOrCol, illuminant);
+			return new this(dataOrCol, newIlluminant);
 		}
+	}
+
+	static fromCol(col: Col, newIlluminant: Xy=col.illuminant) {
+		return this.fromXyz(col.toXyz(newIlluminant));
 	}
 
 	static fromXyz(xyz: Xyz): Col {
 		throw new TypeError("Abstract method / not implemented");
 	}
 
-	toXyz(illuminant: Xy=this.illuminant): Xyz {
+	toXyz(newIlluminant: Xy=this.illuminant): Xyz {
 		throw new TypeError("Abstract method / not implemented");
 	}
 }
@@ -49,26 +53,22 @@ export class Col extends Array {
 export class Xyz extends Col {
 	static readonly labels = ["X", "Y", "Z"];
 
-	constructor(data: Vec3, illuminant: Xy=illuminantE) {
+	constructor(data: Vec3, newIlluminant: Xy=illuminantE) {
 		if (data.length !== 3) throw new TypeError("Data must have 3 components");
 
-		super(data, illuminant);
+		super(data, newIlluminant);
 	}
 
-	static from(dataOrCol: Vec3 | Col, illuminant: Xy=dataOrCol instanceof Col ? dataOrCol.illuminant : this.defaultIlluminant): Xyz {
-		if (dataOrCol instanceof Col) {
-			return dataOrCol.toXyz(illuminant);
-		} else {
-			return new Xyz(dataOrCol, illuminant);
-		}
+	static fromCol(col: Col, newIlluminant: Xy=col.illuminant): Xyz {
+		return col.toXyz(newIlluminant);
 	}
 
 	static fromXyz(xyz: Xyz): Xyz {
 		return new Xyz(xyz as any as Vec3, xyz.illuminant);
 	}
 
-	toXyz(illuminant: Xy=this.illuminant) {
-		return adaptXyz(this, illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant) {
+		return adaptXyz(this, newIlluminant);
 	}
 
 	get x() { return this[0]; }
@@ -79,16 +79,16 @@ export class Xyz extends Col {
 export class Xyy extends Col {
 	static readonly labels = ["x", "y", "Y"];
 
-	constructor(data: Vec3, illuminant: Xy=illuminantE) {
-		super(data, illuminant);
+	constructor(data: Vec3, newIlluminant: Xy=illuminantE) {
+		super(data, newIlluminant);
 	}
 
 	static fromXyz(xyz: Xyz): Xyy {
 		return xyzToXyy(xyz, xyz.illuminant);
 	}
 
-	toXyz(illuminant: Xy=this.illuminant): Xyz {
-		return xyyToXyz(this, illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant): Xyz {
+		return xyyToXyz(this, newIlluminant);
 	}
 
 	get x() { return this[0]; }
@@ -97,12 +97,12 @@ export class Xyy extends Col {
 }
 
 export class Xy extends Col {
-	constructor(data: Vec2, illuminant: Xy=illuminantE) {
-		super(data, illuminant);
+	constructor(data: Vec2, newIlluminant: Xy=illuminantE) {
+		super(data, newIlluminant);
 	}
 
-	toXyz(illuminant: Xy=this.illuminant): Xyz {
-		return xyyToXyz(this, illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant): Xyz {
+		return xyyToXyz(this, newIlluminant);
 	}
 
 	get x() { return this[0]; }

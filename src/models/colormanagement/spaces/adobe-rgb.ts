@@ -12,65 +12,55 @@ export class AdobeRgb extends Col {
 	static readonly defaultIlluminant = illuminantsXy["2deg"]["D65"];
 
 	constructor(data: Vec3) {
-		super(data, illuminantsXy["2deg"]["D65"]);
+		super(data, new.target.defaultIlluminant);
 	}
 
-	static from(dataOrCol: Vec3 | Col): AdobeRgb {
-		if (dataOrCol instanceof LinearAdobeRgb) {
-			return linToGammaAdobeRgb(dataOrCol);
-		} else if (dataOrCol instanceof AdobeRgb) {
-			return new AdobeRgb(dataOrCol as any as Vec3);
-		} else if (dataOrCol instanceof Col) {
-			return this.fromXyz(dataOrCol.toXyz(illuminantsXy["2deg"]["D65"]));
-		} else {
-			return new AdobeRgb(dataOrCol);
+	static fromCol(col: Col) {
+		if (col instanceof LinearAdobeRgb) {
+			return linToGammaAdobeRgb(col);
+		} else if (col instanceof AdobeRgb) {
+			return new AdobeRgb(col as any as Vec3);
 		}
+		return super.fromCol(col, this.defaultIlluminant);
 	}
 
 	static fromXyz(xyz: Xyz): AdobeRgb {
-		return linToGammaAdobeRgb(xyzToLinAdobeRgb(xyz, xyz.illuminant));
+		return linToGammaAdobeRgb(xyzToLinAdobeRgb(xyz));
 	}
 
-	toXyz(illuminant: Xy=this.illuminant) {
-		return linAdobeRgbToXyz(gammaToLinAdobeRgb(this), illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant) {
+		return linAdobeRgbToXyz(gammaToLinAdobeRgb(this), newIlluminant);
 	}
 }
 
 export class LinearAdobeRgb extends Col {
 	static readonly labels = ["R", "G", "B"];
+	
+	static readonly defaultIlluminant = illuminantsXy["2deg"]["D65"];
 
 	constructor(data: Vec3) {
-		super(data, illuminantsXy["2deg"]["D65"]);
+		super(data, new.target.defaultIlluminant);
 	}
 
-	static from(dataOrCol: Vec3 | Col): LinearAdobeRgb {
-		return dataOrCol instanceof Col
-				? dataOrCol instanceof AdobeRgb
-						? gammaToLinAdobeRgb(dataOrCol)
-						: this.fromXyz(dataOrCol.toXyz(illuminantsXy["2deg"]["D65"]))
-				: new LinearAdobeRgb(dataOrCol);
+	static fromCol(col: Col) {
+		return col instanceof AdobeRgb
+				? gammaToLinAdobeRgb(col)
+				: super.fromCol(col, this.defaultIlluminant);
 	}
 
 	static fromXyz(xyz: Xyz): LinearAdobeRgb {
-		return xyzToLinAdobeRgb(xyz, xyz.illuminant);
+		return xyzToLinAdobeRgb(xyz);
 	}
 
-	toXyz(illuminant: Xy=this.illuminant) {
-		return linAdobeRgbToXyz(this, illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant) {
+		return linAdobeRgbToXyz(this, newIlluminant);
 	}
 }
 //#endregion
 
 //#region Conversion functions
-const xyzToLinAdobeRgb = (xyz: Xyz, illuminant: Xy) => {
-	const adaptedXyz = math.multiply(
-		chromaticAdaptationMat(
-			xyyToXyzNoAdapt(illuminant),
-			xyyToXyzNoAdapt(illuminantsXy["2deg"]["D65"]),
-			chromaticAdaptationTransforms["Bradford"],
-		),
-		xyz,
-	);
+const xyzToLinAdobeRgb = (xyz: Xyz) => {
+	const adaptedXyz = adaptXyz(xyz, illuminantsXy["2deg"]["D65"]);
 
 	//http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
 	const mat = math.multiply([
@@ -82,7 +72,7 @@ const xyzToLinAdobeRgb = (xyz: Xyz, illuminant: Xy) => {
 	return new LinearAdobeRgb(mat as any as Vec3);
 };
 
-const linAdobeRgbToXyz = (linAdobe: LinearAdobeRgb, illuminant: Xy) => {
+const linAdobeRgbToXyz = (linAdobe: LinearAdobeRgb, newIlluminant: Xy) => {
 	//http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
 	const mat = math.multiply([
 		[+0.5767309, +0.1855540, +0.1881852],
@@ -90,7 +80,7 @@ const linAdobeRgbToXyz = (linAdobe: LinearAdobeRgb, illuminant: Xy) => {
 		[+0.0270343, +0.0706872, +0.9911085],
 	], linAdobe);
 
-	return adaptXyz(new Xyz(mat as any as Vec3, illuminantsXy["2deg"]["D65"]), illuminant);
+	return adaptXyz(new Xyz(mat as any as Vec3, linAdobe.illuminant), newIlluminant);
 };
 
 // https://www.adobe.com/digitalimag/pdfs/AdobeRGB1998.pdf sec 4.3.1.2

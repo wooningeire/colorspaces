@@ -234,7 +234,6 @@ defineExpose({
 		transform-origin: 0 0;
 	}
 
-	// For some reason, scaling will cause changes to getBoundingClientRect but not translate
 	> .nodes {
 		transform: scale(var(--scale)) translate(var(--pos-x), var(--pos-y));
 	}
