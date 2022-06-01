@@ -14,20 +14,6 @@ import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currently
 const pointerX = ref(-1);
 const pointerY = ref(-1);
 
-const viewportPos = inject("treeViewportPos") as number[];
-const viewportScale = inject("treeViewportScale") as Ref<number>;
-const screenToViewport = inject("screenToViewport") as (screenPos: number[]) => number[];
-
-addEventListener("keydown", event => {
-	if (event.key !== "Home") return;
-	Object.assign(viewportPos, [0, 0]);
-	viewportScale.value = 1;
-});
-
-const onWheel = (event: WheelEvent) => {
-	viewportScale.value *= 1.125**-Math.sign(event.deltaY);
-};
-
 
 provide("tree", tree);
 
@@ -115,6 +101,17 @@ const onPointerDownSelf = () => {
 };
 
 
+
+const viewportPos = inject("treeViewportPos") as number[];
+const viewportScale = inject("treeViewportScale") as Ref<number>;
+const screenToViewport = inject("screenToViewport") as (screenPos: number[]) => number[];
+
+addEventListener("keydown", event => {
+	if (event.key !== "Home") return;
+	Object.assign(viewportPos, [0, 0]);
+	viewportScale.value = 1;
+});
+
 const beginDragCamera = (event: PointerEvent) => {
 	const startPos = [...viewportPos];
 	const pointerStartPos = [event.pageX, event.pageY];
@@ -131,6 +128,22 @@ const beginDragCamera = (event: PointerEvent) => {
 	addEventListener("pointerup", () => {
 		moveListener.detach();
 	}, {once: true});
+};
+
+const onWheel = (event: WheelEvent) => {
+	// Order of transformation: translate to cursor pos, then scale, then translate back to original pos (with new scale)
+
+	const cursorOffsetPos = screenToViewport([event.pageX, event.pageY])
+			.map((comp, i) => comp + viewportPos[i]);
+
+
+	const scaleFac = 1.125**-Math.sign(event.deltaY);
+	viewportScale.value *= scaleFac;
+
+	Object.assign(viewportPos, [
+		viewportPos[0] - cursorOffsetPos[0] + cursorOffsetPos[0] / scaleFac,
+		viewportPos[1] - cursorOffsetPos[1] + cursorOffsetPos[1] / scaleFac,
+	]);
 };
 
 
