@@ -266,7 +266,7 @@ const isSubtle = computed(() =>
 		@include gradient-border(var(--node-border-width), var(--node-border-background));
 	}
 
-	:deep(input[type="text"]) {
+	:deep(input:is([type="text"], [type="file"])) {
 		width: 100%;
 	}
 

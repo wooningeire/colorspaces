@@ -57,7 +57,9 @@ const rerenderCanvas = () => {
 onMounted(rerenderCanvas);
 onUpdated(rerenderCanvas);
 
-watch(() => dataOutput({socket: props.socket}), rerenderCanvas);
+// `coords` property is needed to update when Gradient node axis changes, might want to make this check more robust?
+// When is this check being triggered? (whenever function dependencies update according to Vue?)
+watch(() => dataOutput({socket: props.socket, coords: [0, 0]}), rerenderCanvas);
 
 
 const nAxes = computed(() => props.node.getDependencyAxes().size);

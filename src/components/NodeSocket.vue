@@ -140,7 +140,8 @@ Object.defineProperties(socketVue, {
 		</div>
 
 		<NodeSocketField v-if="shouldShowFields"
-				:socket="socket" />
+				:socket="socket"
+				@value-change="socket.node.onSocketFieldValueChange(socket, tree)" />
 	</div>
 </template>
 

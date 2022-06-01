@@ -124,6 +124,8 @@ export class Node {
 	onDependencyUpdate() { // doesn't do anything yet
 	}
 
+	onSocketFieldValueChange(socket: Socket, tree: Tree) {}
+
 	// Eventually adapted into `findCyclicalLinks`
 	/* hasCircularDependency(visitedNodes=new Set<Node>()): boolean {
 		if (visitedNodes.has(this)) return true;
