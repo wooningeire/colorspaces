@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {inject} from "vue";
+import {inject, Ref} from "vue";
 
 import {Tree, Socket} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
@@ -8,6 +8,8 @@ import {tree} from "./store";
 
 const props = defineProps(["socketVues"]);
 const socketVue = (socket: Socket) => props.socketVues.get(socket);
+
+const viewportScale = inject("treeViewportScale") as Ref<number>;
 </script>
 
 <template>

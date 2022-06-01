@@ -129,7 +129,7 @@ Object.defineProperties(socketVue, {
 				@dragenter.prevent
 				@dragover.prevent
 				@drop="ondrop"
-				@pointerdown.stop
+				@pointerdown="event => event.button === 0 && event.stopPropagation()"
 
 				@dblclick="unlinkLinks">
 			<div class="socket-display"

@@ -186,8 +186,10 @@ export namespace models {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Spectral power distribution";
 
-		distribution: number[] = Array(830 - 360 + 1).fill(0)
-				.map((_, x) => Math.exp(-(((x - 235) / 90)**2)));
+		distribution: number[] =
+			Array(830 - 360 + 1).fill(0)
+					.map((_, x) => Math.exp(-(((x - 235) / 90)**2)))
+		;
 
 		colorMatchingDataset: "2deg" | "10deg" = "2deg";
 

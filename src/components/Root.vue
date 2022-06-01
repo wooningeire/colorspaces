@@ -16,8 +16,10 @@ const treeVue = ref(null as InstanceType<typeof TheNodeTree> | null);
 
 
 const viewportPos = reactive([0, 0]);
-const screenToViewport = (screenPos: number[]) => screenPos.map((coord, i) => coord - viewportPos[i]);
+const viewportScale = ref(1);
+const screenToViewport = (screenPos: number[]) => screenPos.map((coord, i) => (coord / viewportScale.value - viewportPos[i]));
 provide("treeViewportPos", viewportPos);
+provide("treeViewportScale", viewportScale);
 provide("screenToViewport", screenToViewport);
 
 
@@ -102,7 +104,7 @@ button {
 
 	border-radius: 0.5em;
 
-	&:is(:hover, :focus) {
+	&:hover {
 		background: #ffffff3f;
 		color: #fff;
 	}
