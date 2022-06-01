@@ -104,6 +104,8 @@ const onBlur = () => {
 
 const roundToStep = (value: number, step: number) => Math.round(value / step) * step;
 
+const stickToBoundTolerance = 4;
+
 const beginSliderInput = makeDragListener({
 	shouldCancel(event: PointerEvent) {
 		return event.button !== 0;
@@ -112,14 +114,26 @@ const beginSliderInput = makeDragListener({
 	onPassTolerance(downEvent) {
 		(downEvent.target! as HTMLInputElement).requestPointerLock();
 	},
+	
+	onDown() {
+		return props.modelValue;
+	},
 
-	onDrag(moveEvent) {
-		const fac =
+	onDrag(moveEvent, displacement, origValue: number) {
+		const modifierFac =
 				modifierKeys.shift ? 1/8 :
 				modifierKeys.ctrl ? 8 :
 				1;
 	
-		const newValue = props.modelValue + moveEvent.movementX * amountPerPixel.value * fac;
+		const newValue = origValue + displacement.x * amountPerPixel.value * modifierFac;
+		
+		if (Math.abs(newValue - props.min) / stickToBoundTolerance <= amountPerPixel.value * modifierFac) {
+			emit("update:modelValue", props.min);
+			return;
+		} else if (Math.abs(newValue - props.max) / stickToBoundTolerance <= amountPerPixel.value * modifierFac) {
+			emit("update:modelValue", props.max);
+			return;
+		}
 		emit("update:modelValue", roundToStep(newValue, props.step));
 	},
 

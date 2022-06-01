@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {inject, computed} from "vue";
+import {inject, computed, Ref} from "vue";
 
 import NodeSocket from "./NodeSocket.vue";
 import NodeField from "./NodeField.vue";
@@ -37,6 +37,8 @@ const emit = defineEmits([
 const isSelected = computed(() => selectedNodes.has(props.node));
 
 
+const viewportScale = inject("treeViewportScale") as Ref<number>;
+
 const beginDrag = makeDragListener({
 	shouldCancel(event: PointerEvent) {
 		// Make this check more sophisticated
@@ -47,8 +49,8 @@ const beginDrag = makeDragListener({
 	},
 
 	onDrag(moveEvent) {
-		props.node.pos[0] += moveEvent.movementX;
-		props.node.pos[1] += moveEvent.movementY;
+		props.node.pos[0] += moveEvent.movementX / viewportScale.value;
+		props.node.pos[1] += moveEvent.movementY / viewportScale.value;
 
 		emit("node-dragged");
 		emit("potential-socket-position-change");

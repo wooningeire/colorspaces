@@ -92,13 +92,16 @@ const onchangeDatasetId = () => {
 
 
 const changeValue = (newPos: number[], lastPos: number[]) => {
-	const minX = Math.floor(Math.min(lastPos[0], newPos[0]));
-	const maxX = Math.floor(Math.max(lastPos[0], newPos[0]));
+	const x1 = Math.round(lastPos[0]);
+	const x2 = Math.round(newPos[0]);
+
+	const minX = Math.min(x1, x2);
+	const maxX = Math.max(x1, x2);
 
 	for (let x = minX; x <= maxX; x++) {
 		if (0 > x || x > modelValue.length) continue;
 		
-		const lerpFac = (x - lastPos[0]) / (newPos[0] - lastPos[0]);
+		const lerpFac = (x - x1) / (x2 - x1);
 		const newValue = isFinite(lerpFac) ? lerp(lastPos[1], newPos[1], lerpFac) : newPos[1];
 
 		modelValue[x] = shouldClampMax.value
@@ -106,6 +109,7 @@ const changeValue = (newPos: number[], lastPos: number[]) => {
 				: Math.max(0, newValue);
 	}
 };
+
 
 const viewportScale = inject("treeViewportScale") as Ref<number>;
 
