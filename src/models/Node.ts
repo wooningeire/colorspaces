@@ -247,7 +247,11 @@ type SliderProps = {
 };
 
 type SocketData<St extends SocketType=any> =
-		St extends SocketType.Dropdown ? {
+		{
+			socketDesc?: StringKey,
+			fieldText?: StringKey[],
+		} &
+		(St extends SocketType.Dropdown ? {
 			options?: {
 				value: string,
 				text: string,
@@ -262,12 +266,11 @@ type SocketData<St extends SocketType=any> =
 		St extends SocketType.RgbRawOrColTransformed ? {
 			sliderProps?: SliderProps[],
 		} :
-		{};
+		{});
 
 type SocketOptions<St extends SocketType=any> =
 		{
 			defaultValue?: SocketValue<St>,
-			fieldText?: StringKey[],
 		} & SocketData<St>;
 
 export class Socket<St extends SocketType=any> {
@@ -308,7 +311,7 @@ export class Socket<St extends SocketType=any> {
 
 		readonly showSocket: boolean=true,
 
-		options: SocketOptions<St>=<SocketOptions<St>>{},
+		options=<SocketOptions<St>>{},
 	) {
 		const {defaultValue, ...data} = options;
 

@@ -68,7 +68,7 @@ const isEntry = isFloat || isVector;
 					:validate="(color: number[]) => color.every(comp => isFinite(comp))"
 					
 					:sliderProps="(socket as Socket<St.RgbRaw | St.RgbRawOrColTransformed>).data.sliderProps"
-					:descs="props.socket.data.fieldText" />
+					:descs="socket.data.fieldText" />
 		</template>
 
 		<template v-else-if="socket.type === St.Dropdown">

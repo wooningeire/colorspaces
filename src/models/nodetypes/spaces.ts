@@ -21,6 +21,40 @@ export const labSliderProps = [
 	},
 ];
 
+const whitePointSocketOptions = {
+	options: [
+		{value: "2deg/A", text: "CIE 2° / A"},
+		{value: "2deg/B", text: "CIE 2° / B"},
+		{value: "2deg/C", text: "CIE 2° / C"},
+		{value: "2deg/D50", text: "CIE 2° / D50"},
+		{value: "2deg/D55", text: "CIE 2° / D55"},
+		{value: "2deg/D60", text: "CIE 2° / D60"},
+		{value: "2deg/D65", text: "CIE 2° / D65"},
+		{value: "2deg/D75", text: "CIE 2° / D75"},
+		{value: "2deg/E", text: "CIE 2° / E"},
+		{value: "10deg/A", text: "CIE 10° / A"},
+		{value: "10deg/B", text: "CIE 10° / B"},
+		{value: "10deg/C", text: "CIE 10° / C"},
+		{value: "10deg/D50", text: "CIE 10° / D50"},
+		{value: "10deg/D55", text: "CIE 10° / D55"},
+		{value: "10deg/D60", text: "CIE 10° / D60"},
+		{value: "10deg/D65", text: "CIE 10° / D65"},
+		{value: "10deg/D75", text: "CIE 10° / D75"},
+		{value: "10deg/E", text: "CIE 10° / E"},
+	],
+	defaultValue: "2deg/D65",
+	socketDesc: "desc.socket.illuminant" as StringKey,
+};
+const getIlluminant = (socket: Socket<St.Dropdown>, context: NodeEvalContext) => {
+	const illuminantId = socket.inValue(context);
+	if (illuminantId !== "custom") {
+		const [standard, illuminantName] = illuminantId.split("/"); 
+		return cm.illuminantsXy[standard][illuminantName];
+	} else {
+		throw new Error("not implemented");
+	}
+};
+
 export namespace spaces {
 	export class LinearNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
@@ -72,39 +106,6 @@ export namespace spaces {
 		}
 	}
 
-	const whitePointSocketOptions = {
-		options: [
-			{value: "2deg/A", text: "CIE 2° / A"},
-			{value: "2deg/B", text: "CIE 2° / B"},
-			{value: "2deg/C", text: "CIE 2° / C"},
-			{value: "2deg/D50", text: "CIE 2° / D50"},
-			{value: "2deg/D55", text: "CIE 2° / D55"},
-			{value: "2deg/D60", text: "CIE 2° / D60"},
-			{value: "2deg/D65", text: "CIE 2° / D65"},
-			{value: "2deg/D75", text: "CIE 2° / D75"},
-			{value: "2deg/E", text: "CIE 2° / E"},
-			{value: "10deg/A", text: "CIE 10° / A"},
-			{value: "10deg/B", text: "CIE 10° / B"},
-			{value: "10deg/C", text: "CIE 10° / C"},
-			{value: "10deg/D50", text: "CIE 10° / D50"},
-			{value: "10deg/D55", text: "CIE 10° / D55"},
-			{value: "10deg/D60", text: "CIE 10° / D60"},
-			{value: "10deg/D65", text: "CIE 10° / D65"},
-			{value: "10deg/D75", text: "CIE 10° / D75"},
-			{value: "10deg/E", text: "CIE 10° / E"},
-		],
-		defaultValue: "2deg/D65",
-	};
-	const getIlluminant = (socket: Socket<St.Dropdown>, context: NodeEvalContext) => {
-		const illuminantId = socket.inValue(context);
-		if (illuminantId !== "custom") {
-			const [standard, illuminantName] = illuminantId.split("/"); 
-			return cm.illuminantsXy[standard][illuminantName];
-		} else {
-			throw new Error("not implemented");
-		}
-	};
-
 	export class XyzNode extends SpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "XYZ";
@@ -119,7 +120,13 @@ export namespace spaces {
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "XYZ or color")),
+				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "XYZ or color", true, {
+					fieldText: [
+						"desc.field.xyz.x",
+						"desc.field.xyz.y",
+						"desc.field.xyz.z",
+					],
+				})),
 			);
 
 			this.outs.push(
@@ -151,7 +158,14 @@ export namespace spaces {
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "xyY or color", true, {defaultValue: [d65[0], d65[1], 1]})),
+				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "xyY or color", true, {
+					defaultValue: [d65[0], d65[1], 1],
+					fieldText: [
+						"desc.field.xyy.x",
+						"desc.field.xyy.y",
+						"desc.field.xyy.lum",
+					],
+				})),
 				// ...(this.primariesSockets = [
 				// 	new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
 				// 	new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
@@ -298,6 +312,11 @@ export namespace spaces {
 							unboundedChangePerPixel: 2,
 						},
 						{},
+					],
+					fieldText: [
+						"desc.field.lchab.l",
+						"desc.field.lchab.c",
+						"desc.field.lchab.h",
 					],
 				})),
 			);

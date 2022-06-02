@@ -8,6 +8,7 @@ export namespace models {
 	export class RgbNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "RGB";
+		static readonly DESC = "desc.node.rgb";
 
 		constructor() {
 			super();
@@ -35,6 +36,7 @@ export namespace models {
 	export class HslNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HSL";
+		static readonly DESC = "desc.node.hsl";
 
 		constructor() {
 			super();
@@ -58,6 +60,7 @@ export namespace models {
 	export class HsvNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HSV";
+		static readonly DESC = "desc.node.hsv";
 
 		constructor() {
 			super();
@@ -81,6 +84,7 @@ export namespace models {
 	export class HwbNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HWB";
+		static readonly DESC = "desc.node.hwb";
 
 		constructor() {
 			super();
@@ -104,6 +108,7 @@ export namespace models {
 	export class CmyNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "CMY";
+		static readonly DESC = "desc.node.cmy";
 
 		constructor() {
 			super();
@@ -150,6 +155,7 @@ export namespace models {
 	export class VectorNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Vector";
+		static readonly DESC = "desc.node.vector";
 
 		constructor() {
 			super();
@@ -185,6 +191,7 @@ export namespace models {
 	export class SpectralPowerDistributionNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Spectral power distribution";
+		static readonly DESC = "desc.node.spectralPowerDistribution";
 
 		distribution: number[] = Array(830 - 360 + 1).fill(0)
 				.map((_, x) => Math.exp(-(((x - 235) / 90)**2)));
@@ -215,6 +222,7 @@ export namespace models {
 	export class WavelengthNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Wavelength";
+		static readonly DESC = "desc.node.wavelength";
 
 		private readonly inSocket: Socket<St.Float>;
 		private readonly datasetSocket: Socket<St.Dropdown>;
@@ -255,6 +263,7 @@ export namespace models {
 	export class BlackbodyNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Blackbody";
+		static readonly DESC = "desc.node.blackbody";
 
 		private readonly inSocket: Socket<St.Float>;
 		private readonly datasetSocket: Socket<St.Dropdown>;

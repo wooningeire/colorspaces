@@ -5,7 +5,7 @@ import NodeSocketField from "./NodeSocketField.vue";
 import {tree, tooltipData} from "./store";
 
 import {Socket, SocketType as St} from "@/models/Node";
-import getString from "@/strings";
+import getString, {NO_DESC} from "@/strings";
 
 
 const socketVue = getCurrentInstance()!.proxy;
@@ -100,6 +100,17 @@ const socketTypeColors = new Map([
 const socketColor = computed(() => socketTypeColors.get(props.socket.type) ?? "");
 
 
+
+const socketContainer = ref(null as HTMLDivElement | null);
+const showTooltip = () => {
+	const rect = socketContainer.value!.getBoundingClientRect();
+	tooltipData.showTooltip(getString(props.socket.data.socketDesc ?? NO_DESC), {
+		left: `calc(${rect.right}px + 1em)`,
+		top: `${rect.top}px`,
+	});
+};
+
+
 defineExpose({
 	socketEl,
 	socketPos,
@@ -118,7 +129,11 @@ Object.defineProperties(socketVue, {
 
 <template>
 	<div class="socket-container"
-			:class="{'in': socket.isInput}">
+			:class="{'in': socket.isInput}"
+			ref="socketContainer"
+			
+			@pointerenter="() => showTooltip()"
+			@pointerleave="tooltipData.hideTooltip()">
 		<div class="socket"
 				v-if="socket.showSocket"
 
