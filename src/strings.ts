@@ -17,8 +17,8 @@ const strings = {
 
 	"label.button.deleteNodes": "Delete selected nodes",
 
-	"desc.node.srgb": "The default color space in most images. Each component scales linearly with perceived brightness.",
-	"desc.node.linearSrgb": "A variant of sRGB that scales linearly with physical light power.",
+	"desc.node.srgb": "The default color space in most images. Each component scales almost directly with perceived brightness.",
+	"desc.node.linearSrgb": "A variant of sRGB that scales directly with physical light power.",
 	"desc.node.xyz": "A color space whose components correspond with each type of the eye's cone cells.",
 	"desc.node.xyy": "A variant of XYZ that separates chromaticity (xy) and relative luminance (Y).",
 	"desc.node.lchab": "A variant of L\\*a\\*b\\* that uses *hue* and *colorfulness* to define colors, somewhat similar to HSV.",
@@ -29,9 +29,9 @@ const strings = {
 	"desc.node.gradient": "Generates a range of numbers.",
 	"desc.node.imageFile": "Reads RGB data from a local image file.",
 
-	"desc.field.lchab.l": "Perceived luminance.",
-	"desc.field.lchab.c": "“Colorfulness” (similar to saturation).",
-	"desc.field.lchab.h": "Hue. (0–1)",
+	"desc.field.lchab.l": "**L\\***: Perceived luminance.",
+	"desc.field.lchab.c": "**C\\***: “Colorfulness” (similar to saturation).",
+	"desc.field.lchab.h": "**h**: Hue. (0–1)",
 
 	[NO_DESC]: "",
 };

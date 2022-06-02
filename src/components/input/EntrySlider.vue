@@ -2,8 +2,10 @@
 import {computed, PropType, ref, watch} from "vue";
 
 import {acceptAlways, identity} from "./base-functions";
-import {modifierKeys} from "../store";
+import {modifierKeys, tooltipData} from "../store";
 import makeDragListener from "../draggable";
+
+import getString, {NO_DESC, StringKey} from "@/strings";
 
 const props = defineProps({
 	modelValue: {
@@ -49,6 +51,10 @@ const props = defineProps({
 	unboundedChangePerPixel: {
 		type: Number,
 		default: 0.03125,
+	},
+
+	desc: {
+		type: String as PropType<StringKey>,
 	},
 });
 
@@ -133,6 +139,16 @@ watch(() => props.modelValue, () => {
 	if (isUsingEntry.value) return;
 	setDisplayToTrueValue();
 });
+
+
+
+const showTooltip = () => {
+	const rect = textbox.value!.getBoundingClientRect();
+	tooltipData.showTooltip(getString(props.desc ?? NO_DESC), {
+		left: `calc(${rect.right}px + 1.5em)`,
+		top: `${rect.top}px`,
+	});
+};
 </script>
 
 <template>
@@ -148,10 +164,13 @@ watch(() => props.modelValue, () => {
 				'invalid': !proposedValueIsValid,
 				'inputing': isUsingEntry,
 			}"
-			
+
 			:style="{
 				'--slider-progress': hasBounds ? progress : 0,
-			} as any" />
+			} as any"
+			
+			@pointerenter="() => showTooltip()"
+			@pointerleave="tooltipData.hideTooltip()" />
 </template>
 
 <style lang="scss" scoped>

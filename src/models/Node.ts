@@ -246,8 +246,7 @@ type SliderProps = {
 	unboundedChangePerPixel?: number,
 };
 
-type SocketData<St extends SocketType=any> = 
-		// St extends SocketType.Float ? {defaultValue?: SocketValue<St>} :
+type SocketData<St extends SocketType=any> =
 		St extends SocketType.Dropdown ? {
 			options?: {
 				value: string,
@@ -265,7 +264,11 @@ type SocketData<St extends SocketType=any> =
 		} :
 		{};
 
-type SocketOptions<St extends SocketType=any> = {defaultValue?: SocketValue<St>} & SocketData<St>;
+type SocketOptions<St extends SocketType=any> =
+		{
+			defaultValue?: SocketValue<St>,
+			fieldText?: StringKey[],
+		} & SocketData<St>;
 
 export class Socket<St extends SocketType=any> {
 	private static nextId = 0;

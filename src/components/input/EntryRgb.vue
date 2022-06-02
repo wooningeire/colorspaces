@@ -4,8 +4,11 @@ import {defineComponent, reactive, PropType, ref, watch} from "vue";
 import EntrySlider from "./EntrySlider.vue";
 
 import {acceptAlways, cloneArray} from "./base-functions";
+import {tooltipData} from "../store";
 
 import {Vec3} from "@/util";
+import getString, {NO_DESC, StringKey} from "@/strings";
+
 
 const props = defineProps({
 	modelValue: {
@@ -30,6 +33,11 @@ const props = defineProps({
 
 	sliderProps: {
 		type: Array,
+		default: [],
+	},
+
+	descs: {
+		type: Array as PropType<StringKey[]>,
 		default: [],
 	},
 });
@@ -76,7 +84,7 @@ const onBlur = () => {
 	userIsInputing.value = false;
 };
 
-	
+
 watch(() => props.modelValue, () => {
 	if (userIsInputing.value) return;
 	setDisplayToTrueValue();
@@ -87,15 +95,12 @@ watch(() => props.modelValue, () => {
 	<div @change.stop="onChange"
 			@blur.capture="onBlur"
 			:class="{invalid: !proposedValueIsValid}">
-		<EntrySlider v-model="displayValue[0]"
+		<EntrySlider v-for="(_, i) of modelValue"
+				v-model="displayValue[i]"
 				@update:modelValue="emitValueIfValid"
-				v-bind="sliderProps[0]" />
-		<EntrySlider v-model="displayValue[1]"
-				@update:modelValue="emitValueIfValid"
-				v-bind="sliderProps[1]" />
-		<EntrySlider v-model="displayValue[2]"
-				@update:modelValue="emitValueIfValid"
-				v-bind="sliderProps[2]" />
+				v-bind="sliderProps[i]"
+
+				:desc="descs[i]" />
 	</div>
 </template>
 

@@ -50,7 +50,8 @@ const isEntry = isFloat || isVector;
 </script>
 
 <template>
-	<div class="socket-value-editor">
+	<div class="socket-value-editor"
+			ref="editorContainer">
 		<template v-if="isFloat">
 			<EntrySlider v-model="(socket as Socket<St.Float>).fieldValue"
 					@update:modelValue="$emit('value-change')"
@@ -66,7 +67,8 @@ const isEntry = isFloat || isVector;
 
 					:validate="(color: number[]) => color.every(comp => isFinite(comp))"
 					
-					:sliderProps="(socket as Socket<St.RgbRaw | St.RgbRawOrColTransformed>).data.sliderProps" />
+					:sliderProps="(socket as Socket<St.RgbRaw | St.RgbRawOrColTransformed>).data.sliderProps"
+					:descs="props.socket.data.fieldText" />
 		</template>
 
 		<template v-else-if="socket.type === St.Dropdown">

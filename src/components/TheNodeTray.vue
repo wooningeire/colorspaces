@@ -22,7 +22,7 @@ const labels = new Map<object, string>([
 
 const tray = ref(null as HTMLDivElement | null);
 
-const showButtonTooltip = (nodeConstructor: new () => Node) => {
+const showButtonTooltip = (nodeConstructor: typeof Node) => {
 	const rect = tray.value!.getBoundingClientRect();
 	tooltipData.showTooltip(getString(nodeConstructor.DESC), {
 		left: `calc(${rect.left}px + 1em)`,

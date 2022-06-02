@@ -3,6 +3,7 @@ import {ref, reactive} from "vue";
 import {Tree, Node} from "@/models/Node";
 import {models, spaces, externals} from "@/models/nodetypes";
 import * as cm from "@/models/colormanagement";
+import { StringKey } from "@/strings";
 
 
 //#region Node tree
@@ -74,6 +75,17 @@ export const settings = <{
 
 
 //#region Tooltip
+type Tooltip = {
+	key: StringKey,
+	pos: {
+		left?: string,
+		right?: string,
+		top?: string,
+		bottom?: string,
+	},
+};
+const tooltips = new Set<Tooltip>();
+
 export const tooltipData = reactive({
 	text: "",
 	pos: {},

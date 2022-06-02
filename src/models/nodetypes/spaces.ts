@@ -225,6 +225,11 @@ export namespace spaces {
 						},
 						{},
 					],
+					fieldText: [
+						"desc.field.lchab.l",
+						"desc.field.lchab.c",
+						"desc.field.lchab.h",
+					],
 				})),
 			);
 
