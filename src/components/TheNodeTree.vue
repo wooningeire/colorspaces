@@ -113,15 +113,12 @@ addEventListener("keydown", event => {
 });
 
 const beginDragCamera = (event: PointerEvent) => {
-	const startPos = [...viewportPos];
-	const pointerStartPos = [event.pageX, event.pageY];
-
 	const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
 		clearTextSelection();
 
 		[viewportPos[0], viewportPos[1]] = [
-			startPos[0] + (moveEvent.pageX - pointerStartPos[0]) / viewportScale.value,
-			startPos[1] + (moveEvent.pageY - pointerStartPos[1]) / viewportScale.value,
+			viewportPos[0] + moveEvent.movementX / viewportScale.value,
+			viewportPos[1] + moveEvent.movementY / viewportScale.value,
 		];
 	});
 

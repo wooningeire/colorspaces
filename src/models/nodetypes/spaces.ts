@@ -21,7 +21,7 @@ export const labSliderProps = [
 	},
 ];
 
-const whitePointSocketOptions = {
+export const whitePointSocketOptions = {
 	options: [
 		{value: "2deg/A", text: "CIE 2° / A"},
 		{value: "2deg/B", text: "CIE 2° / B"},
@@ -45,7 +45,7 @@ const whitePointSocketOptions = {
 	defaultValue: "2deg/D65",
 	socketDesc: "desc.socket.illuminant" as StringKey,
 };
-const getIlluminant = (socket: Socket<St.Dropdown>, context: NodeEvalContext) => {
+export const getIlluminant = (socket: Socket<St.Dropdown>, context: NodeEvalContext) => {
 	const illuminantId = socket.inValue(context);
 	if (illuminantId !== "custom") {
 		const [standard, illuminantName] = illuminantId.split("/"); 

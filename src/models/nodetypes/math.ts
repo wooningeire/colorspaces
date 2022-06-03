@@ -1,4 +1,4 @@
-import {labSliderProps} from "./spaces";
+import {getIlluminant, labSliderProps, whitePointSocketOptions} from "./spaces";
 import {Tree, Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType} from "../Node";
 import * as cm from "../colormanagement";
 
@@ -315,6 +315,38 @@ export namespace math {
 			const col1 = this.colorSockets[1].inValue(context);
 
 			return cm.difference.contrastRatio(col0, col1);
+		}
+	}
+
+	export class StandardIlluminantNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Standard illuminant";
+		static readonly DESC = "desc.node.standardIlluminant";
+
+		private readonly whitePointSocket: Socket<St.Dropdown>;
+
+		private readonly outXyzSocket: Socket<St.RgbRaw>;
+		private readonly outXyySocket: Socket<St.RgbRaw>;
+
+		constructor() {
+			super();
+
+			this.ins.push(
+				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
+			);
+
+			this.outs.push(
+				(this.outXyzSocket = new Socket(this, false, Socket.Type.RgbRaw, "XYZ")),
+				(this.outXyySocket = new Socket(this, false, Socket.Type.RgbRaw, "xyY")),
+			);
+		}
+
+		output(context: NodeEvalContext): number[] {
+			const illuminant = getIlluminant(this.whitePointSocket, context);
+
+			return context.socket === this.outXyzSocket
+					? [...cm.Xyz.from(illuminant)]
+					: [...cm.Xyy.from(illuminant)];
 		}
 	}
 }
