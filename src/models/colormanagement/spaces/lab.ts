@@ -7,16 +7,16 @@ import {Col, Xyz, Xy, adaptXyz, xyyToXyzNoAdapt} from "./col-xyz-xyy-illuminants
 export class Lab extends Col {
 	static readonly labels = ["L*", "a*", "b*"];
 
-	constructor(data: Vec3, illuminant: Xy) {
-		super(data, illuminant);
+	constructor(data: Vec3, newIlluminant: Xy) {
+		super(data, newIlluminant);
 	}
 
 	static fromXyz(xyz: Xyz): Lab {
 		return xyzToLab(xyz, xyz.illuminant);
 	}
 
-	toXyz(illuminant: Xy=this.illuminant): Xyz {
-		return labToXyz(this, illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant): Xyz {
+		return labToXyz(this, newIlluminant);
 	}
 
 	get l() { return this[0]; }
@@ -27,16 +27,16 @@ export class Lab extends Col {
 export class LchAb extends Col {
 	static readonly labels = ["L*", "C*", "h"];
 
-	constructor(data: Vec3, illuminant: Xy) {
-		super(data, illuminant);
+	constructor(data: Vec3, newIlluminant: Xy) {
+		super(data, newIlluminant);
 	}
 
 	static fromXyz(xyz: Xyz): LchAb {
 		return labToLchAb(xyzToLab(xyz, xyz.illuminant));
 	}
 
-	toXyz(illuminant: Xy=this.illuminant): Xyz {
-		return labToXyz(lchAbToLab(this), illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant): Xyz {
+		return labToXyz(lchAbToLab(this), newIlluminant);
 	}
 
 	get l() { return this[0]; }
@@ -46,7 +46,7 @@ export class LchAb extends Col {
 //#endregion
 
 //#region Conversion functions// https://en.wikipedia.org/wiki/CIELAB_color_space#From_CIELAB_to_CIEXYZ
-const labToXyz = (lab: Lab, illuminant: Xy) => {
+const labToXyz = (lab: Lab, newIlluminant: Xy) => {
 	const [l, a, b] = lab;
 
 	const tempY = (l + 16) / 116;
@@ -64,12 +64,12 @@ const labToXyz = (lab: Lab, illuminant: Xy) => {
 		compHelper(tempX) * referenceWhiteXyz.x,
 		compHelper(tempY) * referenceWhiteXyz.y,
 		compHelper(tempZ) * referenceWhiteXyz.z,
-	], lab.illuminant), illuminant);
+	], lab.illuminant), newIlluminant);
 };
 
-const xyzToLab = (xyz: Xyz, illuminant: Xy) => {
-	const adaptedXyz = adaptXyz(xyz, illuminant);
-	const referenceWhiteXyz = xyyToXyzNoAdapt(illuminant);
+const xyzToLab = (xyz: Xyz, newIlluminant: Xy) => {
+	const adaptedXyz = adaptXyz(xyz, newIlluminant);
+	const referenceWhiteXyz = xyyToXyzNoAdapt(newIlluminant);
 
 	const tempXyz = adaptedXyz.map((comp, i) => adaptedXyz[i] / referenceWhiteXyz[i]);
 
@@ -84,7 +84,7 @@ const xyzToLab = (xyz: Xyz, illuminant: Xy) => {
 		116 * newXyz[1] - 16,
 		500 * (newXyz[0] - newXyz[1]),
 		200 * (newXyz[1] - newXyz[2]),
-	], illuminant);
+	], newIlluminant);
 };
 
 const turn = 2 * Math.PI;

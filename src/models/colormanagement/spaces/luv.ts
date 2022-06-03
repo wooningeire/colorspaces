@@ -7,16 +7,16 @@ import {Col, Xyz, Xy, adaptXyz, xyyToXyzNoAdapt} from "./col-xyz-xyy-illuminants
 export class Luv extends Col {
 	static readonly labels = ["L*", "u*", "v*"];
 
-	constructor(data: Vec3, illuminant: Xy) {
-		super(data, illuminant);
+	constructor(data: Vec3, newIlluminant: Xy) {
+		super(data, newIlluminant);
 	}
 
 	static fromXyz(xyz: Xyz): Luv {
 		return xyzToLuv(xyz, xyz.illuminant);
 	}
 
-	toXyz(illuminant: Xy=this.illuminant): Xyz {
-		return luvToXyz(this, illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant): Xyz {
+		return luvToXyz(this, newIlluminant);
 	}
 
 	get l() { return this[0]; }
@@ -27,16 +27,16 @@ export class Luv extends Col {
 export class LchUv extends Col {
 	static readonly labels = ["L*", "C*", "h"];
 
-	constructor(data: Vec3, illuminant: Xy) {
-		super(data, illuminant);
+	constructor(data: Vec3, newIlluminant: Xy) {
+		super(data, newIlluminant);
 	}
 
 	static fromXyz(xyz: Xyz): LchUv {
 		return luvToLchUv(xyzToLuv(xyz, xyz.illuminant));
 	}
 
-	toXyz(illuminant: Xy=this.illuminant): Xyz {
-		return luvToXyz(lchUvToLuv(this), illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant): Xyz {
+		return luvToXyz(lchUvToLuv(this), newIlluminant);
 	}
 
 	get l() { return this[0]; }
@@ -55,7 +55,7 @@ const uv = (xyz: Xyz) => {
 	];
 };
 
-const luvToXyz = (luv: Luv, illuminant: Xy) => {
+const luvToXyz = (luv: Luv, newIlluminant: Xy) => {
 	const tempY = (luv.l + 16) / 116;
 
 	const y = 
@@ -73,12 +73,12 @@ const luvToXyz = (luv: Luv, illuminant: Xy) => {
 	const x = -9 * y * tempU / ((tempU - 4) * tempV - tempU * tempV);
 	const z = (9 * y - (15 * tempV * y) - (tempV * x)) / (3 * tempV);
 
-	return adaptXyz(new Xyz([x, y, z], luv.illuminant), illuminant);
+	return adaptXyz(new Xyz([x, y, z], luv.illuminant), newIlluminant);
 };
 
-const xyzToLuv = (xyz: Xyz, illuminant: Xy) => {
-	const adaptedXyz = adaptXyz(xyz, illuminant);
-	const referenceWhite = xyyToXyzNoAdapt(illuminant);
+const xyzToLuv = (xyz: Xyz, newIlluminant: Xy) => {
+	const adaptedXyz = adaptXyz(xyz, newIlluminant);
+	const referenceWhite = xyyToXyzNoAdapt(newIlluminant);
 
 	const relativeLum = adaptedXyz.y / referenceWhite.y;
 
@@ -94,7 +94,7 @@ const xyzToLuv = (xyz: Xyz, illuminant: Xy) => {
 		l,
 		13 * l * (tempU - referenceU),
 		13 * l * (tempV - referenceV),
-	], illuminant);
+	], newIlluminant);
 };
 
 const turn = 2 * Math.PI;

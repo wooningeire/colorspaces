@@ -16,9 +16,9 @@ export default <T>({
 	dragTolerance=4,
 }: {
 	shouldCancel?: (downEvent: PointerEvent) => boolean,
-	onDown?: (downEvent: PointerEvent) => T | void,
+	onDown?: (downEvent: PointerEvent) => T,
 	onPassTolerance?: (downEvent: PointerEvent, moveEvent: PointerEvent) => void,
-	onDrag?: (moveEvent: PointerEvent, displacement: Point, data: T | void) => void,
+	onDrag?: (moveEvent: PointerEvent, displacement: Point, data: T) => void,
 	onUp?: () => void,
 	dragTolerance?: number,
 }) => (downEvent: PointerEvent) => {

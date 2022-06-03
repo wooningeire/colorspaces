@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {inject, computed} from "vue";
+import {inject, computed, Ref} from "vue";
 import * as marked from "marked";
 
 import NodeSocket from "./NodeSocket.vue";
@@ -40,17 +40,20 @@ const emit = defineEmits([
 const isSelected = computed(() => selectedNodes.has(props.node));
 
 
+const viewportScale = inject("treeViewportScale") as Ref<number>;
+
 const beginDrag = makeDragListener({
 	shouldCancel(event: PointerEvent) {
 		// Make this check more sophisticated
 		// return event.target !== this.$el;
 		return ["input", "select"].includes((event.target as Element).tagName.toLowerCase())
-				|| !props.node.canMove;
+				|| !props.node.canMove
+				|| event.button !== 0;
 	},
 
 	onDrag(moveEvent) {
-		props.node.pos[0] += moveEvent.movementX;
-		props.node.pos[1] += moveEvent.movementY;
+		props.node.pos[0] += moveEvent.movementX / viewportScale.value;
+		props.node.pos[1] += moveEvent.movementY / viewportScale.value;
 
 		emit("node-dragged");
 		emit("potential-socket-position-change");
@@ -266,7 +269,7 @@ const isSubtle = computed(() =>
 		@include gradient-border(var(--node-border-width), var(--node-border-background));
 	}
 
-	:deep(input[type="text"]) {
+	:deep(input:is([type="text"], [type="file"])) {
 		width: 100%;
 	}
 

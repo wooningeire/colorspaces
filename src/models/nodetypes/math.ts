@@ -1,5 +1,5 @@
 import {labSliderProps} from "./spaces";
-import {Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType} from "../Node";
+import {Tree, Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType} from "../Node";
 import * as cm from "../colormanagement";
 
 import {Color, lerp} from "@/util";
@@ -7,7 +7,7 @@ import {Color, lerp} from "@/util";
 export namespace math {
 	export class LerpNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "RGB blend";
+		static readonly LABEL = "Vector blend";
 
 		private readonly methodSocket: Socket<St.Dropdown>;
 		private readonly facSocket: Socket<St.Float>;
@@ -27,13 +27,13 @@ export namespace math {
 				})),
 				(this.facSocket = new Socket(this, true, Socket.Type.Float, "Blend amount")),
 				...(this.colorSockets = [
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color"),
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color"),
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Vector or color"),
+					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Vector or color"),
 				]),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
+				new Socket(this, false, Socket.Type.RgbRaw, "Vector"),
 			);
 		}
 
@@ -60,6 +60,126 @@ export namespace math {
 					throw new TypeError("Unknown blend mode");
 			}
 
+		}
+	}
+
+	export class ArithmeticNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Arithmetic";
+
+		private readonly methodSocket: Socket<St.Dropdown>;
+		private readonly valueSockets: Socket<St.Float>[];
+
+		constructor() {
+			super();
+
+			this.ins.push(
+				(this.methodSocket = new Socket(this, true, Socket.Type.Dropdown, "", false, {
+					options: [
+						{value: "add", text: "Add"},
+						{value: "multiply", text: "Multiply"},
+						{value: "subtract", text: "Subtract"},
+						{value: "divide", text: "Divide"},
+						{value: "pow", text: "Power"},
+						{value: "lerp", text: "Lerp"},
+						{value: "map range", text: "Map range"},
+					],
+					defaultValue: "multiply",
+				})),
+				...(this.valueSockets = [
+					new Socket(this, true, Socket.Type.Float, "Value", true, {
+						sliderProps: {
+							hasBounds: false,
+						},
+					}),
+					new Socket(this, true, Socket.Type.Float, "Value", true, {
+						sliderProps: {
+							hasBounds: false,
+						},
+					}),
+				]),
+			);
+
+			this.outs.push(
+				new Socket(this, false, Socket.Type.Float, "Value"),
+			);
+		}
+
+		onSocketFieldValueChange(socket: Socket, tree: Tree) {
+			if (socket !== this.methodSocket) return;
+
+			const deleteSocketsUntilLength = (targetLength: number) => {
+				while (this.valueSockets.length > targetLength) {
+					this.ins.pop();
+					const oldSocket = this.valueSockets.pop();
+					oldSocket?.links.forEach(link => tree.unlink(link));
+				}
+			};
+
+			const createUnboundedSockets = (labels: string[]) =>
+					labels.map(label => new Socket(this, true, Socket.Type.Float, label, true, {
+						sliderProps: {
+							hasBounds: false,
+						},
+					}));
+
+			switch (this.methodSocket.inValue()) {
+				case "lerp": {
+					deleteSocketsUntilLength(2);
+
+					this.valueSockets[0].label = this.valueSockets[1].label = "Value";
+
+					const newSocket = new Socket(this, true, Socket.Type.Float, "Amount");
+					this.ins.push(newSocket);
+					this.valueSockets.push(newSocket);
+					break;
+				}
+
+				case "map range": {
+					deleteSocketsUntilLength(1);
+
+					this.valueSockets[0].label = "Value";
+					const newSockets = createUnboundedSockets(["Source min", "Source max", "Target min", "Target max"]);
+					this.ins.push(...newSockets);
+					this.valueSockets.push(...newSockets);
+					break;
+				}
+
+				case "pow": {
+					deleteSocketsUntilLength(2);
+					this.valueSockets[0].label = "Base";
+					this.valueSockets[1].label = "Exponent";
+					break;
+				}
+
+				default:
+					deleteSocketsUntilLength(2);
+					this.valueSockets[0].label = this.valueSockets[1].label = "Value";
+					break;
+			}
+		}
+
+		output(context: NodeEvalContext): number {
+			const n0 = this.valueSockets[0]?.inValue(context);
+			const n1 = this.valueSockets[1]?.inValue(context);
+			const n2 = this.valueSockets[2]?.inValue(context);
+			const n3 = this.valueSockets[3]?.inValue(context);
+			const n4 = this.valueSockets[4]?.inValue(context);
+
+			// and make output the same type as the inputs
+
+			switch (this.methodSocket.inValue(context)) {
+				case "add": return n0 + n1;
+				case "subtract": return n0 - n1;
+				case "multiply": return n0 * n1;
+				case "divide": return n0 / n1;
+				case "pow": return n0**n1;
+				case "lerp": return lerp(n0, n1, n2);
+				case "map range": return lerp(n3, n4, n0 / (n2 - n1));
+					
+				default:
+					throw new TypeError("Unknown blend mode");
+			}
 		}
 	}
 

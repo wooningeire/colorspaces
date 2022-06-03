@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {computed, ref, reactive, provide, nextTick, onMounted, Ref} from "vue";
+import {computed, ref, reactive, provide, nextTick, onMounted, Ref, inject} from "vue";
 
 import NodeVue from "./NodeVue.vue";
 import NodeSocket from "./NodeSocket.vue";
@@ -10,8 +10,6 @@ import {Socket, Node} from "@/models/Node";
 
 import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";
 
-
-const pos = reactive([0, 0]);
 
 const pointerX = ref(-1);
 const pointerY = ref(-1);
@@ -39,8 +37,9 @@ const onDragSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 	[pointerX.value, pointerY.value] = draggedSocketVue.value.socketPos();
 
 	const dragListener = Listen.for(window, "dragover", (event: DragEvent) => {
-		pointerX.value = event.pageX;
-		pointerY.value = event.pageY;
+		const pos = screenToViewport([event.pageX, event.pageY]);
+		pointerX.value = pos[0];
+		pointerY.value = pos[1];
 	});
 
 	((socketVue.socketEl as any as Ref<HTMLDivElement>).value 
@@ -102,22 +101,49 @@ const onPointerDownSelf = () => {
 };
 
 
+
+const viewportPos = inject("treeViewportPos") as number[];
+const viewportScale = inject("treeViewportScale") as Ref<number>;
+const screenToViewport = inject("screenToViewport") as (screenPos: number[]) => number[];
+
+addEventListener("keydown", event => {
+	if (event.key !== "Home") return;
+	Object.assign(viewportPos, [0, 0]);
+	viewportScale.value = 1;
+});
+
 const beginDragCamera = (event: PointerEvent) => {
-	/* const startPos = [...pos];
+	const startPos = [...viewportPos];
 	const pointerStartPos = [event.pageX, event.pageY];
 
 	const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
 		clearTextSelection();
 
-		[pos[0], pos[1]] = [
-			startPos[0] + (moveEvent.pageX - pointerStartPos[0]),
-			startPos[1] + (moveEvent.pageY - pointerStartPos[1]),
+		[viewportPos[0], viewportPos[1]] = [
+			startPos[0] + (moveEvent.pageX - pointerStartPos[0]) / viewportScale.value,
+			startPos[1] + (moveEvent.pageY - pointerStartPos[1]) / viewportScale.value,
 		];
 	});
 
 	addEventListener("pointerup", () => {
 		moveListener.detach();
-	}, {once: true}); */
+	}, {once: true});
+};
+
+const onWheel = (event: WheelEvent) => {
+	// Order of transformation: translate to cursor pos, then scale, then translate back to original pos (with new scale)
+
+	const cursorOffsetPos = screenToViewport([event.pageX, event.pageY])
+			.map((comp, i) => comp + viewportPos[i]);
+
+
+	const scaleFac = 1.125**-Math.sign(event.deltaY);
+	viewportScale.value *= scaleFac;
+
+	Object.assign(viewportPos, [
+		viewportPos[0] - cursorOffsetPos[0] + cursorOffsetPos[0] / scaleFac,
+		viewportPos[1] - cursorOffsetPos[1] + cursorOffsetPos[1] / scaleFac,
+	]);
 };
 
 
@@ -146,14 +172,17 @@ defineExpose({
 	<div class="node-tree"
 			@dragover="event => isDraggingNodeFromNodeTray && event.preventDefault()"
 			@drop="event => isDraggingNodeFromNodeTray && $emit('add-node', currentlyDraggedNodeConstructor, [event.pageX, event.pageY])"
+
+			@pointerdown.self="onPointerDownSelf"
+			@pointerdown="event => event.button === 1 && beginDragCamera(event)"
+			@wheel.passive="onWheel"
 			
 			:style="{
-				'--pos-x': `${pos[0]}px`,
-				'--pos-y': `${pos[1]}px`,	
+				'--pos-x': `${viewportPos[0]}px`,
+				'--pos-y': `${viewportPos[1]}px`,
+				'--scale': `${viewportScale}`,
 			} as any">
-		<div class="nodes"
-				@pointerdown.self="onPointerDownSelf"
-				@pointerdown="event => event.button === 1 && beginDragCamera(event)">
+		<div class="nodes">
 			<NodeVue v-for="node of tree.nodes"
 					:key="node.id"
 					:node="node"
@@ -167,15 +196,17 @@ defineExpose({
 
 		<svg class="links"
 				:viewbox="`0 0 ${$el?.clientWidth ?? 300} ${$el?.clientHeight ?? 150}`">
-			<line v-if="draggingSocket"
-					class="new-link"
-					:x1="draggedSocketVue?.socketPos()[0]"
-					:y1="draggedSocketVue?.socketPos()[1]"
-					:x2="pointerX"
-					:y2="pointerY" />
+			<g>
+				<line v-if="draggingSocket"
+						class="new-link"
+						:x1="(draggedSocketVue?.socketPos()[0] ?? 0)"
+						:y1="(draggedSocketVue?.socketPos()[1] ?? 0)"
+						:x2="pointerX"
+						:y2="pointerY" />
 
-			<TheNodeTreeLinks :socketVues="socketVues"
-					ref="linksComponent" />
+				<TheNodeTreeLinks :socketVues="socketVues"
+						ref="linksComponent" />
+			</g>
 		</svg>
 	</div>
 </template>
@@ -193,21 +224,36 @@ defineExpose({
 
 	--pos-x: 0;
 	--pos-y: 0;
+	--scale: 1;
 	
 	> * {
 		grid-area: 1 / 1;
+	}
+
+	> .nodes {
+		z-index: 1;
+		pointer-events: none;
+
+		> :deep(*) {
+			pointer-events: initial;
+		}
 	}
 
 	> .nodes,
 	> svg {
 		width: 100%;
 		height: 100%;
+
+		transform-origin: 0 0;
 	}
 
-	// > .nodes :deep(.node),
-	// > svg {
-	// 	transform: translate(var(--pos-x), var(--pos-y));
-	// }
+	> .nodes {
+		transform: scale(var(--scale)) translate(var(--pos-x), var(--pos-y));
+	}
+
+	> svg.links > g {
+		transform: scale(var(--scale)) translate(var(--pos-x), var(--pos-y));
+	}
 
 	> svg.links {
 		stroke: currentcolor;
@@ -215,7 +261,7 @@ defineExpose({
 
 		pointer-events: none;
 
-		> .new-link {
+		> g > .new-link {
 			opacity: 0.5;
 		}
 	}

@@ -9,8 +9,8 @@ const deleteSelectedNodes = () => {
 };
 
 addEventListener("keydown", event => {
-	if (event.key !== "Delete") return;
-	deleteSelectedNodes();
+	/* if (event.key !== "Delete") return;
+	deleteSelectedNodes(); */
 });
 </script>
 

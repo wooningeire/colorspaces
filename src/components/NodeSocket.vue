@@ -4,7 +4,7 @@ import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef} from 
 import NodeSocketField from "./NodeSocketField.vue";
 import {tree, tooltipData} from "./store";
 
-import {Socket, SocketType as St} from "@/models/Node";
+import {Tree, Socket, SocketType as St} from "@/models/Node";
 import getString, {NO_DESC} from "@/strings";
 
 
@@ -39,15 +39,17 @@ onMounted(() => {
 	socketVues.set(props.socket, socketVue);
 });
 
-const socketHitbox = ref(null as any as HTMLDivElement);
+const socketHitbox = ref(null as HTMLDivElement | null);
 const socketEl = computed(() => socketHitbox.value);
 
-const rect = () => socketEl.value.getBoundingClientRect();
+const screenToViewport = inject("screenToViewport") as (screenPos: number[]) => number[];
 
-const socketPos = () => [
+const rect = () => socketEl.value!.getBoundingClientRect();
+
+const socketPos = () => screenToViewport([
 	(rect().left + rect().right) / 2,
 	(rect().top + rect().bottom) / 2,
-];
+]);
 
 
 const unlinkLinks = () => {
@@ -143,7 +145,7 @@ Object.defineProperties(socketVue, {
 				@dragenter.prevent
 				@dragover.prevent
 				@drop="ondrop"
-				@pointerdown.stop
+				@pointerdown="event => event.button === 0 && event.stopPropagation()"
 
 				@dblclick="unlinkLinks">
 			<div class="socket-display"
@@ -154,7 +156,8 @@ Object.defineProperties(socketVue, {
 		</div>
 
 		<NodeSocketField v-if="shouldShowFields"
-				:socket="socket" />
+				:socket="socket"
+				@value-change="socket.node.onSocketFieldValueChange(socket, tree as Tree)" />
 	</div>
 </template>
 

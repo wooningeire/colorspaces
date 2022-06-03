@@ -14,24 +14,21 @@ export class Srgb extends Col {
 		super(data, illuminantsXy["2deg"]["D65"]);
 	}
 
-	static from(dataOrCol: Vec3 | Col): Srgb {
-		if (dataOrCol instanceof LinearSrgb) {
-			return linToGammaSrgb(dataOrCol);
-		} else if (dataOrCol instanceof Srgb) {
-			return new Srgb(dataOrCol as any as Vec3);
-		} else if (dataOrCol instanceof Col) {
-			return this.fromXyz(dataOrCol.toXyz(this.defaultIlluminant));
-		} else {
-			return new Srgb(dataOrCol);
+	static fromCol(col: Col) {
+		if (col instanceof LinearSrgb) {
+			return linToGammaSrgb(col);
+		} else if (col instanceof Srgb) {
+			return new Srgb(col as any as Vec3);
 		}
+		return super.fromCol(col, this.defaultIlluminant);
 	}
 
 	static fromXyz(xyz: Xyz): Srgb {
-		return linToGammaSrgb(xyzToLinear(xyz, xyz.illuminant));
+		return linToGammaSrgb(xyzToLinear(xyz));
 	}
 
-	toXyz(illuminant: Xy=this.illuminant) {
-		return linearToXyz(gammaToLinSrgb(this), illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant) {
+		return linearToXyz(gammaToLinSrgb(this), newIlluminant);
 	}
 }
 
@@ -42,20 +39,18 @@ export class LinearSrgb extends Col {
 		super(data, illuminantsXy["2deg"]["D65"]);
 	}
 
-	static from(dataOrCol: Vec3 | Col): LinearSrgb {
-		return dataOrCol instanceof Col
-				? dataOrCol instanceof Srgb
-						? gammaToLinSrgb(dataOrCol)
-						: this.fromXyz(dataOrCol.toXyz(this.defaultIlluminant))
-				: new LinearSrgb(dataOrCol);
+	static fromCol(col: Col) {
+		return col instanceof Srgb
+				? gammaToLinSrgb(col)
+				: super.fromCol(col, this.defaultIlluminant);
 	}
 
 	static fromXyz(xyz: Xyz): LinearSrgb {
-		return xyzToLinear(xyz, xyz.illuminant);
+		return xyzToLinear(xyz);
 	}
 
-	toXyz(illuminant: Xy=this.illuminant) {
-		return linearToXyz(this, illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant) {
+		return linearToXyz(this, newIlluminant);
 	}
 }
 
@@ -68,24 +63,21 @@ export class Rec709 extends Col {
 		super(data, new.target.defaultIlluminant);
 	}
 
-	static from(dataOrCol: Vec3 | Col): Rec709 {
-		if (dataOrCol instanceof LinearSrgb) {
-			return linToRec709(dataOrCol);
-		} else if (dataOrCol instanceof Rec709) {
-			return new Rec709(dataOrCol as any as Vec3);
-		} else if (dataOrCol instanceof Col) {
-			return this.fromXyz(dataOrCol.toXyz(this.defaultIlluminant));
-		} else {
-			return new Rec709(dataOrCol);
+	static fromCol(col: Col) {
+		if (col instanceof LinearSrgb) {
+			return linToRec709(col);
+		} else if (col instanceof Srgb) {
+			return new Rec709(col as any as Vec3);
 		}
+		return super.fromCol(col);
 	}
 
 	static fromXyz(xyz: Xyz): Rec709 {
-		return linToRec709(xyzToLinear(xyz, xyz.illuminant));
+		return linToRec709(xyzToLinear(xyz));
 	}
 
-	toXyz(illuminant: Xy=this.illuminant) {
-		return linearToXyz(rec709ToLin(this), illuminant);
+	toXyz(newIlluminant: Xy=this.illuminant) {
+		return linearToXyz(rec709ToLin(this), newIlluminant);
 	}
 }
 
@@ -132,15 +124,8 @@ const rec709CompToLin = (comp: number) =>
 const rec709ToLin = (rec709: Rec709) => new LinearSrgb(rec709.map(rec709CompToLin) as Vec3);
 
 
-export const xyzToLinear = (xyz: Xyz, illuminant: Xy) => {
-	const adaptedXyz = math.multiply(
-		chromaticAdaptationMat(
-			xyyToXyzNoAdapt(illuminant),
-			xyyToXyzNoAdapt(illuminantsXy["2deg"]["D65"]),
-			chromaticAdaptationTransforms["Bradford"],
-		),
-		xyz,
-	);
+export const xyzToLinear = (xyz: Xyz) => {
+	const adaptedXyz = adaptXyz(xyz, illuminantsXy["2deg"]["D65"]);
 
 	//https://en.wikipedia.org/wiki/SRGB#From_CIE_XYZ_to_sRGB
 	const mat = math.multiply([
@@ -152,14 +137,14 @@ export const xyzToLinear = (xyz: Xyz, illuminant: Xy) => {
 	return new LinearSrgb(mat as any as Vec3);
 };
 
-export const linearToXyz = (linear: LinearSrgb, illuminant: Xy) => {
+export const linearToXyz = (linear: LinearSrgb, newIlluminant: Xy) => {
 	//http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-	const mat = math.multiply([
+	const xyz = math.multiply([
 		[+0.4124564, +0.3575761, +0.1804375],
 		[+0.2126729, +0.7151522, +0.0721750],
 		[+0.0193339, +0.1191920, +0.9503041],
 	], linear);
 
-	return adaptXyz(new Xyz(mat as any as Vec3, illuminantsXy["2deg"]["D65"]), illuminant);
+	return adaptXyz(new Xyz(xyz as any as Vec3, linear.illuminant), newIlluminant);
 };
 //#endregion

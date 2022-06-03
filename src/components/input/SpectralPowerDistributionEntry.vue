@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, PropType, reactive, ref, watch } from 'vue';
+import {computed, onMounted, PropType, reactive, ref, watch, inject, Ref} from 'vue';
 
 import makeDragListener from "../draggable";
 import {settings} from '../store';
@@ -92,14 +92,17 @@ const onchangeDatasetId = () => {
 
 
 const changeValue = (newPos: number[], lastPos: number[]) => {
-	const minX = Math.min(lastPos[0], newPos[0]);
-	const maxX = Math.max(lastPos[0], newPos[0]);
+	const x1 = Math.round(lastPos[0]);
+	const x2 = Math.round(newPos[0]);
+
+	const minX = Math.min(x1, x2);
+	const maxX = Math.max(x1, x2);
 
 	for (let x = minX; x <= maxX; x++) {
 		if (0 > x || x > modelValue.length) continue;
 		
-		const lerpFac = (x - lastPos[0]) / (newPos[0] - lastPos[0]);
-		const newValue = isNaN(lerpFac) ? newPos[1] : lerp(lastPos[1], newPos[1], lerpFac);
+		const lerpFac = (x - x1) / (x2 - x1);
+		const newValue = isFinite(lerpFac) ? lerp(lastPos[1], newPos[1], lerpFac) : newPos[1];
 
 		modelValue[x] = shouldClampMax.value
 				? clamp(newValue, 0, 1)
@@ -107,11 +110,17 @@ const changeValue = (newPos: number[], lastPos: number[]) => {
 	}
 };
 
+
+const viewportScale = inject("treeViewportScale") as Ref<number>;
+
 const beginInput = (downEvent: PointerEvent) => {
+	if (downEvent.button !== 0) return;
+	downEvent.stopPropagation();
+
 	const rect = svgContainer.value!.getBoundingClientRect();
 
 	const pos = (event: PointerEvent) => [
-		event.clientX - rect.left,
+		(event.clientX - rect.left) / viewportScale.value,
 		1 - (event.clientY - rect.top) / rect.height,
 	];
 
@@ -137,7 +146,7 @@ const beginInput = (downEvent: PointerEvent) => {
 <template>
 	<div class="graph-container">
 		<div class="spectral-power-distribution-graph"
-				@pointerdown.stop="beginInput">
+				@pointerdown="beginInput">
 			<div ref="svgContainer">
 				<svg :viewbox="`0 0 471 ${HEIGHT}`"
 						:width="WIDTH"
@@ -206,6 +215,7 @@ const beginInput = (downEvent: PointerEvent) => {
 				fill: #ffffff3f;
 				stroke: var(--node-border-color);
 				stroke-width: 2;
+				stroke-linejoin: round;
 			}
 		}
 
