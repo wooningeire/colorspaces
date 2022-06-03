@@ -97,6 +97,9 @@ const showButtonTooltip = (nodeConstructor: typeof Node) => {
 		flex-flow: row;
 		gap: 0.5em;
 
+		white-space: nowrap;
+		overflow-x: auto;
+
 		button {
 			background: none;
 

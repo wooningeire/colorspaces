@@ -5,6 +5,8 @@ import {Vec3} from "@/util";
 import {Col, Xyz, Xy, illuminantsXy, chromaticAdaptationMat, adaptXyz, xyyToXyzNoAdapt, chromaticAdaptationTransforms} from "./col-xyz-xyy-illuminants";
 
 
+const isZeroToOne = (col: Col) => col.every(comp => 0 <= comp && comp <= 1);
+
 export class Srgb extends Col {
 	static readonly labels = ["R", "G", "B"];
 
@@ -30,6 +32,10 @@ export class Srgb extends Col {
 	toXyz(newIlluminant: Xy=this.illuminant) {
 		return linearToXyz(gammaToLinSrgb(this), newIlluminant);
 	}
+
+	inGamut(): boolean {
+		return isZeroToOne(this);
+	}
 }
 
 export class LinearSrgb extends Col {
@@ -51,6 +57,10 @@ export class LinearSrgb extends Col {
 
 	toXyz(newIlluminant: Xy=this.illuminant) {
 		return linearToXyz(this, newIlluminant);
+	}
+
+	inGamut(): boolean {
+		return isZeroToOne(this);
 	}
 }
 
@@ -78,6 +88,10 @@ export class Rec709 extends Col {
 
 	toXyz(newIlluminant: Xy=this.illuminant) {
 		return linearToXyz(rec709ToLin(this), newIlluminant);
+	}
+
+	inGamut(): boolean {
+		return isZeroToOne(this);
 	}
 }
 

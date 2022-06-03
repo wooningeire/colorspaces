@@ -66,11 +66,11 @@ export const currentlyDraggedNodeConstructor = ref(null as any as new <T extends
 
 
 //#region Global settings
-export const settings = <{
+export const settings = reactive(<{
 	deviceSpace: typeof cm.Col,
 }>{
 	deviceSpace: cm.Srgb,
-};
+});
 //#endregion
 
 

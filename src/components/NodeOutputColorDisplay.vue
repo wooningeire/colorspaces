@@ -22,10 +22,13 @@ const cx = computed(() => canvas.value?.getContext("2d")!);
 
 const dataOutput = (context: NodeEvalContext) => props.node.output(context);
 
+const imageIsOutOfGamut = ref(false);
 
 // Performance bottleneck
 const rerenderCanvas = () => {
 	if (!canvas.value) return;
+
+	let hasPixelOutOfGamut = false;
 
 	const axes = props.node.getDependencyAxes();
 	const width = canvas.value.width = axes.has(0) ? canvas.value.offsetWidth : 1;
@@ -49,13 +52,29 @@ const rerenderCanvas = () => {
 			imageData.data[index + 1] = color[1] * 255;
 			imageData.data[index + 2] = color[2] * 255;
 			imageData.data[index + 3] = 255;
+
+			if (!color.inGamut()) {
+				hasPixelOutOfGamut = true;
+			}
+
+			/* if (color.inGamut()) {
+				imageData.data[index] = color[0] * 255;
+				imageData.data[index + 1] = color[1] * 255;
+				imageData.data[index + 2] = color[2] * 255;
+				imageData.data[index + 3] = 255;
+			} else {
+				imageData.data[index + 3] = 0;
+			} */
 		}
 	}
 	cx.value.putImageData(imageData, 0, 0);
+
+	imageIsOutOfGamut.value = hasPixelOutOfGamut;
 };
 
 onMounted(rerenderCanvas);
 onUpdated(rerenderCanvas);
+watch(settings, rerenderCanvas);
 
 // `coords` property is needed to update when Gradient node axis changes, might want to make this check more robust?
 // When is this check being triggered? (whenever function dependencies update according to Vue?)
@@ -73,6 +92,10 @@ const nAxes = computed(() => props.node.getDependencyAxes().size);
 			}"></div> -->
 
 	<canvas class="color-display-box"
+			:class="{
+				'out-of-gamut': imageIsOutOfGamut,
+			}"
+			:title="imageIsOutOfGamut ? 'Colors are out of gamut of the device color space; it cannot accurately represent this color.' : ''"
 			ref="canvas"
 			width="1"
 			height="1"></canvas>
@@ -83,4 +106,20 @@ const nAxes = computed(() => props.node.getDependencyAxes().size);
 	width: 3em;
 
 	box-shadow: 0 0 0 2px var(--node-border-color);
-}</style>
+
+	&.out-of-gamut {
+		cursor: help;
+		animation: pulsate-border 1.5s ease-in-out infinite alternate;
+
+		@keyframes pulsate-border {
+			0% {
+				box-shadow: 0 0 0 2px #ef30af;
+			}
+
+			100% {
+				box-shadow: 0 0 0 2px #5e2bd3;
+			}
+		}
+	}
+}
+</style>

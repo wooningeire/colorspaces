@@ -47,6 +47,10 @@ export class Col extends Array {
 	toXyz(newIlluminant: Xy=this.illuminant): Xyz {
 		throw new TypeError("Abstract method / not implemented");
 	}
+
+	inGamut(): boolean {
+		return true;
+	}
 }
 
 //#region Types
