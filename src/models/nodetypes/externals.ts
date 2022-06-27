@@ -14,12 +14,6 @@ export namespace externals {
 			super();
 			
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Dropdown, "Device color space", false, {
-					options: [
-						{value: "srgb", text: "sRGB"},
-					],
-					defaultValue: "srgb",
-				}),
 				...(this.colorSockets = [
 					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Color"),
 				]),

@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import SpectralPowerDistributionEntry from './input/SpectralPowerDistributionEntry.vue';
+import GlobalSettingsOptions from './GlobalSettingsOptions.vue';
 
 import {Node} from "@/models/Node";
-import {models} from "@/models/nodetypes";
+import {models, externals} from "@/models/nodetypes";
 
 
 const props = defineProps({
@@ -18,6 +19,7 @@ const props = defineProps({
 			:node="node"
 			v-model="node.distribution"
 			v-model:datasetId="node.colorMatchingDataset" />
+	<GlobalSettingsOptions v-else-if="node instanceof externals.DeviceTransformNode" />
 </template>
 
 <style lang="scss" scoped>

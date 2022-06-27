@@ -227,6 +227,7 @@ export namespace models {
 		static readonly DESC = "desc.node.wavelength";
 
 		private readonly inSocket: Socket<St.Float>;
+		private readonly powerSocket: Socket<St.Float>;
 		private readonly datasetSocket: Socket<St.Dropdown>;
 
 		constructor() {
@@ -240,6 +241,12 @@ export namespace models {
 						step: 1,
 					},
 					defaultValue: 510,
+				})),
+				(this.powerSocket = new Socket(this, true, Socket.Type.Float, "Relative power", true, {
+					sliderProps: {
+						hasBounds: false,
+					},
+					defaultValue: 1,
 				})),
 				(this.datasetSocket = new Socket(this, true, Socket.Type.Dropdown, "Dataset", false, {
 					defaultValue: "2deg",
@@ -258,7 +265,8 @@ export namespace models {
 		}
 
 		output(context: NodeEvalContext): Vec3 {
-			return [...cm.singleWavelength(this.inSocket.inValue(context), this.datasetSocket.inValue(context) as "2deg" | "10deg")] as any as Vec3;
+			return [...cm.singleWavelength(this.inSocket.inValue(context), this.datasetSocket.inValue(context) as "2deg" | "10deg")]
+					.map(comp => comp * this.powerSocket.inValue(context)) as any as Vec3;
 		}
 	}
 

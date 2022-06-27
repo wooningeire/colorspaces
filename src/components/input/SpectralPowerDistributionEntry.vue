@@ -65,6 +65,7 @@ const rerenderSpectrum = () => {
 	context.putImageData(imageData, 0, 0);
 };
 onMounted(rerenderSpectrum);
+watch(settings, rerenderSpectrum);
 
 
 
