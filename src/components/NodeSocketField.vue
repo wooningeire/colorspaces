@@ -5,7 +5,9 @@ import BaseEntry from "./input/BaseEntry.vue";
 import EntryRgb from "./input/EntryRgb.vue";
 import EntrySlider from "./input/EntrySlider.vue";
 
-import {Socket, SocketType as St} from "@/models/Node";
+import {settings} from "./store";
+
+import {Socket, SocketType as St, SocketFlag} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
 
 const props = defineProps({
@@ -47,27 +49,39 @@ const isFloat = props.socket.type === St.Float;
 const isVector = [St.RgbRaw, St.RgbRawOrColTransformed].includes(props.socket.type) && !isOutputNode;
 
 const isEntry = isFloat || isVector;
+
+const isRgb = Boolean(props.socket.flags & SocketFlag.Rgb);
+
+type FloatSocket = Socket<St.Float>;
+type VectorSocket = Socket<St.RgbRaw | St.RgbRawOrColTransformed>;
 </script>
 
 <template>
 	<div class="socket-value-editor"
 			ref="editorContainer">
 		<template v-if="isFloat">
-			<EntrySlider v-model="(socket as Socket<St.Float>).fieldValue"
+			<EntrySlider v-model="(socket as FloatSocket).fieldValue"
 					@update:modelValue="$emit('value-change')"
 					
+					:convertIn="isRgb ? (value: number) => value / settings.rgbScale : undefined"
+					:convertOut="isRgb ? (value: number) => value * settings.rgbScale : undefined"
 					:validate="isFinite"
+
+					:max="isRgb ? settings.rgbScale : undefined"
 					
-					v-bind="(socket as Socket<St.Float>).data.sliderProps" />
+					v-bind="(socket as FloatSocket).data.sliderProps" />
 		</template>
 
 		<template v-else-if="isVector">
-			<EntryRgb v-model="(socket as Socket<St.RgbRaw | St.RgbRawOrColTransformed>).fieldValue"
+			<EntryRgb v-model="(socket as VectorSocket).fieldValue"
 					@update:modelValue="$emit('value-change')"
 
+					:convertIn="isRgb ? (color: number[]) => color.map(value => value / settings.rgbScale) : undefined"
+					:convertOut="isRgb ? (color: number[]) => color.map(value => value * settings.rgbScale) : undefined"
 					:validate="(color: number[]) => color.every(comp => isFinite(comp))"
 					
-					:sliderProps="(socket as Socket<St.RgbRaw | St.RgbRawOrColTransformed>).data.sliderProps"
+					:maxes="isRgb ? (socket as VectorSocket).fieldValue.map(() => settings.rgbScale) : undefined"
+					:sliderProps="(socket as VectorSocket).data.sliderProps"
 					:descs="socket.data.fieldText" />
 		</template>
 

@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import {PropType} from 'vue';
+import {PropType, computed} from 'vue';
+
+import {settings} from "./store";
 
 import {Col} from "@/models/colormanagement";
 
@@ -13,6 +15,7 @@ const props = defineProps({
 const nDecimals = 4;
 
 const labels = (props.values.constructor as typeof Col).labels;
+const isRgb = (props.values.constructor as typeof Col).isRgb;
 
 </script>
 
@@ -22,7 +25,12 @@ const labels = (props.values.constructor as typeof Col).labels;
 			<div class="header">
 				{{index < labels.length ? labels[index] : ""}}
 			</div>
-			<div class="data">{{values[index].toFixed(nDecimals)}}</div>
+			<div class="data">{{
+				(isRgb
+					? values[index] * settings.rgbScale
+					: values[index]
+				).toFixed(nDecimals)
+			}}</div>
 		</template>
 	</div>
 </template>

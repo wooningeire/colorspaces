@@ -1,4 +1,4 @@
-import {Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType} from "../Node";
+import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType} from "../Node";
 import * as cm from "../colormanagement";
 import {StringKey} from "@/strings";
 
@@ -68,7 +68,8 @@ export namespace spaces {
 			super();
 
 			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")
+						.flag(SocketFlag.Rgb)),
 			);
 
 			this.outs.push(
@@ -93,7 +94,8 @@ export namespace spaces {
 			super();
 
 			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")
+						.flag(SocketFlag.Rgb)),
 			);
 
 			this.outs.push(
@@ -342,7 +344,8 @@ export namespace spaces {
 			super();
 
 			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")
+						.flag(SocketFlag.Rgb)),
 			);
 
 			this.outs.push(
@@ -365,7 +368,8 @@ export namespace spaces {
 			super();
 
 			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")
+						.flag(SocketFlag.Rgb)),
 			);
 
 			this.outs.push(
@@ -390,7 +394,8 @@ export namespace spaces {
 			super();
 
 			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")),
+				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")
+						.flag(SocketFlag.Rgb)),
 			);
 
 			this.outs.push(

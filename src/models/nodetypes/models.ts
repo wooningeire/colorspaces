@@ -1,4 +1,4 @@
-import {Node, Socket, SocketType as St, NodeEvalContext} from "../Node";
+import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext} from "../Node";
 import * as cm from "../colormanagement";
 
 import {Color, Vec2, Vec3, pipe} from "@/util";
@@ -14,9 +14,9 @@ export namespace models {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "Red"),
-				new Socket(this, true, Socket.Type.Float, "Green"),
-				new Socket(this, true, Socket.Type.Float, "Blue"),
+				new Socket(this, true, Socket.Type.Float, "Red").flag(SocketFlag.Rgb),
+				new Socket(this, true, Socket.Type.Float, "Green").flag(SocketFlag.Rgb),
+				new Socket(this, true, Socket.Type.Float, "Blue").flag(SocketFlag.Rgb),
 			);
 
 			this.outs.push(
@@ -42,7 +42,7 @@ export namespace models {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "Hue"),
+				new Socket(this, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
 				new Socket(this, true, Socket.Type.Float, "Saturation"),
 				new Socket(this, true, Socket.Type.Float, "Lightness"),
 			);
@@ -66,7 +66,7 @@ export namespace models {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "Hue"),
+				new Socket(this, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
 				new Socket(this, true, Socket.Type.Float, "Saturation"),
 				new Socket(this, true, Socket.Type.Float, "Value"),
 			);
@@ -90,7 +90,7 @@ export namespace models {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "Hue"),
+				new Socket(this, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
 				new Socket(this, true, Socket.Type.Float, "Whiteness"),
 				new Socket(this, true, Socket.Type.Float, "Blackness"),
 			);
@@ -114,9 +114,9 @@ export namespace models {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "Cyan"),
-				new Socket(this, true, Socket.Type.Float, "Magenta"),
-				new Socket(this, true, Socket.Type.Float, "Yellow"),
+				new Socket(this, true, Socket.Type.Float, "Cyan").flag(SocketFlag.Rgb),
+				new Socket(this, true, Socket.Type.Float, "Magenta").flag(SocketFlag.Rgb),
+				new Socket(this, true, Socket.Type.Float, "Yellow").flag(SocketFlag.Rgb),
 			);
 
 			this.outs.push(

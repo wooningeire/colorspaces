@@ -4,7 +4,7 @@ import {defineComponent, reactive, PropType, ref, watch} from "vue";
 import EntrySlider from "./EntrySlider.vue";
 
 import {acceptAlways, cloneArray} from "./base-functions";
-import {tooltipData} from "../store";
+import {tooltipData, settings} from "../store";
 
 import {Vec3} from "@/util";
 import getString, {NO_DESC, StringKey} from "@/strings";
@@ -17,18 +17,25 @@ const props = defineProps({
 	},
 
 	validate: {
-		type: Function as PropType<<T>(proposedValue: T) => boolean>,
+		// type requires a generic component
+		type: Function as PropType<(proposedValue: any) => boolean>,
 		default: acceptAlways,
 	},
 
 	convertIn: {
-		type: Function as PropType<<T>(value: T) => T>,
+		type: Function as PropType<(value: any) => any>,
 		default: cloneArray,
 	},
 
 	convertOut: {
-		type: Function as PropType<<T>(value: T) => T>,
+		type: Function as PropType<(value: any) => any>,
 		default: cloneArray,
+	},
+
+
+	maxes: {
+		type: Array as PropType<number[]>,
+		default: [],
 	},
 
 	sliderProps: {
@@ -43,11 +50,11 @@ const props = defineProps({
 });
 
 
-const displayValue = ref(props.convertIn(props.modelValue));
+const displayValue = ref(props.convertOut(props.modelValue));
 
 
 const proposedValueIsValid = ref(true);
-const userIsInputing = ref(false);
+const entryActive = ref(false);
 
 
 const emit = defineEmits([
@@ -56,17 +63,17 @@ const emit = defineEmits([
 
 
 const setDisplayToTrueValue = () => {
-	displayValue.value = props.convertIn(props.modelValue);
+	displayValue.value = props.convertOut(props.modelValue);
 };
 
 
 const onInput = () => {
-	userIsInputing.value = true;
+	entryActive.value = true;
 	emitValueIfValid();
 };
 
 const emitValueIfValid = () => {
-	const proposedValue = props.convertOut(displayValue.value);
+	const proposedValue = props.convertIn(displayValue.value);
 
 	proposedValueIsValid.value = props.validate(proposedValue);
 	if (proposedValueIsValid.value) {
@@ -75,18 +82,18 @@ const emitValueIfValid = () => {
 };
 
 const onChange = () => {
-	userIsInputing.value = false;
+	entryActive.value = false;
 	setDisplayToTrueValue();
 	proposedValueIsValid.value = true;
 };
 
 const onBlur = () => {
-	userIsInputing.value = false;
+	entryActive.value = false;
 };
 
 
-watch(() => props.modelValue, () => {
-	if (userIsInputing.value) return;
+watch(() => [props.modelValue, props.convertOut], () => {
+	if (entryActive.value) return;
 	setDisplayToTrueValue();
 });
 </script>
@@ -98,6 +105,7 @@ watch(() => props.modelValue, () => {
 		<EntrySlider v-for="(_, i) of modelValue"
 				v-model="displayValue[i]"
 				@update:modelValue="emitValueIfValid"
+				:max="maxes[i]"
 				v-bind="sliderProps[i]"
 
 				:desc="descs[i]" />

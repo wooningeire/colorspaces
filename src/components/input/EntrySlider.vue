@@ -14,17 +14,17 @@ const props = defineProps({
 	},
 
 	validate: {
-		type: Function as PropType<<T>(proposedValue: T) => boolean>,
+		type: Function as PropType<(proposedValue: any) => boolean>,
 		default: acceptAlways,
 	},
 
 	convertIn: {
-		type: Function as PropType<<T>(value: T) => T>,
+		type: Function as PropType<(value: any) => any>,
 		default: identity,
 	},
 
 	convertOut: {
-		type: Function as PropType<<T>(value: T) => T>,
+		type: Function as PropType<(value: any) => any>,
 		default: identity,
 	},
 
@@ -58,19 +58,26 @@ const props = defineProps({
 	},
 });
 
+const internalMin = computed(() => props.convertIn(props.min));
+const internalMax = computed(() => props.convertIn(props.max));
 
-const progress = computed(() => (props.modelValue - props.min) / (props.max - props.min));
-const amountPerPixel = computed(() => props.hasBounds ? (props.max - props.min) / textbox.value!.offsetWidth : props.unboundedChangePerPixel);
+
+const progress = computed(
+	() => (props.modelValue - internalMin.value) / (internalMax.value - internalMin.value));
+const amountPerPixel = computed(
+	() => props.hasBounds
+			? (internalMax.value - internalMin.value) / textbox.value!.offsetWidth
+			: props.unboundedChangePerPixel);
 
 
 const proposedValueIsValid = ref(true);
-const isUsingEntry = ref(false);
+const entryActive = ref(false);
 
 
-const tempValue = ref(props.convertIn(props.modelValue).toString());
+const tempValue = ref(props.convertOut(props.modelValue).toString());
 
 const displayValue = computed({
-	get: () => isUsingEntry.value ? tempValue.value : Number(Number(tempValue.value).toFixed(4)).toString(),
+	get: () => entryActive.value ? tempValue.value : Number(Number(tempValue.value).toFixed(4)).toString(),
 	set: value => tempValue.value = value,
 });
 
@@ -84,13 +91,13 @@ const emit = defineEmits([
 
 
 const setDisplayToTrueValue = () => {
-	tempValue.value = props.convertIn(props.modelValue).toString();
+	tempValue.value = props.convertOut(props.modelValue).toString();
 };
 
 
 const onInput = () => {
-	isUsingEntry.value = true;
-	const proposedValue = props.convertOut(Number(tempValue.value));
+	entryActive.value = true;
+	const proposedValue = props.convertIn(Number(tempValue.value));
 
 	proposedValueIsValid.value = props.validate(proposedValue);
 	if (proposedValueIsValid.value) {
@@ -99,18 +106,24 @@ const onInput = () => {
 };
 
 const onChange = () => {
-	isUsingEntry.value = false;
+	entryActive.value = false;
 	setDisplayToTrueValue();
 	proposedValueIsValid.value = true;
 };
 
 const onBlur = () => {
-	isUsingEntry.value = false;
+	entryActive.value = false;
 };
+
+
+const onDrag = () => {
+	setDisplayToTrueValue();
+};
+
 
 const roundToStep = (value: number, step: number) => Math.round(value / step) * step;
 
-const stickToBoundTolerance = 4;
+const stickToBoundTolerance = 12;
 
 const beginSliderInput = makeDragListener({
 	shouldCancel(event: PointerEvent) {
@@ -133,14 +146,18 @@ const beginSliderInput = makeDragListener({
 	
 		const newValue = origValue + displacement.x * amountPerPixel.value * modifierFac;
 		
-		if (Math.abs(newValue - props.min) / stickToBoundTolerance <= amountPerPixel.value * modifierFac) {
-			emit("update:modelValue", props.min);
+		if (Math.abs(newValue - internalMin.value) / stickToBoundTolerance <= amountPerPixel.value * modifierFac) {
+			emit("update:modelValue", internalMin.value);
+			onDrag();
 			return;
-		} else if (Math.abs(newValue - props.max) / stickToBoundTolerance <= amountPerPixel.value * modifierFac) {
-			emit("update:modelValue", props.max);
+		} else if (Math.abs(newValue - internalMax.value) / stickToBoundTolerance <= amountPerPixel.value * modifierFac) {
+			emit("update:modelValue", internalMax.value);
+			onDrag();
 			return;
 		}
 		emit("update:modelValue", roundToStep(newValue, props.step));
+		onDrag();
+
 	},
 
 	onUp() {
@@ -149,15 +166,14 @@ const beginSliderInput = makeDragListener({
 });
 
 const beginTextInput = (event: PointerEvent) => {
-	isUsingEntry.value = true;
+	entryActive.value = true;
 	textbox.value!.select();
 };
 
-watch(() => props.modelValue, () => {
-	if (isUsingEntry.value) return;
+watch(() => [props.modelValue, props.convertOut], () => {
+	if (entryActive.value) return;
 	setDisplayToTrueValue();
 });
-
 
 
 const showTooltip = () => {
@@ -175,12 +191,12 @@ const showTooltip = () => {
 			v-model="displayValue"
 			@input="onInput"
 			@change="onChange"
-			@pointerdown="event => !isUsingEntry && beginSliderInput(event)"
-			@click="event => !isUsingEntry && beginTextInput(event as any as PointerEvent)"
+			@pointerdown="event => !entryActive && beginSliderInput(event)"
+			@click="event => !entryActive && beginTextInput(event as any as PointerEvent)"
 			@blur="onBlur"
 			:class="{
 				'invalid': !proposedValueIsValid,
-				'inputing': isUsingEntry,
+				'inputing': entryActive,
 			}"
 
 			:style="{

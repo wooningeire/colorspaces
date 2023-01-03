@@ -10,6 +10,7 @@ import {Vec2, Vec3} from "@/util";
 export class Col extends Array {
 	static readonly [Symbol.species] = Array;
 	static readonly labels: string[] = [];
+	static readonly isRgb: boolean = false;
 
 	static readonly defaultIlluminant: Xy = null!; //illuminantE; // set later
 

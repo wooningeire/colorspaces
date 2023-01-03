@@ -23,14 +23,14 @@ const dn = deviceNodes;
 [
 	new spaces.SrgbNode().setPos([450, 50]),
 	(dn.transformNode = new externals.DeviceTransformNode().setPos([1000, 100])),
-	(dn.postprocessingNode = new externals.DevicePostprocessingNode().setPos([1200, 100])),
-	(dn.environmentNode = new externals.EnvironmentNode().setPos([1200, 250])),
-	(dn.visionNode = new externals.VisionNode().setPos([1200, 400])),
+	// (dn.postprocessingNode = new externals.DevicePostprocessingNode().setPos([1200, 100])),
+	// (dn.environmentNode = new externals.EnvironmentNode().setPos([1200, 250])),
+	// (dn.visionNode = new externals.VisionNode().setPos([1200, 400])),
 ].forEach(tree.nodes.add, tree.nodes);
 
-tree.linkSockets(dn.transformNode.outs[0], dn.postprocessingNode.ins[0]);
-tree.linkSockets(dn.postprocessingNode.outs[0], dn.environmentNode.ins[0]);
-tree.linkSockets(dn.environmentNode.outs[0], dn.visionNode.ins[0]);
+// tree.linkSockets(dn.transformNode.outs[0], dn.postprocessingNode.ins[0]);
+// tree.linkSockets(dn.postprocessingNode.outs[0], dn.environmentNode.ins[0]);
+// tree.linkSockets(dn.environmentNode.outs[0], dn.visionNode.ins[0]);
 //#endregion
 //#endregion
 
@@ -68,8 +68,12 @@ export const currentlyDraggedNodeConstructor = ref(null as any as new <T extends
 //#region Global settings
 export const settings = reactive(<{
 	deviceSpace: typeof cm.Col,
+	rgbScale: number,
+	hueScale: number,
 }>{
 	deviceSpace: cm.Srgb,
+	rgbScale: 1,
+	hueScale: 1,
 });
 //#endregion
 

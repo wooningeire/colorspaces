@@ -240,6 +240,11 @@ export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.Image ? ImageData :
 		never;
 
+export enum SocketFlag {
+	Rgb = 1 << 0,
+	Hue = 1 << 1,
+}
+
 type SliderProps = {
 	hasBounds?: boolean,
 	min?: number,
@@ -301,6 +306,7 @@ export class Socket<St extends SocketType=any> {
 	readonly links: Link[] = [];
 
 	fieldValue: SocketValue<St>;//number | Color;
+	flags: SocketFlag;
 
 	readonly data: SocketData<St>
 
@@ -319,6 +325,8 @@ export class Socket<St extends SocketType=any> {
 
 		this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
 		this.data = data as any as SocketData<St>;
+
+		this.flags = 0;
 	}
 
 	get isOutput() {
@@ -342,6 +350,11 @@ export class Socket<St extends SocketType=any> {
 
 	get hasLinks() {
 		return this.links.length > 0;
+	}
+	
+	flag(flags: SocketFlag) {
+		this.flags = flags;
+		return this;
 	}
 }
 
