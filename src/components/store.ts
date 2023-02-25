@@ -22,7 +22,7 @@ export const deviceNodes = reactive(<DeviceNodes>{});
 const dn = deviceNodes;
 [
 	new spaces.SrgbNode().setPos([450, 50]),
-	(dn.transformNode = new externals.DeviceTransformNode().setPos([1000, 100])),
+	// (dn.transformNode = new externals.DeviceTransformNode().setPos([1000, 100])),
 	// (dn.postprocessingNode = new externals.DevicePostprocessingNode().setPos([1200, 100])),
 	// (dn.environmentNode = new externals.EnvironmentNode().setPos([1200, 250])),
 	// (dn.visionNode = new externals.VisionNode().setPos([1200, 400])),

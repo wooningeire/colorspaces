@@ -4,6 +4,7 @@ import {ref, reactive, onMounted, provide, Ref} from "vue";
 import TheNodeTree from "./TheNodeTree.vue";
 import TheNodeTray from "./TheNodeTray.vue";
 import TheToolbar from "./TheToolbar.vue";
+import TheSettingsPanel from "./TheSettingsPanel.vue";
 
 import {Node} from "@/models/Node";
 
@@ -42,6 +43,8 @@ const addNode = <T extends Node>(nodeConstructor: new () => T, screenPos: Vec2=[
 		<ObjectTooltip :text="tooltipData.text"
 				:pos="tooltipData.pos" />
 	</div>
+
+	<TheSettingsPanel />
 </template>
 
 <style lang="scss">
@@ -100,6 +103,10 @@ main {
 	> .node-tray {
 		grid-area: 2/2;
 		z-index: 1;
+	}
+
+	> .settings-panel {
+		grid-area: 2/3;
 	}
 
 	> .tooltips {
