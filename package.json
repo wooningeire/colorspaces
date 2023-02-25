@@ -21,15 +21,13 @@
     "@vitejs/plugin-vue": "^2.3.3",
     "@vue/compiler-sfc": "^3.2.33",
     "jest": "^27.5.1",
-    "path-browserify": "^1.0.1",
     "process": "^0.11.10",
     "require-json5": "^1.2.0",
     "sass": "^1.50.0",
     "ts-jest": "^27.1.4",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.3",
-    "vite": "^2.9.9",
-    "vm-browserify": "^1.1.2",
+    "vite": "^4.1.4",
     "vue-tsc": "^0.34.13"
   },
   "dependencies": {

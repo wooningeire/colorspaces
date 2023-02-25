@@ -70,7 +70,7 @@ export class Node {
 	static readonly TYPE: symbol = Symbol();
 	static readonly LABEL: string = "";
 
-	static readonly DESC: StringKey = NO_DESC;
+	static readonly DESC: StringKey | string = NO_DESC;
 
 	readonly ins: Socket[] = [];
 	readonly outs: Socket[] = [];

@@ -34,6 +34,15 @@ import {settings} from "./store";
 			<option :value="360">360</option>
 		</select>
 	</div>
+
+	<div class="container">
+		<div class="control-row">
+			<input type="checkbox"
+					id="settings-display-out-of-gamut"
+					v-model="settings.displayOutOfGamut" />
+			<label for="settings-display-out-of-gamut">Display out-of-gamut colors</label>
+		</div>
+	</div>
 </template>
 
 <style lang="scss" scoped>
@@ -42,6 +51,17 @@ import {settings} from "./store";
 
 	& + .container {
 		margin-top: 0.25em;
+	}
+}
+
+.control-row {
+	display: flex;
+	justify-content: space-between;
+
+	> div {
+		display: flex;
+		flex-flow: row;
+		gap: 0.25em;
 	}
 }
 </style>

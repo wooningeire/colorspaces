@@ -45,26 +45,22 @@ const rerenderCanvas = () => {
 			if (!colorData) return; // Deals with extraneous call from watcher when nodes are deleted; not ideal
 
 			const color = settings.deviceSpace.from(colorData);
+			const inGamut = color.inGamut();
 
 			const index = (xPixels + yPixels * imageData.width) * 4;
 
-			imageData.data[index] = color[0] * 255;
-			imageData.data[index + 1] = color[1] * 255;
-			imageData.data[index + 2] = color[2] * 255;
-			imageData.data[index + 3] = 255;
-
-			if (!color.inGamut()) {
+			if (!inGamut) {
 				hasPixelOutOfGamut = true;
 			}
 
-			/* if (color.inGamut()) {
+			if (settings.displayOutOfGamut || inGamut) {
 				imageData.data[index] = color[0] * 255;
 				imageData.data[index + 1] = color[1] * 255;
 				imageData.data[index + 2] = color[2] * 255;
 				imageData.data[index + 3] = 255;
 			} else {
 				imageData.data[index + 3] = 0;
-			} */
+			}
 		}
 	}
 	cx.value.putImageData(imageData, 0, 0);
@@ -114,10 +110,12 @@ const nAxes = computed(() => props.node.getDependencyAxes().size);
 		@keyframes pulsate-border {
 			0% {
 				box-shadow: 0 0 0 2px #ef30af;
+				background: #ef30af7f;
 			}
 
 			100% {
 				box-shadow: 0 0 0 2px #5e2bd3;
+				background: #5e2bd37f;
 			}
 		}
 	}
