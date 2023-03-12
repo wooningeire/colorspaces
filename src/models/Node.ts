@@ -305,6 +305,7 @@ export class Socket<St extends SocketType=any> {
 
 	readonly links: Link[] = [];
 
+	/** The value of the entry field input for this socket */
 	fieldValue: SocketValue<St>;//number | Color;
 	flags: SocketFlag;
 
@@ -333,12 +334,15 @@ export class Socket<St extends SocketType=any> {
 		return !this.isInput;
 	}
 
+	/** Evaluates the value of this input socket (uses the value from the link attached to this socket if the link is
+	 * valid, or the value from the socket's field input otherwise) */
 	inValue(context: NodeEvalContext={}): SocketValue<St> {
 		return this.links[0]?.causesCircularDependency
 				? this.fieldValue
 				: (this.links[0]?.src.outValue(context) as SocketValue<St>) ?? this.fieldValue;
 	}
 
+	/** Evaluates the value of this output socket */
 	outValue(context: NodeEvalContext={}): SocketValue<St> {
 		const newContext = {
 			...context,

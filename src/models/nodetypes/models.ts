@@ -309,4 +309,23 @@ export namespace models {
 			return [...cm.blackbody(this.inSocket.inValue(context), this.datasetSocket.inValue(context) as "2deg" | "10deg")] as any as Vec3;
 		}
 	}
+
+	export class ChromaticityNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Chromaticity";
+		static readonly DESC = "desc.node.chromaticity";
+
+		constructor() {
+			super();
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.Float, "x", true, {
+					defaultValue: cm.illuminantsXy["2deg"]["D65"][0],
+				}),
+				new Socket(this, true, Socket.Type.Float, "y", true, {
+					defaultValue: cm.illuminantsXy["2deg"]["D65"][1],
+				}),
+			);
+		}
+	}
 }
