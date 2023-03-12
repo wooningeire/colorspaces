@@ -77,7 +77,7 @@ main {
 	display: grid;
 	align-items: center;
 	grid-template-rows: 1fr max(20vh, 15em);
-	grid-template-columns: 8em 1fr;
+	grid-template-columns: 8em 1fr auto;
 
 	--grid-size: 16px;
 
@@ -93,7 +93,7 @@ main {
 	color: #fff;
 
 	> .node-tree {
-		grid-area: 1/1 / 3/3;
+		grid-area: 1/1 / -1/-1;
 	}
 
 	> .toolbar {
@@ -107,6 +107,7 @@ main {
 
 	> .settings-panel {
 		grid-area: 2/3;
+		z-index: 1;
 	}
 
 	> .tooltips {

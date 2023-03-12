@@ -3,7 +3,7 @@ import * as marked from "marked";
 export type StringKey = keyof typeof strings;
 export const NO_DESC = Symbol();
 
-export default (key: string) => marked.parseInline(strings[key] ?? `[missing text: \`${String(key)}\`]`);
+export default (key: string | StringKey) => marked.parseInline(strings[key] ?? `[missing text: \`${String(key)}\`]`);
 
 const strings = {
 	"label.nodeCategory.models": "Models",
