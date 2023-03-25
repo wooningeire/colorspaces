@@ -1,7 +1,9 @@
 <script lang="ts" setup>
 import {inject, Ref} from "vue";
 
-import {Tree, Socket} from "@/models/Node";
+import NodeLink from "./NodeLink.vue";
+
+import {Tree, Socket, Link} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
 
 import {tree} from "./store";
@@ -9,27 +11,46 @@ import {tree} from "./store";
 const props = defineProps(["socketVues"]);
 const socketVue = (socket: Socket) => props.socketVues.get(socket);
 
-const viewportScale = inject("treeViewportScale") as Ref<number>;
+// This component is force-updated by TheNodeTree when a socket moves
+
+const srcX = (link: Link) => socketVue(link.src)?.socketPos()[0];
+const srcY = (link: Link) => socketVue(link.src)?.socketPos()[1];
+const dstX = (link: Link) => socketVue(link.dst)?.socketPos()[0];
+const dstY = (link: Link) => socketVue(link.dst)?.socketPos()[1];
+
+const linkPath = (link: Link) => {
+	const x0 = srcX(link);
+	const y0 = srcY(link);
+	const x1 = dstX(link);
+	const y1 = dstY(link);
+
+	const controlPointDx = Math.max(10, 8 * (Math.abs(x1 - x0 - 12) ** (1/2)));
+
+	return `M${x0},${y0}
+C${x0 + controlPointDx},${y0} ${x1 - controlPointDx},${y1}, ${x1},${y1}`;
+};
 </script>
 
 <template>
-	<line v-for="link of tree.links"
+	<NodeLink v-for="link of tree.links"
 			:key="link.id"
-			:x1="socketVue(link.src)?.socketPos()[0]"
-			:y1="socketVue(link.src)?.socketPos()[1]"
-			:x2="socketVue(link.dst)?.socketPos()[0]"
-			:y2="socketVue(link.dst)?.socketPos()[1]"
-			
-			:class="{
-				'subtle': link.dstNode instanceof externals.DevicePostprocessingNode
-						|| link.dstNode instanceof externals.EnvironmentNode
-						|| link.dstNode instanceof externals.VisionNode,
-				'invalid': link.causesCircularDependency,
-			}" />
+
+			:x0="srcX(link)"
+			:y0="srcY(link)"
+			:x1="dstX(link)"
+			:y1="dstY(link)"
+
+			:subtle="link.dstNode instanceof externals.DevicePostprocessingNode
+					|| link.dstNode instanceof externals.EnvironmentNode
+					|| link.dstNode instanceof externals.VisionNode"
+
+			:invalid="link.causesCircularDependency" />
 </template>
 
 <style lang="scss" scoped>
-line {
+path {
+	fill: none;
+
 	&.subtle {
 		opacity: 0.25;
 	}

@@ -4,6 +4,7 @@ import {computed, ref, reactive, provide, nextTick, onMounted, Ref, inject} from
 import NodeVue from "./NodeVue.vue";
 import NodeSocket from "./NodeSocket.vue";
 import TheNodeTreeLinks from "./TheNodeTreeLinks.vue";
+import NodeLink from "./NodeLink.vue";
 
 import {Vec2, Listen, clearTextSelection} from "@/util";
 import {Socket, Node} from "@/models/Node";
@@ -194,12 +195,22 @@ defineExpose({
 		<svg class="links"
 				:viewbox="`0 0 ${$el?.clientWidth ?? 300} ${$el?.clientHeight ?? 150}`">
 			<g>
-				<line v-if="draggingSocket"
-						class="new-link"
-						:x1="(draggedSocketVue?.socketPos()[0] ?? 0)"
-						:y1="(draggedSocketVue?.socketPos()[1] ?? 0)"
-						:x2="pointerX"
-						:y2="pointerY" />
+				<template v-if="draggingSocket">
+					<NodeLink v-if="draggedSocket?.isOutput"
+							class="new-link"
+
+							:x0="draggedSocketVue?.socketPos()[0] ?? 0"
+							:y0="draggedSocketVue?.socketPos()[1] ?? 0"
+							:x1="pointerX"
+							:y1="pointerY" />
+					<NodeLink v-else
+							class="new-link"
+
+							:x0="pointerX"
+							:y0="pointerY"
+							:x1="draggedSocketVue?.socketPos()[0] ?? 0"
+							:y1="draggedSocketVue?.socketPos()[1] ?? 0" />
+				</template>
 
 				<TheNodeTreeLinks :socketVues="socketVues"
 						ref="linksComponent" />

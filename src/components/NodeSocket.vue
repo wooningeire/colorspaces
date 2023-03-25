@@ -79,7 +79,7 @@ const ondrop = (event: DragEvent) => {
 };
 const willAcceptLink = () => {
 	// preemptive + stops TypeScript complaint
-	if (!draggedSocket) throw new TypeError("Not currently dragging from a socket");
+	if (!draggedSocket.value) throw new TypeError("Not currently dragging from a socket");
 
 	const [src, dst] = props.socket.isOutput
 			? [props.socket, draggedSocket.value]
