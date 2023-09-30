@@ -1,12 +1,13 @@
-import It from "./iter";
+import It from "@/iter";
 
 import {Color} from "@/util";
-import * as cm from "@/models/colormanagement";
+import * as cm from "./colormanagement";
+import {describe, expect, test} from "vitest";
 
 describe("sRGB", () => {
 	test("inversion functions are accurate", () => {
 		const origColor = [0.1, 0.75, 0.5];
-		const newColor = cm.srgbToLinear(cm.linearToSrgb(origColor as Color));
+		const newColor = cm.Srgb.from(cm.LinearSrgb.from(new cm.Srgb(origColor as Color)));
 
 		console.log(origColor, newColor);
 

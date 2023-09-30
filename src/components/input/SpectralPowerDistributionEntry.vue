@@ -186,7 +186,7 @@ const beginInput = (downEvent: PointerEvent) => {
 			<div class="control-row">
 				<div>
 					<label>Dataset</label>
-					<select v-model="datasetId"
+					<select :value="datasetId"
 							@change="onchangeDatasetId">
 						<option value="2deg">CIE 2° observer (1931)</option>
 						<option value="10deg">CIE 10° observer (1964)</option>
