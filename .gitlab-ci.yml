@@ -24,12 +24,22 @@ stages:
 
 build:
   stage: build
+  before_script:
+    - corepack enable
+    - corepack prepare pnpm@latest-8 --activate
+    - pnpm config set store-dir .pnpm-store
   script: 
-    - npm ci
-    - npm run build.public
+    - pnpm install --frozen-lockfile
+    - pnpm run build.public
   artifacts:
     paths:
       - dist/
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store
   only:
     - main
 
