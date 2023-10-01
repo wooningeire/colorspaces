@@ -35,7 +35,7 @@ const isRgb = (props.values.constructor as typeof Col).isRgb;
 	</div>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .output-values {
 	display: grid;
 	grid-template-columns: auto 1fr;

@@ -64,6 +64,7 @@ export enum OutputDisplayType {
 	None,
 	Float,
 	Color,
+	Vec,
 }
 
 export class Node {

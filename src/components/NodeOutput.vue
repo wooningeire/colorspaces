@@ -37,6 +37,14 @@ const nDecimals = 4;
 			<div class="output-values"
 					v-if="hasConstantOutput">{{output.toFixed(nDecimals)}}</div>
 		</template>
+
+		<template v-else-if="type === OutputDisplayType.Vec">
+			<div class="output-values"
+					v-if="hasConstantOutput">
+				<div class="data"
+						v-for="value of output">{{value.toFixed(nDecimals)}}</div>
+			</div>
+		</template>
 	</div>
 </template>
 

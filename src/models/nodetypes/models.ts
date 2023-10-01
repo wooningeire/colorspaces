@@ -1,4 +1,5 @@
-import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, Tree} from "../Node";
+import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, Tree, OutputDisplayType} from "../Node";
+import { Overload, OverloadManager, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
 
 import {Color, Vec2, Vec3, pipe} from "@/util";
@@ -57,126 +58,60 @@ export namespace models {
 		}
 	}
 
+	enum HsvMethod {
+		ToRgb = "to rgb",
+		FromRgbVector = "from rgb vector",
+		FromRgbColor = "from rgb color",
+	}
 	export class HsvNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HSV";
 		static readonly DESC = "desc.node.hsv";
+        static readonly outputDisplayType = OutputDisplayType.Vec;
 
-		private readonly methodSocket: Socket<St.Dropdown>;
-		private readonly valueSockets: Socket[];
-		static readonly HsvMethod = (() => {
-			enum HsvMethod {
-				ToRgb = "to rgb",
-				FromRgbVector = "from rgb vector",
-				FromRgbColor = "from rgb color",
-			};
-			return HsvMethod;
-		})();
+		private static readonly HsvMethod = HsvMethod;
+		private static readonly overloadGroup = new OverloadGroup(new Map<HsvMethod, Overload<Color | number>>([
+			[HsvMethod.ToRgb, new Overload(
+				"To RGB",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new Socket(node, true, Socket.Type.Float, "Saturation"),
+					new Socket(node, true, Socket.Type.Float, "Value"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.RgbRaw, "RGB"),
+				],
+				(ins, outs, context) => cm.hsvToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
+			)],
+
+			[HsvMethod.FromRgbVector, new Overload(
+				"From RGB",
+				node => [
+					new Socket(node, true, Socket.Type.RgbRawOrColTransformed, "RGB or RGB color"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new Socket(node, false, Socket.Type.Float, "Saturation"),
+					new Socket(node, false, Socket.Type.Float, "Value"),
+				],
+				(ins, outs, context) => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
+			)],
+		]));
+
+		private readonly overloadManager = new OverloadManager(this, HsvNode.HsvMethod.ToRgb, HsvNode.overloadGroup);
 
 		constructor() {
 			super();
-
-			this.ins.push(
-				(this.methodSocket = new Socket(this, true, Socket.Type.Dropdown, "", false, {
-					options: [
-						{value: HsvNode.HsvMethod.ToRgb, text: "To RGB"},
-						{value: HsvNode.HsvMethod.FromRgbVector, text: "From RGB vector"},
-						{value: HsvNode.HsvMethod.FromRgbColor, text: "From RGB color"},
-					],
-					defaultValue: HsvNode.HsvMethod.ToRgb,
-				})),
-
-				...(this.valueSockets = [
-					new Socket(this, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-					new Socket(this, true, Socket.Type.Float, "Saturation"),
-					new Socket(this, true, Socket.Type.Float, "Value"),
-				]),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
-			);
+            this.overloadManager.setSockets();
 		}
 
 		output(context: NodeEvalContext): Color | number {
-			switch (this.methodSocket.inValue()) {
-				default:
-				case HsvNode.HsvMethod.ToRgb:
-					return cm.hsvToRgb(this.valueSockets.map(socket => socket.inValue(context)) as Color) as Color;
-
-				case HsvNode.HsvMethod.FromRgbVector:
-					return cm.rgbToHsv(this.valueSockets[0].inValue(context) as Vec3)[this.outs.indexOf(context.socket!)];
-
-				case HsvNode.HsvMethod.FromRgbColor:
-					return cm.rgbToHsv(this.valueSockets[0].inValue(context) as Color)[this.outs.indexOf(context.socket!)];
-			}
+			return this.overloadManager.evaluate(context);
 		}
 
 		onSocketFieldValueChange(socket: Socket, tree: Tree) {
-			if (socket !== this.methodSocket) return;
-
-			while (this.valueSockets.length > 0) {
-				this.ins.pop();
-				const oldSocket = this.valueSockets.pop();
-				oldSocket?.links.forEach(link => tree.unlink(link));
-			}
-
-			while (this.outs.length > 0) {
-				const oldSocket = this.outs.pop();
-				oldSocket?.links.forEach(link => tree.unlink(link));
-			}
-
-			let newIns: Socket[] = [];
-			let newOuts: Socket[] = [];
-
-			switch (this.methodSocket.inValue()) {
-				case HsvNode.HsvMethod.ToRgb: {
-					newIns = [
-						new Socket(this, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-						new Socket(this, true, Socket.Type.Float, "Saturation"),
-						new Socket(this, true, Socket.Type.Float, "Value"),
-					];
-					
-					newOuts = [
-						new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
-					];
-
-					break;
-				}
-
-				case HsvNode.HsvMethod.FromRgbVector: {
-					newIns = [
-						new Socket(this, true, Socket.Type.RgbRaw, "RGB"),
-					];
-					
-					newOuts = [
-						new Socket(this, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-						new Socket(this, false, Socket.Type.Float, "Saturation"),
-						new Socket(this, false, Socket.Type.Float, "Value"),
-					];
-
-					break;
-				}
-
-				case HsvNode.HsvMethod.FromRgbColor: {
-					newIns = [
-						new Socket(this, true, Socket.Type.ColTransformed, "RGB color"),
-					];
-					
-					newOuts = [
-						new Socket(this, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-						new Socket(this, false, Socket.Type.Float, "Saturation"),
-						new Socket(this, false, Socket.Type.Float, "Value"),
-					];
-
-					break;
-				}
-			}
-
-			this.ins.push(...newIns);
-			this.valueSockets.push(...newIns);
-
-			this.outs.push(...newOuts);
+			if (socket !== this.overloadManager.dropdown) return;
+			this.overloadManager.handleModeChange(tree);
 		}
 	}
 

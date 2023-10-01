@@ -97,7 +97,7 @@ const nAxes = computed(() => props.node.getDependencyAxes().size);
 			height="1"></canvas>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .color-display-box {
 	width: 3em;
 
