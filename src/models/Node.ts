@@ -241,6 +241,7 @@ export type SocketValue<St extends SocketType=any> =
 		never;
 
 export enum SocketFlag {
+	None = 0,
 	Rgb = 1 << 0,
 	Hue = 1 << 1,
 }
@@ -327,7 +328,7 @@ export class Socket<St extends SocketType=any> {
 		this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
 		this.data = data as any as SocketData<St>;
 
-		this.flags = 0;
+		this.flags = SocketFlag.None;
 	}
 
 	get isOutput() {

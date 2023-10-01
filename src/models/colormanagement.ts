@@ -6,6 +6,6 @@ export {Luv, LchUv} from "./colormanagement/spaces/luv";
 
 export {spectralPowerDistribution, singleWavelength} from "./colormanagement/spectral-power-distribution";
 export {blackbody} from "./colormanagement/blackbody";
-export {cmyToRgb, rgbToCmy, hslToRgb, hsvToRgb, hwbToRgb} from "./colormanagement/rgb-models";
+export {cmyToRgb, rgbToCmy, hslToRgb, rgbToHsv, hsvToRgb, hwbToRgb} from "./colormanagement/rgb-models";
 
 export * as difference from "./colormanagement/difference";

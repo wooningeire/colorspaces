@@ -1,4 +1,4 @@
-import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext} from "../Node";
+import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, Tree} from "../Node";
 import * as cm from "../colormanagement";
 
 import {Color, Vec2, Vec3, pipe} from "@/util";
@@ -62,13 +62,35 @@ export namespace models {
 		static readonly LABEL = "HSV";
 		static readonly DESC = "desc.node.hsv";
 
+		private readonly methodSocket: Socket<St.Dropdown>;
+		private readonly valueSockets: Socket[];
+		static readonly HsvMethod = (() => {
+			enum HsvMethod {
+				ToRgb = "to rgb",
+				FromRgbVector = "from rgb vector",
+				FromRgbColor = "from rgb color",
+			};
+			return HsvMethod;
+		})();
+
 		constructor() {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-				new Socket(this, true, Socket.Type.Float, "Saturation"),
-				new Socket(this, true, Socket.Type.Float, "Value"),
+				(this.methodSocket = new Socket(this, true, Socket.Type.Dropdown, "", false, {
+					options: [
+						{value: HsvNode.HsvMethod.ToRgb, text: "To RGB"},
+						{value: HsvNode.HsvMethod.FromRgbVector, text: "From RGB vector"},
+						{value: HsvNode.HsvMethod.FromRgbColor, text: "From RGB color"},
+					],
+					defaultValue: HsvNode.HsvMethod.ToRgb,
+				})),
+
+				...(this.valueSockets = [
+					new Socket(this, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new Socket(this, true, Socket.Type.Float, "Saturation"),
+					new Socket(this, true, Socket.Type.Float, "Value"),
+				]),
 			);
 
 			this.outs.push(
@@ -76,8 +98,85 @@ export namespace models {
 			);
 		}
 
-		output(context: NodeEvalContext): Color {
-			return cm.hsvToRgb(this.ins.map(socket => socket.inValue(context)) as Color) as Color;
+		output(context: NodeEvalContext): Color | number {
+			switch (this.methodSocket.inValue()) {
+				default:
+				case HsvNode.HsvMethod.ToRgb:
+					return cm.hsvToRgb(this.valueSockets.map(socket => socket.inValue(context)) as Color) as Color;
+
+				case HsvNode.HsvMethod.FromRgbVector:
+					return cm.rgbToHsv(this.valueSockets[0].inValue(context) as Vec3)[this.outs.indexOf(context.socket!)];
+
+				case HsvNode.HsvMethod.FromRgbColor:
+					return cm.rgbToHsv(this.valueSockets[0].inValue(context) as Color)[this.outs.indexOf(context.socket!)];
+			}
+		}
+
+		onSocketFieldValueChange(socket: Socket, tree: Tree) {
+			if (socket !== this.methodSocket) return;
+
+			while (this.valueSockets.length > 0) {
+				this.ins.pop();
+				const oldSocket = this.valueSockets.pop();
+				oldSocket?.links.forEach(link => tree.unlink(link));
+			}
+
+			while (this.outs.length > 0) {
+				const oldSocket = this.outs.pop();
+				oldSocket?.links.forEach(link => tree.unlink(link));
+			}
+
+			let newIns: Socket[] = [];
+			let newOuts: Socket[] = [];
+
+			switch (this.methodSocket.inValue()) {
+				case HsvNode.HsvMethod.ToRgb: {
+					newIns = [
+						new Socket(this, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+						new Socket(this, true, Socket.Type.Float, "Saturation"),
+						new Socket(this, true, Socket.Type.Float, "Value"),
+					];
+					
+					newOuts = [
+						new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
+					];
+
+					break;
+				}
+
+				case HsvNode.HsvMethod.FromRgbVector: {
+					newIns = [
+						new Socket(this, true, Socket.Type.RgbRaw, "RGB"),
+					];
+					
+					newOuts = [
+						new Socket(this, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+						new Socket(this, false, Socket.Type.Float, "Saturation"),
+						new Socket(this, false, Socket.Type.Float, "Value"),
+					];
+
+					break;
+				}
+
+				case HsvNode.HsvMethod.FromRgbColor: {
+					newIns = [
+						new Socket(this, true, Socket.Type.ColTransformed, "RGB color"),
+					];
+					
+					newOuts = [
+						new Socket(this, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+						new Socket(this, false, Socket.Type.Float, "Saturation"),
+						new Socket(this, false, Socket.Type.Float, "Value"),
+					];
+
+					break;
+				}
+			}
+
+			this.ins.push(...newIns);
+			this.valueSockets.push(...newIns);
+
+			this.outs.push(...newOuts);
 		}
 	}
 

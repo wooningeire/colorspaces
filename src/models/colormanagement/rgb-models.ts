@@ -44,6 +44,31 @@ export const hsvToRgb = ([hue, sat, value]: Vec3) => {
 	else              return [plateau, valley,  falling];
 };
 
+export const rgbToHsv = ([red, green, blue]: Vec3) => {
+	const componentMax = Math.max(red, green, blue);
+	const componentMin = Math.min(red, green, blue);
+	const componentRange = componentMax - componentMin;
+
+	let hue: number;
+	if (componentRange === 0) {
+		hue = 0;
+	} else if (componentMax === red) {
+		hue = mod((green - blue) / componentRange, 6);
+	} else if (componentMax === blue) {
+		hue = (blue - red) / componentRange + 2;
+	} else {
+		hue = (red - green) / componentRange + 2;
+	}
+
+	return [
+		hue / 6,
+		componentRange === 0
+				? 0
+				: componentRange / componentMax,
+		componentMax,
+	];
+};
+
 export const hwbToRgb = ([hue, whiteness, blackness]: Vec3) => {
 	const scaledWhiteness = whiteness / Math.max(1, whiteness + blackness);
 	const scaledBlackness = blackness / Math.max(1, whiteness + blackness);

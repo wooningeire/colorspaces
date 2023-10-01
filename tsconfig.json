@@ -17,7 +17,7 @@
 		"skipLibCheck": true,
 
 		"baseUrl": "./",
-		// Must update in jest.config.ts and vite.config.ts
+		// Must update in vite.config.ts
 		"paths": {
 			"@/*": ["src/*"],
 		},
