@@ -25,6 +25,8 @@ const props = defineProps({
 	},
 });
 
+const datasetIdRef = ref(props.datasetId);
+
 const WIDTH = 830 - 360 + 1;
 const HEIGHT = 81;
 
@@ -87,7 +89,7 @@ const onchangeDatasetId = () => {
 	props.node.flushCache();
 	
 	rerenderSpectrum();
-	emit("update:datasetId", props.datasetId);
+	emit("update:datasetId", datasetIdRef.value);
 };
 
 
@@ -186,7 +188,7 @@ const beginInput = (downEvent: PointerEvent) => {
 			<div class="control-row">
 				<div>
 					<label>Dataset</label>
-					<select :value="datasetId"
+					<select v-model="datasetIdRef"
 							@change="onchangeDatasetId">
 						<option value="2deg">CIE 2° observer (1931)</option>
 						<option value="10deg">CIE 10° observer (1964)</option>
