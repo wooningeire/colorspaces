@@ -51,6 +51,7 @@ const isVector = [St.RgbRaw, St.RgbRawOrColTransformed].includes(props.socket.ty
 const isEntry = isFloat || isVector;
 
 const isRgb = Boolean(props.socket.flags & SocketFlag.Rgb);
+const isHue = Boolean(props.socket.flags & SocketFlag.Hue);
 
 type FloatSocket = Socket<St.Float>;
 type VectorSocket = Socket<St.RgbRaw | St.RgbRawOrColTransformed>;
@@ -63,11 +64,23 @@ type VectorSocket = Socket<St.RgbRaw | St.RgbRawOrColTransformed>;
 			<EntrySlider v-model="(socket as FloatSocket).fieldValue"
 					@update:modelValue="$emit('value-change')"
 					
-					:convertIn="isRgb ? (value: number) => value / settings.rgbScale : undefined"
-					:convertOut="isRgb ? (value: number) => value * settings.rgbScale : undefined"
+					:convertIn="
+						isRgb ? (value: number) => value / settings.rgbScale :
+						isHue ? (value: number) => value / settings.hueScale :
+						undefined
+					"
+					:convertOut="
+						isRgb ? (value: number) => value * settings.rgbScale :
+						isHue ? (value: number) => value * settings.hueScale :
+						undefined
+					"
 					:validate="isFinite"
 
-					:max="isRgb ? settings.rgbScale : undefined"
+					:max="
+						isRgb ? settings.rgbScale :
+						isHue ? settings.hueScale :
+						undefined
+					"
 					
 					v-bind="(socket as FloatSocket).data.sliderProps" />
 		</template>
@@ -76,11 +89,23 @@ type VectorSocket = Socket<St.RgbRaw | St.RgbRawOrColTransformed>;
 			<EntryRgb v-model="(socket as VectorSocket).fieldValue"
 					@update:modelValue="$emit('value-change')"
 
-					:convertIn="isRgb ? (color: number[]) => color.map(value => value / settings.rgbScale) : undefined"
-					:convertOut="isRgb ? (color: number[]) => color.map(value => value * settings.rgbScale) : undefined"
+					:convertIn="
+						isRgb ? (color: number[]) => color.map(value => value / settings.rgbScale) :
+						isHue ? (color: number[]) => color.map(value => value / settings.hueScale) :
+						undefined
+					"
+					:convertOut="
+						isRgb ? (color: number[]) => color.map(value => value * settings.rgbScale) :
+						isHue ? (color: number[]) => color.map(value => value * settings.hueScale) :
+						undefined
+					"
 					:validate="(color: number[]) => color.every(comp => isFinite(comp))"
 					
-					:maxes="isRgb ? (socket as VectorSocket).fieldValue.map(() => settings.rgbScale) : undefined"
+					:maxes="
+						isRgb ? (socket as VectorSocket).fieldValue.map(() => settings.rgbScale) :
+						isHue ? (socket as VectorSocket).fieldValue.map(() => settings.hueScale) :
+						undefined
+					"
 					:sliderProps="(socket as VectorSocket).data.sliderProps"
 					:descs="socket.data.fieldText" />
 		</template>
