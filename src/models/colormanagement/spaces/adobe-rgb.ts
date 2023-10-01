@@ -9,7 +9,7 @@ const isZeroToOne = (col: Col) => col.every(comp => 0 <= comp && comp <= 1);
 
 //#region Types
 export class AdobeRgb extends Col {
-	static readonly labels = ["R", "G", "B"];
+	// static readonly labels = ["R", "G", "B"];
 	
 	static readonly defaultIlluminant = illuminantsXy["2deg"]["D65"];
 
@@ -40,7 +40,7 @@ export class AdobeRgb extends Col {
 }
 
 export class LinearAdobeRgb extends Col {
-	static readonly labels = ["R", "G", "B"];
+	// static readonly labels = ["R", "G", "B"];
 	
 	static readonly defaultIlluminant = illuminantsXy["2deg"]["D65"];
 

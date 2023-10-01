@@ -5,7 +5,7 @@ import {Col, Xyz, Xy, adaptXyz, xyyToXyzNoAdapt} from "./col-xyz-xyy-illuminants
 
 //#region Types
 export class Lab extends Col {
-	static readonly labels = ["L*", "a*", "b*"];
+	// static readonly labels = ["L*", "a*", "b*"];
 
 	constructor(data: Vec3, newIlluminant: Xy) {
 		super(data, newIlluminant);
@@ -25,7 +25,7 @@ export class Lab extends Col {
 }
 
 export class LchAb extends Col {
-	static readonly labels = ["L*", "C*", "h"];
+	// static readonly labels = ["L*", "C*", "h"];
 
 	constructor(data: Vec3, newIlluminant: Xy) {
 		super(data, newIlluminant);

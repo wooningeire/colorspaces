@@ -27,6 +27,33 @@ export const hslToRgb = ([hue, sat, lightness]: Vec3) => {
 	];
 };
 
+export const rgbToHsl = ([red, green, blue]: Vec3) => {
+	const componentMax = Math.max(red, green, blue);
+	const componentMin = Math.min(red, green, blue);
+	const componentRange = componentMax - componentMin;
+
+	let hue: number;
+	if (componentRange === 0) {
+		hue = 0;
+	} else if (componentMax === red) {
+		hue = mod((green - blue) / componentRange, 6);
+	} else if (componentMax === blue) {
+		hue = (blue - red) / componentRange + 2;
+	} else {
+		hue = (red - green) / componentRange + 2;
+	}
+
+	const lightness = (componentMin + componentMax) / 2;
+
+	return [
+		hue / 6,
+		componentRange === 0
+				? 0
+				: componentRange / (1 - Math.abs(2 * lightness - 1)),
+		lightness,
+	];
+};
+
 export const hsvToRgb = ([hue, sat, value]: Vec3) => {
 	hue = mod(hue, 1) * 6;
 	const segmentStart = Math.floor(hue);
@@ -78,4 +105,14 @@ export const hwbToRgb = ([hue, whiteness, blackness]: Vec3) => {
 		1 - scaledWhiteness / (1 - scaledBlackness),
 		1 - scaledBlackness,
 	]);
+};
+
+export const rgbToHwb = ([red, green, blue]: Vec3) => {
+	const hsv = rgbToHsv([red, green, blue]);
+	
+	return [
+		hsv[0],
+		(1 - hsv[1]) * hsv[2],
+		1 - hsv[2],
+	];
 };

@@ -5,6 +5,7 @@ import NodeOutputColorValues from "./NodeOutputColorValues.vue";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 
 import {Node, OutputDisplayType} from "@/models/Node";
+import {Col} from "@/models/colormanagement";
 
 const props = defineProps({
 	node: {
@@ -17,7 +18,7 @@ const hasConstantOutput = computed(() => props.node.getDependencyAxes().size ===
 
 const type = computed(() => (props.node.constructor as typeof Node).outputDisplayType);
 
-const output = computed(() => props.node.output({coords: [0, 0]}));
+const output = computed(() => props.node.display());
 
 
 const nDecimals = 4;
@@ -28,22 +29,23 @@ const nDecimals = 4;
 			v-if="type !== OutputDisplayType.None">
 
 		<template v-if="type === OutputDisplayType.Color">
-			<NodeOutputColorValues :values="output"
+			<NodeOutputColorValues :values="output.values"
+					:labels="output.labels"
+					:flags="output.flags"
 					v-if="hasConstantOutput" />
 			<NodeOutputColorDisplay :node="node" />
 		</template>
 
 		<template v-else-if="type === OutputDisplayType.Float">
 			<div class="output-values"
-					v-if="hasConstantOutput">{{output.toFixed(nDecimals)}}</div>
+					v-if="hasConstantOutput">{{output.values[0].toFixed(nDecimals)}}</div>
 		</template>
 
 		<template v-else-if="type === OutputDisplayType.Vec">
-			<div class="output-values"
-					v-if="hasConstantOutput">
-				<div class="data"
-						v-for="value of output">{{value.toFixed(nDecimals)}}</div>
-			</div>
+			<NodeOutputColorValues :values="output.values"
+					:labels="output.labels"
+					:flags="output.flags"
+					v-if="hasConstantOutput" />
 		</template>
 	</div>
 </template>

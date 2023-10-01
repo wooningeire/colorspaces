@@ -67,6 +67,12 @@ export enum OutputDisplayType {
 	Vec,
 }
 
+export type NodeDisplay = {
+	labels: string[],
+	values: number[],
+	flags: SocketFlag[],
+};
+
 export class Node {
 	static readonly TYPE: symbol = Symbol();
 	static readonly LABEL: string = "";
@@ -96,6 +102,22 @@ export class Node {
 
 	output(context: NodeEvalContext={}): any {
 		throw new TypeError("Abstract method / not implemented");
+	}
+	
+	display(context: NodeEvalContext={}): NodeDisplay {
+		return {
+			values: this.output(context),
+			labels: this.displayLabels,
+			flags: this.displayFlags,
+		};
+	}
+
+	get displayLabels(): string[] {
+		return [];
+	}
+
+	get displayFlags(): SocketFlag[] {
+		return [];
 	}
 
 	/**

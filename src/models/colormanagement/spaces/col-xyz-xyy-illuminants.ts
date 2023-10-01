@@ -9,8 +9,8 @@ import {Vec2, Vec3} from "@/util";
 //@ts-ignore
 export class Col extends Array {
 	static readonly [Symbol.species] = Array;
-	static readonly labels: string[] = [];
-	static readonly isRgb: boolean = false;
+	// static readonly labels: string[] = [];
+	// static readonly isRgb: boolean = false;
 
 	static readonly defaultIlluminant: Xy = null!; //illuminantE; // set later
 
@@ -56,7 +56,7 @@ export class Col extends Array {
 
 //#region Types
 export class Xyz extends Col {
-	static readonly labels = ["X", "Y", "Z"];
+	// static readonly labels = ["X", "Y", "Z"];
 
 	constructor(data: Vec3, newIlluminant: Xy=illuminantE) {
 		if (data.length !== 3) throw new TypeError("Data must have 3 components");
@@ -82,7 +82,7 @@ export class Xyz extends Col {
 }
 
 export class Xyy extends Col {
-	static readonly labels = ["x", "y", "Y"];
+	// static readonly labels = ["x", "y", "Y"];
 
 	constructor(data: Vec3, newIlluminant: Xy=illuminantE) {
 		super(data, newIlluminant);

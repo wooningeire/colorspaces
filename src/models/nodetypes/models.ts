@@ -34,44 +34,92 @@ export namespace models {
 		}
 	}
 
+	enum RgbMode {
+		ToRgb = "to rgb",
+		FromRgb = "from rgb",
+	}
 	export class HslNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HSL";
 		static readonly DESC = "desc.node.hsl";
+		static readonly outputDisplayType = OutputDisplayType.Vec;
+
+		private static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
+			[RgbMode.ToRgb, new Overload(
+				"To RGB",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new Socket(node, true, Socket.Type.Float, "Saturation"),
+					new Socket(node, true, Socket.Type.Float, "Lightness"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.RgbRaw, "RGB"),
+				],
+				(ins, outs, context) => cm.hslToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
+			)],
+
+			[RgbMode.FromRgb, new Overload(
+				"From RGB",
+				node => [
+					new Socket(node, true, Socket.Type.RgbRawOrColTransformed, "RGB or RGB color"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new Socket(node, false, Socket.Type.Float, "Saturation"),
+					new Socket(node, false, Socket.Type.Float, "Lightness"),
+				],
+				(ins, outs, context) => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
+			)],
+		]));
+
+		private readonly overloadManager = new OverloadManager(this, RgbMode.ToRgb, HslNode.overloadGroup);
 
 		constructor() {
 			super();
-
-			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-				new Socket(this, true, Socket.Type.Float, "Saturation"),
-				new Socket(this, true, Socket.Type.Float, "Lightness"),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
-			);
+			this.overloadManager.setSockets();
 		}
 
-		output(context: NodeEvalContext): Color {
-			return cm.hslToRgb(this.ins.map(socket => socket.inValue(context)) as Color) as Color;
+		output(context: NodeEvalContext): Vec3 | number {
+			return this.overloadManager.evaluate(context);
+		}
+
+		display(context: NodeEvalContext) {
+			switch (this.overloadManager.mode) {
+				default:
+				case RgbMode.ToRgb:
+					return {
+						values: this.output(context) as Vec3,
+						labels: ["R", "G", "B"],
+						flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
+					};
+
+				case RgbMode.FromRgb:
+					return {
+						values: [
+							this.output({ ...context, socket: this.outs[0] }),
+							this.output({ ...context, socket: this.outs[1] }),
+							this.output({ ...context, socket: this.outs[2] }),
+						] as Vec3,
+						labels: ["H", "S", "L"],
+						flags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
+					};
+			}
+		}
+
+		onSocketFieldValueChange(socket: Socket, tree: Tree) {
+			if (socket !== this.overloadManager.dropdown) return;
+			this.overloadManager.handleModeChange(tree);
 		}
 	}
 
-	enum HsvMethod {
-		ToRgb = "to rgb",
-		FromRgbVector = "from rgb vector",
-		FromRgbColor = "from rgb color",
-	}
 	export class HsvNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HSV";
 		static readonly DESC = "desc.node.hsv";
-        static readonly outputDisplayType = OutputDisplayType.Vec;
+		static readonly outputDisplayType = OutputDisplayType.Vec;
 
-		private static readonly HsvMethod = HsvMethod;
-		private static readonly overloadGroup = new OverloadGroup(new Map<HsvMethod, Overload<Color | number>>([
-			[HsvMethod.ToRgb, new Overload(
+		private static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
+			[RgbMode.ToRgb, new Overload(
 				"To RGB",
 				node => [
 					new Socket(node, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
@@ -84,7 +132,7 @@ export namespace models {
 				(ins, outs, context) => cm.hsvToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
 			)],
 
-			[HsvMethod.FromRgbVector, new Overload(
+			[RgbMode.FromRgb, new Overload(
 				"From RGB",
 				node => [
 					new Socket(node, true, Socket.Type.RgbRawOrColTransformed, "RGB or RGB color"),
@@ -98,15 +146,38 @@ export namespace models {
 			)],
 		]));
 
-		private readonly overloadManager = new OverloadManager(this, HsvNode.HsvMethod.ToRgb, HsvNode.overloadGroup);
+		private readonly overloadManager = new OverloadManager(this, RgbMode.ToRgb, HsvNode.overloadGroup);
 
 		constructor() {
 			super();
-            this.overloadManager.setSockets();
+			this.overloadManager.setSockets();
 		}
 
-		output(context: NodeEvalContext): Color | number {
+		output(context: NodeEvalContext): Vec3 | number {
 			return this.overloadManager.evaluate(context);
+		}
+
+		display(context: NodeEvalContext) {
+			switch (this.overloadManager.mode) {
+				default:
+				case RgbMode.ToRgb:
+					return {
+						values: this.output(context) as Vec3,
+						labels: ["R", "G", "B"],
+						flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
+					};
+
+				case RgbMode.FromRgb:
+					return {
+						values: [
+							this.output({ ...context, socket: this.outs[0] }),
+							this.output({ ...context, socket: this.outs[1] }),
+							this.output({ ...context, socket: this.outs[2] }),
+						] as Vec3,
+						labels: ["H", "S", "V"],
+						flags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
+					};
+			}
 		}
 
 		onSocketFieldValueChange(socket: Socket, tree: Tree) {
@@ -119,23 +190,73 @@ export namespace models {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HWB";
 		static readonly DESC = "desc.node.hwb";
+		static readonly outputDisplayType = OutputDisplayType.Vec;
+
+		private static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
+			[RgbMode.ToRgb, new Overload(
+				"To RGB",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new Socket(node, true, Socket.Type.Float, "Whiteness"),
+					new Socket(node, true, Socket.Type.Float, "Blackness"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.RgbRaw, "RGB"),
+				],
+				(ins, outs, context) => cm.hwbToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
+			)],
+
+			[RgbMode.FromRgb, new Overload(
+				"From RGB",
+				node => [
+					new Socket(node, true, Socket.Type.RgbRawOrColTransformed, "RGB or RGB color"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new Socket(node, false, Socket.Type.Float, "Whiteness"),
+					new Socket(node, false, Socket.Type.Float, "Blackness"),
+				],
+				(ins, outs, context) => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
+			)],
+		]));
+
+		private readonly overloadManager = new OverloadManager(this, RgbMode.ToRgb, HwbNode.overloadGroup);
 
 		constructor() {
 			super();
-
-			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-				new Socket(this, true, Socket.Type.Float, "Whiteness"),
-				new Socket(this, true, Socket.Type.Float, "Blackness"),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
-			);
+			this.overloadManager.setSockets();
 		}
 
-		output(context: NodeEvalContext): Color {
-			return cm.hwbToRgb(this.ins.map(socket => socket.inValue(context)) as Color) as Color;
+		output(context: NodeEvalContext): Vec3 | number {
+			return this.overloadManager.evaluate(context);
+		}
+
+		display(context: NodeEvalContext) {
+			switch (this.overloadManager.mode) {
+				default:
+				case RgbMode.ToRgb:
+					return {
+						values: this.output(context) as Vec3,
+						labels: ["R", "G", "B"],
+						flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
+					};
+
+				case RgbMode.FromRgb:
+					return {
+						values: [
+							this.output({ ...context, socket: this.outs[0] }),
+							this.output({ ...context, socket: this.outs[1] }),
+							this.output({ ...context, socket: this.outs[2] }),
+						] as Vec3,
+						labels: ["H", "W", "B"],
+						flags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
+					};
+			}
+		}
+
+		onSocketFieldValueChange(socket: Socket, tree: Tree) {
+			if (socket !== this.overloadManager.dropdown) return;
+			this.overloadManager.handleModeChange(tree);
 		}
 	}
 
@@ -143,23 +264,73 @@ export namespace models {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "CMY";
 		static readonly DESC = "desc.node.cmy";
+		static readonly outputDisplayType = OutputDisplayType.Vec;
+
+		private static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
+			[RgbMode.ToRgb, new Overload(
+				"To RGB",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Cyan").flag(SocketFlag.Rgb),
+					new Socket(node, true, Socket.Type.Float, "Magenta").flag(SocketFlag.Rgb),
+					new Socket(node, true, Socket.Type.Float, "Yellow").flag(SocketFlag.Rgb),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.RgbRaw, "RGB"),
+				],
+				(ins, outs, context) => cm.cmyToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
+			)],
+
+			[RgbMode.FromRgb, new Overload(
+				"From RGB",
+				node => [
+					new Socket(node, true, Socket.Type.RgbRawOrColTransformed, "RGB or RGB color"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Cyan").flag(SocketFlag.Rgb),
+					new Socket(node, false, Socket.Type.Float, "Magenta").flag(SocketFlag.Rgb),
+					new Socket(node, false, Socket.Type.Float, "Yellow").flag(SocketFlag.Rgb),
+				],
+				(ins, outs, context) => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
+			)],
+		]));
+
+		private readonly overloadManager = new OverloadManager(this, RgbMode.ToRgb, CmyNode.overloadGroup);
 
 		constructor() {
 			super();
-
-			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "Cyan").flag(SocketFlag.Rgb),
-				new Socket(this, true, Socket.Type.Float, "Magenta").flag(SocketFlag.Rgb),
-				new Socket(this, true, Socket.Type.Float, "Yellow").flag(SocketFlag.Rgb),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
-			);
+			this.overloadManager.setSockets();
 		}
 
-		output(context: NodeEvalContext): Color {
-			return cm.cmyToRgb(this.ins.map(socket => socket.inValue(context)) as Color) as Color;
+		output(context: NodeEvalContext): Vec3 | number {
+			return this.overloadManager.evaluate(context);
+		}
+
+		onSocketFieldValueChange(socket: Socket, tree: Tree) {
+			if (socket !== this.overloadManager.dropdown) return;
+			this.overloadManager.handleModeChange(tree);
+		}
+
+		display(context: NodeEvalContext) {
+			switch (this.overloadManager.mode) {
+				default:
+				case RgbMode.ToRgb:
+					return {
+						values: this.output(context) as Vec3,
+						labels: ["R", "G", "B"],
+						flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
+					};
+
+				case RgbMode.FromRgb:
+					return {
+						values: [
+							this.output({ ...context, socket: this.outs[0] }),
+							this.output({ ...context, socket: this.outs[1] }),
+							this.output({ ...context, socket: this.outs[2] }),
+						] as Vec3,
+						labels: ["C", "M", "Y"],
+						flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
+					};
+			}
 		}
 	}
 

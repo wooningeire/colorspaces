@@ -8,8 +8,8 @@ import {Col, Xyz, Xy, illuminantsXy, chromaticAdaptationMat, adaptXyz, xyyToXyzN
 const isZeroToOne = (col: Col) => col.every(comp => 0 <= comp && comp <= 1);
 
 export class Srgb extends Col {
-	static readonly labels = ["R", "G", "B"];
-	static readonly isRgb = true;
+	// static readonly labels = ["R", "G", "B"];
+	// static readonly isRgb = true;
 
 	static readonly defaultIlluminant = illuminantsXy["2deg"]["D65"];
 
@@ -40,8 +40,8 @@ export class Srgb extends Col {
 }
 
 export class LinearSrgb extends Col {
-	static readonly labels = ["R", "G", "B"];
-	static readonly isRgb = true;
+	// static readonly labels = ["R", "G", "B"];
+	// static readonly isRgb = true;
 	
 	constructor(data: Vec3) {
 		super(data, illuminantsXy["2deg"]["D65"]);
@@ -67,8 +67,8 @@ export class LinearSrgb extends Col {
 }
 
 export class Rec709 extends Col {
-	static readonly labels = ["R", "G", "B"];
-	static readonly isRgb = true;
+	// static readonly labels = ["R", "G", "B"];
+	// static readonly isRgb = true;
 
 	static readonly defaultIlluminant = illuminantsXy["2deg"]["D65"];
 

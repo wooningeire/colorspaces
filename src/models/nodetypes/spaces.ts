@@ -80,6 +80,14 @@ export namespace spaces {
 		output(context: NodeEvalContext) {
 			return cm.LinearSrgb.from(this.inSocket.inValue(context));
 		}
+
+		get displayLabels() {
+			return ["R", "G", "B"];
+		}
+
+		get displayFlags() {
+			return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
+		}
 	}
 
 	export class SrgbNode extends SpaceNode {
@@ -105,6 +113,14 @@ export namespace spaces {
 
 		output(context: NodeEvalContext): cm.Srgb {
 			return cm.Srgb.from(this.inSocket.inValue(context));
+		}
+
+		get displayLabels() {
+			return ["R", "G", "B"];
+		}
+
+		get displayFlags() {
+			return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
 		}
 	}
 
@@ -140,6 +156,10 @@ export namespace spaces {
 			const illuminant = getIlluminant(this.whitePointSocket, context);
 
 			return cm.Xyz.from(this.colorSocket.inValue(context), illuminant);
+		}
+
+		get displayLabels() {
+			return ["X", "Y", "Z"];
 		}
 	}
 
@@ -184,6 +204,10 @@ export namespace spaces {
 			const illuminant = getIlluminant(this.whitePointSocket, context);
 			return cm.Xyy.from(this.colorSocket.inValue(context), illuminant);
 		}
+
+		get displayLabels() {
+			return ["x", "y", "Y"];
+		}
 	}
 
 	export class LabNode extends SpaceNode {
@@ -213,6 +237,10 @@ export namespace spaces {
 		output(context: NodeEvalContext): cm.Lab {
 			const illuminant = getIlluminant(this.whitePointSocket, context);
 			return cm.Lab.from(this.colorSocket.inValue(context), illuminant);
+		}
+
+		get displayLabels() {
+			return ["L*", "a*", "b*"];
 		}
 	}
 
@@ -258,6 +286,10 @@ export namespace spaces {
 			const illuminant = getIlluminant(this.whitePointSocket, context);
 			return cm.LchAb.from(this.colorSocket.inValue(context), illuminant);
 		}
+
+		get displayLabels() {
+			return ["L*", "C*", "h"];
+		}
 	}
 
 	export class LuvNode extends SpaceNode {
@@ -287,6 +319,10 @@ export namespace spaces {
 		output(context: NodeEvalContext): cm.Luv {
 			const illuminant = getIlluminant(this.whitePointSocket, context);
 			return cm.Luv.from(this.colorSocket.inValue(context), illuminant);
+		}
+
+		get displayLabels() {
+			return ["L*", "u*", "v*"];
 		}
 	}
 
@@ -332,6 +368,10 @@ export namespace spaces {
 			const illuminant = getIlluminant(this.whitePointSocket, context);
 			return cm.LchUv.from(this.colorSocket.inValue(context), illuminant);
 		}
+
+		get displayLabels() {
+			return ["L*", "C*", "h"];
+		}
 	}
 
 	export class LinearAdobeRgbNode extends SpaceNode {
@@ -356,6 +396,14 @@ export namespace spaces {
 		output(context: NodeEvalContext) {
 			return cm.LinearAdobeRgb.from(this.inSocket.inValue(context));
 		}
+
+		get displayLabels() {
+			return ["R", "G", "B"];
+		}
+
+		get displayFlags() {
+			return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
+		}
 	}
 
 	export class AdobeRgbNode extends SpaceNode {
@@ -379,6 +427,14 @@ export namespace spaces {
 
 		output(context: NodeEvalContext): cm.AdobeRgb {
 			return cm.AdobeRgb.from(this.inSocket.inValue(context));
+		}
+
+		get displayLabels() {
+			return ["R", "G", "B"];
+		}
+
+		get displayFlags() {
+			return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
 		}
 	}
 
@@ -405,6 +461,14 @@ export namespace spaces {
 
 		output(context: NodeEvalContext): cm.Rec709 {
 			return cm.Rec709.from(this.inSocket.inValue(context));
+		}
+
+		get displayLabels() {
+			return ["R", "G", "B"];
+		}
+
+		get displayFlags() {
+			return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
 		}
 	}
 }
