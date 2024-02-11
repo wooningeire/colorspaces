@@ -77,7 +77,7 @@ export namespace images {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
+				new Socket(this, false, Socket.Type.Vector, "RGB"),
 			);
 		}
 

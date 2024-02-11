@@ -155,7 +155,7 @@ defineExpose({
 	const resultSocket = this.deviceNodes.transformNode.ins[0];
 
 	for (const link of resultSocket.links) {
-		if (link.src.type !== Socket.Type.ColTransformed) continue;
+		if (link.src.type !== Socket.Type.ColorCoords) continue;
 		return link.src.node.output();
 	}
 

@@ -1,13 +1,13 @@
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType} from "../Node";
+import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag} from "../Node";
 import * as cm from "../colormanagement";
 
 import {Color, Vec2, Vec3, pipe} from "@/util";
 
 export namespace externals {
-	export class CssNode extends Node {
+	export class CssOutputNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "CSS output";
-		static readonly DESC = "desc.node.css";
+		static readonly DESC = "desc.node.cssOutput";
 
 		static readonly outputDisplayType = OutputDisplayType.Css;
 
@@ -15,10 +15,10 @@ export namespace externals {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or RGB color"),
+				new Socket(this, true, Socket.Type.Vector, "RGB").flag(SocketFlag.Rgb),
 			);
 
-			this.width = 200;
+			this.width = 250;
 		}
 
 		output(context: NodeEvalContext) {
@@ -30,14 +30,14 @@ export namespace externals {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Display buffer";
 
-		readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
+		readonly colorSockets: Socket<St.VectorOrColor>[];
 		
 		constructor() {
 			super();
 			
 			this.ins.push(
 				...(this.colorSockets = [
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Color"),
+					new Socket(this, true, Socket.Type.VectorOrColor, "Color"),
 				]),
 			);
 
@@ -49,7 +49,7 @@ export namespace externals {
 		}
 
 		output(context: NodeEvalContext): cm.Srgb {
-			const color = (context.socket! as Socket<St.RgbRawOrColTransformed>).inValue(context);
+			const color = (context.socket! as Socket<St.VectorOrColor>).inValue(context);
 
 			return color && cm.Srgb.from(color);
 			// return this.colorSockets.filter(socket => socket.hasLinks)
@@ -67,7 +67,7 @@ export namespace externals {
 
 			if (!socket.isInput) return;
 
-			const newSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Color");
+			const newSocket = new Socket(this, true, Socket.Type.VectorOrColor, "Color");
 
 			this.ins.push(newSocket);
 			this.colorSockets.push(newSocket);

@@ -86,14 +86,17 @@ export abstract class Node {
 	static readonly LABEL: string = "";
 
 	static readonly DESC: StringKey | string = NO_DESC;
+	
+	static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.None;
 
 	readonly ins: Socket[] = [];
 	readonly outs: Socket[] = [];
 
 	private static nextId = 0;
 	readonly id = Node.nextId++;
-	
-	static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.None;
+
+	/** Used to memoize values */
+	private memo = new WeakMap<() => any, any>();
 
 
 	width = 140;
@@ -155,10 +158,23 @@ export abstract class Node {
 		Node.prototype.onSocketLink.call(this, socket, link, tree);
 	}
 
-	onDependencyUpdate() { // doesn't do anything yet
+	onSocketFieldValueChange(socket: Socket, tree: Tree) {}
+
+	onDependencyUpdate() {
+		// Clear the memoized values
+		this.memo = new WeakMap();
 	}
 
-	onSocketFieldValueChange(socket: Socket, tree: Tree) {}
+	/** Memoizes a value once computed */
+	memoize<T>(fn: () => T): T {
+		if (this.memo.has(fn)) {
+			return this.memo.get(fn);
+		}
+
+		const value = fn();
+		this.memo.set(fn, value);
+		return value;
+	}
 
 	// Eventually adapted into `findCyclicalLinks`
 	/* hasCircularDependency(visitedNodes=new Set<Node>()): boolean {
@@ -269,9 +285,9 @@ export enum SocketType {
 	Any,
 	Float,
 	Integer,
-	RgbRaw,
-	RgbRawOrColTransformed,
-	ColTransformed,
+	Vector,
+	VectorOrColor,
+	ColorCoords,
 	Dropdown,
 	Image,
 }
@@ -280,9 +296,9 @@ const St = SocketType;
 export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.Float ? number :
 		St extends SocketType.Integer ? number :
-		St extends SocketType.RgbRaw ? Color :
-		St extends SocketType.ColTransformed ? Color :
-		St extends SocketType.RgbRawOrColTransformed ? Color :
+		St extends SocketType.Vector ? Color :
+		St extends SocketType.ColorCoords ? Color :
+		St extends SocketType.VectorOrColor ? Color :
 		St extends SocketType.Dropdown ? string :
 		St extends SocketType.Image ? ImageData :
 		never;
@@ -316,10 +332,10 @@ type SocketData<St extends SocketType=any> =
 		St extends SocketType.Float ? {
 			sliderProps?: SliderProps,
 		} :
-		St extends SocketType.RgbRaw ? {
+		St extends SocketType.Vector ? {
 			sliderProps?: SliderProps[],
 		} :
-		St extends SocketType.RgbRawOrColTransformed ? {
+		St extends SocketType.VectorOrColor ? {
 			sliderProps?: SliderProps[],
 		} :
 		{});
@@ -337,15 +353,18 @@ export class Socket<St extends SocketType=any> {
 	static readonly Type = SocketType;
 	private static readonly defaultValues = new Map<SocketType, SocketValue>([
 		[St.Float, 0],
-		[St.RgbRaw, [0, 0, 0]],
-		[St.RgbRawOrColTransformed, [0, 0, 0]],
+		[St.Vector, [0, 0, 0]],
+		[St.VectorOrColor, [0, 0, 0]],
 	]);
 
+	/** Specifies what destination socket types a source socket type can be linked to, if it cannot be determined
+	 * automatically */
 	private static readonly typeCanBeLinkedTo = new Map<SocketType, SocketType[]>([
-		[St.RgbRaw, [St.RgbRaw, St.RgbRawOrColTransformed]],
-		[St.ColTransformed, [St.ColTransformed, St.RgbRawOrColTransformed]],
+		[St.Vector, [St.Vector, St.VectorOrColor]],
+		[St.ColorCoords, [St.ColorCoords, St.VectorOrColor, St.Vector]],
 	]);
 
+	/** Checks if a source socket type can be linked to a destination socket type */
 	static canLinkTypeTo(srcType: SocketType, dstType: SocketType) {
 		return dstType === St.Any
 				|| (this.typeCanBeLinkedTo.get(srcType)?.includes(dstType)

@@ -1,12 +1,12 @@
 import { Node, NodeEvalContext, Socket, SocketType as St, Tree } from "./Node";
 
 /** A collection of input/output sockets, as well as a function to compute outputs from the inputs' values */
-export class Overload<OutputType> {
+export class Overload<OutputType, InSockets extends Socket[]=any, OutSockets extends Socket[]=any> {
     constructor(
         readonly label: string,
-        readonly ins: (node: Node) => Socket[],
-        readonly outs: (node: Node) => Socket[],
-        readonly evaluate: (ins: Socket[], outs: Socket[], context: NodeEvalContext) => OutputType,
+        readonly ins: (node: Node) => [...InSockets],
+        readonly outs: (node: Node) => [...OutSockets],
+        readonly evaluate: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: Node) => OutputType,
         private readonly maintainExistingLinks = false,
     ) {}
 }
@@ -59,7 +59,7 @@ export class OverloadManager<Mode extends string> {
     }
 
     evaluate(context: NodeEvalContext) {
-        return this.overload.evaluate(this.ins, this.outs, context);
+        return this.overload.evaluate(this.ins, this.outs, context, this.node);
     }
 
     handleModeChange(tree: Tree) {

@@ -51,7 +51,7 @@ const isOutputNode = props.socket.node instanceof externals.DeviceTransformNode;
 
 
 const isFloat = props.socket.type === St.Float;
-const isVector = [St.RgbRaw, St.RgbRawOrColTransformed].includes(props.socket.type) && !isOutputNode;
+const isVector = [St.Vector, St.VectorOrColor].includes(props.socket.type) && !isOutputNode;
 
 const isEntry = isFloat || isVector;
 
@@ -59,7 +59,7 @@ const isRgb = Boolean(props.socket.flags & SocketFlag.Rgb);
 const isHue = Boolean(props.socket.flags & SocketFlag.Hue);
 
 type FloatSocket = Socket<St.Float>;
-type VectorSocket = Socket<St.RgbRaw | St.RgbRawOrColTransformed>;
+type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
 </script>
 
 <template>

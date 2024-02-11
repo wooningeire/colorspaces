@@ -6,6 +6,8 @@ export const NO_DESC = Symbol();
 export default (key: string | StringKey) => marked.parseInline(strings[key] ?? `[missing text: \`${String(key)}\`]`);
 
 const strings = {
+	"general.socketDataTypeLabel": "**Data type:** ",
+
 	"label.nodeCategory.models": "Models",
 	"label.nodeCategory.spaces": "Spaces",
 
@@ -40,7 +42,7 @@ const strings = {
 	"desc.node.gradient": "Generates a range of numbers.",
 	"desc.node.imageFile": "Reads RGB data from a local image file.",
 
-	"desc.node.css": "CSS formats for a given color.",
+	"desc.node.cssOutput": "CSS formats for an RGB color.",
 
 	"desc.socket.illuminant": "The chromaticity of the color “white”. This varies under different viewing circumstances.",
 
@@ -55,6 +57,19 @@ const strings = {
 	"desc.field.xyy.x": "**x**: One axis used to define chromaticity.",
 	"desc.field.xyy.y": "**y**: Another axis used to define chromaticity.",
 	"desc.field.xyy.lum": "**Y**: Relative luminance, i.e. luminance relative to the white point. (0–1)",
+
+	"label.socketType.float": "Float",
+	"desc.socketType.float.out": "A single number.",
+	"desc.socketType.float.in": "A single number.",
+	"label.socketType.vector": "Vector",
+	"desc.socketType.vector.out": "A list of (usually 3) numbers with no color space data attached to it.",
+	"desc.socketType.vector.in": "A list of (usually 3) numbers. This socket also accepts colors, but the associated color space will not affect the result of this node.",
+	"label.socketType.vectorOrColor": "Vector or color",
+	"desc.socketType.vectorOrColor.out": "A list of (usually 3) numbers which may or may not already be associated with a color space.",
+	"desc.socketType.vectorOrColor.in": "A list of (usually 3) numbers which may or may not already be associated with a color space (values will be handled differently depending on this).",
+	"label.socketType.colorCoords": "Color",
+	"desc.socketType.colorCoords.out": "A list of (usually 3) coordinates in a color space.",
+	"desc.socketType.colorCoords.in": "A list of (usually 3) coordinates in a color space.",
 
 	[NO_DESC]: "",
 };

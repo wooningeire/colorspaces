@@ -21,7 +21,7 @@ export namespace models {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "RGB"),
+				new Socket(this, false, Socket.Type.Vector, "RGB"),
 			);
 		}
 
@@ -53,7 +53,7 @@ export namespace models {
 					new Socket(node, true, Socket.Type.Float, "Lightness"),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.RgbRaw, "RGB"),
+					new Socket(node, false, Socket.Type.Vector, "RGB"),
 				],
 				(ins, outs, context) => cm.hslToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
 			)],
@@ -61,7 +61,7 @@ export namespace models {
 			[RgbMode.FromRgb, new Overload(
 				"From RGB",
 				node => [
-					new Socket(node, true, Socket.Type.RgbRawOrColTransformed, "RGB or RGB color"),
+					new Socket(node, true, Socket.Type.Vector, "RGB"),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
@@ -115,7 +115,7 @@ export namespace models {
 					new Socket(node, true, Socket.Type.Float, "Value"),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.RgbRaw, "RGB"),
+					new Socket(node, false, Socket.Type.Vector, "RGB"),
 				],
 				(ins, outs, context) => cm.hsvToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
 			)],
@@ -123,7 +123,7 @@ export namespace models {
 			[RgbMode.FromRgb, new Overload(
 				"From RGB",
 				node => [
-					new Socket(node, true, Socket.Type.RgbRawOrColTransformed, "RGB or RGB color"),
+					new Socket(node, true, Socket.Type.Vector, "RGB"),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
@@ -177,7 +177,7 @@ export namespace models {
 					new Socket(node, true, Socket.Type.Float, "Blackness"),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.RgbRaw, "RGB"),
+					new Socket(node, false, Socket.Type.Vector, "RGB"),
 				],
 				(ins, outs, context) => cm.hwbToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
 			)],
@@ -185,7 +185,7 @@ export namespace models {
 			[RgbMode.FromRgb, new Overload(
 				"From RGB",
 				node => [
-					new Socket(node, true, Socket.Type.RgbRawOrColTransformed, "RGB or RGB color"),
+					new Socket(node, true, Socket.Type.Vector, "RGB"),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
@@ -239,7 +239,7 @@ export namespace models {
 					new Socket(node, true, Socket.Type.Float, "Yellow").flag(SocketFlag.Rgb),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.RgbRaw, "RGB"),
+					new Socket(node, false, Socket.Type.Vector, "RGB"),
 				],
 				(ins, outs, context) => cm.cmyToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
 			)],
@@ -247,7 +247,7 @@ export namespace models {
 			[RgbMode.FromRgb, new Overload(
 				"From RGB",
 				node => [
-					new Socket(node, true, Socket.Type.RgbRawOrColTransformed, "RGB or RGB color"),
+					new Socket(node, true, Socket.Type.Vector, "RGB"),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Cyan").flag(SocketFlag.Rgb),
@@ -300,7 +300,7 @@ export namespace models {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "XYZ"),
+				new Socket(this, false, Socket.Type.Vector, "XYZ"),
 			);
 		}
 
@@ -336,7 +336,7 @@ export namespace models {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "Vector"),
+				new Socket(this, false, Socket.Type.Vector, "Vector"),
 			);
 		}
 
@@ -361,7 +361,7 @@ export namespace models {
 			super();
 			
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "XYZ"),
+				new Socket(this, false, Socket.Type.Vector, "XYZ"),
 			);
 			this.width = 503;
 		}
@@ -415,7 +415,7 @@ export namespace models {
 			);
 			
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "XYZ"),
+				new Socket(this, false, Socket.Type.Vector, "XYZ"),
 			);
 
 			this.width = 180;
@@ -456,7 +456,7 @@ export namespace models {
 			);
 			
 			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "XYZ"),
+				new Socket(this, false, Socket.Type.Vector, "XYZ"),
 			);
 
 			this.width = 180;

@@ -2,65 +2,148 @@ import {getIlluminant, labSliderProps, whitePointSocketOptions} from "./spaces";
 import {Tree, Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, NodeDisplay, NodeWithOverloads} from "../Node";
 import * as cm from "../colormanagement";
 
-import {Color, lerp} from "@/util";
+import {Color, Vec3, lerp} from "@/util";
 import { Overload, OverloadGroup, OverloadManager } from "../Overload";
 
 export namespace math {
-	export class LerpNode extends Node {
+	enum VectorArithmeticMode {
+		Lerp = "lerp",
+		Add = "add",
+		Multiply = "multiply",
+		Subtract = "subtract",
+		Divide = "divide",
+		Screen = "screen",
+		Scale = "scale",
+	}
+	export class VectorArithmeticNode extends NodeWithOverloads<VectorArithmeticMode> {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Vector blend";
+		static readonly LABEL = "Vector arithmetic";
+		static readonly outputDisplayType = OutputDisplayType.Vec;
 
-		private readonly methodSocket: Socket<St.Dropdown>;
-		private readonly facSocket: Socket<St.Float>;
-		private readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
+		static readonly overloadGroup = new OverloadGroup(new Map<VectorArithmeticMode, Overload<Vec3>>([
+			[VectorArithmeticMode.Lerp, new Overload(
+				"Lerp",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Blend amount"),
+					new Socket(node, true, Socket.Type.Vector, "Start"),
+					new Socket(node, true, Socket.Type.Vector, "End"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Vector, "Vector"),
+				],
+				(ins, outs, context) => {
+					const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+					return col0.map((_, i) => lerp(col0[i], col1[i], fac)) as Vec3;
+				},
+			)],
+
+			[VectorArithmeticMode.Add, new Overload(
+				"Add",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Blend amount"),
+					new Socket(node, true, Socket.Type.Vector, "Addend"),
+					new Socket(node, true, Socket.Type.Vector, "Addend"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Vector, "Sum"),
+				],
+				(ins, outs, context) => {
+					const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+					return col0.map((_, i) => col0[i] + col1[i] * fac) as Vec3;
+				},
+			)],
+
+			[VectorArithmeticMode.Multiply, new Overload(
+				"Componentwise multiply",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Blend amount"),
+					new Socket(node, true, Socket.Type.Vector, "Factor"),
+					new Socket(node, true, Socket.Type.Vector, "Factor"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Vector, "Product"),
+				],
+				(ins, outs, context) => {
+					const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+					return col0.map((_, i) => col0[i] * ((1 - fac) + col1[i] * fac)) as Vec3;
+				},
+			)],
+
+			[VectorArithmeticMode.Subtract, new Overload(
+				"Subtract",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Blend amount"),
+					new Socket(node, true, Socket.Type.Vector, "Minuend"),
+					new Socket(node, true, Socket.Type.Vector, "Subtrahend"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Vector, "Difference"),
+				],
+				(ins, outs, context) => {
+					const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+					return col0.map((_, i) => col0[i] - col1[i] * fac) as Vec3;
+				},
+			)],
+
+			[VectorArithmeticMode.Divide, new Overload(
+				"Componentwise divide",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Blend amount"),
+					new Socket(node, true, Socket.Type.Vector, "Dividend"),
+					new Socket(node, true, Socket.Type.Vector, "Divisor"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Vector, "Quotient"),
+				],
+				(ins, outs, context) => {
+					const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+					return col0.map((_, i) => col0[i] / ((1 - fac) + col1[i] * fac)) as Vec3;
+				},
+			)],
+
+			[VectorArithmeticMode.Screen, new Overload(
+				"Screen",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Blend amount"),
+					new Socket(node, true, Socket.Type.Vector, "Factor"),
+					new Socket(node, true, Socket.Type.Vector, "Factor"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Vector, "Product"),
+				],
+				(ins, outs, context) => {
+					const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+					return col0.map((_, i) => 1 - (1 - col0[i]) * (1 - col1[i] * fac)) as Vec3;
+				},
+			)],
+
+			[VectorArithmeticMode.Scale, new Overload(
+				"Scalar multiply",
+				node => [
+					new Socket(node, true, Socket.Type.Vector, "Vector"),
+					new Socket(node, true, Socket.Type.Float, "Scalar"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Vector, "Vector"),
+				],
+				(ins, outs, context) => {
+					const [col, scalar] = ins.map(socket => socket.inValue(context)) as [Vec3, number];
+					return col.map((_, i) => col[i] * scalar) as Vec3;
+				},
+			)],
+		]));
 
 		constructor() {
-			super();
-
-			this.ins.push(
-				(this.methodSocket = new Socket(this, true, Socket.Type.Dropdown, "", false, {
-					options: [
-						{value: "mix", text: "Mix"},
-						{value: "add", text: "Add"},
-						{value: "multiply", text: "Multiply"},
-					],
-					defaultValue: "mix",
-				})),
-				(this.facSocket = new Socket(this, true, Socket.Type.Float, "Blend amount")),
-				...(this.colorSockets = [
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Vector or color"),
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Vector or color"),
-				]),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.RgbRaw, "Vector"),
-			);
+			super(VectorArithmeticMode.Lerp);
+			this.width = 200;
 		}
 
-		output(context: NodeEvalContext): Color {
-			const fac = this.facSocket.inValue(context);
-
-			// TODO check that inputs are of same type
-			const col0 = this.colorSockets[0].inValue(context);
-			const col1 = this.colorSockets[1].inValue(context);
-
-			// and make output the same type as the inputs
-
-			switch (this.methodSocket.inValue(context)) {
-				case "mix":
-					return col0.map((_, i) => lerp(col0[i], col1[i], fac)) as Color;
-
-				case "add":
-					return col0.map((_, i) => col0[i] + col1[i] * fac) as Color;
-
-				case "multiply":
-					return col0.map((_, i) => col0[i] * ((1 - fac) + col1[i] * fac)) as Color;
-					
-				default:
-					throw new TypeError("Unknown blend mode");
-			}
-
+		display(context: NodeEvalContext) {
+			return {
+				labels: [],
+				values: this.output(context),
+				flags: [],
+			};
 		}
 	}
 
@@ -71,102 +154,114 @@ export namespace math {
 		Subtract = "subtract",
 		Divide = "divide",
 		Pow = "pow",
+		Screen = "screen",
 		Lerp = "lerp",
 		MapRange = "mapRange",
 	}
 	export class ArithmeticNode extends NodeWithOverloads<ArithmeticMode> {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Arithmetic";
-
 		static readonly outputDisplayType = OutputDisplayType.Float;
 
-		static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticMode, Overload<Color | number>>([
+		static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticMode, Overload<number>>([
 			[ArithmeticMode.Add, new Overload(
 				"Add",
 				node => [
-					new Socket(node, true, Socket.Type.Float, "Addend", true, {sliderProps: {hasBounds: false}}),
-					new Socket(node, true, Socket.Type.Float, "Addend", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Addend"),
+					new Socket(node, true, Socket.Type.Float, "Addend"),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Sum"),
 				],
-				(ins: Socket<St.Float>[], outs, context) => ins[0].inValue(context) + ins[1].inValue(context),
+				(ins, outs, context) => ins[0].inValue(context) + ins[1].inValue(context),
 			)],
 			
 			[ArithmeticMode.Multiply, new Overload(
 				"Multiply",
 				node => [
-					new Socket(node, true, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
-					new Socket(node, true, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Factor"),
+					new Socket(node, true, Socket.Type.Float, "Factor"),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Product"),
 				],
-				(ins: Socket<St.Float>[], outs, context) => ins[0].inValue(context) * ins[1].inValue(context),
+				(ins, outs, context) => ins[0].inValue(context) * ins[1].inValue(context),
 			)],
 			
 			[ArithmeticMode.Subtract, new Overload(
 				"Subtract",
 				node => [
-					new Socket(node, true, Socket.Type.Float, "Minuend", true, {sliderProps: {hasBounds: false}}),
-					new Socket(node, true, Socket.Type.Float, "Subtrahend", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Minuend"),
+					new Socket(node, true, Socket.Type.Float, "Subtrahend"),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Difference"),
 				],
-				(ins: Socket<St.Float>[], outs, context) => ins[0].inValue(context) - ins[1].inValue(context),
+				(ins, outs, context) => ins[0].inValue(context) - ins[1].inValue(context),
 			)],
 			
 			[ArithmeticMode.Divide, new Overload(
 				"Divide",
 				node => [
-					new Socket(node, true, Socket.Type.Float, "Dividend", true, {sliderProps: {hasBounds: false}}),
-					new Socket(node, true, Socket.Type.Float, "Divisor", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Dividend"),
+					new Socket(node, true, Socket.Type.Float, "Divisor"),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Quotient"),
 				],
-				(ins: Socket<St.Float>[], outs, context) => ins[0].inValue(context) / ins[1].inValue(context),
+				(ins, outs, context) => ins[0].inValue(context) / ins[1].inValue(context),
 			)],
 			
 			[ArithmeticMode.Pow, new Overload(
 				"Power",
 				node => [
-					new Socket(node, true, Socket.Type.Float, "Base", true, {sliderProps: {hasBounds: false}}),
-					new Socket(node, true, Socket.Type.Float, "Exponent", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Base"),
+					new Socket(node, true, Socket.Type.Float, "Exponent"),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Power"),
 				],
-				(ins: Socket<St.Float>[], outs, context) => ins[0].inValue(context) ** ins[1].inValue(context),
+				(ins, outs, context) => ins[0].inValue(context) ** ins[1].inValue(context),
+			)],
+			
+			[ArithmeticMode.Pow, new Overload(
+				"Screen",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Factor"),
+					new Socket(node, true, Socket.Type.Float, "Factor"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Product"),
+				],
+				(ins, outs, context) => 1 - (1 - ins[0].inValue(context)) * (1 - ins[1].inValue(context)),
 			)],
 			
 			[ArithmeticMode.Lerp, new Overload(
 				"Lerp",
 				node => [
-					new Socket(node, true, Socket.Type.Float, "Min", true, {sliderProps: {hasBounds: false}}),
-					new Socket(node, true, Socket.Type.Float, "Max", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Min"),
+					new Socket(node, true, Socket.Type.Float, "Max"),
 					new Socket(node, true, Socket.Type.Float, "Amount"),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Value"),
 				],
-				(ins: Socket<St.Float>[], outs, context) => lerp(ins[0].inValue(context), ins[1].inValue(context), ins[2].inValue(context)),
+				(ins, outs, context) => lerp(ins[0].inValue(context), ins[1].inValue(context), ins[2].inValue(context)),
 			)],
 			
 			[ArithmeticMode.MapRange, new Overload(
 				"Map range",
 				node => [
-					new Socket(node, true, Socket.Type.Float, "Source value", true, {sliderProps: {hasBounds: false}}),
-					new Socket(node, true, Socket.Type.Float, "Source min", true, {sliderProps: {hasBounds: false}}),
-					new Socket(node, true, Socket.Type.Float, "Source max", true, {sliderProps: {hasBounds: false}}),
-					new Socket(node, true, Socket.Type.Float, "Target min", true, {sliderProps: {hasBounds: false}}),
-					new Socket(node, true, Socket.Type.Float, "Target max", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Source value"),
+					new Socket(node, true, Socket.Type.Float, "Source min"),
+					new Socket(node, true, Socket.Type.Float, "Source max"),
+					new Socket(node, true, Socket.Type.Float, "Target min"),
+					new Socket(node, true, Socket.Type.Float, "Target max"),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Target value"),
 				],
-				(ins: Socket<St.Float>[], outs, context) => lerp(ins[3].inValue(context), ins[4].inValue(context), ins[0].inValue(context) / (ins[2].inValue(context) - ins[1].inValue(context))),
+				(ins, outs, context) => lerp(ins[3].inValue(context), ins[4].inValue(context), ins[0].inValue(context) / (ins[2].inValue(context) - ins[1].inValue(context))),
 			)],
 		]));
 
@@ -189,13 +284,13 @@ export namespace math {
 
 		static readonly DESC = "desc.node.explode";
 
-		private readonly inSocket: Socket<St.RgbRawOrColTransformed>;
+		private readonly inSocket: Socket<St.Vector>;
 
 		constructor() {
 			super();
 
 			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Color or vector")),
+				(this.inSocket = new Socket(this, true, Socket.Type.Vector, "Vector")),
 			);
 
 			this.outs.push(
@@ -228,17 +323,17 @@ export namespace math {
 			[ColorDifferenceMode.DeltaE1976, new Overload(
 				"ΔE* 1976",
 				node => [
-					new Socket(node, true, St.RgbRawOrColTransformed, "L*a*b* or color", true, {
+					new Socket(node, true, St.VectorOrColor, "L*a*b* or color", true, {
 						sliderProps: labSliderProps,
 					}),
-					new Socket(node, true, St.RgbRawOrColTransformed, "L*a*b* or color", true, {
+					new Socket(node, true, St.VectorOrColor, "L*a*b* or color", true, {
 						sliderProps: labSliderProps,
 					}),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Difference"),
 				],
-				(ins: Socket<St.RgbRawOrColTransformed>[], outs, context) => {
+				(ins: Socket<St.VectorOrColor>[], outs, context) => {
 					const col0 = ins[0].inValue(context);
 					const col1 = ins[1].inValue(context);
 
@@ -249,17 +344,17 @@ export namespace math {
 			[ColorDifferenceMode.DeltaE2000, new Overload(
 				"ΔE* 2000",
 				node => [
-					new Socket(node, true, St.RgbRawOrColTransformed, "Sample L*a*b* or color", true, {
+					new Socket(node, true, St.VectorOrColor, "Sample L*a*b* or color", true, {
 						sliderProps: labSliderProps,
 					}),
-					new Socket(node, true, St.RgbRawOrColTransformed, "Target L*a*b* or color", true, {
+					new Socket(node, true, St.VectorOrColor, "Target L*a*b* or color", true, {
 						sliderProps: labSliderProps,
 					}),
 				],
 				node => [
 					new Socket(node, false, Socket.Type.Float, "Difference"),
 				],
-				(ins: Socket<St.RgbRawOrColTransformed>[], outs, context) => {
+				(ins: Socket<St.VectorOrColor>[], outs, context) => {
 					const col0 = ins[0].inValue(context);
 					const col1 = ins[1].inValue(context);
 
@@ -287,7 +382,7 @@ export namespace math {
 
 		static readonly DESC = "desc.node.contrastRatio";
 
-		private readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
+		private readonly colorSockets: Socket<St.VectorOrColor>[];
 
 		static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
 
@@ -296,8 +391,8 @@ export namespace math {
 
 			this.ins.push(
 				...(this.colorSockets = [
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "XYZ or color"),
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "XYZ or color"),
+					new Socket(this, true, Socket.Type.VectorOrColor, "XYZ or color"),
+					new Socket(this, true, Socket.Type.VectorOrColor, "XYZ or color"),
 				]),
 			);
 
@@ -329,8 +424,8 @@ export namespace math {
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
 
-		private readonly outXyzSocket: Socket<St.RgbRaw>;
-		private readonly outXyySocket: Socket<St.RgbRaw>;
+		private readonly outXyzSocket: Socket<St.Vector>;
+		private readonly outXyySocket: Socket<St.Vector>;
 
 		constructor() {
 			super();
@@ -340,8 +435,8 @@ export namespace math {
 			);
 
 			this.outs.push(
-				(this.outXyzSocket = new Socket(this, false, Socket.Type.RgbRaw, "XYZ")),
-				(this.outXyySocket = new Socket(this, false, Socket.Type.RgbRaw, "xyY")),
+				(this.outXyzSocket = new Socket(this, false, Socket.Type.Vector, "XYZ")),
+				(this.outXyySocket = new Socket(this, false, Socket.Type.Vector, "xyY")),
 			);
 		}
 

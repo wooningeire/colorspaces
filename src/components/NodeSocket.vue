@@ -95,18 +95,34 @@ const willAcceptLink = () => {
 
 const socketTypeColors = new Map([
 	[St.Float, "#aaa"],
-	[St.RgbRaw, "#75d"],
-	[St.ColTransformed, "#dd3"],
-	[St.RgbRawOrColTransformed, "linear-gradient(45deg, #75d 50%, #dd3 50%)"],
+	[St.Vector, "#75d"],
+	[St.ColorCoords, "#dd3"],
+	[St.VectorOrColor, "linear-gradient(45deg, #75d 50%, #dd3 50%)"],
 ]);
 const socketColor = computed(() => socketTypeColors.get(props.socket.type) ?? "");
 
 
 
 const socketContainer = ref(null as HTMLDivElement | null);
+const socketTypeNames = new Map(
+	Object.entries(St)
+			.map(([key, value]) => [value, `${key[0].toLowerCase()}${key.substring(1)}`])
+);
 const showTooltip = () => {
 	const rect = socketContainer.value!.getBoundingClientRect();
-	tooltipData.showTooltip(getString(props.socket.data.socketDesc ?? NO_DESC), {
+
+	const socketTypeName = socketTypeNames.get(props.socket.type);
+
+	let tooltipString = `${getString(props.socket.data.socketDesc ?? NO_DESC)}`;
+	
+	if (props.socket.showSocket) {
+		tooltipString += `<br />
+<br />
+${getString("general.socketDataTypeLabel")}${getString(`label.socketType.${socketTypeName}`)}<br />
+${getString(`desc.socketType.${socketTypeName}.${props.socket.isInput ? "in" : "out"}`)}`;
+	}
+
+	tooltipData.showTooltip(tooltipString, {
 		left: `calc(${rect.right}px + 1em)`,
 		top: `${rect.top}px`,
 	});

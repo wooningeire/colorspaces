@@ -1,9 +1,11 @@
-import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType} from "../Node";
+import { Vec3 } from "@/util";
+import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, NodeWithOverloads} from "../Node";
+import { Overload, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
 import {StringKey} from "@/strings";
 
 
-class SpaceNode extends Node { 
+abstract class SpaceNode extends Node { 
 	static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Color;
 }
 
@@ -56,29 +58,56 @@ export const getIlluminant = (socket: Socket<St.Dropdown>, context: NodeEvalCont
 };
 
 export namespace spaces {
-	export class LinearNode extends SpaceNode {
-		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Linear sRGB";
+	enum SpaceMode {
+		FromVec = "from vector",
+		FromValues = "from values",
+	}
 
-		static readonly DESC = "desc.node.linearSrgb";
+	abstract class RgbSpaceNode extends NodeWithOverloads<SpaceMode> {
+		static readonly outputDisplayType = OutputDisplayType.Color;
 
-		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
+		static readonly overloadGroup = new OverloadGroup(new Map<SpaceMode, Overload<cm.Col>>([
+			[SpaceMode.FromVec, new Overload(
+				"From vector",
+				node => [
+					new Socket(node, true, Socket.Type.VectorOrColor, "RGB or color").flag(SocketFlag.Rgb),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.ColorCoords, "Color"),
+					new Socket(node, false, Socket.Type.Float, "R"),
+					new Socket(node, false, Socket.Type.Float, "G"),
+					new Socket(node, false, Socket.Type.Float, "B"),
+				],
+				(ins, outs, context, node) => {
+					const rgb = (node as RgbSpaceNode).RgbClass.from(ins[0].inValue(context));
+					switch (context.socket) {
+						default:
+						case outs[0]: return rgb;
+						case outs[1]: return rgb[0];
+						case outs[2]: return rgb[1];
+						case outs[3]: return rgb[2];
+					}
+				},
+			)],
+
+			[SpaceMode.FromValues, new Overload(
+				"From values",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "R").flag(SocketFlag.Rgb),
+					new Socket(node, true, Socket.Type.Float, "G").flag(SocketFlag.Rgb),
+					new Socket(node, true, Socket.Type.Float, "B").flag(SocketFlag.Rgb),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.ColorCoords, "Color"),
+				],
+				(ins, outs, context, node) => {
+					return (node as RgbSpaceNode).RgbClass.from(ins.map(socket => socket.inValue(context)) as Vec3);
+				},
+			)],
+		]));
 
 		constructor() {
-			super();
-
-			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")
-						.flag(SocketFlag.Rgb)),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
-			);
-		}
-
-		output(context: NodeEvalContext) {
-			return cm.LinearSrgb.from(this.inSocket.inValue(context));
+			super(SpaceMode.FromVec);
 		}
 
 		get displayLabels() {
@@ -87,40 +116,31 @@ export namespace spaces {
 
 		get displayFlags() {
 			return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
+		}
+
+		/** The RGB class to use for conversions */
+		get RgbClass(): typeof cm.Col {
+			throw new TypeError("abstract method / not implemented");
 		}
 	}
 
-	export class SrgbNode extends SpaceNode {
+	export class LinearNode extends RgbSpaceNode {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Linear sRGB";
+		static readonly DESC = "desc.node.linearSrgb";
+
+		get RgbClass() {
+			return cm.LinearSrgb;
+		}
+	}
+
+	export class SrgbNode extends RgbSpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "sRGB";
-
 		static readonly DESC = "desc.node.srgb";
 
-		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
-
-		constructor() {
-			super();
-
-			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")
-						.flag(SocketFlag.Rgb)),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
-			);
-		}
-
-		output(context: NodeEvalContext): cm.Srgb {
-			return cm.Srgb.from(this.inSocket.inValue(context));
-		}
-
-		get displayLabels() {
-			return ["R", "G", "B"];
-		}
-
-		get displayFlags() {
-			return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
+		get RgbClass() {
+			return cm.Srgb;
 		}
 	}
 
@@ -131,14 +151,14 @@ export namespace spaces {
 		static readonly DESC = "desc.node.xyz";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
-		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
+		private readonly colorSocket: Socket<St.VectorOrColor>;
 
 		constructor() {
 			super();
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "XYZ or color", true, {
+				(this.colorSocket = new Socket(this, true, Socket.Type.VectorOrColor, "XYZ or color", true, {
 					fieldText: [
 						"desc.field.xyz.x",
 						"desc.field.xyz.y",
@@ -148,7 +168,7 @@ export namespace spaces {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+				new Socket(this, false, Socket.Type.ColorCoords, "Color"),
 			);
 		}
 
@@ -172,7 +192,7 @@ export namespace spaces {
 		static readonly DESC = "desc.node.xyy";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
-		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
+		private readonly colorSocket: Socket<St.VectorOrColor>;
 		// private readonly primariesSockets: Socket<SocketType.Float>[];
 
 		constructor() {
@@ -180,7 +200,7 @@ export namespace spaces {
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "xyY or color", true, {
+				(this.colorSocket = new Socket(this, true, Socket.Type.VectorOrColor, "xyY or color", true, {
 					defaultValue: [d65[0], d65[1], 1],
 					fieldText: [
 						"desc.field.xyy.x",
@@ -196,11 +216,11 @@ export namespace spaces {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+				new Socket(this, false, Socket.Type.ColorCoords, "Color"),
 			);
 		}
 
-		output(context: NodeEvalContext): cm.Xyy {
+		output(context: NodeEvalContext) {
 			const illuminant = getIlluminant(this.whitePointSocket, context);
 			return cm.Xyy.from(this.colorSocket.inValue(context), illuminant);
 		}
@@ -216,25 +236,25 @@ export namespace spaces {
 		static readonly DESC = "desc.node.lab";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
-		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
+		private readonly colorSocket: Socket<St.VectorOrColor>;
 
 		constructor() {
 			super();
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color", true, {
+				(this.colorSocket = new Socket(this, true, Socket.Type.VectorOrColor, "L*a*b* or color", true, {
 					defaultValue: [50, 0, 0],
 					sliderProps: labSliderProps,
 				})),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+				new Socket(this, false, Socket.Type.ColorCoords, "Color"),
 			);
 		}
 
-		output(context: NodeEvalContext): cm.Lab {
+		output(context: NodeEvalContext) {
 			const illuminant = getIlluminant(this.whitePointSocket, context);
 			return cm.Lab.from(this.colorSocket.inValue(context), illuminant);
 		}
@@ -250,14 +270,14 @@ export namespace spaces {
 		static readonly DESC = "desc.node.lchab";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
-		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
+		private readonly colorSocket: Socket<St.VectorOrColor>;
 
 		constructor() {
 			super();
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*C*h or color", true, {
+				(this.colorSocket = new Socket(this, true, Socket.Type.VectorOrColor, "L*C*h or color", true, {
 					defaultValue: [50, 0, 0],
 					sliderProps: [
 						{
@@ -278,11 +298,11 @@ export namespace spaces {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+				new Socket(this, false, Socket.Type.ColorCoords, "Color"),
 			);
 		}
 
-		output(context: NodeEvalContext): cm.Lab {
+		output(context: NodeEvalContext) {
 			const illuminant = getIlluminant(this.whitePointSocket, context);
 			return cm.LchAb.from(this.colorSocket.inValue(context), illuminant);
 		}
@@ -298,25 +318,25 @@ export namespace spaces {
 		static readonly DESC = "desc.node.luv";
 
 		private readonly whitePointSocket: Socket<St.Dropdown>;
-		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
+		private readonly colorSocket: Socket<St.VectorOrColor>;
 
 		constructor() {
 			super();
 
 			this.ins.push(
 				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*u*v* or color", true, {
+				(this.colorSocket = new Socket(this, true, Socket.Type.VectorOrColor, "L*u*v* or color", true, {
 					defaultValue: [50, 0, 0],
 					sliderProps: labSliderProps,
 				})),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
+				new Socket(this, false, Socket.Type.ColorCoords, "Color"),
 			);
 		}
 
-		output(context: NodeEvalContext): cm.Luv {
+		output(context: NodeEvalContext) {
 			const illuminant = getIlluminant(this.whitePointSocket, context);
 			return cm.Luv.from(this.colorSocket.inValue(context), illuminant);
 		}
@@ -325,48 +345,99 @@ export namespace spaces {
 			return ["L*", "u*", "v*"];
 		}
 	}
-
-	export class LchUvNode extends SpaceNode {
+	export class LchUvNode extends NodeWithOverloads<SpaceMode> {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "L\\*C\\*h<sub>uv</sub>";
 		static readonly DESC = "desc.node.lchuv";
+		static readonly outputDisplayType = OutputDisplayType.Color;
 
-		private readonly whitePointSocket: Socket<St.Dropdown>;
-		private readonly colorSocket: Socket<St.RgbRawOrColTransformed>;
+		static readonly overloadGroup = new OverloadGroup(new Map<SpaceMode, Overload<cm.Col>>([
+			[SpaceMode.FromVec, new Overload(
+				"From vector",
+				node => [
+					new Socket(node, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions),
+					new Socket(node, true, Socket.Type.VectorOrColor, "L*C*h or color", true, {
+						defaultValue: [50, 0, 0],
+						sliderProps: [
+							{
+								max: 100,
+							},
+							{
+								hasBounds: false,
+								unboundedChangePerPixel: 2,
+							},
+							{},
+						],
+						fieldText: [
+							"desc.field.lchab.l",
+							"desc.field.lchab.c",
+							"desc.field.lchab.h",
+						],
+					}),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.ColorCoords, "Color"),
+					new Socket(node, false, Socket.Type.Float, "L*"),
+					new Socket(node, false, Socket.Type.Float, "C*"),
+					new Socket(node, false, Socket.Type.Float, "h"),
+				],
+				(ins, outs, context, node) => {
+					// const lchuv = node.memoize(() => {
+					// 	const illuminant = getIlluminant(ins[0], context);
+					// 	return cm.LchUv.from(ins[1].inValue(context), illuminant);
+					// });
+					const illuminant = getIlluminant(ins[0], context);
+					const lchuv = cm.LchUv.from(ins[1].inValue(context), illuminant);
+					switch (context.socket) {
+						default:
+						case outs[0]: return lchuv;
+						case outs[1]: return lchuv[0];
+						case outs[2]: return lchuv[1];
+						case outs[3]: return lchuv[2];
+					}
+				},
+			)],
 
-		constructor() {
-			super();
-
-			this.ins.push(
-				(this.whitePointSocket = new Socket(this, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
-				(this.colorSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*C*h or color", true, {
-					defaultValue: [50, 0, 0],
-					sliderProps: [
-						{
-							max: 100,
+			[SpaceMode.FromValues, new Overload(
+				"From values",
+				node => [
+					new Socket(node, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions),
+					new Socket(node, true, Socket.Type.Float, "L*", true, {
+						defaultValue: 50,
+						sliderProps: {
+							max: 100
 						},
-						{
+						fieldText: "desc.field.lchab.l",
+					}),
+					new Socket(node, true, Socket.Type.Float, "C*", true, {
+						defaultValue: 0,
+						sliderProps: {
 							hasBounds: false,
 							unboundedChangePerPixel: 2,
 						},
-						{},
-					],
-					fieldText: [
-						"desc.field.lchab.l",
-						"desc.field.lchab.c",
-						"desc.field.lchab.h",
-					],
-				})),
-			);
+						fieldText: "desc.field.lchab.c",
+					}),
+					new Socket(node, true, Socket.Type.Float, "h", true, {
+						defaultValue: 0,
+						fieldText: "desc.field.lchab.h",
+					}),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.ColorCoords, "Color"),
+				],
+				(ins, outs, context) => {
+					const illuminant = getIlluminant(ins[0], context);
+					return cm.LchUv.from([
+						ins[1].inValue(context),
+						ins[2].inValue(context),
+						ins[3].inValue(context),
+					], illuminant);
+				},
+			)],
+		]));
 
-			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
-			);
-		}
-
-		output(context: NodeEvalContext): cm.LchUv {
-			const illuminant = getIlluminant(this.whitePointSocket, context);
-			return cm.LchUv.from(this.colorSocket.inValue(context), illuminant);
+		constructor() {
+			super(SpaceMode.FromVec);
 		}
 
 		get displayLabels() {
@@ -374,101 +445,31 @@ export namespace spaces {
 		}
 	}
 
-	export class LinearAdobeRgbNode extends SpaceNode {
+	export class LinearAdobeRgbNode extends RgbSpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Linear Adobe RGB 1998";
 
-		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
-
-		constructor() {
-			super();
-
-			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")
-						.flag(SocketFlag.Rgb)),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
-			);
-		}
-
-		output(context: NodeEvalContext) {
-			return cm.LinearAdobeRgb.from(this.inSocket.inValue(context));
-		}
-
-		get displayLabels() {
-			return ["R", "G", "B"];
-		}
-
-		get displayFlags() {
-			return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
+		get RgbClass() {
+			return cm.LinearAdobeRgb;
 		}
 	}
 
-	export class AdobeRgbNode extends SpaceNode {
+	export class AdobeRgbNode extends RgbSpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Adobe RGB 1998";
 
-		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
-
-		constructor() {
-			super();
-
-			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")
-						.flag(SocketFlag.Rgb)),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
-			);
-		}
-
-		output(context: NodeEvalContext): cm.AdobeRgb {
-			return cm.AdobeRgb.from(this.inSocket.inValue(context));
-		}
-
-		get displayLabels() {
-			return ["R", "G", "B"];
-		}
-
-		get displayFlags() {
-			return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
+		get RgbClass() {
+			return cm.AdobeRgb;
 		}
 	}
 
-	export class Rec709Node extends SpaceNode {
+	export class Rec709Node extends RgbSpaceNode {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Rec. 709";
-
 		static readonly DESC = "desc.node.rec709";
 
-		readonly inSocket: Socket<St.RgbRawOrColTransformed>;
-
-		constructor() {
-			super();
-
-			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or color")
-						.flag(SocketFlag.Rgb)),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.ColTransformed, "Color"),
-			);
-		}
-
-		output(context: NodeEvalContext): cm.Rec709 {
-			return cm.Rec709.from(this.inSocket.inValue(context));
-		}
-
-		get displayLabels() {
-			return ["R", "G", "B"];
-		}
-
-		get displayFlags() {
-			return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
+		get RgbClass() {
+			return cm.Rec709;
 		}
 	}
 }
