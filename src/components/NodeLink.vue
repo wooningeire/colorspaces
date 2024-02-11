@@ -27,10 +27,10 @@ const props = withDefaults(defineProps<{
 
 
 const socketVue = (socket: Socket) => props.socketVues.get(socket);
-const srcX = ref(0);
-const srcY = ref(0);
-const dstX = ref(0);
-const dstY = ref(0);
+const srcX = ref();
+const srcY = ref();
+const dstX = ref();
+const dstY = ref();
 
 const socketLoaded = ref(false);
 const checkSocketLoaded = () => {
@@ -51,7 +51,7 @@ onMounted(() => {
 	setCoords();
 });
 
-onUpdated(() => {
+onBeforeUpdate(() => {
 	setCoords();
 });
 
@@ -60,7 +60,7 @@ const setCoords = () => {
 	srcY.value = props.link ? socketVue(props.link.src)?.socketPos()[1] : props.y0;
 	dstX.value = props.link ? socketVue(props.link.dst)?.socketPos()[0] : props.x1;
 	dstY.value = props.link ? socketVue(props.link.dst)?.socketPos()[1] : props.y1;
-}
+};
 
 
 

@@ -1,4 +1,4 @@
-import { Tree, Node, SocketValue, Socket } from "@/models/Node";
+import { Tree, Node, SocketValue, Socket, NodeWithOverloads } from "@/models/Node";
 import { images, models, math, organization, spaces, externals } from "@/models/nodetypes";
 import { c } from "vitest/dist/reporters-5f784f42";
 
@@ -22,6 +22,8 @@ export const importNodeTree = (tree: Tree, fileString: string) => {
 
 
 interface SerializedTree {
+    /** Version of the file format; should follow semver */
+    fileFormatVersion: number[],
     nodes: SerializedNode[],
     links: SerializedLink[],
 };
@@ -42,6 +44,7 @@ interface SerializedLink {
 // TODO: handle overloads
 const serializeNodeTree = (tree: Tree) => {
     const serializedTree: SerializedTree = {
+        fileFormatVersion: [0, 0, 0],
         nodes: [],
         links: [],
     };
@@ -53,21 +56,23 @@ const serializeNodeTree = (tree: Tree) => {
     for (const node of tree.nodes) {
         const socketFieldValues = [];
 
+        // Track socket indices
+
         let inSocketIndex = 0;
         for (const socket of node.ins) {
             socketFieldValues.push(socket.fieldValue);
 
             socketsToIndices.set(socket, inSocketIndex);
-
             inSocketIndex++;
         }
 
         let outSocketIndex = 0;
         for (const socket of node.outs) {
             socketsToIndices.set(socket, outSocketIndex);
-
             outSocketIndex++;
         }
+
+        // Construct the serialized node
 
         serializedTree.nodes.push({
             type: (node.constructor as typeof Node).TYPE.description!,
@@ -76,7 +81,6 @@ const serializeNodeTree = (tree: Tree) => {
         });
 
         nodesToIndices.set(node, nodeIndex);
-
         nodeIndex++;
     }
 
@@ -106,8 +110,18 @@ const deserializeNodeTree = async (tree: Tree, fileString: string) => {
         const node = new (namesToConstructors.get(serializedNode.type)!)()
                 .setPos(serializedNode.pos);
 
-        for (const [i, fieldValue] of serializedNode.socketFieldValues.entries()) {
-            node.ins[i].fieldValue = fieldValue;
+        if (node instanceof NodeWithOverloads) {
+            // Handle the overload dropdown socket
+            node.ins[0].fieldValue = serializedNode.socketFieldValues[0];
+            node.overloadManager.handleModeChange(tree);
+
+            for (let i = 1; i < serializedNode.socketFieldValues.length; i++) {
+                node.ins[i].fieldValue = serializedNode.socketFieldValues[i];
+            }
+        } else {
+            for (const [i, fieldValue] of serializedNode.socketFieldValues.entries()) {
+                node.ins[i].fieldValue = fieldValue;
+            }
         }
 
         tree.nodes.add(node);

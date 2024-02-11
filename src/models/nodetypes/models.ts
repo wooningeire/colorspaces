@@ -77,7 +77,7 @@ export namespace models {
 		}
 
 		display(context: NodeEvalContext) {
-			switch (this.currentMode) {
+			switch (this.overloadManager.mode) {
 				default:
 				case RgbMode.ToRgb:
 					return {
@@ -139,7 +139,7 @@ export namespace models {
 		}
 
 		display(context: NodeEvalContext) {
-			switch (this.currentMode) {
+			switch (this.overloadManager.mode) {
 				default:
 				case RgbMode.ToRgb:
 					return {
@@ -201,7 +201,7 @@ export namespace models {
 		}
 
 		display(context: NodeEvalContext) {
-			switch (this.currentMode) {
+			switch (this.overloadManager.mode) {
 				default:
 				case RgbMode.ToRgb:
 					return {
@@ -263,7 +263,7 @@ export namespace models {
 		}
 
 		display(context: NodeEvalContext) {
-			switch (this.currentMode) {
+			switch (this.overloadManager.mode) {
 				default:
 				case RgbMode.ToRgb:
 					return {

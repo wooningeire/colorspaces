@@ -241,7 +241,7 @@ export abstract class Node {
 export abstract class NodeWithOverloads<Mode extends string> extends Node {
 	static readonly overloadGroup: OverloadGroup<any>;
 
-	private readonly overloadManager: OverloadManager<Mode>;
+	readonly overloadManager: OverloadManager<Mode>;
 
 	constructor(defaultMode: Mode) {
 		super();
@@ -251,10 +251,6 @@ export abstract class NodeWithOverloads<Mode extends string> extends Node {
 
 	output(context: NodeEvalContext): number {
 		return this.overloadManager.evaluate(context);
-	}
-
-	get currentMode() {
-		return this.overloadManager.mode;
 	}
 }
 
