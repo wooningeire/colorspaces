@@ -57,6 +57,16 @@ export class OverloadManager<Mode extends string> {
     }
 
     handleModeChange(tree: Tree) {
+        /* 
+        const deleteSocketsUntilLength = (targetLength: number) => {
+            while (this.valueSockets.length > targetLength) {
+                this.ins.pop();
+                const oldSocket = this.valueSockets.pop();
+                oldSocket?.links.forEach(link => tree.unlink(link));
+            }
+        };
+        */
+
         const nIns = this.ins.length;
         const nOuts = this.outs.length;
         for (let i = 0; i < nIns; i++) {

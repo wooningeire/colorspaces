@@ -52,8 +52,10 @@ const beginDrag = makeDragListener({
 	},
 
 	onDrag(moveEvent) {
-		props.node.pos[0] += moveEvent.movementX / viewportScale.value;
-		props.node.pos[1] += moveEvent.movementY / viewportScale.value;
+		for (const node of selectedNodes) {
+			node.pos[0] += moveEvent.movementX / viewportScale.value;
+			node.pos[1] += moveEvent.movementY / viewportScale.value;
+		}
 
 		emit("node-dragged");
 		emit("potential-socket-position-change");

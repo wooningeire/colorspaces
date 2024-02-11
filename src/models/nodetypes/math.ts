@@ -3,6 +3,7 @@ import {Tree, Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType
 import * as cm from "../colormanagement";
 
 import {Color, lerp} from "@/util";
+import { Overload, OverloadGroup, OverloadManager } from "../Overload";
 
 export namespace math {
 	export class LerpNode extends Node {
@@ -63,123 +64,134 @@ export namespace math {
 		}
 	}
 
+
+	enum ArithmeticMode {
+		Add = "add",
+		Multiply = "multiply",
+		Subtract = "subtract",
+		Divide = "divide",
+		Pow = "pow",
+		Lerp = "lerp",
+		MapRange = "mapRange",
+	}
 	export class ArithmeticNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Arithmetic";
 
-		private readonly methodSocket: Socket<St.Dropdown>;
-		private readonly valueSockets: Socket<St.Float>[];
+		static readonly outputDisplayType = OutputDisplayType.Float;
+
+		private static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticMode, Overload<Color | number>>([
+			[ArithmeticMode.Add, new Overload(
+				"Add",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Addend", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Addend", true, {sliderProps: {hasBounds: false}}),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Sum"),
+				],
+				(ins: Socket<St.Float>[], outs, context) => ins[0].inValue(context) + ins[1].inValue(context),
+			)],
+			
+			[ArithmeticMode.Multiply, new Overload(
+				"Multiply",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Product"),
+				],
+				(ins: Socket<St.Float>[], outs, context) => ins[0].inValue(context) * ins[1].inValue(context),
+			)],
+			
+			[ArithmeticMode.Subtract, new Overload(
+				"Subtract",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Minuend", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Subtrahend", true, {sliderProps: {hasBounds: false}}),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Difference"),
+				],
+				(ins: Socket<St.Float>[], outs, context) => ins[0].inValue(context) - ins[1].inValue(context),
+			)],
+			
+			[ArithmeticMode.Divide, new Overload(
+				"Divide",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Dividend", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Divisor", true, {sliderProps: {hasBounds: false}}),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Quotient"),
+				],
+				(ins: Socket<St.Float>[], outs, context) => ins[0].inValue(context) / ins[1].inValue(context),
+			)],
+			
+			[ArithmeticMode.Pow, new Overload(
+				"Power",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Base", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Exponent", true, {sliderProps: {hasBounds: false}}),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Power"),
+				],
+				(ins: Socket<St.Float>[], outs, context) => ins[0].inValue(context) ** ins[1].inValue(context),
+			)],
+			
+			[ArithmeticMode.Lerp, new Overload(
+				"Lerp",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Min", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Max", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Amount"),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Value"),
+				],
+				(ins: Socket<St.Float>[], outs, context) => lerp(ins[0].inValue(context), ins[1].inValue(context), ins[2].inValue(context)),
+			)],
+			
+			[ArithmeticMode.MapRange, new Overload(
+				"Map range",
+				node => [
+					new Socket(node, true, Socket.Type.Float, "Source value", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Source min", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Source max", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Target min", true, {sliderProps: {hasBounds: false}}),
+					new Socket(node, true, Socket.Type.Float, "Target max", true, {sliderProps: {hasBounds: false}}),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Target value"),
+				],
+				(ins: Socket<St.Float>[], outs, context) => lerp(ins[3].inValue(context), ins[4].inValue(context), ins[0].inValue(context) / (ins[2].inValue(context) - ins[1].inValue(context))),
+			)],
+		]));
+
+		private readonly overloadManager = new OverloadManager(this, ArithmeticMode.Add, ArithmeticNode.overloadGroup);
 
 		constructor() {
 			super();
-
-			this.ins.push(
-				(this.methodSocket = new Socket(this, true, Socket.Type.Dropdown, "", false, {
-					options: [
-						{value: "add", text: "Add"},
-						{value: "multiply", text: "Multiply"},
-						{value: "subtract", text: "Subtract"},
-						{value: "divide", text: "Divide"},
-						{value: "pow", text: "Power"},
-						{value: "lerp", text: "Lerp"},
-						{value: "map range", text: "Map range"},
-					],
-					defaultValue: "multiply",
-				})),
-				...(this.valueSockets = [
-					new Socket(this, true, Socket.Type.Float, "Value", true, {
-						sliderProps: {
-							hasBounds: false,
-						},
-					}),
-					new Socket(this, true, Socket.Type.Float, "Value", true, {
-						sliderProps: {
-							hasBounds: false,
-						},
-					}),
-				]),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.Float, "Value"),
-			);
+			this.overloadManager.setSockets();
 		}
 
 		onSocketFieldValueChange(socket: Socket, tree: Tree) {
-			if (socket !== this.methodSocket) return;
-
-			const deleteSocketsUntilLength = (targetLength: number) => {
-				while (this.valueSockets.length > targetLength) {
-					this.ins.pop();
-					const oldSocket = this.valueSockets.pop();
-					oldSocket?.links.forEach(link => tree.unlink(link));
-				}
-			};
-
-			const createUnboundedSockets = (labels: string[]) =>
-					labels.map(label => new Socket(this, true, Socket.Type.Float, label, true, {
-						sliderProps: {
-							hasBounds: false,
-						},
-					}));
-
-			switch (this.methodSocket.inValue()) {
-				case "lerp": {
-					deleteSocketsUntilLength(2);
-
-					this.valueSockets[0].label = this.valueSockets[1].label = "Value";
-
-					const newSocket = new Socket(this, true, Socket.Type.Float, "Amount");
-					this.ins.push(newSocket);
-					this.valueSockets.push(newSocket);
-					break;
-				}
-
-				case "map range": {
-					deleteSocketsUntilLength(1);
-
-					this.valueSockets[0].label = "Value";
-					const newSockets = createUnboundedSockets(["Source min", "Source max", "Target min", "Target max"]);
-					this.ins.push(...newSockets);
-					this.valueSockets.push(...newSockets);
-					break;
-				}
-
-				case "pow": {
-					deleteSocketsUntilLength(2);
-					this.valueSockets[0].label = "Base";
-					this.valueSockets[1].label = "Exponent";
-					break;
-				}
-
-				default:
-					deleteSocketsUntilLength(2);
-					this.valueSockets[0].label = this.valueSockets[1].label = "Value";
-					break;
-			}
+			if (socket !== this.overloadManager.dropdown) return;
+			this.overloadManager.handleModeChange(tree);
 		}
 
 		output(context: NodeEvalContext): number {
-			const n0 = this.valueSockets[0]?.inValue(context);
-			const n1 = this.valueSockets[1]?.inValue(context);
-			const n2 = this.valueSockets[2]?.inValue(context);
-			const n3 = this.valueSockets[3]?.inValue(context);
-			const n4 = this.valueSockets[4]?.inValue(context);
+			return this.overloadManager.evaluate(context);
+		}
 
-			// and make output the same type as the inputs
-
-			switch (this.methodSocket.inValue(context)) {
-				case "add": return n0 + n1;
-				case "subtract": return n0 - n1;
-				case "multiply": return n0 * n1;
-				case "divide": return n0 / n1;
-				case "pow": return n0**n1;
-				case "lerp": return lerp(n0, n1, n2);
-				case "map range": return lerp(n3, n4, n0 / (n2 - n1));
-					
-				default:
-					throw new TypeError("Unknown blend mode");
-			}
+		display(context: NodeEvalContext) {
+			return {
+				labels: [],
+				values: [this.output(context)],
+				flags: [],
+			};
 		}
 	}
 
@@ -215,81 +227,73 @@ export namespace math {
 		// }
 	}
 
-	export class DeltaE1976Node extends Node {
-		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Color difference (ΔE* 1976)";
-
-		private readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
-
-		static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
-
-		constructor() {
-			super();
-
-			this.ins.push(
-				...(this.colorSockets = [
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color", true, {
-						sliderProps: labSliderProps,
-					}),
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "L*a*b* or color", true, {
-						sliderProps: labSliderProps,
-					}),
-				]),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.Float, "Difference"),
-			);
-		}
-
-		output(context: NodeEvalContext): number {
-			const col0 = this.colorSockets[0].inValue(context);
-			const col1 = this.colorSockets[1].inValue(context);
-
-			return cm.difference.deltaE1976(col0, col1);
-		}
-		
-		display(context: NodeEvalContext) {
-			return {
-				labels: [],
-				values: [this.output(context)],
-				flags: [],
-			};
-		}
+	enum ColorDifferenceMode {
+		DeltaE1976 = "deltae1976",
+		DeltaE2000 = "deltae2000",
 	}
-
-	export class DeltaE2000Node extends Node {
+	export class ColorDifferenceNode extends Node {
 		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Color difference (ΔE* 2000)";
-
-		private readonly colorSockets: Socket<St.RgbRawOrColTransformed>[];
-
+		static readonly LABEL = "Color difference";
 		static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
+
+		private static readonly overloadGroup = new OverloadGroup(new Map<ColorDifferenceMode, Overload<Color | number>>([
+			[ColorDifferenceMode.DeltaE1976, new Overload(
+				"ΔE* 1976",
+				node => [
+					new Socket(node, true, St.RgbRawOrColTransformed, "L*a*b* or color", true, {
+						sliderProps: labSliderProps,
+					}),
+					new Socket(node, true, St.RgbRawOrColTransformed, "L*a*b* or color", true, {
+						sliderProps: labSliderProps,
+					}),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Difference"),
+				],
+				(ins: Socket<St.RgbRawOrColTransformed>[], outs, context) => {
+					const col0 = ins[0].inValue(context);
+					const col1 = ins[1].inValue(context);
+
+					return cm.difference.deltaE1976(col0, col1);
+				},
+			)],
+			
+			[ColorDifferenceMode.DeltaE2000, new Overload(
+				"ΔE* 2000",
+				node => [
+					new Socket(node, true, St.RgbRawOrColTransformed, "Sample L*a*b* or color", true, {
+						sliderProps: labSliderProps,
+					}),
+					new Socket(node, true, St.RgbRawOrColTransformed, "Target L*a*b* or color", true, {
+						sliderProps: labSliderProps,
+					}),
+				],
+				node => [
+					new Socket(node, false, Socket.Type.Float, "Difference"),
+				],
+				(ins: Socket<St.RgbRawOrColTransformed>[], outs, context) => {
+					const col0 = ins[0].inValue(context);
+					const col1 = ins[1].inValue(context);
+
+					return cm.difference.deltaE2000(col0, col1);
+				},
+			)],
+		]));
+
+		private readonly overloadManager = new OverloadManager(this, ColorDifferenceMode.DeltaE2000, ColorDifferenceNode.overloadGroup);
 
 		constructor() {
 			super();
+			this.overloadManager.setSockets();
+		}
 
-			this.ins.push(
-				...(this.colorSockets = [
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Sample L*a*b* or color", true, {
-						sliderProps: labSliderProps,
-					}),
-					new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "Target L*a*b* or color", true, {
-						sliderProps: labSliderProps,
-					}),
-				]),
-			);
-
-			this.outs.push(
-				new Socket(this, false, Socket.Type.Float, "Difference"),
-			);
+		onSocketFieldValueChange(socket: Socket, tree: Tree) {
+			if (socket !== this.overloadManager.dropdown) return;
+			this.overloadManager.handleModeChange(tree);
 		}
 
 		output(context: NodeEvalContext): number {
-			const col0 = this.colorSockets[0].inValue(context);
-			const col1 = this.colorSockets[1].inValue(context);
-
-			return cm.difference.deltaE2000(col0, col1);
+			return this.overloadManager.evaluate(context);
 		}
 		
 		display(context: NodeEvalContext) {
@@ -331,6 +335,14 @@ export namespace math {
 			const col1 = this.colorSockets[1].inValue(context);
 
 			return cm.difference.contrastRatio(col0, col1);
+		}
+		
+		display(context: NodeEvalContext) {
+			return {
+				labels: [],
+				values: [this.output(context)],
+				flags: [],
+			};
 		}
 	}
 
