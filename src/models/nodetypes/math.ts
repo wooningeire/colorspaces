@@ -1,5 +1,5 @@
 import {getIlluminant, labSliderProps, whitePointSocketOptions} from "./spaces";
-import {Tree, Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, NodeDisplay} from "../Node";
+import {Tree, Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, NodeDisplay, NodeWithOverloads} from "../Node";
 import * as cm from "../colormanagement";
 
 import {Color, lerp} from "@/util";
@@ -74,13 +74,13 @@ export namespace math {
 		Lerp = "lerp",
 		MapRange = "mapRange",
 	}
-	export class ArithmeticNode extends Node {
+	export class ArithmeticNode extends NodeWithOverloads<ArithmeticMode> {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Arithmetic";
 
 		static readonly outputDisplayType = OutputDisplayType.Float;
 
-		private static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticMode, Overload<Color | number>>([
+		static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticMode, Overload<Color | number>>([
 			[ArithmeticMode.Add, new Overload(
 				"Add",
 				node => [
@@ -170,20 +170,8 @@ export namespace math {
 			)],
 		]));
 
-		private readonly overloadManager = new OverloadManager(this, ArithmeticMode.Add, ArithmeticNode.overloadGroup);
-
 		constructor() {
-			super();
-			this.overloadManager.setSockets();
-		}
-
-		onSocketFieldValueChange(socket: Socket, tree: Tree) {
-			if (socket !== this.overloadManager.dropdown) return;
-			this.overloadManager.handleModeChange(tree);
-		}
-
-		output(context: NodeEvalContext): number {
-			return this.overloadManager.evaluate(context);
+			super(ArithmeticMode.Add);
 		}
 
 		display(context: NodeEvalContext) {
@@ -231,12 +219,12 @@ export namespace math {
 		DeltaE1976 = "deltae1976",
 		DeltaE2000 = "deltae2000",
 	}
-	export class ColorDifferenceNode extends Node {
+	export class ColorDifferenceNode extends NodeWithOverloads<ColorDifferenceMode> {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Color difference";
 		static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
 
-		private static readonly overloadGroup = new OverloadGroup(new Map<ColorDifferenceMode, Overload<Color | number>>([
+		static readonly overloadGroup = new OverloadGroup(new Map<ColorDifferenceMode, Overload<Color | number>>([
 			[ColorDifferenceMode.DeltaE1976, new Overload(
 				"ΔE* 1976",
 				node => [
@@ -280,20 +268,8 @@ export namespace math {
 			)],
 		]));
 
-		private readonly overloadManager = new OverloadManager(this, ColorDifferenceMode.DeltaE2000, ColorDifferenceNode.overloadGroup);
-
 		constructor() {
-			super();
-			this.overloadManager.setSockets();
-		}
-
-		onSocketFieldValueChange(socket: Socket, tree: Tree) {
-			if (socket !== this.overloadManager.dropdown) return;
-			this.overloadManager.handleModeChange(tree);
-		}
-
-		output(context: NodeEvalContext): number {
-			return this.overloadManager.evaluate(context);
+			super(ColorDifferenceMode.DeltaE2000);
 		}
 		
 		display(context: NodeEvalContext) {

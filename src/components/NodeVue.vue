@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {inject, computed, Ref} from "vue";
+import {inject, computed, Ref, watch, ref, getCurrentInstance} from "vue";
 import * as marked from "marked";
 
 import NodeSocket from "./NodeSocket.vue";
@@ -104,6 +104,11 @@ const isSubtle = computed(() =>
 		|| props.node instanceof externals.EnvironmentNode
 		|| props.node instanceof externals.VisionNode
 );
+
+const instance = getCurrentInstance();
+watch(props.node, () => { // update please :(
+	instance?.proxy?.$forceUpdate();
+});
 
 </script>
 

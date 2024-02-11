@@ -7,7 +7,7 @@ import { StringKey } from "@/strings";
 
 
 //#region Node tree
-export const tree = reactive(new Tree());
+export const tree = reactive<Tree>(new Tree());
 
 //#region Node tree nodes setup
 export interface DeviceNodes {

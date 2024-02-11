@@ -5,9 +5,9 @@ import BaseEntry from "./input/BaseEntry.vue";
 import EntryRgb from "./input/EntryRgb.vue";
 import EntrySlider from "./input/EntrySlider.vue";
 
-import {settings} from "./store";
+import {settings, tree} from "./store";
 
-import {Socket, SocketType as St, SocketFlag} from "@/models/Node";
+import {Socket, SocketType as St, SocketFlag, Tree} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
 
 const props = defineProps({
@@ -16,7 +16,7 @@ const props = defineProps({
 		required: true,
 	},
 });
-
+const emit = defineEmits(["value-change"]);
 
 const fileInput = ref(null as any as HTMLInputElement);
 
@@ -41,6 +41,11 @@ const readFile = (): Promise<ImageData> => new Promise(resolve => {
 	reader.readAsDataURL(file);
 });
 
+const onValueChange = () => {
+	emit("value-change");
+	props.socket.onValueChange(tree as Tree);
+};
+
 
 const isOutputNode = props.socket.node instanceof externals.DeviceTransformNode;
 
@@ -62,7 +67,7 @@ type VectorSocket = Socket<St.RgbRaw | St.RgbRawOrColTransformed>;
 			ref="editorContainer">
 		<template v-if="isFloat">
 			<EntrySlider v-model="(socket as FloatSocket).fieldValue"
-					@update:modelValue="$emit('value-change')"
+					@update:modelValue="onValueChange()"
 					
 					:convertIn="
 						isRgb ? (value: number) => value / settings.rgbScale :
@@ -87,7 +92,7 @@ type VectorSocket = Socket<St.RgbRaw | St.RgbRawOrColTransformed>;
 
 		<template v-else-if="isVector">
 			<EntryRgb v-model="(socket as VectorSocket).fieldValue"
-					@update:modelValue="$emit('value-change')"
+					@update:modelValue="onValueChange()"
 
 					:convertIn="
 						isRgb ? (color: number[]) => color.map(value => value / settings.rgbScale) :
@@ -112,7 +117,7 @@ type VectorSocket = Socket<St.RgbRaw | St.RgbRawOrColTransformed>;
 
 		<template v-else-if="socket.type === St.Dropdown">
 			<select v-model="socket.fieldValue"
-					@change="$emit('value-change')">
+					@change="onValueChange()">
 				<option v-for="{text, value} of (socket as Socket<St.Dropdown>).data.options"
 						:value="value">
 					{{text}}
@@ -126,7 +131,7 @@ type VectorSocket = Socket<St.RgbRaw | St.RgbRawOrColTransformed>;
 					ref="fileInput"
 					@change="async () => {
 						socket.fieldValue = await readFile();
-						$emit('value-change');
+						onValueChange();
 					}" />
 		</template>
 	</div>

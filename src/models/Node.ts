@@ -1,5 +1,6 @@
 import {StringKey, NO_DESC} from "../strings";
 import {Color, Vec2} from "../util";
+import { OverloadGroup, OverloadManager } from "./Overload";
 
 export class Tree {
 	readonly links = new Set<Link>();
@@ -74,7 +75,7 @@ export type NodeDisplay = {
 	flags: SocketFlag[],
 };
 
-export class Node {
+export abstract class Node {
 	static readonly TYPE: symbol = Symbol();
 	static readonly LABEL: string = "";
 
@@ -231,6 +232,26 @@ export class Node {
 	}
 }
 
+export abstract class NodeWithOverloads<Mode extends string> extends Node {
+	static readonly overloadGroup: OverloadGroup<any>;
+
+	private readonly overloadManager: OverloadManager<Mode>;
+
+	constructor(defaultMode: Mode) {
+		super();
+		this.overloadManager = new OverloadManager(this, defaultMode, new.target.overloadGroup);
+		this.overloadManager.setSockets();
+	}
+
+	output(context: NodeEvalContext): number {
+		return this.overloadManager.evaluate(context);
+	}
+
+	get currentMode() {
+		return this.overloadManager.mode;
+	}
+}
+
 export interface AxisNode extends Node {
 	readonly axes: number[];
 }
@@ -278,6 +299,7 @@ type SliderProps = {
 	unboundedChangePerPixel?: number,
 };
 
+/** Properties specific to the socket type */
 type SocketData<St extends SocketType=any> =
 		{
 			socketDesc?: StringKey,
@@ -303,6 +325,7 @@ type SocketData<St extends SocketType=any> =
 type SocketOptions<St extends SocketType=any> =
 		{
 			defaultValue?: SocketValue<St>,
+			onValueChange?: (tree: Tree) => void,
 		} & SocketData<St>;
 
 export class Socket<St extends SocketType=any> {
@@ -334,9 +357,10 @@ export class Socket<St extends SocketType=any> {
 	fieldValue: SocketValue<St>;//number | Color;
 	flags: SocketFlag;
 
-	readonly data: SocketData<St>
+	readonly data: SocketData<St>;
 
 	constructor(
+		/** The node this socket belongs to */
 		readonly node: Node,
 		readonly isInput: boolean,
 		public type: St,
@@ -345,14 +369,16 @@ export class Socket<St extends SocketType=any> {
 
 		readonly showSocket: boolean=true,
 
+		/** Object that specifies SocketType-independent options for this socket as well as SocketType-specific properties/data */
 		options=<SocketOptions<St>>{},
 	) {
-		const {defaultValue, ...data} = options;
+		const {defaultValue, onValueChange, ...data} = options;
 
 		this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
 		this.data = data as any as SocketData<St>;
 
 		this.flags = SocketFlag.None;
+		this.onValueChange = onValueChange ?? (() => {});
 	}
 
 	get isOutput() {
@@ -385,6 +411,8 @@ export class Socket<St extends SocketType=any> {
 		this.flags = flags;
 		return this;
 	}
+
+	onValueChange(tree: Tree) {}
 }
 
 export class Link {

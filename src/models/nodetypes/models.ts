@@ -1,4 +1,4 @@
-import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, Tree, OutputDisplayType} from "../Node";
+import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, Tree, OutputDisplayType, NodeWithOverloads} from "../Node";
 import { Overload, OverloadManager, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
 
@@ -38,13 +38,13 @@ export namespace models {
 		ToRgb = "to rgb",
 		FromRgb = "from rgb",
 	}
-	export class HslNode extends Node {
+	export class HslNode extends NodeWithOverloads<RgbMode> {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HSL";
 		static readonly DESC = "desc.node.hsl";
 		static readonly outputDisplayType = OutputDisplayType.Vec;
 
-		private static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
+		static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
 			[RgbMode.ToRgb, new Overload(
 				"To RGB",
 				node => [
@@ -72,23 +72,16 @@ export namespace models {
 			)],
 		]));
 
-		private readonly overloadManager = new OverloadManager(this, RgbMode.ToRgb, HslNode.overloadGroup);
-
 		constructor() {
-			super();
-			this.overloadManager.setSockets();
-		}
-
-		output(context: NodeEvalContext): Vec3 | number {
-			return this.overloadManager.evaluate(context);
+			super(RgbMode.ToRgb);
 		}
 
 		display(context: NodeEvalContext) {
-			switch (this.overloadManager.mode) {
+			switch (this.currentMode) {
 				default:
 				case RgbMode.ToRgb:
 					return {
-						values: this.output(context) as Vec3,
+						values: this.output(context) as any as Vec3,
 						labels: ["R", "G", "B"],
 						flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
 					};
@@ -105,20 +98,15 @@ export namespace models {
 					};
 			}
 		}
-
-		onSocketFieldValueChange(socket: Socket, tree: Tree) {
-			if (socket !== this.overloadManager.dropdown) return;
-			this.overloadManager.handleModeChange(tree);
-		}
 	}
 
-	export class HsvNode extends Node {
+	export class HsvNode extends NodeWithOverloads<RgbMode> {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HSV";
 		static readonly DESC = "desc.node.hsv";
 		static readonly outputDisplayType = OutputDisplayType.Vec;
 
-		private static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
+		static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
 			[RgbMode.ToRgb, new Overload(
 				"To RGB",
 				node => [
@@ -146,23 +134,16 @@ export namespace models {
 			)],
 		]));
 
-		private readonly overloadManager = new OverloadManager(this, RgbMode.ToRgb, HsvNode.overloadGroup);
-
 		constructor() {
-			super();
-			this.overloadManager.setSockets();
-		}
-
-		output(context: NodeEvalContext): Vec3 | number {
-			return this.overloadManager.evaluate(context);
+			super(RgbMode.ToRgb);
 		}
 
 		display(context: NodeEvalContext) {
-			switch (this.overloadManager.mode) {
+			switch (this.currentMode) {
 				default:
 				case RgbMode.ToRgb:
 					return {
-						values: this.output(context) as Vec3,
+						values: this.output(context) as any as Vec3,
 						labels: ["R", "G", "B"],
 						flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
 					};
@@ -179,20 +160,15 @@ export namespace models {
 					};
 			}
 		}
-
-		onSocketFieldValueChange(socket: Socket, tree: Tree) {
-			if (socket !== this.overloadManager.dropdown) return;
-			this.overloadManager.handleModeChange(tree);
-		}
 	}
 
-	export class HwbNode extends Node {
+	export class HwbNode extends NodeWithOverloads<RgbMode> {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "HWB";
 		static readonly DESC = "desc.node.hwb";
 		static readonly outputDisplayType = OutputDisplayType.Vec;
 
-		private static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
+		static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
 			[RgbMode.ToRgb, new Overload(
 				"To RGB",
 				node => [
@@ -220,23 +196,16 @@ export namespace models {
 			)],
 		]));
 
-		private readonly overloadManager = new OverloadManager(this, RgbMode.ToRgb, HwbNode.overloadGroup);
-
 		constructor() {
-			super();
-			this.overloadManager.setSockets();
-		}
-
-		output(context: NodeEvalContext): Vec3 | number {
-			return this.overloadManager.evaluate(context);
+			super(RgbMode.ToRgb);
 		}
 
 		display(context: NodeEvalContext) {
-			switch (this.overloadManager.mode) {
+			switch (this.currentMode) {
 				default:
 				case RgbMode.ToRgb:
 					return {
-						values: this.output(context) as Vec3,
+						values: this.output(context) as any as Vec3,
 						labels: ["R", "G", "B"],
 						flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
 					};
@@ -253,20 +222,15 @@ export namespace models {
 					};
 			}
 		}
-
-		onSocketFieldValueChange(socket: Socket, tree: Tree) {
-			if (socket !== this.overloadManager.dropdown) return;
-			this.overloadManager.handleModeChange(tree);
-		}
 	}
 
-	export class CmyNode extends Node {
+	export class CmyNode extends NodeWithOverloads<RgbMode> {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "CMY";
 		static readonly DESC = "desc.node.cmy";
 		static readonly outputDisplayType = OutputDisplayType.Vec;
 
-		private static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
+		static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
 			[RgbMode.ToRgb, new Overload(
 				"To RGB",
 				node => [
@@ -294,28 +258,16 @@ export namespace models {
 			)],
 		]));
 
-		private readonly overloadManager = new OverloadManager(this, RgbMode.ToRgb, CmyNode.overloadGroup);
-
 		constructor() {
-			super();
-			this.overloadManager.setSockets();
-		}
-
-		output(context: NodeEvalContext): Vec3 | number {
-			return this.overloadManager.evaluate(context);
-		}
-
-		onSocketFieldValueChange(socket: Socket, tree: Tree) {
-			if (socket !== this.overloadManager.dropdown) return;
-			this.overloadManager.handleModeChange(tree);
+			super(RgbMode.ToRgb);
 		}
 
 		display(context: NodeEvalContext) {
-			switch (this.overloadManager.mode) {
+			switch (this.currentMode) {
 				default:
 				case RgbMode.ToRgb:
 					return {
-						values: this.output(context) as Vec3,
+						values: this.output(context) as any as Vec3,
 						labels: ["R", "G", "B"],
 						flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
 					};

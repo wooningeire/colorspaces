@@ -1,26 +1,29 @@
 import { Node, NodeEvalContext, Socket, SocketType as St, Tree } from "./Node";
 
-export class Overload<T> {
+/** A collection of input/output sockets, as well as a function to compute outputs from the inputs' values */
+export class Overload<OutputType> {
     constructor(
         readonly label: string,
         readonly ins: (node: Node) => Socket[],
         readonly outs: (node: Node) => Socket[],
-        readonly evaluate: (ins: Socket[], outs: Socket[], context: NodeEvalContext) => T,
+        readonly evaluate: (ins: Socket[], outs: Socket[], context: NodeEvalContext) => OutputType,
         private readonly maintainExistingLinks = false,
     ) {}
 }
 
+/** Descriptor of a set of overloads, usually to store those specific to a certain subclass of Node */
 export class OverloadGroup<Mode extends string> {
     constructor(
         private readonly modes: Map<Mode, Overload<any>>,
     ) {}
 
-    buildDropdown(node: Node, defaultMode: Mode) {
+    buildDropdown(node: Node, defaultMode: Mode, overloadManager: OverloadManager<Mode>) {
         return new Socket(node, true, Socket.Type.Dropdown, "", false, {
             options: [...this.modes].map(([mode, overload]) => (
                 {value: mode, text: overload.label}
             )),
             defaultValue: defaultMode,
+            onValueChange: tree => overloadManager.handleModeChange(tree),
         });
     }
 
@@ -29,6 +32,9 @@ export class OverloadGroup<Mode extends string> {
     }
 }
 
+/** Stores the currently selected overload of a Node instance, as well as obtains the current output evaluation
+ * function when needed and updates the sockets when the selected overload changes
+ */
 export class OverloadManager<Mode extends string> {
     readonly dropdown: Socket<St.Dropdown>;
     private ins: Socket[];
@@ -39,7 +45,7 @@ export class OverloadManager<Mode extends string> {
         defaultMode: Mode,
         private readonly overloadGroup: OverloadGroup<Mode>,
     ) {
-        this.dropdown = overloadGroup.buildDropdown(node, defaultMode);
+        this.dropdown = overloadGroup.buildDropdown(node, defaultMode, this);
 
         const overload = overloadGroup.getOverload(defaultMode);
         this.ins = overload.ins(node);
