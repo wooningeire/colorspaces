@@ -1,9 +1,31 @@
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext} from "../Node";
+import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType} from "../Node";
 import * as cm from "../colormanagement";
 
 import {Color, Vec2, Vec3, pipe} from "@/util";
 
 export namespace externals {
+	export class CssNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "CSS output";
+		static readonly DESC = "desc.node.css";
+
+		static readonly outputDisplayType = OutputDisplayType.Css;
+
+		constructor() {
+			super();
+
+			this.ins.push(
+				new Socket(this, true, Socket.Type.RgbRawOrColTransformed, "RGB or RGB color"),
+			);
+
+			this.width = 200;
+		}
+
+		output(context: NodeEvalContext) {
+			return this.ins[0].inValue(context);
+		}
+	}
+	
 	export class DeviceTransformNode extends Node {
 		static readonly TYPE = Symbol(this.name);
 		static readonly LABEL = "Display buffer";

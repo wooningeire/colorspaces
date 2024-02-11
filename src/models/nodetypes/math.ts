@@ -1,5 +1,5 @@
 import {getIlluminant, labSliderProps, whitePointSocketOptions} from "./spaces";
-import {Tree, Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType} from "../Node";
+import {Tree, Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, NodeDisplay} from "../Node";
 import * as cm from "../colormanagement";
 
 import {Color, lerp} from "@/util";
@@ -248,6 +248,14 @@ export namespace math {
 
 			return cm.difference.deltaE1976(col0, col1);
 		}
+		
+		display(context: NodeEvalContext) {
+			return {
+				labels: [],
+				values: [this.output(context)],
+				flags: [],
+			};
+		}
 	}
 
 	export class DeltaE2000Node extends Node {
@@ -282,6 +290,14 @@ export namespace math {
 			const col1 = this.colorSockets[1].inValue(context);
 
 			return cm.difference.deltaE2000(col0, col1);
+		}
+		
+		display(context: NodeEvalContext) {
+			return {
+				labels: [],
+				values: [this.output(context)],
+				flags: [],
+			};
 		}
 	}
 

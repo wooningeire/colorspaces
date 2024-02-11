@@ -40,10 +40,6 @@ C${x0 + controlPointDx},${y0} ${x1 - controlPointDx},${y1}, ${x1},${y1}`;
 			:x1="dstX(link)"
 			:y1="dstY(link)"
 
-			:subtle="link.dstNode instanceof externals.DevicePostprocessingNode
-					|| link.dstNode instanceof externals.EnvironmentNode
-					|| link.dstNode instanceof externals.VisionNode"
-
 			:invalid="link.causesCircularDependency" />
 </template>
 

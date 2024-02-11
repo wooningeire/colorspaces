@@ -5,6 +5,7 @@ import {settings} from "./store";
 
 import {Col} from "@/models/colormanagement";
 import {SocketFlag} from '@/models/Node';
+import NodeOutputTable from './NodeOutputTable.vue';
 
 const props = defineProps<{
 	values: number[],
@@ -17,45 +18,17 @@ const nDecimals = 4;
 // const labels = (props.values.constructor as typeof Col).labels;
 // const isRgb = (props.values.constructor as typeof Col).isRgb;
 
+const newValues = computed(() => props.values.map((value, i) => {
+	const flag = i < props.flags.length ? props.flags[i] : SocketFlag.None;
+	return (flag === SocketFlag.Rgb ? props.values[i] * settings.rgbScale
+			: flag === SocketFlag.Hue ? props.values[i]  * settings.hueScale
+			: props.values[i]
+	).toFixed(nDecimals);
+}));
+
 </script>
 
 <template>
-	<div class="output-values two-column">
-		<template v-for="(value, index) of values">
-			<div class="header">
-				{{index < labels.length ? labels[index] : ''}}
-			</div>
-			<div class="data">
-				<template v-for="flag of [index < flags.length ? flags[index] : SocketFlag.None]">
-					{{(flag === SocketFlag.Rgb ? values[index] * settings.rgbScale
-							: flag === SocketFlag.Hue ? values[index]  * settings.hueScale
-							: values[index]
-						).toFixed(nDecimals)
-					}}
-				</template>
-			</div>
-		</template>
-	</div>
+	<NodeOutputTable :labels="labels"
+			:values="newValues" />
 </template>
-
-<style lang="scss" scoped>
-.output-values {
-	&.two-column {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		gap: 0 1em;
-		text-align: right;
-	}
-
-	> .header {
-		font-weight: 700;
-
-		// &:not(:empty)::after {
-		// 	content: ":";
-		// }
-	}
-
-	// > .data {
-	// }
-}
-</style>

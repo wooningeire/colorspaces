@@ -2,7 +2,7 @@
 import {ref} from "vue";
 import * as marked from "marked";
 
-import {models, math, spaces, images, organization} from "@/models/nodetypes";
+import {models, math, spaces, images, organization, externals} from "@/models/nodetypes";
 import {Node} from "@/models/Node";
 
 import getString from "@/strings";
@@ -17,6 +17,7 @@ const labels = new Map<object, string>([
 	[math, "Math"],
 	[images, "Images"],
 	[organization, "Other"],
+	[externals, "Output"],
 ]);
 
 
@@ -34,7 +35,7 @@ const showButtonTooltip = (nodeConstructor: typeof Node) => {
 <template>
 	<div class="node-tray"
 			ref="tray">
-		<template v-for="nodeNamespace of [models, spaces, math, images, organization]">
+		<template v-for="nodeNamespace of [models, spaces, math, images, externals, organization]">
 			<div class="node-category-label">
 				{{labels.get(nodeNamespace)}}
 			</div>

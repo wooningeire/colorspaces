@@ -3,6 +3,7 @@ import {inject, computed} from "vue";
 
 import NodeOutputColorValues from "./NodeOutputColorValues.vue";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
+import NodeOutputCss from "./NodeOutputCss.vue";
 
 import {Node, OutputDisplayType} from "@/models/Node";
 import {Col} from "@/models/colormanagement";
@@ -46,6 +47,10 @@ const nDecimals = 4;
 					:labels="output.labels"
 					:flags="output.flags"
 					v-if="hasConstantOutput" />
+		</template>
+
+		<template v-else-if="type === OutputDisplayType.Css">
+			<NodeOutputCss :color="output.values" />
 		</template>
 	</div>
 </template>

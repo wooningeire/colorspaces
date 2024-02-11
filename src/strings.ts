@@ -12,6 +12,7 @@ const strings = {
 	"label.node.srgb": "sRGB",
 	"label.node.linearSrgb": "Linear sRGB",
 	"label.node.explode": "Explode",
+	"label.node.css": "CSS",
 	
 	"label.socket.color": "Color",
 	"label.socket.illuminant": "White point",
@@ -38,6 +39,8 @@ const strings = {
 	"desc.node.contrastRatio": "Compares the relative luminance between two colors.",
 	"desc.node.gradient": "Generates a range of numbers.",
 	"desc.node.imageFile": "Reads RGB data from a local image file.",
+
+	"desc.node.css": "CSS formats for a given color.",
 
 	"desc.socket.illuminant": "The chromaticity of the color “white”. This varies under different viewing circumstances.",
 
