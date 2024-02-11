@@ -1,32 +1,82 @@
 <script lang="ts" setup>
-import {computed} from "vue";
+import { Link, Socket } from "@/models/Node";
+import {computed, getCurrentInstance, inject, nextTick, onBeforeUpdate, onMounted, onUpdated, ref} from "vue";
 
 const props = withDefaults(defineProps<{
-    x0: number,
-    y0: number,
-    x1: number,
-    y1: number,
+    link?: Link | null,
+	socketVues: WeakMap<Socket, any>,
+
+	x0?: number,
+	y0?: number,
+	x1?: number,
+	y1?: number,
 
     subtle?: boolean,
     invalid?: boolean,
 }>(), {
+	link: null,
+
     subtle: false,
     invalid: false,
+	
+	x0: 0,
+	y0: 0,
+	x1: 0,
+	y1: 0,
 });
 
 
-const path = computed(() => {
-    const {x0, y0, x1, y1} = props;
+const socketVue = (socket: Socket) => props.socketVues.get(socket);
+const srcX = ref(0);
+const srcY = ref(0);
+const dstX = ref(0);
+const dstY = ref(0);
 
-	const controlPointDx = Math.max(10, 8 * (Math.abs(x1 - x0 - 12) ** (1/2)));
+const socketLoaded = ref(false);
+const checkSocketLoaded = () => {
+	if ([srcX.value, srcY.value, dstX.value, dstY.value].includes(undefined)) {
+		nextTick(checkSocketLoaded);
+	} else {
+		socketLoaded.value = true;
+	}
+}
+const linkVues = inject<WeakMap<Link, any>>("linkVues")!;
+onMounted(() => {
+	checkSocketLoaded();
+
+	// This component is force-updated by TheNodeTree when a socket moves
+	if (props.link) {
+		linkVues.set(props.link, getCurrentInstance()?.proxy);
+	}
+	setCoords();
+});
+
+onUpdated(() => {
+	setCoords();
+});
+
+const setCoords = () => {
+	srcX.value = props.link ? socketVue(props.link.src)?.socketPos()[0] : props.x0;
+	srcY.value = props.link ? socketVue(props.link.src)?.socketPos()[1] : props.y0;
+	dstX.value = props.link ? socketVue(props.link.dst)?.socketPos()[0] : props.x1;
+	dstY.value = props.link ? socketVue(props.link.dst)?.socketPos()[1] : props.y1;
+}
+
+
+
+const path = computed(() => {
+    const [x0, y0, x1, y1] = [srcX.value, srcY.value, dstX.value, dstY.value];
+
+	const controlPointDx = Math.max(10, 8 * (Math.abs(x1! - x0! - 12) ** (1/2)));
 
 	return `M${x0},${y0}
-C${x0 + controlPointDx},${y0} ${x1 - controlPointDx},${y1}, ${x1},${y1}`;
+C${x0! + controlPointDx},${y0} ${x1! - controlPointDx},${y1}, ${x1},${y1}`;
 });
 </script>
 
 <template>
-	<path :d="path"
+	<path v-if="socketLoaded"
+			:d="path"
 			
 			:class="{
                 subtle,

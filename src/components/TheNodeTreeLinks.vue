@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {inject, Ref} from "vue";
+import {getCurrentInstance, inject, nextTick, onMounted, ref, Ref, watch} from "vue";
 
 import NodeLink from "./NodeLink.vue";
 
@@ -9,36 +9,13 @@ import {externals} from "@/models/nodetypes";
 import {tree} from "./store";
 
 const props = defineProps(["socketVues"]);
-const socketVue = (socket: Socket) => props.socketVues.get(socket);
-
-// This component is force-updated by TheNodeTree when a socket moves
-
-const srcX = (link: Link) => socketVue(link.src)?.socketPos()[0];
-const srcY = (link: Link) => socketVue(link.src)?.socketPos()[1];
-const dstX = (link: Link) => socketVue(link.dst)?.socketPos()[0];
-const dstY = (link: Link) => socketVue(link.dst)?.socketPos()[1];
-
-const linkPath = (link: Link) => {
-	const x0 = srcX(link);
-	const y0 = srcY(link);
-	const x1 = dstX(link);
-	const y1 = dstY(link);
-
-	const controlPointDx = Math.max(10, 8 * (Math.abs(x1 - x0 - 12) ** (1/2)));
-
-	return `M${x0},${y0}
-C${x0 + controlPointDx},${y0} ${x1 - controlPointDx},${y1}, ${x1},${y1}`;
-};
 </script>
 
 <template>
 	<NodeLink v-for="link of tree.links"
 			:key="link.id"
-
-			:x0="srcX(link)"
-			:y0="srcY(link)"
-			:x1="dstX(link)"
-			:y1="dstY(link)"
+			:link="link"
+			:socketVues="socketVues"
 
 			:invalid="link.causesCircularDependency" />
 </template>

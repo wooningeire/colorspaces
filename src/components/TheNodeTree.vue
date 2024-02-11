@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {computed, ref, reactive, provide, nextTick, onMounted, Ref, inject} from "vue";
+import {computed, ref, reactive, provide, nextTick, onMounted, Ref, inject, watch} from "vue";
 
 import NodeVue from "./NodeVue.vue";
 import NodeSocket from "./NodeSocket.vue";
@@ -7,7 +7,7 @@ import TheNodeTreeLinks from "./TheNodeTreeLinks.vue";
 import NodeLink from "./NodeLink.vue";
 
 import {Vec2, Listen, clearTextSelection} from "@/util";
-import {Socket, Node} from "@/models/Node";
+import {Socket, Node, Link} from "@/models/Node";
 
 import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";
 
@@ -22,6 +22,8 @@ provide("tree", tree);
 
 const socketVues = new WeakMap<Socket, InstanceType<typeof NodeSocket>>();
 provide("socketVues", socketVues);
+const linkVues = new WeakMap<Link, InstanceType<typeof NodeLink>>();
+provide("linkVues", linkVues);
 
 const draggedSocketVue = ref(null as InstanceType<typeof NodeSocket> | null);
 
@@ -64,12 +66,12 @@ const onLinkToSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 
 
 
-const linksComponent = ref(null as InstanceType<typeof TheNodeTreeLinks> | null);
-
 const rerenderLinks = () => {
 	// Delay to next tick because socket positions in DOM have not updated yet
 	nextTick(() => {
-		linksComponent.value?.$forceUpdate();
+		for (const link of tree.links) {
+			linkVues.get(link)!.$forceUpdate();
+		}
 	});
 };
 
@@ -198,6 +200,8 @@ defineExpose({
 				<template v-if="draggingSocket">
 					<NodeLink v-if="draggedSocket?.isOutput"
 							class="new-link"
+							:link="null"
+							:socketVues="socketVues"
 
 							:x0="draggedSocketVue?.socketPos()[0] ?? 0"
 							:y0="draggedSocketVue?.socketPos()[1] ?? 0"
@@ -205,6 +209,8 @@ defineExpose({
 							:y1="pointerY" />
 					<NodeLink v-else
 							class="new-link"
+							:link="null"
+							:socketVues="socketVues"
 
 							:x0="pointerX"
 							:y0="pointerY"
@@ -212,8 +218,7 @@ defineExpose({
 							:y1="draggedSocketVue?.socketPos()[1] ?? 0" />
 				</template>
 
-				<TheNodeTreeLinks :socketVues="socketVues"
-						ref="linksComponent" />
+				<TheNodeTreeLinks :socketVues="socketVues" />
 			</g>
 		</svg>
 	</div>

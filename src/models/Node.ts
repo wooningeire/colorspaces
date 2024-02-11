@@ -59,6 +59,12 @@ export class Tree {
 				.flat()
 				.forEach(link => this.unlink(link));
 	}
+
+	clear() {
+		for (const node of this.nodes) {
+			this.deleteNode(node);
+		}
+	}
 }
 
 export enum OutputDisplayType {
