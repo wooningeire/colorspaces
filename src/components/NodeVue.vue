@@ -9,7 +9,7 @@ import NodeOutput from "./NodeOutput.vue";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 
 import {Node} from "@/models/Node";
-import {models, spaces, math, images, externals, organization} from "@/models/nodetypes";
+import {models, spaces, math, images, externals, organization, output} from "@/models/nodetypes";
 
 import {Listen, clearTextSelection, Vec2} from "@/util";
 
@@ -19,22 +19,19 @@ import {selectedNodes, modifierKeys} from "./store";
 import makeDragListener from "./draggable";
 
 
-const props = defineProps({
-	node: {
-		type: Node,
-		required: true,
-	},
-});
+const props = defineProps<{
+	node: Node,
+}>();
 
 
-const emit = defineEmits([
-	"drag-socket",
-	"link-to-socket",
-	"node-dragged",
-	"potential-socket-position-change",
-	"tree-update",
-	"node-selected",
-]);
+const emit = defineEmits<{
+	(event: "drag-socket", socketVue: InstanceType<typeof NodeSocket>): void,
+	(event: "link-to-socket", socketVue: InstanceType<typeof NodeSocket>): void,
+	(event: "node-dragged"): void,
+	(event: "potential-socket-position-change"): void,
+	(event: "tree-update"): void,
+	(event: "node-selected", targetNode: Node, clearSelectionFirst: boolean): void,
+}>();
 
 
 const isSelected = computed(() => selectedNodes.has(props.node));
@@ -76,7 +73,7 @@ const emitNodeSelected = (event: PointerEvent) => {
 const shouldDisplayLabel = computed(() => !(props.node instanceof organization.RerouteNode))
 
 
-const nodeCategories = new Map([models, spaces, math, images, externals, organization]
+const nodeCategories = new Map([models, spaces, math, images, externals, organization, output]
 		.map(category =>
 				Object.values(category)
 						.map(nodeType => [nodeType.TYPE, category]))
@@ -91,6 +88,7 @@ const categoryNames = new Map<unknown, string>([
 	[math, "math"],
 	[images, "images"],
 	[externals, "externals"],
+	[output, "output"],
 ]);
 const nodeCategoryClass = computed(() =>
 		categoryNames.has(category.value)
@@ -153,8 +151,8 @@ watch(props.node, () => { // update please :(
 						:socket="socket" />
 
 				<NodeSocket :socket="socket"
-						@drag-socket="socketVue => $emit('drag-socket', socketVue)"
-						@link-to-socket="socketVue => (
+						@drag-socket="(socketVue: InstanceType<typeof NodeSocket>) => $emit('drag-socket', socketVue)"
+						@link-to-socket="(socketVue: InstanceType<typeof NodeSocket>) => (
 							$emit('link-to-socket', socketVue),
 							$emit('tree-update'),
 							$emit('potential-socket-position-change'))"
@@ -170,8 +168,8 @@ watch(props.node, () => { // update please :(
 			<NodeSocket v-for="socket of node.outs"
 					:key="socket.id"
 					:socket="socket"
-					@drag-socket="socketVue => $emit('drag-socket', socketVue)"
-					@link-to-socket="socketVue => (
+					@drag-socket="(socketVue: InstanceType<typeof NodeSocket>) => $emit('drag-socket', socketVue)"
+					@link-to-socket="(socketVue: InstanceType<typeof NodeSocket>) => (
 						$emit('link-to-socket', socketVue),
 						$emit('tree-update'),
 						$emit('potential-socket-position-change'))"
@@ -296,7 +294,8 @@ watch(props.node, () => { // update please :(
 		--node-border-background: linear-gradient(hsl(165deg 10% 50%), hsl(185deg 10% 60%));
 		--node-background: hsl(165deg 10% 20% / 0.8745);
 	}
-	&.category--externals {
+	&.category--externals,
+	&.category--output {
 		--node-border-background: linear-gradient(hsl(220deg 40% 50%), hsl(200deg 40% 50%));
 		--node-background: hsl(220deg 25% 20% / 0.8745);
 	}

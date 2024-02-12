@@ -2,6 +2,7 @@
 import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef} from "vue";
 
 import NodeSocketField from "./NodeSocketField.vue";
+import NodeSocket from "./NodeSocket.vue";
 import {tree, tooltipData} from "./store";
 
 import {Tree, Socket, SocketType as St} from "@/models/Node";
@@ -18,12 +19,12 @@ const props = defineProps({
 	},
 });
 
-const emit = defineEmits([
-	"value-change",
-	"drag-socket",
-	"link-to-socket",
-	"unlink",
-]);
+const emit = defineEmits<{
+	(event: "value-change"): void,
+	(event: "drag-socket", socketVue: InstanceType<typeof NodeSocket>): void,
+	(event: "link-to-socket", socketVue: InstanceType<typeof NodeSocket>): void,
+	(event: "unlink"): void,
+}>();
 
 const draggedSocket = inject("draggedSocket") as ComputedRef<Socket>;
 
@@ -34,7 +35,7 @@ const shouldShowFields = computed(
 );
 
 
-const socketVues = inject("socketVues") as WeakMap<Socket, unknown>;
+const socketVues = inject("socketVues") as WeakMap<Socket, InstanceType<typeof NodeSocket>>;
 onMounted(() => {
 	socketVues.set(props.socket, socketVue);
 });

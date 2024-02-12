@@ -3,15 +3,12 @@ import SpectralPowerDistributionEntry from "./input/SpectralPowerDistributionEnt
 import ChromaticityEntry from "./input/ChromaticityEntry.vue";
 
 import {Node} from "@/models/Node";
-import {models, externals} from "@/models/nodetypes";
+import {models, output} from "@/models/nodetypes";
 
 
-const props = defineProps({
-	node: {
-		type: Node,
-		required: true,
-	},
-});
+const props = defineProps<{
+	node: Node,
+}>();
 </script>
 
 <template class="special-input">
@@ -20,7 +17,7 @@ const props = defineProps({
 			v-model="node.distribution"
 			v-model:datasetId="node.colorMatchingDataset" />
 
-	<ChromaticityEntry v-else-if="node instanceof models.ChromaticityNode"
+	<ChromaticityEntry v-else-if="node instanceof output.ChromaticityPlotNode"
 			:node="node" />
 </template>
 

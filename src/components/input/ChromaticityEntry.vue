@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { Socket, SocketType as St } from "@/models/Node";
-import { models } from "@/models/nodetypes";
+import { output } from "@/models/nodetypes";
 import {onMounted, ref, computed, onUpdated, watch, PropType} from "vue";
 import { settings } from "../store";
 
 
 const props = defineProps({
 	node: {
-		type: models.ChromaticityNode,
+		type: output.ChromaticityPlotNode,
 		required: true,
 	},
 });

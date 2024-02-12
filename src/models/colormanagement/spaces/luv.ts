@@ -102,7 +102,7 @@ const turn = 2 * Math.PI;
 const luvToLchUv = (luv: Luv) => new LchUv([
 	luv.l,
 	Math.hypot(luv.u, luv.v),
-	mod(Math.atan2(luv.v, luv.u) / turn, 2), // radians to [0, 1)
+	mod(Math.atan2(luv.v, luv.u) / turn, 1), // radians to [0, 1)
 ], luv.illuminant);
 
 const lchUvToLuv = (lch: LchUv) => new Luv([

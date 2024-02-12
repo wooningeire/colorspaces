@@ -4,3 +4,4 @@ export {math} from "./nodetypes/math";
 export {spaces} from "./nodetypes/spaces";
 export {externals} from "./nodetypes/externals";
 export {organization} from "./nodetypes/organization";
+export {output} from "./nodetypes/output";

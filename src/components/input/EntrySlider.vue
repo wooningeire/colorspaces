@@ -197,6 +197,9 @@ const showTooltip = () => {
 			:class="{
 				'invalid': !proposedValueIsValid,
 				'inputing': entryActive,
+				'overflow': progress > 1,
+				'underflow': progress < 0,
+				'unbounded': !hasBounds,
 			}"
 
 			:style="{
@@ -223,6 +226,8 @@ input {
 
 	--col-slider-progress: #ad4c64;
 	--col-slider-empty: #555857;
+	--col-slider-overflow: #f581a6;
+	--col-slider-underflow: #212222;
 
 	text-align: right;
 	cursor: ew-resize;
@@ -230,6 +235,8 @@ input {
 	&:hover {
 		--col-slider-progress: #dd4f96;
 		--col-slider-empty: #666b69;
+		--col-slider-overflow: #ffc7cc;
+		--col-slider-underflow: #323333;
 	}
 	
 	&.inputing {
@@ -237,6 +244,26 @@ input {
 
 		--col-slider-progress: #693333;
 		--col-slider-empty: #3a3b3b;
+		--col-slider-overflow: #ad4c64;
+		--col-slider-underflow: #1f1f1f;
+	}
+
+	&.overflow {
+		background: linear-gradient(90deg,
+				var(--col-slider-progress) 50%,
+				var(--col-slider-overflow));
+	}
+
+	&.underflow {
+		background: linear-gradient(90deg,
+				var(--col-slider-underflow),
+				var(--col-slider-empty) 50%);
+	}
+
+	&.unbounded {
+	background: linear-gradient(90deg,
+			var(--col-slider-empty),
+			var(--col-slider-progress));
 	}
 
 	&.invalid {

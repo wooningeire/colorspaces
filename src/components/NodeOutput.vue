@@ -50,7 +50,8 @@ const nDecimals = 4;
 		</template>
 
 		<template v-else-if="type === OutputDisplayType.Css">
-			<NodeOutputCss :color="output.values" />
+			<NodeOutputCss :color="output.values"
+					v-if="hasConstantOutput" />
 		</template>
 	</div>
 </template>
