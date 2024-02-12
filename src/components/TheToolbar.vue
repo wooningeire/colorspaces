@@ -18,7 +18,7 @@ addEventListener("keydown", event => {
 
 const fileSelector = ref<HTMLInputElement | null>(null);
 const onFileSelectorChange = () => {
-	if (!fileSelector.value!.files?.length) return;
+	if (!fileSelector.value?.files?.length) return;
 
 	const reader = new FileReader();
 	reader.addEventListener("load", () => {

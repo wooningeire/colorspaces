@@ -7,7 +7,7 @@ import {Node} from "@/models/Node";
 
 import getString from "@/strings";
 
-import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, tooltipData} from "./store";
+import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, tooltipController} from "./store";
 
 const emit = defineEmits(["add-node"]);
 
@@ -25,7 +25,7 @@ const tray = ref(null as HTMLDivElement | null);
 
 const showButtonTooltip = (nodeConstructor: typeof Node) => {
 	const rect = tray.value!.getBoundingClientRect();
-	tooltipData.showTooltip(getString(nodeConstructor.DESC), {
+	tooltipController.showTooltip(getString(nodeConstructor.DESC), {
 		left: `calc(${rect.left}px + 1em)`,
 		bottom: `calc(${rect.height}px + 1em)`,
 	});
@@ -51,7 +51,7 @@ const showButtonTooltip = (nodeConstructor: typeof Node) => {
 						}"
 						@dragend="isDraggingNodeFromNodeTray = false"
 						@pointerenter="() => showButtonTooltip(nodeConstructor)"
-						@pointerleave="tooltipData.hideTooltip()"
+						@pointerleave="tooltipController.hideTooltip()"
 						
 						v-html="marked.parseInline(nodeConstructor.LABEL)">
 				</button>

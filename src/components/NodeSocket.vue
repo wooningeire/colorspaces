@@ -3,7 +3,7 @@ import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef} from 
 
 import NodeSocketField from "./NodeSocketField.vue";
 import NodeSocket from "./NodeSocket.vue";
-import {tree, tooltipData} from "./store";
+import {tree, tooltipController} from "./store";
 
 import {Tree, Socket, SocketType as St} from "@/models/Node";
 import getString, {NO_DESC} from "@/strings";
@@ -123,7 +123,7 @@ ${getString("general.socketDataTypeLabel")}${getString(`label.socketType.${socke
 ${getString(`desc.socketType.${socketTypeName}.${props.socket.isInput ? "in" : "out"}`)}`;
 	}
 
-	tooltipData.showTooltip(tooltipString, {
+	tooltipController.showTooltip(tooltipString, {
 		left: `calc(${rect.right}px + 1em)`,
 		top: `${rect.top}px`,
 	});
@@ -152,7 +152,7 @@ Object.defineProperties(socketVue, {
 			ref="socketContainer"
 			
 			@pointerenter="() => showTooltip()"
-			@pointerleave="tooltipData.hideTooltip()">
+			@pointerleave="tooltipController.hideTooltip()">
 		<div class="socket"
 				v-if="socket.showSocket"
 

@@ -1,6 +1,7 @@
+import { errorPopupController } from "@/components/store";
 import { Tree, Node, SocketValue, Socket, NodeWithOverloads } from "@/models/Node";
-import { images, models, math, organization, spaces, externals } from "@/models/nodetypes";
-import { c } from "vitest/dist/reporters-5f784f42";
+import * as nodeTypes from "@/models/nodetypes";
+import getString from "@/strings";
 
 export const downloadNodeTree = (tree: Tree) => {
     const fileString = serializeNodeTree(tree);
@@ -17,7 +18,13 @@ export const downloadNodeTree = (tree: Tree) => {
 };
 
 export const importNodeTree = (tree: Tree, fileString: string) => {
-    deserializeNodeTree(tree, fileString);
+    try {
+        deserializeNodeTree(tree, fileString);
+    } catch (error) {
+        tree.clear();
+        errorPopupController.showPopup(`${getString("error.import")}<br />
+${(error as Error).message}`);
+    }
 };
 
 
@@ -41,7 +48,6 @@ interface SerializedLink {
     dstSocketIndex: number,
 };
 
-// TODO: handle overloads
 const serializeNodeTree = (tree: Tree) => {
     const serializedTree: SerializedTree = {
         fileFormatVersion: [0, 0, 0],
@@ -96,24 +102,32 @@ const serializeNodeTree = (tree: Tree) => {
     return JSON.stringify(serializedTree);
 };
 
-const deserializeNodeTree = async (tree: Tree, fileString: string) => {
+const deserializeNodeTree = (tree: Tree, fileString: string) => {
     tree.clear();
 
     const serializedTree: SerializedTree = JSON.parse(fileString);
     const namesToConstructors = new Map<string, new (...args: any[]) => Node>(
-        [models, spaces, math, images, externals, organization]
-                .flatMap(namespace => Object.entries(namespace))
+        Object.values(nodeTypes).flatMap(namespace => Object.entries(namespace))
     );
 
     const nodes = [];
     for (const serializedNode of serializedTree.nodes) {
-        const node = new (namesToConstructors.get(serializedNode.type)!)()
+        const nodeConstructor = namesToConstructors.get(serializedNode.type);
+        if (!nodeConstructor) {
+            throw new Error(getString("error.import.unknownNodeType", serializedNode.type));
+        }
+
+        const node = new nodeConstructor()
                 .setPos(serializedNode.pos);
 
         if (node instanceof NodeWithOverloads) {
             // Handle the overload dropdown socket
             node.ins[0].fieldValue = serializedNode.socketFieldValues[0];
-            node.overloadManager.handleModeChange(tree);
+            try {
+                node.overloadManager.handleModeChange(tree);
+            } catch (error) {
+                throw new Error(getString("error.import.unknownOverload", serializedNode.type, node.overloadManager.mode));
+            }
 
             for (let i = 1; i < serializedNode.socketFieldValues.length; i++) {
                 node.ins[i].fieldValue = serializedNode.socketFieldValues[i];
@@ -127,9 +141,6 @@ const deserializeNodeTree = async (tree: Tree, fileString: string) => {
         tree.nodes.add(node);
         nodes.push(node);
     }
-
-    // await Promise.resolve(); // wait a tick so that nodes have been mounted
-    // TODO this is a display issue and probably should not rely on the import code
 
     for (const serializedLink of serializedTree.links) {
         tree.linkSockets(

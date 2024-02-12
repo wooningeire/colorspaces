@@ -10,8 +10,9 @@ import {Node} from "@/models/Node";
 
 import {Vec2} from "@/util";
 
-import {tree, tooltipData} from "./store";
+import {tree, tooltipController, errorPopupController} from "./store";
 import ObjectTooltip from "./ObjectTooltip.vue";
+import ErrorPopup from "./ErrorPopup.vue";
 
 
 const treeVue = ref(null as InstanceType<typeof TheNodeTree> | null);
@@ -40,9 +41,10 @@ const addNode = <T extends Node>(nodeConstructor: new () => T, screenPos: Vec2=[
 	<TheToolbar />
 
 	<div class="tooltips">
-		<ObjectTooltip :text="tooltipData.text"
-				:pos="tooltipData.pos" />
+		<ObjectTooltip :text="tooltipController.text"
+				:pos="tooltipController.pos" />
 	</div>
+	<ErrorPopup :text="errorPopupController.text" />
 
 	<TheSettingsPanel />
 </template>

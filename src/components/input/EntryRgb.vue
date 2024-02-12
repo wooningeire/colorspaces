@@ -4,7 +4,7 @@ import {defineComponent, reactive, PropType, ref, watch} from "vue";
 import EntrySlider from "./EntrySlider.vue";
 
 import {acceptAlways, cloneArray} from "./base-functions";
-import {tooltipData, settings} from "../store";
+import {tooltipController, settings} from "../store";
 
 import {Vec3} from "@/util";
 import getString, {NO_DESC, StringKey} from "@/strings";

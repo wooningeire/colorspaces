@@ -92,7 +92,7 @@ type Tooltip = {
 };
 const tooltips = new Set<Tooltip>();
 
-export const tooltipData = reactive({
+export const tooltipController = reactive({
 	text: "",
 	pos: {},
 
@@ -106,6 +106,22 @@ export const tooltipData = reactive({
 		this.pos = {};
 	},
 });
+//#endregion
+
+//#region Error popup
+export const errorPopupController =  reactive({
+	text: "",
+
+	async showPopup(text: string) {
+		this.text = "";
+		await Promise.resolve();
+		this.text = text;
+	},
+
+	hidePopup() {
+		this.text = "";
+	},
+})
 //#endregion
 
 export class SocketHitbox extends HTMLElement {

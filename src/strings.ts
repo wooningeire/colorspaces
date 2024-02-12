@@ -3,7 +3,10 @@ import * as marked from "marked";
 export type StringKey = keyof typeof strings;
 export const NO_DESC = Symbol();
 
-export default (key: string | StringKey) => marked.parseInline(strings[key] ?? `[missing text: \`${String(key)}\`]`);
+export default (key: string | StringKey, ...replacements: string[]) => replacements.reduce(
+	(acc, replacement) => acc.replace("{}", replacement),
+	marked.parseInline(strings.hasOwnProperty(key) ? strings[key as keyof typeof strings] : `[missing text: \`${String(key)}\`]`),
+);
 
 const strings = {
 	"general.socketDataTypeLabel": "**Data type:** ",
@@ -70,6 +73,10 @@ const strings = {
 	"label.socketType.colorCoords": "Color",
 	"desc.socketType.colorCoords.out": "A list of (usually 3) coordinates in a color space.",
 	"desc.socketType.colorCoords.in": "A list of (usually 3) coordinates in a color space.",
+
+	"error.import": "**Error occurred while importing tree:** ",
+	"error.import.unknownNodeType": "Node type \"`{}`\" does not exist.",
+	"error.import.unknownOverload": "Node type \"`{}`\" does not have a mode named \"`{}`\".",
 
 	[NO_DESC]: "",
 };

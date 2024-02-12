@@ -2,7 +2,7 @@
 import {computed, PropType, ref, watch} from "vue";
 
 import {acceptAlways, identity} from "./base-functions";
-import {modifierKeys, tooltipData} from "../store";
+import {modifierKeys, tooltipController} from "../store";
 import makeDragListener from "../draggable";
 
 import getString, {NO_DESC, StringKey} from "@/strings";
@@ -178,7 +178,7 @@ watch(() => [props.modelValue, props.convertOut], () => {
 
 const showTooltip = () => {
 	const rect = textbox.value!.getBoundingClientRect();
-	tooltipData.showTooltip(getString(props.desc ?? NO_DESC), {
+	tooltipController.showTooltip(getString(props.desc ?? NO_DESC), {
 		left: `calc(${rect.right}px + 1.5em)`,
 		top: `${rect.top}px`,
 	});
@@ -207,7 +207,7 @@ const showTooltip = () => {
 			} as any"
 			
 			@pointerenter="() => showTooltip()"
-			@pointerleave="tooltipData.hideTooltip()" />
+			@pointerleave="tooltipController.hideTooltip()" />
 </template>
 
 <style lang="scss" scoped>
