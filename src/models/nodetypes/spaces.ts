@@ -1,5 +1,5 @@
 import { Vec3 } from "@/util";
-import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, NodeWithOverloads} from "../Node";
+import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, NodeWithOverloads, SliderProps, SocketOptions, InSocket, OutSocket} from "../Node";
 import { Overload, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
 import {StringKey} from "@/strings";
@@ -12,6 +12,20 @@ abstract class SpaceNode extends Node {
 export const labSliderProps = [
 	{
 		max: 100,
+	},
+	{
+		hasBounds: false,
+		unboundedChangePerPixel: 0.25,
+	},
+	{
+		hasBounds: false,
+		unboundedChangePerPixel: 0.25,
+	},
+];
+
+export const oklabSliderProps = [
+	{
+		max: 1,
 	},
 	{
 		hasBounds: false,
@@ -71,14 +85,14 @@ export namespace spaces {
 				node => {
 					const sockets: Socket[] = [];
 					if (node.includeWhitePoint) {
-						sockets.push(new Socket(node, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions));
+						sockets.push(new InSocket(node, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions));
 					}
-					sockets.push(node.constructInSocket());
+					sockets.push(node.constructInSocket(node.inSocketOptions()));
 					return sockets;
 				},
 				node => [
-					new Socket(node, false, Socket.Type.ColorCoords, "Color"),
-					...node.componentLabels.map(label => new Socket(node, false, St.Float, label)),
+					new OutSocket(node, Socket.Type.ColorCoords, "Color"),
+					...node.componentLabels.map(label => new OutSocket(node, St.Float, label)),
 				],
 				(ins, outs, context, node) => {
 					const col = node.computeColor(ins, context, true);
@@ -95,15 +109,26 @@ export namespace spaces {
 			[SpaceMode.FromValues, new Overload(
 				"From values",
 				node => {
+					const socketOptions = node.inSocketOptions();
+					const individualSocketOptions = [0, 1, 2].map(i =>{
+						const floatSocketOptions: SocketOptions<St.Float> = {};
+						for (const [key, value] of Object.entries(socketOptions)) {
+							const newKey = key === "fieldText" ? "socketDesc" : key;
+
+							floatSocketOptions[newKey as keyof typeof socketOptions] = value[i as keyof typeof value];
+						}
+						return floatSocketOptions;
+					});
+
 					const sockets: Socket[] = [];
 					if (node.includeWhitePoint) {
-						sockets.push(new Socket(node, true, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions));
+						sockets.push(new InSocket(node, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions));
 					}
-					sockets.push(...node.componentLabels.map(label => new Socket(node, true, St.Float, label)));
+					sockets.push(...node.componentLabels.map((label, i) => new InSocket(node, St.Float, label, true, individualSocketOptions[i])));
 					return sockets;
 				},
 				node => [
-					new Socket(node, false, Socket.Type.ColorCoords, "Color"),
+					new OutSocket(node, Socket.Type.ColorCoords, "Color"),
 				],
 				(ins, outs, context, node) => node.computeColor(ins, context, false),
 			)],
@@ -122,8 +147,11 @@ export namespace spaces {
 		get componentLabels() {
 			return ["", "", ""];
 		}
-		constructInSocket() {
-			return new Socket(this, true, Socket.Type.VectorOrColor, "Vector or color");
+		constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
+			return new InSocket(this, Socket.Type.VectorOrColor, "Vector or color");
+		}
+		inSocketOptions(): SocketOptions<St.VectorOrColor> {
+			return {};
 		}
 		get includeWhitePoint() {
 			return true;
@@ -158,8 +186,18 @@ export namespace spaces {
 		get componentLabels() {
 			return ["R", "G", "B"];
 		}
-		constructInSocket() {
-			return new Socket(this, true, Socket.Type.VectorOrColor, "RGB or color").flag(SocketFlag.Rgb);
+		constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
+			return new InSocket(this, Socket.Type.VectorOrColor, "RGB or color", true, socketOptions).flag(SocketFlag.Rgb);
+		}
+		inSocketOptions(): SocketOptions<St.VectorOrColor> {
+			return {
+				defaultValue: [0.5, 0.5, 0.5],
+				fieldText: [
+					"desc.field.rgb.r",
+					"desc.field.rgb.g",
+					"desc.field.rgb.b",
+				],
+			};
 		}
 		get includeWhitePoint() {
 			return false;
@@ -198,14 +236,17 @@ export namespace spaces {
 		get ColClass() {
 			return cm.Xyz;
 		}
-		constructInSocket() {
-			return new Socket(this, true, Socket.Type.VectorOrColor, "XYZ or color", true, {
+		constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
+			return new InSocket(this, Socket.Type.VectorOrColor, "XYZ or color", true, socketOptions);
+		}
+		inSocketOptions(): SocketOptions<St.VectorOrColor> {
+			return {
 				fieldText: [
 					"desc.field.xyz.x",
 					"desc.field.xyz.y",
 					"desc.field.xyz.z",
 				],
-			});
+			};
 		}
 		get componentLabels() {
 			return ["X", "Y", "Z"];
@@ -227,20 +268,23 @@ export namespace spaces {
 		get ColClass() {
 			return cm.Xyy;
 		}
-		constructInSocket() {
-			return new Socket(this, true, Socket.Type.VectorOrColor, "xyY or color", true, {
+		constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
+			return new InSocket(this, Socket.Type.VectorOrColor, "xyY or color", true, socketOptions);
+			// ...(this.primariesSockets = [
+			// 	new InSocket(this, Socket.Type.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
+			// 	new InSocket(this, Socket.Type.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
+			// 	new InSocket(this, Socket.Type.Float, "Y (luminance)", true, {defaultValue: 1}),
+			// ]),
+		}
+		inSocketOptions(): SocketOptions<St.VectorOrColor> {
+			return {
 				defaultValue: [d65[0], d65[1], 1],
 				fieldText: [
 					"desc.field.xyy.x",
 					"desc.field.xyy.y",
 					"desc.field.xyy.lum",
 				],
-			});
-			// ...(this.primariesSockets = [
-			// 	new Socket(this, true, Socket.Type.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
-			// 	new Socket(this, true, Socket.Type.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
-			// 	new Socket(this, true, Socket.Type.Float, "Y (luminance)", true, {defaultValue: 1}),
-			// ]),
+			};
 		}
 		get componentLabels() {
 			return ["x", "y", "Y"];
@@ -259,11 +303,14 @@ export namespace spaces {
 		get ColClass() {
 			return cm.Lab;
 		}
-		constructInSocket() {
-			return new Socket(this, true, Socket.Type.VectorOrColor, "L*a*b* or color", true, {
+		constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
+			return new InSocket(this, Socket.Type.VectorOrColor, "L*a*b* or color", true, socketOptions);
+		}
+		inSocketOptions(): SocketOptions<St.VectorOrColor> {
+			return {
 				defaultValue: [50, 0, 0],
 				sliderProps: labSliderProps,
-			});
+			};
 		}
 		get componentLabels() {
 			return ["L*", "a*", "b*"];
@@ -282,8 +329,11 @@ export namespace spaces {
 		get ColClass() {
 			return cm.LchAb;
 		}
-		constructInSocket() {
-			return new Socket(this, true, Socket.Type.VectorOrColor, "L*C*h or color", true, {
+		constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
+			return new InSocket(this, Socket.Type.VectorOrColor, "L*C*h or color", true, socketOptions);
+		}
+		inSocketOptions(): SocketOptions<St.VectorOrColor> {
+			return {
 				defaultValue: [50, 0, 0],
 				sliderProps: [
 					{
@@ -300,7 +350,7 @@ export namespace spaces {
 					"desc.field.lchab.c",
 					"desc.field.lchab.h",
 				],
-			});
+			};
 		}
 		get componentLabels() {
 			return ["L*", "C*", "h"];
@@ -319,11 +369,14 @@ export namespace spaces {
 		get ColClass() {
 			return cm.Luv;
 		}
-		constructInSocket() {
-			return new Socket(this, true, Socket.Type.VectorOrColor, "L*u*v* or color", true, {
+		constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
+			return new InSocket(this, Socket.Type.VectorOrColor, "L*u*v* or color", true, socketOptions);
+		}
+		inSocketOptions(): SocketOptions<St.VectorOrColor> {
+			return {
 				defaultValue: [50, 0, 0],
 				sliderProps: labSliderProps,
-			});
+			};
 		}
 		get componentLabels() {
 			return ["L*", "u*", "v*"];
@@ -342,8 +395,11 @@ export namespace spaces {
 		get ColClass() {
 			return cm.LchUv;
 		}
-		constructInSocket() {
-			return new Socket(this, true, Socket.Type.VectorOrColor, "L*C*h or color", true, {
+		constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
+			return new InSocket(this, Socket.Type.VectorOrColor, "L*C*h or color", true, socketOptions);
+		}
+		inSocketOptions(): SocketOptions<St.VectorOrColor> {
+			return {
 				defaultValue: [50, 0, 0],
 				sliderProps: [
 					{
@@ -360,13 +416,87 @@ export namespace spaces {
 					"desc.field.lchab.c",
 					"desc.field.lchab.h",
 				],
-			});
+			};
 		}
 		get componentLabels() {
 			return ["L*", "C*", "h"];
 		}
 	}
 
+
+	export class OklabNode extends TripletSpaceNode {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Oklab";
+		static readonly DESC = "desc.node.oklab";
+
+		get displayLabels() {
+			return ["L", "a", "b"];
+		}
+
+		get ColClass() {
+			return cm.Oklab;
+		}
+		constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
+			return new InSocket(this, Socket.Type.VectorOrColor, "Lab* or color", true, socketOptions);
+		}
+		inSocketOptions(): SocketOptions<St.VectorOrColor> {
+			return {
+				defaultValue: [0.5, 0, 0],
+				sliderProps: oklabSliderProps,
+			};
+		}
+		get componentLabels() {
+			return ["L", "a", "b"];
+		}
+
+		get includeWhitePoint() {
+			return false;
+		}
+	}
+
+	export class OklchAbNode extends TripletSpaceNode {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Oklch";
+		static readonly DESC = "desc.node.oklchab";
+
+		get displayLabels() {
+			return ["L", "C", "h"];
+		}
+
+		get ColClass() {
+			return cm.OklchAb;
+		}
+		constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
+			return new InSocket(this, Socket.Type.VectorOrColor, "LCh or color", true, socketOptions);
+		}
+		inSocketOptions(): SocketOptions<St.VectorOrColor> {
+			return {
+				defaultValue: [0.5, 0, 0],
+				sliderProps: [
+					{
+						max: 1,
+					},
+					{
+						hasBounds: false,
+						unboundedChangePerPixel: 0.02,
+					},
+					{},
+				],
+				fieldText: [
+					"desc.field.oklchab.l",
+					"desc.field.oklchab.c",
+					"desc.field.oklchab.h",
+				],
+			};
+		}
+		get componentLabels() {
+			return ["L", "C", "h"];
+		}
+
+		get includeWhitePoint() {
+			return false;
+		}
+	}
 
 	export class LinearAdobeRgbNode extends RgbSpaceNode {
 		static readonly TYPE = Symbol(this.name);

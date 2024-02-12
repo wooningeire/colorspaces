@@ -151,8 +151,8 @@ Object.defineProperties(socketVue, {
 			:class="{'in': socket.isInput}"
 			ref="socketContainer"
 			
-			@pointerenter="() => showTooltip()"
-			@pointerleave="tooltipController.hideTooltip()">
+			@pointerover="() => showTooltip()"
+			@pointerout="tooltipController.hideTooltip()">
 		<div class="socket"
 				v-if="socket.showSocket"
 

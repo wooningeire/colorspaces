@@ -22,6 +22,11 @@ const labStrings = (color: cm.Col, fn: (color: cm.Col) => number[]) => {
     return [`${Number(lab[0].toFixed(2))}%`, Number(lab[1].toFixed(2)), Number(lab[2].toFixed(2))];
 };
 
+const oklabStrings = (color: cm.Col, fn: (color: cm.Col) => number[]) => {
+    const lab = fn(color);
+    return [`${Number((lab[0] * 100).toFixed(2))}%`, Number(lab[1].toFixed(2)), Number(lab[2].toFixed(2))];
+};
+
 const hex = computed(() => props.color ? `#${cm.Srgb.from(props.color).map(toHex).join("")}` : "--");
 const hex3 = computed(() => props.color ? `#${cm.Srgb.from(props.color).map(toHex3).join("")}` : "--");
 const rgb = computed(() => props.color ? `rgb(${cm.Srgb.from(props.color).map(to255).join(" ")})` : "--");
@@ -32,6 +37,9 @@ const hslLegacy = computed(() => props.color ? `hsl(${hueStrings(props.color, cm
 
 const lab = computed(() => props.color ? `lab(${labStrings(props.color, color => cm.Lab.from(color)).join(" ")})` : "--");
 const lchab = computed(() => props.color ? `lch(${labStrings(props.color, color => cm.LchAb.from(color)).join(" ")})` : "--");
+
+const oklab = computed(() => props.color ? `oklab(${oklabStrings(props.color, color => cm.Oklab.from(color)).join(" ")})` : "--");
+const oklchab = computed(() => props.color ? `oklch(${oklabStrings(props.color, color => cm.OklchAb.from(color)).join(" ")})` : "--");
 </script>
 
 <template>
@@ -68,6 +76,15 @@ const lchab = computed(() => props.color ? `lch(${labStrings(props.color, color 
                     lchab,
                 ]" />
         <div class="heading">Oklab</div>
+        <NodeOutputTable
+                :labels="[
+                    'oklab',
+                    'oklch',
+                ]"
+                :values="[
+                    oklab,
+                    oklchab,
+                ]" />
         <div class="heading">Other</div>
     </div>
 </template>

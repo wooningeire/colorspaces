@@ -1,4 +1,4 @@
-import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext} from "../Node";
+import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, OutSocket} from "../Node";
 
 import {Vec2, lerp} from "@/util";
 
@@ -19,7 +19,7 @@ export namespace images {
 			super();
 
 			this.ins.push(
-				(this.axisSocket = new Socket(this, true, Socket.Type.Dropdown, "Axis", false, {
+				(this.axisSocket = new InSocket(this, Socket.Type.Dropdown, "Axis", false, {
 					options: [
 						{text: "X", value: "0"},
 						{text: "Y", value: "1"},
@@ -27,12 +27,12 @@ export namespace images {
 					defaultValue: "0",
 				})),
 				...(this.boundsSockets = [
-					new Socket(this, true, Socket.Type.Float, "From", true, {
+					new InSocket(this, Socket.Type.Float, "From", true, {
 						sliderProps: {
 							hasBounds: false,
 						},
 					}),
-					new Socket(this, true, Socket.Type.Float, "To", true, {
+					new InSocket(this, Socket.Type.Float, "To", true, {
 						defaultValue: 1,
 						sliderProps: {
 							hasBounds: false,
@@ -42,7 +42,7 @@ export namespace images {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.Float, "Values"),
+				new OutSocket(this, Socket.Type.Float, "Values"),
 			);
 		}
 
@@ -73,11 +73,11 @@ export namespace images {
 			super();
 
 			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.Image, "File", false)),
+				(this.inSocket = new InSocket(this, Socket.Type.Image, "File", false)),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.Vector, "RGB"),
+				new OutSocket(this, Socket.Type.Vector, "RGB"),
 			);
 		}
 

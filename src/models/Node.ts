@@ -89,8 +89,8 @@ export abstract class Node {
 	
 	static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.None;
 
-	readonly ins: Socket[] = [];
-	readonly outs: Socket[] = [];
+	readonly ins: InSocket[] = [];
+	readonly outs: OutSocket[] = [];
 
 	private static nextId = 0;
 	readonly id = Node.nextId++;
@@ -276,7 +276,7 @@ export interface AxisNode extends Node {
 
 export interface NodeEvalContext {
 	readonly coords?: Vec2;
-	readonly socket?: Socket;
+	readonly socket?: OutSocket;
 }
 
 
@@ -309,7 +309,7 @@ export enum SocketFlag {
 	Hue = 1 << 1,
 }
 
-type SliderProps = {
+export type SliderProps = {
 	hasBounds?: boolean,
 	min?: number,
 	max?: number,
@@ -340,7 +340,7 @@ type SocketData<St extends SocketType=any> =
 		} :
 		{});
 
-type SocketOptions<St extends SocketType=any> =
+export type SocketOptions<St extends SocketType=any> =
 		{
 			defaultValue?: SocketValue<St>,
 			onValueChange?: (tree: Tree) => void,
@@ -434,6 +434,36 @@ export class Socket<St extends SocketType=any> {
 	}
 
 	onValueChange(tree: Tree) {}
+}
+
+export class InSocket<St extends SocketType=any> extends Socket<St> {
+	constructor(
+		node: Node,
+		type: St,
+
+		public label: string="",
+
+		readonly showSocket: boolean=true,
+
+		options=<SocketOptions<St>>{},
+	) {
+		super(node, true, type, label, showSocket, options);
+	}
+}
+
+export class OutSocket<St extends SocketType=any> extends Socket<St> {
+	constructor(
+		node: Node,
+		type: St,
+
+		public label: string="",
+
+		readonly showSocket: boolean=true,
+
+		options=<SocketOptions<St>>{},
+	) {
+		super(node, false, type, label, showSocket, options);
+	}
 }
 
 export class Link {

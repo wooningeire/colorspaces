@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {inject, computed} from "vue";
+import {inject, computed, watch, getCurrentInstance} from "vue";
 
 import NodeOutputColorValues from "./NodeOutputColorValues.vue";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
@@ -20,8 +20,11 @@ const type = computed(() => (props.node.constructor as typeof Node).outputDispla
 
 const output = computed(() => props.node.display());
 
-
 const nDecimals = 4;
+
+watch(() => props.node.getDependencyAxes().size, () => {
+	getCurrentInstance()?.proxy?.$forceUpdate();
+});
 </script>
 
 <template>

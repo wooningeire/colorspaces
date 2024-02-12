@@ -4,16 +4,11 @@ import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch}
 import {Node, Socket, NodeEvalContext} from "@/models/Node";
 import {tree, settings} from "./store";
 
-const props = defineProps({
-	node: {
-		type: Node,
-		required: true,
-	},
-
-	socket: {
-		type: Socket,
-		default: null,
-	},
+const props = withDefaults(defineProps<{
+	node: Node,
+	socket?: Socket | null,
+}>(),{
+	socket: null,
 });
 
 const canvas = ref(null as HTMLCanvasElement | null);

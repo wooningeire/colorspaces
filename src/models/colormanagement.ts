@@ -3,6 +3,7 @@ export {Srgb, LinearSrgb, Rec709} from "./colormanagement/spaces/srgb";
 export {AdobeRgb, LinearAdobeRgb} from "./colormanagement/spaces/adobe-rgb";
 export {Lab, LchAb} from "./colormanagement/spaces/lab";
 export {Luv, LchUv} from "./colormanagement/spaces/luv";
+export {Oklab, OklchAb} from "./colormanagement/spaces/oklab";
 
 export {spectralPowerDistribution, singleWavelength} from "./colormanagement/spectral-power-distribution";
 export {blackbody} from "./colormanagement/blackbody";

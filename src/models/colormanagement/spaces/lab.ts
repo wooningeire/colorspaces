@@ -92,7 +92,7 @@ const turn = 2 * Math.PI;
 const labToLchAb = (lab: Lab) => new LchAb([
 	lab.l,
 	Math.hypot(lab.a, lab.b),
-	mod(Math.atan2(lab.b, lab.a) / turn, 2), // radians to [0, 1)
+	mod(Math.atan2(lab.b, lab.a) / turn, 1), // radians to [0, 1)
 ], lab.illuminant);
 
 const lchAbToLab = (lch: LchAb) => new Lab([

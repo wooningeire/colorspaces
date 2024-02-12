@@ -1,4 +1,4 @@
-import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, Tree, OutputDisplayType, NodeWithOverloads} from "../Node";
+import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, Tree, OutputDisplayType, NodeWithOverloads, InSocket, OutSocket} from "../Node";
 import { Overload, OverloadManager, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
 
@@ -15,13 +15,13 @@ export namespace models {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "Red").flag(SocketFlag.Rgb),
-				new Socket(this, true, Socket.Type.Float, "Green").flag(SocketFlag.Rgb),
-				new Socket(this, true, Socket.Type.Float, "Blue").flag(SocketFlag.Rgb),
+				new InSocket(this, Socket.Type.Float, "Red").flag(SocketFlag.Rgb),
+				new InSocket(this, Socket.Type.Float, "Green").flag(SocketFlag.Rgb),
+				new InSocket(this, Socket.Type.Float, "Blue").flag(SocketFlag.Rgb),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.Vector, "RGB"),
+				new OutSocket(this, Socket.Type.Vector, "RGB"),
 			);
 		}
 
@@ -48,12 +48,12 @@ export namespace models {
 			[RgbMode.ToRgb, new Overload(
 				"To RGB",
 				node => [
-					new Socket(node, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-					new Socket(node, true, Socket.Type.Float, "Saturation"),
-					new Socket(node, true, Socket.Type.Float, "Lightness"),
+					new InSocket(node, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new InSocket(node, Socket.Type.Float, "Saturation"),
+					new InSocket(node, Socket.Type.Float, "Lightness"),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.Vector, "RGB"),
+					new OutSocket(node, Socket.Type.Vector, "RGB"),
 				],
 				(ins, outs, context) => cm.hslToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
 			)],
@@ -61,12 +61,12 @@ export namespace models {
 			[RgbMode.FromRgb, new Overload(
 				"From RGB",
 				node => [
-					new Socket(node, true, Socket.Type.Vector, "RGB"),
+					new InSocket(node, Socket.Type.Vector, "RGB"),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-					new Socket(node, false, Socket.Type.Float, "Saturation"),
-					new Socket(node, false, Socket.Type.Float, "Lightness"),
+					new OutSocket(node, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new OutSocket(node, Socket.Type.Float, "Saturation"),
+					new OutSocket(node, Socket.Type.Float, "Lightness"),
 				],
 				(ins, outs, context) => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
 			)],
@@ -110,12 +110,12 @@ export namespace models {
 			[RgbMode.ToRgb, new Overload(
 				"To RGB",
 				node => [
-					new Socket(node, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-					new Socket(node, true, Socket.Type.Float, "Saturation"),
-					new Socket(node, true, Socket.Type.Float, "Value"),
+					new InSocket(node, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new InSocket(node, Socket.Type.Float, "Saturation"),
+					new InSocket(node, Socket.Type.Float, "Value"),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.Vector, "RGB"),
+					new OutSocket(node, Socket.Type.Vector, "RGB"),
 				],
 				(ins, outs, context) => cm.hsvToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
 			)],
@@ -123,12 +123,12 @@ export namespace models {
 			[RgbMode.FromRgb, new Overload(
 				"From RGB",
 				node => [
-					new Socket(node, true, Socket.Type.Vector, "RGB"),
+					new InSocket(node, Socket.Type.Vector, "RGB"),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-					new Socket(node, false, Socket.Type.Float, "Saturation"),
-					new Socket(node, false, Socket.Type.Float, "Value"),
+					new OutSocket(node, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new OutSocket(node, Socket.Type.Float, "Saturation"),
+					new OutSocket(node, Socket.Type.Float, "Value"),
 				],
 				(ins, outs, context) => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
 			)],
@@ -172,12 +172,12 @@ export namespace models {
 			[RgbMode.ToRgb, new Overload(
 				"To RGB",
 				node => [
-					new Socket(node, true, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-					new Socket(node, true, Socket.Type.Float, "Whiteness"),
-					new Socket(node, true, Socket.Type.Float, "Blackness"),
+					new InSocket(node, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new InSocket(node, Socket.Type.Float, "Whiteness"),
+					new InSocket(node, Socket.Type.Float, "Blackness"),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.Vector, "RGB"),
+					new OutSocket(node, Socket.Type.Vector, "RGB"),
 				],
 				(ins, outs, context) => cm.hwbToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
 			)],
@@ -185,12 +185,12 @@ export namespace models {
 			[RgbMode.FromRgb, new Overload(
 				"From RGB",
 				node => [
-					new Socket(node, true, Socket.Type.Vector, "RGB"),
+					new InSocket(node, Socket.Type.Vector, "RGB"),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-					new Socket(node, false, Socket.Type.Float, "Whiteness"),
-					new Socket(node, false, Socket.Type.Float, "Blackness"),
+					new OutSocket(node, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
+					new OutSocket(node, Socket.Type.Float, "Whiteness"),
+					new OutSocket(node, Socket.Type.Float, "Blackness"),
 				],
 				(ins, outs, context) => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
 			)],
@@ -234,12 +234,12 @@ export namespace models {
 			[RgbMode.ToRgb, new Overload(
 				"To RGB",
 				node => [
-					new Socket(node, true, Socket.Type.Float, "Cyan").flag(SocketFlag.Rgb),
-					new Socket(node, true, Socket.Type.Float, "Magenta").flag(SocketFlag.Rgb),
-					new Socket(node, true, Socket.Type.Float, "Yellow").flag(SocketFlag.Rgb),
+					new InSocket(node, Socket.Type.Float, "Cyan").flag(SocketFlag.Rgb),
+					new InSocket(node, Socket.Type.Float, "Magenta").flag(SocketFlag.Rgb),
+					new InSocket(node, Socket.Type.Float, "Yellow").flag(SocketFlag.Rgb),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.Vector, "RGB"),
+					new OutSocket(node, Socket.Type.Vector, "RGB"),
 				],
 				(ins, outs, context) => cm.cmyToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
 			)],
@@ -247,12 +247,12 @@ export namespace models {
 			[RgbMode.FromRgb, new Overload(
 				"From RGB",
 				node => [
-					new Socket(node, true, Socket.Type.Vector, "RGB"),
+					new InSocket(node, Socket.Type.Vector, "RGB"),
 				],
 				node => [
-					new Socket(node, false, Socket.Type.Float, "Cyan").flag(SocketFlag.Rgb),
-					new Socket(node, false, Socket.Type.Float, "Magenta").flag(SocketFlag.Rgb),
-					new Socket(node, false, Socket.Type.Float, "Yellow").flag(SocketFlag.Rgb),
+					new OutSocket(node, Socket.Type.Float, "Cyan").flag(SocketFlag.Rgb),
+					new OutSocket(node, Socket.Type.Float, "Magenta").flag(SocketFlag.Rgb),
+					new OutSocket(node, Socket.Type.Float, "Yellow").flag(SocketFlag.Rgb),
 				],
 				(ins, outs, context) => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
 			)],
@@ -294,13 +294,13 @@ export namespace models {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "X"),
-				new Socket(this, true, Socket.Type.Float, "Y"),
-				new Socket(this, true, Socket.Type.Float, "Z"),
+				new InSocket(this, Socket.Type.Float, "X"),
+				new InSocket(this, Socket.Type.Float, "Y"),
+				new InSocket(this, Socket.Type.Float, "Z"),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.Vector, "XYZ"),
+				new OutSocket(this, Socket.Type.Vector, "XYZ"),
 			);
 		}
 
@@ -318,17 +318,17 @@ export namespace models {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Float, "", true, {
+				new InSocket(this, Socket.Type.Float, "", true, {
 					sliderProps: {
 						hasBounds: false,
 					},
 				}),
-				new Socket(this, true, Socket.Type.Float, "", true, {
+				new InSocket(this, Socket.Type.Float, "", true, {
 					sliderProps: {
 						hasBounds: false,
 					},
 				}),
-				new Socket(this, true, Socket.Type.Float, "", true, {
+				new InSocket(this, Socket.Type.Float, "", true, {
 					sliderProps: {
 						hasBounds: false,
 					},
@@ -336,7 +336,7 @@ export namespace models {
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.Vector, "Vector"),
+				new OutSocket(this, Socket.Type.Vector, "Vector"),
 			);
 		}
 
@@ -361,7 +361,7 @@ export namespace models {
 			super();
 			
 			this.outs.push(
-				new Socket(this, false, Socket.Type.Vector, "XYZ"),
+				new OutSocket(this, Socket.Type.Vector, "XYZ"),
 			);
 			this.width = 503;
 		}
@@ -391,7 +391,7 @@ export namespace models {
 			super();
 
 			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.Float, "Wavelength (nm)", true, {
+				(this.inSocket = new InSocket(this, Socket.Type.Float, "Wavelength (nm)", true, {
 					sliderProps: {
 						min: 360,
 						max: 830,
@@ -399,13 +399,13 @@ export namespace models {
 					},
 					defaultValue: 510,
 				})),
-				(this.powerSocket = new Socket(this, true, Socket.Type.Float, "Relative power", true, {
+				(this.powerSocket = new InSocket(this, Socket.Type.Float, "Relative power", true, {
 					sliderProps: {
 						hasBounds: false,
 					},
 					defaultValue: 1,
 				})),
-				(this.datasetSocket = new Socket(this, true, Socket.Type.Dropdown, "Dataset", false, {
+				(this.datasetSocket = new InSocket(this, Socket.Type.Dropdown, "Dataset", false, {
 					defaultValue: "2deg",
 					options: [
 						{value: "2deg", text: "CIE 2° observer (1931)"},
@@ -415,7 +415,7 @@ export namespace models {
 			);
 			
 			this.outs.push(
-				new Socket(this, false, Socket.Type.Vector, "XYZ"),
+				new OutSocket(this, Socket.Type.Vector, "XYZ"),
 			);
 
 			this.width = 180;
@@ -439,14 +439,14 @@ export namespace models {
 			super();
 
 			this.ins.push(
-				(this.inSocket = new Socket(this, true, Socket.Type.Float, "Temperature (K)", true, {
+				(this.inSocket = new InSocket(this, Socket.Type.Float, "Temperature (K)", true, {
 					sliderProps: {
 						hasBounds: false,
 						unboundedChangePerPixel: 10,
 					},
 					defaultValue: 1750,
 				})),
-				(this.datasetSocket = new Socket(this, true, Socket.Type.Dropdown, "Dataset", false, {
+				(this.datasetSocket = new InSocket(this, Socket.Type.Dropdown, "Dataset", false, {
 					defaultValue: "2deg",
 					options: [
 						{value: "2deg", text: "CIE 2° observer (1931)"},
@@ -456,7 +456,7 @@ export namespace models {
 			);
 			
 			this.outs.push(
-				new Socket(this, false, Socket.Type.Vector, "XYZ"),
+				new OutSocket(this, Socket.Type.Vector, "XYZ"),
 			);
 
 			this.width = 180;

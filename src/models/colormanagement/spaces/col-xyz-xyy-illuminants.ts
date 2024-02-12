@@ -239,6 +239,7 @@ export const xyyToXyz = (xyy: Xy | Xyy, illuminant: Xy=xyy.illuminant) => {
 	return adaptXyz(xyz, illuminant);
 };
 
+/** Converts an xyY color to XYZ without changing the illuminant */
 export const xyyToXyzNoAdapt = (xyy: Xy | Xyy) => {
 	const [x, y, lum=1] = xyy;
 	

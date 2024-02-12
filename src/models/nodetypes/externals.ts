@@ -1,4 +1,4 @@
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag} from "../Node";
+import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, OutSocket} from "../Node";
 import * as cm from "../colormanagement";
 
 import {Color, Vec2, Vec3, pipe} from "@/util";
@@ -15,12 +15,12 @@ export namespace externals {
 			
 			this.ins.push(
 				...(this.colorSockets = [
-					new Socket(this, true, Socket.Type.VectorOrColor, "Color"),
+					new InSocket(this, Socket.Type.VectorOrColor, "Color"),
 				]),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.Unknown, "Color data"),
+				new OutSocket(this, Socket.Type.Unknown, "Color data"),
 			);
 
 			this.canMove = false;
@@ -45,7 +45,7 @@ export namespace externals {
 
 			if (!socket.isInput) return;
 
-			const newSocket = new Socket(this, true, Socket.Type.VectorOrColor, "Color");
+			const newSocket = new InSocket(this, Socket.Type.VectorOrColor, "Color");
 
 			this.ins.push(newSocket);
 			this.colorSockets.push(newSocket);
@@ -69,11 +69,11 @@ export namespace externals {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Unknown, "Color data"),
+				new InSocket(this, Socket.Type.Unknown, "Color data"),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.Unknown, "Screen image"),
+				new OutSocket(this, Socket.Type.Unknown, "Screen image"),
 			);
 
 			this.canMove = false;
@@ -89,11 +89,11 @@ export namespace externals {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Unknown, "Radiation"),
+				new InSocket(this, Socket.Type.Unknown, "Radiation"),
 			);
 
 			this.outs.push(
-				new Socket(this, false, Socket.Type.Unknown, "Radiation"),
+				new OutSocket(this, Socket.Type.Unknown, "Radiation"),
 			);
 
 			this.canMove = false;
@@ -109,7 +109,7 @@ export namespace externals {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Unknown, "Light"),
+				new InSocket(this, Socket.Type.Unknown, "Light"),
 			);
 
 			this.canMove = false;

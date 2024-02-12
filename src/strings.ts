@@ -9,7 +9,7 @@ export default (key: string | StringKey, ...replacements: string[]) => replaceme
 );
 
 const strings = {
-	"general.socketDataTypeLabel": "**Data type:** ",
+	"general.socketDataTypeLabel": "**Data type**: ",
 
 	"label.nodeCategory.models": "Models",
 	"label.nodeCategory.spaces": "Spaces",
@@ -49,9 +49,17 @@ const strings = {
 
 	"desc.socket.illuminant": "The chromaticity of the color “white”. This varies under different viewing circumstances.",
 
+	"desc.field.rgb.r": "**R**: Red light.",
+	"desc.field.rgb.g": "**G**: Green light.",
+	"desc.field.rgb.b": "**B**: Blue light.",
+
 	"desc.field.lchab.l": "**L\\***: Perceived luminance. (0–100)",
 	"desc.field.lchab.c": "**C\\***: “Colorfulness” (similar to saturation).",
 	"desc.field.lchab.h": "**h**: Hue. (0–1)",
+
+	"desc.field.oklchab.l": "**L\\***: Perceived luminance. (0–1)",
+	"desc.field.oklchab.c": "**C\\***: “Colorfulness” (similar to saturation).",
+	"desc.field.oklchab.h": "**h**: Hue. (0–1)",
 
 	"desc.field.xyz.x": "**X**: Encodes some information about the stimulation of red (long) cones. (0–1)",
 	"desc.field.xyz.y": "**Y**: Relative luminance, i.e. luminance relative to the white point. Encodes some information about the stimulation of green (medium) cones. (0–1)",
@@ -74,7 +82,7 @@ const strings = {
 	"desc.socketType.colorCoords.out": "A list of (usually 3) coordinates in a color space.",
 	"desc.socketType.colorCoords.in": "A list of (usually 3) coordinates in a color space.",
 
-	"error.import": "**Error occurred while importing tree:** ",
+	"error.import": "**Error occurred while importing tree**: ",
 	"error.import.unknownNodeType": "Node type \"`{}`\" does not exist.",
 	"error.import.unknownOverload": "Node type \"`{}`\" does not have a mode named \"`{}`\".",
 

@@ -1,4 +1,4 @@
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, NodeWithOverloads} from "../Node";
+import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, NodeWithOverloads, InSocket} from "../Node";
 import { Overload, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
 
@@ -19,7 +19,7 @@ export namespace output {
             [CssOutputMode.RgbVector, new Overload(
                 "RGB vector",
 				node => [
-                    new Socket(node, true, Socket.Type.Vector, "RGB").flag(SocketFlag.Rgb),
+                    new InSocket(node, Socket.Type.Vector, "RGB").flag(SocketFlag.Rgb),
                 ],
 				node => [],
 				(ins, outs, context) => ins[0].inValue(context),
@@ -27,7 +27,7 @@ export namespace output {
             [CssOutputMode.Color, new Overload(
                 "Color",
 				node => [
-                    new Socket(node, true, Socket.Type.ColorCoords, "Color"),
+                    new InSocket(node, Socket.Type.ColorCoords, "Color"),
                 ],
 				node => [],
 				(ins, outs, context) => ins[0].inValue(context),
@@ -49,10 +49,10 @@ export namespace output {
             super();
 
             this.ins.push(
-                new Socket(this, true, Socket.Type.Float, "x", true, {
+                new InSocket(this, Socket.Type.Float, "x", true, {
                     defaultValue: cm.illuminantsXy["2deg"]["D65"][0],
                 }),
-                new Socket(this, true, Socket.Type.Float, "y", true, {
+                new InSocket(this, Socket.Type.Float, "y", true, {
                     defaultValue: cm.illuminantsXy["2deg"]["D65"][1],
                 }),
             );

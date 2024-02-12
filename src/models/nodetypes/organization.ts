@@ -1,4 +1,4 @@
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext} from "../Node";
+import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, InSocket, OutSocket} from "../Node";
 
 import {Vec2} from "@/util";
 
@@ -11,7 +11,7 @@ export namespace organization {
 			super();
 
 			this.ins.push(
-				new Socket(this, true, Socket.Type.Any, ""),
+				new InSocket(this, Socket.Type.Any, ""),
 			);
 
 			this.width = 30;
@@ -28,7 +28,7 @@ export namespace organization {
 			const type = link.src.type;
 			this.ins[0].type = type;
 
-			this.outs.push(new Socket(this, false, type, ""));
+			this.outs.push(new OutSocket(this, type, ""));
 		}
 
 		onSocketUnlink(socket: Socket, link: Link, tree: Tree) {

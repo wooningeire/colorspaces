@@ -1,7 +1,7 @@
-import { Node, NodeEvalContext, Socket, SocketType as St, Tree } from "./Node";
+import { InSocket, Node, NodeEvalContext, OutSocket, Socket, SocketType as St, Tree } from "./Node";
 
 /** A collection of input/output sockets, as well as a function to compute outputs from the inputs' values */
-export class Overload<OutputType, NodeType extends Node=any, InSockets extends Socket[]=any, OutSockets extends Socket[]=any> {
+export class Overload<OutputType, NodeType extends Node=any, InSockets extends InSocket[]=any, OutSockets extends OutSocket[]=any> {
     constructor(
         readonly label: string,
         readonly ins: (node: NodeType) => [...InSockets],
@@ -18,7 +18,7 @@ export class OverloadGroup<Mode extends string, NodeType extends Node=any> {
     ) {}
 
     buildDropdown(node: NodeType, defaultMode: Mode, overloadManager: OverloadManager<Mode>) {
-        return new Socket(node, true, Socket.Type.Dropdown, "", false, {
+        return new InSocket(node, Socket.Type.Dropdown, "", false, {
             options: [...this.modes].map(([mode, overload]) => (
                 {value: mode, text: overload.label}
             )),
