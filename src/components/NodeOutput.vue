@@ -3,17 +3,16 @@ import {inject, computed} from "vue";
 
 import NodeOutputColorValues from "./NodeOutputColorValues.vue";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
-import NodeOutputCss from "./NodeOutputCss.vue";
+import NodeOutputCssRgbVec from "./NodeOutputCssRgbVec.vue";
+import NodeOutputCssColor from "./NodeOutputCssColor.vue";
 
-import {Node, OutputDisplayType} from "@/models/Node";
+import {Node, NodeWithOverloads, OutputDisplayType} from "@/models/Node";
 import {Col} from "@/models/colormanagement";
+import { Vec3 } from "@/util";
 
-const props = defineProps({
-	node: {
-		type: Node,
-		required: true,
-	},
-});
+const props = defineProps<{
+	node: Node,
+}>();
 
 const hasConstantOutput = computed(() => props.node.getDependencyAxes().size === 0);
 
@@ -49,9 +48,13 @@ const nDecimals = 4;
 					v-if="hasConstantOutput" />
 		</template>
 
-		<template v-else-if="type === OutputDisplayType.Css">
-			<NodeOutputCss :color="output.values"
-					v-if="hasConstantOutput" />
+		<template v-else-if="type === OutputDisplayType.Css && node instanceof NodeWithOverloads">
+			<template v-if="hasConstantOutput">
+				<NodeOutputCssRgbVec :rgbVec="output.values as Vec3"
+						v-if="node.overloadManager.mode === node.overloadManager.dropdown.data.options?.[0].value" />
+				<NodeOutputCssColor :color="output.values as Col"
+						v-else />
+			</template>
 		</template>
 	</div>
 </template>

@@ -1,4 +1,4 @@
-import {Vec3, mod} from "@/util";
+import {Vec3, clamp, mod} from "@/util";
 
 export const cmyToRgb = (vec: Vec3) => vec.map(comp => 1 - comp);
 export const rgbToCmy = cmyToRgb;
@@ -28,6 +28,10 @@ export const hslToRgb = ([hue, sat, lightness]: Vec3) => {
 };
 
 export const rgbToHsl = ([red, green, blue]: Vec3) => {
+	red = clamp(red, 0, 1);
+	green = clamp(green, 0, 1);
+	blue = clamp(blue, 0, 1);
+
 	const componentMax = Math.max(red, green, blue);
 	const componentMin = Math.min(red, green, blue);
 	const componentRange = componentMax - componentMin;
@@ -72,6 +76,10 @@ export const hsvToRgb = ([hue, sat, value]: Vec3) => {
 };
 
 export const rgbToHsv = ([red, green, blue]: Vec3) => {
+	red = clamp(red, 0, 1);
+	green = clamp(green, 0, 1);
+	blue = clamp(blue, 0, 1);
+
 	const componentMax = Math.max(red, green, blue);
 	const componentMin = Math.min(red, green, blue);
 	const componentRange = componentMax - componentMin;
@@ -108,6 +116,10 @@ export const hwbToRgb = ([hue, whiteness, blackness]: Vec3) => {
 };
 
 export const rgbToHwb = ([red, green, blue]: Vec3) => {
+	red = clamp(red, 0, 1);
+	green = clamp(green, 0, 1);
+	blue = clamp(blue, 0, 1);
+	
 	const hsv = rgbToHsv([red, green, blue]);
 	
 	return [
