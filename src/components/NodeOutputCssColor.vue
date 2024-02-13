@@ -63,7 +63,8 @@ const oklchab = computed(() => props.color ? `oklch(${oklabStrings(props.color, 
                     hwb,
                     rgbLegacy,
                     hslLegacy,
-                ]" />
+                ]"
+                :useInputs="true" />
 
         <div class="heading">CIELAB</div>
         <NodeOutputTable
@@ -74,7 +75,8 @@ const oklchab = computed(() => props.color ? `oklch(${oklabStrings(props.color, 
                 :values="[
                     lab,
                     lchab,
-                ]" />
+                ]"
+                :useInputs="true" />
         <div class="heading">Oklab</div>
         <NodeOutputTable
                 :labels="[
@@ -84,7 +86,8 @@ const oklchab = computed(() => props.color ? `oklch(${oklabStrings(props.color, 
                 :values="[
                     oklab,
                     oklchab,
-                ]" />
+                ]"
+                :useInputs="true" />
         <div class="heading">Other</div>
     </div>
 </template>

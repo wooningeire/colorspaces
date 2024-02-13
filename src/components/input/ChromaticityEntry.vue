@@ -1,23 +1,67 @@
 <script lang="ts" setup>
-import { Socket, SocketType as St } from "@/models/Node";
+import { InSocket, SocketType as St } from "@/models/Node";
 import { output } from "@/models/nodetypes";
-import {onMounted, ref, computed, onUpdated, watch, PropType} from "vue";
+import {onMounted, ref, computed, onUpdated, watch, getCurrentInstance} from "vue";
 import { settings } from "../store";
+import { ChromaticityPlotMode } from "@/models/nodetypes/output";
+import * as cm from "@/models/colormanagement";
+import {colorCss} from "@/models/colormanagement-util";
+import {clamp} from "@/util";
 
 
-const props = defineProps({
-	node: {
-		type: output.ChromaticityPlotNode,
-		required: true,
-	},
+const props = defineProps<{
+    node: output.ChromaticityPlotNode,
+}>();
+
+
+
+const dependencyAxes = ref(props.node.getDependencyAxes());
+watch(() => props.node.getDependencyAxes(), () => {
+    dependencyAxes.value = props.node.getDependencyAxes();
+    getCurrentInstance()?.proxy?.$forceUpdate();
 });
 
+const diagramScale = 1;
+const nSamplesPerAxis = 128;
+/** Samples an xy value from the input sockets (xy mode) */
+const sampleInputXy = (coords: [number, number]) => (props.node.ins as InSocket<St.Float>[])
+        .slice(1)
+        .map(socket => socket.inValue({coords}));
+/** Samples a color from the input sokcet (colors mode) */
+const sampleInputColor = (coords: [number, number]) => (props.node.ins as InSocket<St.ColorCoords>[])[1]
+        .inValue({coords});
+/** The coordinates to sample from the input image/gradient/etc. */
+const sampleCoords = computed(() => {
+    let sampleCoords: [number, number][] = [[0, 0]];
 
-const xy = computed(() => (props.node.ins as Socket<St.Float>[])
-        .map(socket => socket.inValue({coords: [0, 0]})));
+    for (const axis of dependencyAxes.value) {
+        const range = new Array(nSamplesPerAxis).fill(0).map((_, i) => i / (nSamplesPerAxis - 1));
+        sampleCoords = sampleCoords.flatMap(coords =>
+            range.map((_, i) => {
+                const newCoords: [number, number] = [...coords];
+                newCoords[axis] += range[i];
+                return newCoords;
+            }),
+        );
+    }
+
+    return sampleCoords;
+});
+
+/** The sampled xy values fromthe input */
+const sampledXys = computed(() => {
+    if (props.node.overloadManager.mode === ChromaticityPlotMode.Xy) {
+        return sampleCoords.value.map(coords => sampleInputXy(coords));
+    }
+
+    const colors = sampleCoords.value.map(coords => sampleInputColor(coords));
+    if (colors[0] === undefined) {
+        return [];
+    }
+    return colors.map(color => cm.Xyy.from(color));
+});
 
 const canvas = ref<HTMLCanvasElement | null>(null);
-
 onMounted(() => {
     canvas.value!.width = canvas.value!.offsetWidth;
     canvas.value!.height = canvas.value!.offsetWidth;
@@ -123,7 +167,7 @@ vec3 linearToGammaSrgb(vec3 linear) {
 
 
 void main() {
-    vec3 xyy = vec3(v_xy, LUM);
+    vec3 xyy = vec3(v_xy * ${diagramScale.toFixed(6)}, LUM);
 
     vec3 xyz = xyyToXyz(xyy);
     vec3 linearSrgb = xyzToLinearSrgb(xyz);
@@ -240,13 +284,22 @@ watch(settings, rerenderCanvas);
 <template>
     <div class="chromaticity-viewer">
         <canvas ref="canvas"></canvas>
-        <div class="point-container">
-            <div class="point"
+        <div class="point-container"
+                :style="{
+                    '--scale': diagramScale,
+                } as any">
+            <div v-for="xy of sampledXys"
+                    class="point"
                     :style="{
                         '--x': xy[0],
                         '--y': xy[1],
+                        /* '--color': colorCss(
+                            cm.Srgb.from(new cm.Xyy(
+                                [xy[0], xy[1], 1],
+                                xy instanceof cm.Col ? xy.illuminant : undefined,
+                            )).map(channel => clamp(channel, 0, 1) * 0.25) as cm.Srgb,
+                        ), */
                     } as any">
-
             </div>
         </div>
     </div>
@@ -264,26 +317,37 @@ watch(settings, rerenderCanvas);
         max-width: 100%;
     }
 
+    > canvas {
+        border-radius: 0.5em;
+    }
+
     > .point-container {    
         position: relative;
 
-        > .point {
-            position: absolute;
-            left: calc(var(--x) * 100%);
-            bottom: calc(var(--y) * 100%);
+        --scale: 1;
 
-            --point-size: 8px;
+        > .point {
+            --x: 0;
+            --y: 0;
+            --color: #fff;
+
+            position: absolute;
+            left: calc(var(--x) / var(--scale) * 100%);
+            bottom: calc(var(--y) / var(--scale) * 100%);
+
+            --point-size: 4px;
 
             width: var(--point-size);
             height: var(--point-size);
             transform: translate(calc(-1 * var(--point-size) / 2), calc(var(--point-size) / 2));
-            border: 2px solid #fff;
+            // border: 2px solid #fff;
             border-radius: 50%;
 
             // transition: bottom 0.125s cubic-bezier(0, 0.74, 0.36, 1),
             //        left 0.125s cubic-bezier(0, 0.74, 0.36, 1);
 
             mix-blend-mode: difference;
+            background: var(--color);
         }
     }
 }

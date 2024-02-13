@@ -123,6 +123,12 @@ ${getString("general.socketDataTypeLabel")}${getString(`label.socketType.${socke
 ${getString(`desc.socketType.${socketTypeName}.${props.socket.isInput ? "in" : "out"}`)}`;
 	}
 
+	if (props.socket.showSocket && props.socket.hasLinks) {
+		tooltipString += `<br />
+<br />
+${getString("general.socketUnlinkTutorial")}`;
+	}
+
 	tooltipController.showTooltip(tooltipString, {
 		left: `calc(${rect.right}px + 1em)`,
 		top: `${rect.top}px`,

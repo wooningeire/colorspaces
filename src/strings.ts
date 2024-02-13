@@ -10,6 +10,7 @@ export default (key: string | StringKey, ...replacements: string[]) => replaceme
 
 const strings = {
 	"general.socketDataTypeLabel": "**Data type**: ",
+	"general.socketUnlinkTutorial": "*Double-click to detach links*",
 
 	"label.nodeCategory.models": "Models",
 	"label.nodeCategory.spaces": "Spaces",

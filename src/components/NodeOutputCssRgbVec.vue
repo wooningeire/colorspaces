@@ -52,6 +52,7 @@ const hslLegacy = computed(() => `hsl(${hueStrings(props.rgbVec, rgbToHsl).join(
                 rgbLegacy,
                 hslLegacy,
             ]"
+            :useInputs="true"
             v-if="props.rgbVec"/>
     
     <div v-else>

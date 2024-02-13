@@ -13,6 +13,7 @@ export namespace math {
 		Subtract = "subtract",
 		Divide = "divide",
 		Screen = "screen",
+		Distance = "distance",
 		Scale = "scale",
 	}
 	export class VectorArithmeticNode extends NodeWithOverloads<VectorArithmeticMode> {
@@ -20,7 +21,7 @@ export namespace math {
 		static readonly LABEL = "Vector arithmetic";
 		static readonly outputDisplayType = OutputDisplayType.Vec;
 
-		static readonly overloadGroup = new OverloadGroup(new Map<VectorArithmeticMode, Overload<Vec3>>([
+		static readonly overloadGroup = new OverloadGroup(new Map<VectorArithmeticMode, Overload<Vec3 | number>>([
 			[VectorArithmeticMode.Lerp, new Overload(
 				"Lerp",
 				node => [
@@ -117,6 +118,21 @@ export namespace math {
 				},
 			)],
 
+			[VectorArithmeticMode.Distance, new Overload(
+				"Distance",
+				node => [
+					new InSocket(node, Socket.Type.Vector, "Vector"),
+					new InSocket(node, Socket.Type.Vector, "Vector"),
+				],
+				node => [
+					new OutSocket(node, Socket.Type.Float, "Distance"),
+				],
+				(ins, outs, context) => {
+					const [col0, col1] = ins.map(socket => socket.inValue(context)) as [Vec3, Vec3];
+					return Math.hypot(...col0.map((_, i) => col0[i] - col1[i]));
+				},
+			)],
+
 			[VectorArithmeticMode.Scale, new Overload(
 				"Scalar multiply",
 				node => [
@@ -139,9 +155,12 @@ export namespace math {
 		}
 
 		display(context: NodeEvalContext) {
+			const output = this.output(context);
 			return {
 				labels: [],
-				values: this.output(context) as unknown as Vec3,
+				values: typeof output === "number"
+						? [output]
+						: output as Vec3,
 				flags: [],
 			};
 		}

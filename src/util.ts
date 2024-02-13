@@ -83,6 +83,9 @@ class Option<T> {
 }
 
 
+export const to255 = (channel: number) => Math.round(clamp(channel, 0, 1) * 255);
+export const toHex = (channel: number) => to255(channel).toString(16).padStart(2, "0");
+export const toHex3 = (channel: number) => Math.round(clamp(channel, 0, 1) * 15).toString(16);
 
 
 const matrixDotVector3 = (matrix: number[][], vector: number[]) => [

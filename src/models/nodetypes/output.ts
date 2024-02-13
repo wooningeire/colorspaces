@@ -4,6 +4,11 @@ import * as cm from "../colormanagement";
 
 import {Color, Vec2, Vec3, pipe} from "@/util";
 
+
+export enum ChromaticityPlotMode {
+    Xy = "from xy",
+    Color = "from color",
+}
 export namespace output {
     enum CssOutputMode {
         RgbVector = "rgbVector",
@@ -39,23 +44,38 @@ export namespace output {
             this.width = 275;
         }
     }
-
-    export class ChromaticityPlotNode extends Node {
+    export class ChromaticityPlotNode extends NodeWithOverloads<ChromaticityPlotMode> {
         static readonly TYPE = Symbol(this.name);
         static readonly LABEL = "Chromaticity plot";
         static readonly DESC = "desc.node.chromaticity";
 
-        constructor() {
-            super();
+        static readonly overloadGroup = new OverloadGroup(new Map<ChromaticityPlotMode, Overload<void>>([
+            [ChromaticityPlotMode.Xy, new Overload(
+                "From xy",
+                node => [
+                    new InSocket(node, Socket.Type.Float, "x", true, {
+                        defaultValue: cm.illuminantsXy["2deg"]["D65"][0],
+                    }),
+                    new InSocket(node, Socket.Type.Float, "y", true, {
+                        defaultValue: cm.illuminantsXy["2deg"]["D65"][1],
+                    }),
+                ],
+                node => [],
+                () => {},
+            )],
 
-            this.ins.push(
-                new InSocket(this, Socket.Type.Float, "x", true, {
-                    defaultValue: cm.illuminantsXy["2deg"]["D65"][0],
-                }),
-                new InSocket(this, Socket.Type.Float, "y", true, {
-                    defaultValue: cm.illuminantsXy["2deg"]["D65"][1],
-                }),
-            );
+            [ChromaticityPlotMode.Color, new Overload(
+                "From colors",
+                node => [
+                    new InSocket(node, Socket.Type.ColorCoords, "Colors"),
+                ],
+                node => [],
+                () => {},
+            )],
+        ]));
+
+        constructor() {
+            super(ChromaticityPlotMode.Xy);
         }
     }
 }
