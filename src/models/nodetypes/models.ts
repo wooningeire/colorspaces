@@ -3,6 +3,7 @@ import { Overload, OverloadManager, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
 
 import {Color, Vec2, Vec3, pipe} from "@/util";
+import { illuminantE } from "../colormanagement/spaces/col-xyz-xyy-illuminants";
 
 export namespace models {
 	//TODO code duplication
@@ -361,16 +362,26 @@ export namespace models {
 			super();
 			
 			this.outs.push(
-				new OutSocket(this, Socket.Type.Vector, "XYZ"),
+				new OutSocket(this, St.Vector, "XYZ"),
+				new OutSocket(this, St.ColorCoords, "Color"),
 			);
 			this.width = 503;
 		}
 
 		private cachedOutput: Vec3 | null = null;
 
-		output(context: NodeEvalContext): Vec3 {
-			return this.cachedOutput
+		output(context: NodeEvalContext): Vec3 | cm.Xyz {
+			const xyz = this.cachedOutput
 					?? (this.cachedOutput = [...cm.spectralPowerDistribution(this.distribution, this.colorMatchingDataset)] as any as Vec3);
+
+			switch (context.socket) {
+				default:
+				case this.outs[0]:
+					return xyz;
+
+				case this.outs[1]:
+					return new cm.Xyz(xyz, illuminantE);
+			}
 		}
 
 		flushCache() {
@@ -415,15 +426,25 @@ export namespace models {
 			);
 			
 			this.outs.push(
-				new OutSocket(this, Socket.Type.Vector, "XYZ"),
+				new OutSocket(this, St.Vector, "XYZ"),
+				new OutSocket(this, St.ColorCoords, "Color"),
 			);
 
 			this.width = 180;
 		}
 
-		output(context: NodeEvalContext): Vec3 {
-			return [...cm.singleWavelength(this.inSocket.inValue(context), this.datasetSocket.inValue(context) as "2deg" | "10deg")]
+		output(context: NodeEvalContext): Vec3 | cm.Xyz {
+			const xyz = [...cm.singleWavelength(this.inSocket.inValue(context), this.datasetSocket.inValue(context) as "2deg" | "10deg")]
 					.map(comp => comp * this.powerSocket.inValue(context)) as any as Vec3;
+
+			switch (context.socket) {
+				default:
+				case this.outs[0]:
+					return xyz;
+
+				case this.outs[1]:
+					return new cm.Xyz(xyz, illuminantE);
+			}
 		}
 	}
 
@@ -456,14 +477,24 @@ export namespace models {
 			);
 			
 			this.outs.push(
-				new OutSocket(this, Socket.Type.Vector, "XYZ"),
+				new OutSocket(this, St.Vector, "XYZ"),
+				new OutSocket(this, St.ColorCoords, "Color"),
 			);
 
 			this.width = 180;
 		}
 
-		output(context: NodeEvalContext): Vec3 {
-			return [...cm.blackbody(this.inSocket.inValue(context), this.datasetSocket.inValue(context) as "2deg" | "10deg")] as any as Vec3;
+		output(context: NodeEvalContext): Vec3 | cm.Xyz {
+			const xyz = [...cm.blackbody(this.inSocket.inValue(context), this.datasetSocket.inValue(context) as "2deg" | "10deg")] as unknown as Vec3;
+
+			switch (context.socket) {
+				default:
+				case this.outs[0]:
+					return xyz;
+
+				case this.outs[1]:
+					return new cm.Xyz(xyz, illuminantE);
+			}
 		}
 	}
 }

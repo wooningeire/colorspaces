@@ -2,7 +2,7 @@
 import { InSocket, SocketType as St } from "@/models/Node";
 import { output } from "@/models/nodetypes";
 import {onMounted, ref, computed, onUpdated, watch, getCurrentInstance} from "vue";
-import { settings } from "../store";
+import { settings, tree } from "../store";
 import { ChromaticityPlotMode } from "@/models/nodetypes/output";
 import * as cm from "@/models/colormanagement";
 import {colorCss} from "@/models/colormanagement-util";
@@ -14,9 +14,8 @@ const props = defineProps<{
 }>();
 
 
-
 const dependencyAxes = ref(props.node.getDependencyAxes());
-watch(() => props.node.getDependencyAxes(), () => {
+watch(tree.links, () => {
     dependencyAxes.value = props.node.getDependencyAxes();
     getCurrentInstance()?.proxy?.$forceUpdate();
 });
