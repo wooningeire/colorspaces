@@ -62,8 +62,8 @@ const sampledXys = computed(() => {
 
 const canvas = ref<HTMLCanvasElement | null>(null);
 onMounted(() => {
-    canvas.value!.width = canvas.value!.offsetWidth;
-    canvas.value!.height = canvas.value!.offsetWidth;
+    canvas.value!.width = canvas.value!.offsetWidth * devicePixelRatio;
+    canvas.value!.height = canvas.value!.offsetWidth * devicePixelRatio;
 
 
     const vertexShaderSource = `#version 300 es
@@ -85,6 +85,8 @@ precision mediump float;
 in vec2 v_xy;
 out vec4 fragColor;
 
+uniform float alphaFac;
+uniform bool detectGamut;
 
 const float LUM = 1.;
 
@@ -109,6 +111,21 @@ vec3 xyyToXyz(vec3 xyy) {
 				lum / y * x,
 				lum,
 				lum / y * (1. - x - y)
+			);
+}
+vec3 xyzToXyy(vec3 xyz){
+    float x = xyz.x;
+    float y = xyz.y;
+    float z = xyz.z;
+
+	float dot1 = x + y + z;
+
+	return dot1 == 0.
+			? vec3(0., 0., 0.)
+			: vec3(
+				x / dot1,
+				y / dot1,
+				y
 			);
 }
 
@@ -172,12 +189,16 @@ void main() {
     vec3 linearSrgb = xyzToLinearSrgb(xyz);
     vec3 gammaSrgb = linearToGammaSrgb(linearSrgb);
 
-    bool outOfGamut = 0. > gammaSrgb.r || gammaSrgb.r > 1.
-            || 0. > gammaSrgb.g || gammaSrgb.g > 1.
-            || 0. > gammaSrgb.b || gammaSrgb.b > 1.;
+    bool outOfGamut = 0. > gammaSrgb.r
+            || 0. > gammaSrgb.g
+            || 0. > gammaSrgb.b;
 
-    // fragColor = vec4(gammaSrgb, outOfGamut ? 0.25 : 1.);
-    fragColor = vec4(gammaSrgb, 1.);
+    float alpha = detectGamut && outOfGamut
+            ? 0.75
+            : 1.;
+
+    fragColor = vec4(gammaSrgb, alpha * alphaFac);
+    // fragColor = vec4(gammaSrgb, 1.);
 }`;
 
 
@@ -205,6 +226,9 @@ void main() {
 
     //#region Setting attributes
 
+    const vertArray = gl.createVertexArray();
+    gl.bindVertexArray(vertArray);
+
     const vertCoords = new Float32Array([
         // Coordinates of the triangles that cover the canvas
         -1, -1,
@@ -227,6 +251,42 @@ void main() {
     gl.vertexAttribPointer(posAttr, COORD_DIMENSION, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(posAttr);
 
+    
+
+    const vertArraySpectralLocus = gl.createVertexArray();
+    gl.bindVertexArray(vertArraySpectralLocus);
+
+    // Create a triangle fan with the spectral locus as vertices
+    const vertsSpectralLocus = [];
+    const baseVert = cm.Xyy.from(cm.singleWavelength(360, "2deg"));
+    for (let i = 361; i < 830; i++) {
+        const xyy0 = cm.Xyy.from(cm.singleWavelength(i, "2deg"));
+        const xyy1 = cm.Xyy.from(cm.singleWavelength(i + 1, "2deg"));
+
+        vertsSpectralLocus.push(
+            baseVert[0] * 2 - 1, baseVert[1] * 2 - 1,
+            xyy0[0] * 2 - 1, xyy0[1] * 2 - 1,
+            xyy1[0] * 2 - 1, xyy1[1] * 2 - 1,
+        );
+    }
+    const vertCoordsSpectralLocus = new Float32Array(vertsSpectralLocus);
+
+    const nVertsSpectralLocus = vertCoordsSpectralLocus.length / COORD_DIMENSION;
+
+    const vertBufferSpectralLocus = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertBufferSpectralLocus);
+    gl.bufferData(gl.ARRAY_BUFFER, vertCoordsSpectralLocus, gl.STATIC_DRAW);
+
+    const posAttrSpectralLocus = gl.getAttribLocation(glProgram, "a_pos");
+    gl.vertexAttribPointer(posAttrSpectralLocus, COORD_DIMENSION, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(posAttrSpectralLocus);
+
+    //#endregion
+
+
+    //#region Setting uniforms
+    const alphaUnif = gl.getUniformLocation(glProgram, "alphaFac");
+    const detectGamutUnif = gl.getUniformLocation(glProgram, "detectGamut");
     //#endregion
     
     // gl.clearColor(0, 0, 0, 0);
@@ -235,7 +295,15 @@ void main() {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+    gl.bindVertexArray(vertArray);
+    gl.uniform1f(alphaUnif, 0.25);
+    gl.uniform1i(detectGamutUnif, 0);
     gl.drawArrays(gl.TRIANGLES, 0, nVerts);
+
+    gl.bindVertexArray(vertArraySpectralLocus);
+    gl.uniform1f(alphaUnif, 1);
+    gl.uniform1i(detectGamutUnif, 1);
+    gl.drawArrays(gl.TRIANGLES, 0, nVertsSpectralLocus);
 });
 
 // Performance bottleneck
@@ -283,31 +351,33 @@ watch(settings, rerenderCanvas);
 <template>
     <div class="chromaticity-viewer">
         <canvas ref="canvas"></canvas>
-        <div class="point-container"
+        <svg class="point-container"
+                viewBox="0 0 1 1"
                 :style="{
                     '--scale': diagramScale,
                 } as any">
-            <div v-for="xy of sampledXys"
-                    class="point"
-                    :style="{
-                        '--x': xy[0],
-                        '--y': xy[1],
-                        /* '--color': colorCss(
-                            cm.Srgb.from(new cm.Xyy(
-                                [xy[0], xy[1], 1],
-                                xy instanceof cm.Col ? xy.illuminant : undefined,
-                            )).map(channel => clamp(channel, 0, 1) * 0.25) as cm.Srgb,
-                        ), */
-                    } as any">
-            </div>
-        </div>
+            <g transform="translate(0, 1) scale(1, -1)">
+                <circle v-for="xy of sampledXys"
+                        :cx="xy[0]"
+                        :cy="xy[1]"
+                        r="0.0125"
+                        class="point"
+                        :style="{
+                            /* '--color': colorCss(
+                                cm.Srgb.from(new cm.Xyy(
+                                    [xy[0], xy[1], 1],
+                                    xy instanceof cm.Col ? xy.illuminant : undefined,
+                                )).map(channel => clamp(channel, 0, 1) * 0.25) as cm.Srgb,
+                            ), */
+                        } as any" />
+            </g>
+        </svg>
     </div>
 </template>
 
 <style lang="scss">
 .chromaticity-viewer {
     display: grid;
-    overflow: hidden;
 
     padding: 0.5em;
 
@@ -322,31 +392,18 @@ watch(settings, rerenderCanvas);
 
     > .point-container {    
         position: relative;
+        overflow: visible;
+        mix-blend-mode: difference;
 
         --scale: 1;
 
-        > .point {
-            --x: 0;
-            --y: 0;
+        .point {
             --color: #fff;
 
-            position: absolute;
-            left: calc(var(--x) / var(--scale) * 100%);
-            bottom: calc(var(--y) / var(--scale) * 100%);
+            transition: cx 0.125s cubic-bezier(0, 0.74, 0.36, 1),
+                    cy 0.125s cubic-bezier(0, 0.74, 0.36, 1);
 
-            --point-size: 4px;
-
-            width: var(--point-size);
-            height: var(--point-size);
-            transform: translate(calc(-1 * var(--point-size) / 2), calc(var(--point-size) / 2));
-            // border: 2px solid #fff;
-            border-radius: 50%;
-
-            // transition: bottom 0.125s cubic-bezier(0, 0.74, 0.36, 1),
-            //        left 0.125s cubic-bezier(0, 0.74, 0.36, 1);
-
-            mix-blend-mode: difference;
-            background: var(--color);
+            fill: var(--color);
         }
     }
 }

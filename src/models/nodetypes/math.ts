@@ -450,21 +450,30 @@ export namespace math {
 			super();
 
 			this.ins.push(
-				(this.whitePointSocket = new InSocket(this, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions)),
+				(this.whitePointSocket = new InSocket(this, St.Dropdown, "White point", false, whitePointSocketOptions)),
 			);
 
 			this.outs.push(
-				(this.outXyzSocket = new OutSocket(this, Socket.Type.Vector, "XYZ")),
-				(this.outXyySocket = new OutSocket(this, Socket.Type.Vector, "xyY")),
+				(this.outXyzSocket = new OutSocket(this, St.Vector, "XYZ")),
+				(this.outXyySocket = new OutSocket(this, St.Vector, "xyY")),
+				new OutSocket(this, St.ColorCoords, "Color")
 			);
 		}
 
-		output(context: NodeEvalContext): number[] {
+		output(context: NodeEvalContext): number[] | cm.Xyz {
 			const illuminant = getIlluminant(this.whitePointSocket, context);
 
-			return context.socket === this.outXyzSocket
-					? [...cm.Xyz.from(illuminant)]
-					: [...cm.Xyy.from(illuminant)];
+			switch(context.socket) {
+				case this.outXyzSocket:
+					return [...cm.Xyz.from(illuminant)];
+
+				case this.outXyySocket:
+					return [...cm.Xyy.from(illuminant)];
+
+				default:
+				case this.outs[2]:
+					return cm.Xyz.from(illuminant);
+			}
 		}
 	}
 }
