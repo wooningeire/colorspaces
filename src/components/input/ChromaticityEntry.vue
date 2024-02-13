@@ -5,8 +5,6 @@ import {onMounted, ref, computed, onUpdated, watch, getCurrentInstance} from "vu
 import { settings, tree } from "../store";
 import { ChromaticityPlotMode } from "@/models/nodetypes/output";
 import * as cm from "@/models/colormanagement";
-import {colorCss} from "@/models/colormanagement-util";
-import {clamp} from "@/util";
 
 
 const props = defineProps<{
@@ -20,8 +18,15 @@ watch(tree.links, () => {
     getCurrentInstance()?.proxy?.$forceUpdate();
 });
 
-const diagramScale = 1;
-const nSamplesPerAxis = 128;
+const diagramScale = 1.15;
+const nSamplesPerAxis = computed(() => {
+    switch (dependencyAxes.value.size) {
+        case 1: return 128;
+
+        default:
+        case 2: return 32;
+    }
+});
 /** Samples an xy value from the input sockets (xy mode) */
 const sampleInputXy = (coords: [number, number]) => (props.node.ins as InSocket<St.Float>[])
         .slice(1)
@@ -34,7 +39,7 @@ const sampleCoords = computed(() => {
     let sampleCoords: [number, number][] = [[0, 0]];
 
     for (const axis of dependencyAxes.value) {
-        const range = new Array(nSamplesPerAxis).fill(0).map((_, i) => i / (nSamplesPerAxis - 1));
+        const range = new Array(nSamplesPerAxis.value).fill(0).map((_, i) => i / (nSamplesPerAxis.value - 1));
         sampleCoords = sampleCoords.flatMap(coords =>
             range.map((_, i) => {
                 const newCoords: [number, number] = [...coords];
@@ -183,7 +188,7 @@ vec3 linearToGammaSrgb(vec3 linear) {
 
 
 void main() {
-    vec3 xyy = vec3(v_xy * ${diagramScale.toFixed(6)}, LUM);
+    vec3 xyy = vec3(v_xy / ${diagramScale.toFixed(6)}, LUM);
 
     vec3 xyz = xyyToXyz(xyy);
     vec3 linearSrgb = xyzToLinearSrgb(xyz);
@@ -264,9 +269,9 @@ void main() {
         const xyy1 = cm.Xyy.from(cm.singleWavelength(i + 1, "2deg"));
 
         vertsSpectralLocus.push(
-            baseVert[0] * 2 - 1, baseVert[1] * 2 - 1,
-            xyy0[0] * 2 - 1, xyy0[1] * 2 - 1,
-            xyy1[0] * 2 - 1, xyy1[1] * 2 - 1,
+            baseVert[0] * 2 * diagramScale - 1, baseVert[1] * 2 * diagramScale - 1,
+            xyy0[0] * 2 * diagramScale - 1, xyy0[1] * 2 * diagramScale - 1,
+            xyy1[0] * 2 * diagramScale - 1, xyy1[1] * 2 * diagramScale - 1,
         );
     }
     const vertCoordsSpectralLocus = new Float32Array(vertsSpectralLocus);
@@ -352,24 +357,13 @@ watch(settings, rerenderCanvas);
     <div class="chromaticity-viewer">
         <canvas ref="canvas"></canvas>
         <svg class="point-container"
-                viewBox="0 0 1 1"
-                :style="{
-                    '--scale': diagramScale,
-                } as any">
+                viewBox="0 0 1 1">
             <g transform="translate(0, 1) scale(1, -1)">
                 <circle v-for="xy of sampledXys"
-                        :cx="xy[0]"
-                        :cy="xy[1]"
+                        :cx="xy[0] * diagramScale"
+                        :cy="xy[1] * diagramScale"
                         r="0.0125"
-                        class="point"
-                        :style="{
-                            /* '--color': colorCss(
-                                cm.Srgb.from(new cm.Xyy(
-                                    [xy[0], xy[1], 1],
-                                    xy instanceof cm.Col ? xy.illuminant : undefined,
-                                )).map(channel => clamp(channel, 0, 1) * 0.25) as cm.Srgb,
-                            ), */
-                        } as any" />
+                        class="point" />
             </g>
         </svg>
     </div>
@@ -378,7 +372,7 @@ watch(settings, rerenderCanvas);
 <style lang="scss">
 .chromaticity-viewer {
     display: grid;
-
+    overflow: hidden;
     padding: 0.5em;
 
     > * {
@@ -394,8 +388,6 @@ watch(settings, rerenderCanvas);
         position: relative;
         overflow: visible;
         mix-blend-mode: difference;
-
-        --scale: 1;
 
         .point {
             --color: #fff;

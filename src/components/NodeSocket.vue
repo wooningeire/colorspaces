@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef} from "vue";
+import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef, watch} from "vue";
 
 import NodeSocketField from "./NodeSocketField.vue";
 import NodeSocket from "./NodeSocket.vue";
@@ -27,6 +27,9 @@ const emit = defineEmits<{
 }>();
 
 const draggedSocket = inject("draggedSocket") as ComputedRef<Socket>;
+
+
+const isDraggedOver = ref(false);
 
 
 const shouldShowFields = computed(
@@ -157,21 +160,27 @@ Object.defineProperties(socketVue, {
 			:class="{'in': socket.isInput}"
 			ref="socketContainer"
 			
-			@pointerover="() => showTooltip()"
+			@pointerover="() => !draggedSocket && showTooltip()"
 			@pointerout="tooltipController.hideTooltip()">
 		<div class="socket"
 				v-if="socket.showSocket"
 
 				ref="socketHitbox"
 				draggable="true"
-				@dragstart="ondragstart"
+				@dragstart="event => (ondragstart(event), tooltipController.hideTooltip())"
 				@dragenter.prevent
-				@dragover.prevent
-				@drop="ondrop"
+				@dragover.prevent="isDraggedOver = true"
+				@drop="event => (ondrop(event), isDraggedOver = false)"
 				@pointerdown="event => event.button === 0 && event.stopPropagation()"
+				@dragleave="isDraggedOver = false"
+				@dragend="event => event.currentTarget?.blur()"
 
 				@dblclick="unlinkLinks">
 			<div class="socket-display"
+					:class="{
+						accepting: isDraggedOver && Socket.canLink(draggedSocket, socket),
+						hiding: Boolean(draggedSocket) && !Socket.canLink(draggedSocket, socket),
+					}"
 					:style="{'--socket-color': socketColor} as any"></div>
 		</div>
 		<div class="socket-label">
@@ -199,6 +208,8 @@ Object.defineProperties(socketVue, {
 		--socket-box-size: 20px;
 		--socket-size: 12px;
 		--socket-offset: -12px;
+		--socket-size-ease: cubic-bezier(.23, 2, .5, 1);
+		--socket-size-transition-time: .2s;
 
 		width: var(--socket-box-size);
 		height: var(--socket-box-size);
@@ -208,6 +219,18 @@ Object.defineProperties(socketVue, {
 
 		display: grid;
 		place-items: center;
+
+		cursor: crosshair;
+
+		&:hover {
+			--socket-size: 16px;
+		}
+
+		&:active {
+			--socket-size: 8px;
+			--socket-size-ease: ease;
+			--socket-size-transition-time: .1s;
+		}
 		
 		> .socket-display {
 			width: var(--socket-size);
@@ -215,9 +238,23 @@ Object.defineProperties(socketVue, {
 
 			border-radius: 50%;
 			background: var(--socket-color);
-			box-shadow: 0 0 0 4px #2f3432;
+			box-shadow: 0 0 0 #fff, var(--main-border-box-shadow);
+			
+			transition: width var(--socket-size-transition-time) var(--socket-size-ease),
+					height var(--socket-size-transition-time) var(--socket-size-ease),
+					box-shadow .1s ease;
 
 			--socket-color: currentcolor;
+			--main-border-box-shadow: 0 0 0 4px #2f3432;
+
+			&.accepting {
+				box-shadow: 0 0 0 2px #fff,
+						var(--main-border-box-shadow);
+			}
+		}
+
+		&:not(:active) > .socket-display.hiding {
+			--socket-size: 0;
 		}
 	}
 

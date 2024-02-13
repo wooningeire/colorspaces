@@ -1,9 +1,9 @@
-import {getIlluminant, labSliderProps, whitePointSocketOptions} from "./spaces";
-import {Tree, Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, NodeDisplay, NodeWithOverloads, OutSocket, InSocket} from "../Node";
+import { labSliderProps } from "./spaces";
+import { Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, NodeWithOverloads, OutSocket, InSocket } from "../Node";
 import * as cm from "../colormanagement";
 
-import {Color, Vec3, lerp} from "@/util";
-import { Overload, OverloadGroup, OverloadManager } from "../Overload";
+import { Color, Vec3, lerp } from "@/util";
+import { Overload, OverloadGroup } from "../Overload";
 
 export namespace math {
 	enum VectorArithmeticMode {
@@ -433,47 +433,6 @@ export namespace math {
 				values: [this.output(context)],
 				flags: [],
 			};
-		}
-	}
-
-	export class StandardIlluminantNode extends Node {
-		static readonly TYPE = Symbol(this.name);
-		static readonly LABEL = "Standard illuminant";
-		static readonly DESC = "desc.node.standardIlluminant";
-
-		private readonly whitePointSocket: Socket<St.Dropdown>;
-
-		private readonly outXyzSocket: Socket<St.Vector>;
-		private readonly outXyySocket: Socket<St.Vector>;
-
-		constructor() {
-			super();
-
-			this.ins.push(
-				(this.whitePointSocket = new InSocket(this, St.Dropdown, "White point", false, whitePointSocketOptions)),
-			);
-
-			this.outs.push(
-				(this.outXyzSocket = new OutSocket(this, St.Vector, "XYZ")),
-				(this.outXyySocket = new OutSocket(this, St.Vector, "xyY")),
-				new OutSocket(this, St.ColorCoords, "Color")
-			);
-		}
-
-		output(context: NodeEvalContext): number[] | cm.Xyz {
-			const illuminant = getIlluminant(this.whitePointSocket, context);
-
-			switch(context.socket) {
-				case this.outXyzSocket:
-					return [...cm.Xyz.from(illuminant)];
-
-				case this.outXyySocket:
-					return [...cm.Xyy.from(illuminant)];
-
-				default:
-				case this.outs[2]:
-					return cm.Xyz.from(illuminant);
-			}
 		}
 	}
 }

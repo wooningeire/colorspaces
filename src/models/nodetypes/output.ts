@@ -76,6 +76,7 @@ export namespace output {
 
         constructor() {
             super(ChromaticityPlotMode.Xy);
+            this.width = 200;
         }
     }
 }

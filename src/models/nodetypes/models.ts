@@ -1,9 +1,10 @@
-import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, Tree, OutputDisplayType, NodeWithOverloads, InSocket, OutSocket} from "../Node";
-import { Overload, OverloadManager, OverloadGroup } from "../Overload";
+import { Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, NodeWithOverloads, InSocket, OutSocket } from "../Node";
+import { Overload, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
 
-import {Color, Vec2, Vec3, pipe} from "@/util";
+import { Color, Vec3, pipe } from "@/util";
 import { illuminantE } from "../colormanagement/spaces/col-xyz-xyy-illuminants";
+import { getIlluminant, whitePointSocketOptions } from "./spaces";
 
 export namespace models {
 	//TODO code duplication
@@ -430,7 +431,7 @@ export namespace models {
 				new OutSocket(this, St.ColorCoords, "Color"),
 			);
 
-			this.width = 180;
+			this.width = 200;
 		}
 
 		output(context: NodeEvalContext): Vec3 | cm.Xyz {
@@ -481,7 +482,7 @@ export namespace models {
 				new OutSocket(this, St.ColorCoords, "Color"),
 			);
 
-			this.width = 180;
+			this.width = 200;
 		}
 
 		output(context: NodeEvalContext): Vec3 | cm.Xyz {
@@ -494,6 +495,47 @@ export namespace models {
 
 				case this.outs[1]:
 					return new cm.Xyz(xyz, illuminantE);
+			}
+		}
+	}
+
+	export class StandardIlluminantNode extends Node {
+		static readonly TYPE = Symbol(this.name);
+		static readonly LABEL = "Standard illuminant";
+		static readonly DESC = "desc.node.standardIlluminant";
+
+		private readonly whitePointSocket: Socket<St.Dropdown>;
+
+		private readonly outXyzSocket: Socket<St.Vector>;
+		private readonly outXyySocket: Socket<St.Vector>;
+
+		constructor() {
+			super();
+
+			this.ins.push(
+				(this.whitePointSocket = new InSocket(this, St.Dropdown, "White point", false, whitePointSocketOptions)),
+			);
+
+			this.outs.push(
+				(this.outXyzSocket = new OutSocket(this, St.Vector, "XYZ")),
+				(this.outXyySocket = new OutSocket(this, St.Vector, "xyY")),
+				new OutSocket(this, St.ColorCoords, "Color")
+			);
+		}
+
+		output(context: NodeEvalContext): number[] | cm.Xyz {
+			const illuminant = getIlluminant(this.whitePointSocket, context);
+
+			switch(context.socket) {
+				case this.outXyzSocket:
+					return [...cm.Xyz.from(illuminant)];
+
+				case this.outXyySocket:
+					return [...cm.Xyy.from(illuminant)];
+
+				default:
+				case this.outs[2]:
+					return cm.Xyz.from(illuminant);
 			}
 		}
 	}

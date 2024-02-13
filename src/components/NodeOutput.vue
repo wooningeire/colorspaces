@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {inject, computed, watch, getCurrentInstance} from "vue";
+import {inject, computed, watch, getCurrentInstance, onMounted, ref} from "vue";
 
 import NodeOutputColorValues from "./NodeOutputColorValues.vue";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
@@ -9,12 +9,18 @@ import NodeOutputCssColor from "./NodeOutputCssColor.vue";
 import {Node, NodeWithOverloads, OutputDisplayType} from "@/models/Node";
 import {Col} from "@/models/colormanagement";
 import { Vec3 } from "@/util";
+import { tree } from "./store";
 
 const props = defineProps<{
 	node: Node,
 }>();
 
-const hasConstantOutput = computed(() => props.node.getDependencyAxes().size === 0);
+const hasConstantOutput = ref(true);
+const setHasConstantOutput = () => {
+	hasConstantOutput.value = props.node.getDependencyAxes().size === 0;
+};
+onMounted(setHasConstantOutput);
+watch(tree.links, setHasConstantOutput)
 
 const type = computed(() => (props.node.constructor as typeof Node).outputDisplayType);
 
