@@ -175,11 +175,14 @@ Object.defineProperties(socketVue, {
 				@dragleave="isDraggedOver = false"
 				@dragend="event => event.currentTarget?.blur()"
 
-				@dblclick="unlinkLinks">
+				@dblclick="unlinkLinks"
+				
+				:class="{
+					hiding: Boolean(draggedSocket) && !Socket.canLink(draggedSocket, socket),
+				}">
 			<div class="socket-display"
 					:class="{
 						accepting: isDraggedOver && Socket.canLink(draggedSocket, socket),
-						hiding: Boolean(draggedSocket) && !Socket.canLink(draggedSocket, socket),
 					}"
 					:style="{'--socket-color': socketColor} as any"></div>
 		</div>
@@ -253,7 +256,11 @@ Object.defineProperties(socketVue, {
 			}
 		}
 
-		&:not(:active) > .socket-display.hiding {
+		&.hiding {
+			pointer-events: none;
+		}
+
+		&:not(:active).hiding > .socket-display {
 			--socket-size: 0;
 		}
 	}

@@ -158,7 +158,9 @@ export abstract class Node {
 		Node.prototype.onSocketLink.call(this, socket, link, tree);
 	}
 
-	onSocketFieldValueChange(socket: Socket, tree: Tree) {}
+	onSocketFieldValueChange(socket: Socket, tree: Tree) {
+		this.onDependencyUpdate();
+	}
 
 	onDependencyUpdate() {
 		// Clear the memoized values
@@ -290,6 +292,7 @@ export enum SocketType {
 	ColorCoords,
 	Dropdown,
 	Image,
+	Bool,
 }
 const St = SocketType;
 
@@ -301,6 +304,7 @@ export type SocketValue<St extends SocketType=any> =
 		St extends SocketType.VectorOrColor ? Color :
 		St extends SocketType.Dropdown ? string :
 		St extends SocketType.Image ? ImageData :
+		St extends SocketType.Bool ? boolean :
 		never;
 
 export enum SocketFlag {

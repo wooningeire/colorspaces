@@ -134,6 +134,12 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
 						onValueChange();
 					}" />
 		</template>
+
+		<template v-else-if="socket.type === St.Bool">
+			<input type="checkbox"
+					v-model="socket.fieldValue"
+					@change="onValueChange()" />
+		</template>
 	</div>
 </template>
 
