@@ -17,11 +17,11 @@ const radConst2 = planck * speedOfLight / boltzmann;
  * @returns 
  */
 const blackbodyExitance = (wavelength: number, temperature: number) =>
-		radConst1 / wavelength**5 / Math.expm1(radConst2 / wavelength / temperature) / Math.PI;
+    radConst1 / wavelength**5 / Math.expm1(radConst2 / wavelength / temperature) / Math.PI;
 
 export const blackbody = (temperature: number, datasetId: keyof typeof datasets) => new Xyz(
-	Array(3).fill(0).map((_, i) =>
-		[...datasets[datasetId].colorMatchingFunctions]
-				.reduce((cumsum, [wavelength, cmf]) => cumsum + blackbodyExitance(wavelength * 1e-9, temperature) * 1e-9 * cmf[i], 0)
-	).map((comp, i) => comp / datasets[datasetId].colorMatchingFunctionsIntegrals[i]) as Vec3,
+  Array(3).fill(0).map((_, i) =>
+    [...datasets[datasetId].colorMatchingFunctions]
+        .reduce((cumsum, [wavelength, cmf]) => cumsum + blackbodyExitance(wavelength * 1e-9, temperature) * 1e-9 * cmf[i], 0)
+  ).map((comp, i) => comp / datasets[datasetId].colorMatchingFunctionsIntegrals[i]) as Vec3,
 );

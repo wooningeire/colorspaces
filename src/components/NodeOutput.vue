@@ -12,12 +12,12 @@ import { Vec3 } from "@/util";
 import { tree } from "./store";
 
 const props = defineProps<{
-	node: Node,
+  node: Node,
 }>();
 
 const hasConstantOutput = ref(true);
 const setHasConstantOutput = () => {
-	hasConstantOutput.value = props.node.getDependencyAxes().size === 0;
+  hasConstantOutput.value = props.node.getDependencyAxes().size === 0;
 };
 onMounted(setHasConstantOutput);
 watch(tree.links, setHasConstantOutput)
@@ -29,51 +29,51 @@ const output = computed(() => props.node.display());
 const nDecimals = 4;
 
 watch(() => props.node.getDependencyAxes().size, () => {
-	getCurrentInstance()?.proxy?.$forceUpdate();
+  getCurrentInstance()?.proxy?.$forceUpdate();
 });
 </script>
 
 <template>
-	<div class="node-output"
-			v-if="type !== OutputDisplayType.None">
+  <div class="node-output"
+      v-if="type !== OutputDisplayType.None">
 
-		<template v-if="type === OutputDisplayType.Color">
-			<NodeOutputColorValues :values="output.values"
-					:labels="output.labels"
-					:flags="output.flags"
-					v-if="hasConstantOutput" />
-			<NodeOutputColorDisplay :node="node" />
-		</template>
+    <template v-if="type === OutputDisplayType.Color">
+      <NodeOutputColorValues :values="output.values"
+          :labels="output.labels"
+          :flags="output.flags"
+          v-if="hasConstantOutput" />
+      <NodeOutputColorDisplay :node="node" />
+    </template>
 
-		<template v-else-if="type === OutputDisplayType.Float">
-			<div class="output-values"
-					v-if="hasConstantOutput">{{output.values[0].toFixed(nDecimals)}}</div>
-		</template>
+    <template v-else-if="type === OutputDisplayType.Float">
+      <div class="output-values"
+          v-if="hasConstantOutput">{{output.values[0].toFixed(nDecimals)}}</div>
+    </template>
 
-		<template v-else-if="type === OutputDisplayType.Vec">
-			<NodeOutputColorValues :values="output.values"
-					:labels="output.labels"
-					:flags="output.flags"
-					v-if="hasConstantOutput" />
-		</template>
+    <template v-else-if="type === OutputDisplayType.Vec">
+      <NodeOutputColorValues :values="output.values"
+          :labels="output.labels"
+          :flags="output.flags"
+          v-if="hasConstantOutput" />
+    </template>
 
-		<template v-else-if="type === OutputDisplayType.Css && node instanceof NodeWithOverloads">
-			<template v-if="hasConstantOutput">
-				<NodeOutputCssRgbVec :rgbVec="output.values as Vec3"
-						v-if="node.overloadManager.mode === node.overloadManager.dropdown.data.options?.[0].value" />
-				<NodeOutputCssColor :color="output.values as Col"
-						v-else />
-			</template>
-		</template>
-	</div>
+    <template v-else-if="type === OutputDisplayType.Css && node instanceof NodeWithOverloads">
+      <template v-if="hasConstantOutput">
+        <NodeOutputCssRgbVec :rgbVec="output.values as Vec3"
+            v-if="node.overloadManager.mode === node.overloadManager.dropdown.data.options?.[0].value" />
+        <NodeOutputCssColor :color="output.values as Col"
+            v-else />
+      </template>
+    </template>
+  </div>
 </template>
 
 <style lang="scss" scoped>
 :deep(.output-values) {
-	max-width: 100%;
-	overflow-x: auto;
+  max-width: 100%;
+  overflow-x: auto;
 
-	font-family: var(--font-mono);
-	font-size: 0.75em;
+  font-family: var(--font-mono);
+  font-size: 0.75em;
 }
 </style>

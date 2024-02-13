@@ -5,7 +5,7 @@ import { Color, Vec3, clamp } from '@/util';
 import * as cm from '@/models/colormanagement';
 
 const props = defineProps<{
-    color?: cm.Col,
+  color?: cm.Col,
 }>();
 
 const to255 = (channel: number) => Math.round(clamp(channel, 0, 1) * 255);
@@ -13,18 +13,18 @@ const toHex = (channel: number) => to255(channel).toString(16).padStart(2, "0");
 const toHex3 = (channel: number) => Math.round(clamp(channel, 0, 1) * 15).toString(16);
 
 const hueStrings = (color: cm.Col, fn: (rgb: Vec3) => number[]) => {
-    const hxx = fn([...cm.Srgb.from(color)] as Vec3);
-    return [Number((hxx[0] * 360).toFixed(1)).toString(), `${Number((hxx[1] * 100).toFixed(2))}%`, `${Number((hxx[2] * 100).toFixed(2))}%`];
+  const hxx = fn([...cm.Srgb.from(color)] as Vec3);
+  return [Number((hxx[0] * 360).toFixed(1)).toString(), `${Number((hxx[1] * 100).toFixed(2))}%`, `${Number((hxx[2] * 100).toFixed(2))}%`];
 };
 
 const labStrings = (color: cm.Col, fn: (color: cm.Col) => number[]) => {
-    const lab = fn(color);
-    return [`${Number(lab[0].toFixed(2))}%`, Number(lab[1].toFixed(2)), Number(lab[2].toFixed(2))];
+  const lab = fn(color);
+  return [`${Number(lab[0].toFixed(2))}%`, Number(lab[1].toFixed(2)), Number(lab[2].toFixed(2))];
 };
 
 const oklabStrings = (color: cm.Col, fn: (color: cm.Col) => number[]) => {
-    const lab = fn(color);
-    return [`${Number((lab[0] * 100).toFixed(2))}%`, Number(lab[1].toFixed(2)), Number(lab[2].toFixed(2))];
+  const lab = fn(color);
+  return [`${Number((lab[0] * 100).toFixed(2))}%`, Number(lab[1].toFixed(2)), Number(lab[2].toFixed(2))];
 };
 
 const hex = computed(() => props.color ? `#${cm.Srgb.from(props.color).map(toHex).join("")}` : "--");
@@ -43,64 +43,64 @@ const oklchab = computed(() => props.color ? `oklch(${oklabStrings(props.color, 
 </script>
 
 <template>
-    <div class="table-container">
-        <div class="heading">sRGB</div>
-        <NodeOutputTable
-                :labels="[
-                    'HEX',
-                    'HEX3',
-                    'RGB',
-                    'HSL',
-                    'HWB',
-                    'RGB legacy',
-                    'HSL legacy',
-                ]"
-                :values="[
-                    hex,
-                    hex3,
-                    rgb,
-                    hsl,
-                    hwb,
-                    rgbLegacy,
-                    hslLegacy,
-                ]"
-                :useInputs="true" />
+  <div class="table-container">
+    <div class="heading">sRGB</div>
+    <NodeOutputTable
+        :labels="[
+          'HEX',
+          'HEX3',
+          'RGB',
+          'HSL',
+          'HWB',
+          'RGB legacy',
+          'HSL legacy',
+        ]"
+        :values="[
+          hex,
+          hex3,
+          rgb,
+          hsl,
+          hwb,
+          rgbLegacy,
+          hslLegacy,
+        ]"
+        :useInputs="true" />
 
-        <div class="heading">CIELAB</div>
-        <NodeOutputTable
-                :labels="[
-                    'L*a*b*',
-                    'L*C*h',
-                ]"
-                :values="[
-                    lab,
-                    lchab,
-                ]"
-                :useInputs="true" />
-        <div class="heading">Oklab</div>
-        <NodeOutputTable
-                :labels="[
-                    'oklab',
-                    'oklch',
-                ]"
-                :values="[
-                    oklab,
-                    oklchab,
-                ]"
-                :useInputs="true" />
-        <div class="heading">Other</div>
-    </div>
+    <div class="heading">CIELAB</div>
+    <NodeOutputTable
+        :labels="[
+          'L*a*b*',
+          'L*C*h',
+        ]"
+        :values="[
+          lab,
+          lchab,
+        ]"
+        :useInputs="true" />
+    <div class="heading">Oklab</div>
+    <NodeOutputTable
+        :labels="[
+          'oklab',
+          'oklch',
+        ]"
+        :values="[
+          oklab,
+          oklchab,
+        ]"
+        :useInputs="true" />
+    <div class="heading">Other</div>
+  </div>
 </template>
 
 <style lang="scss">
 .table-container {
-    display: flex;
-    flex-flow: column;
-    align-items: center;
+  display: flex;
+  flex-flow: column;
+  align-items: center;
 }
 
 .heading {
-    font-weight: 700;
-    margin: 0.5em 0 0.25em 0;
+  font-weight: 700;
+  margin: 0.5em 0 0.25em 0;
 }
 </style>

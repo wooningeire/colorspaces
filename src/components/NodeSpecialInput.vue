@@ -7,18 +7,18 @@ import {models, output} from "@/models/nodetypes";
 
 
 const props = defineProps<{
-	node: Node,
+  node: Node,
 }>();
 </script>
 
 <template class="special-input">
-	<SpectralPowerDistributionEntry v-if="node instanceof models.SpectralPowerDistributionNode"
-			:node="node"
-			v-model="node.distribution"
-			v-model:datasetId="node.colorMatchingDataset" />
+  <SpectralPowerDistributionEntry v-if="node instanceof models.SpectralPowerDistributionNode"
+      :node="node"
+      v-model="node.distribution"
+      v-model:datasetId="node.colorMatchingDataset" />
 
-	<ChromaticityEntry v-else-if="node instanceof output.ChromaticityPlotNode"
-			:node="node" />
+  <ChromaticityEntry v-else-if="node instanceof output.ChromaticityPlotNode"
+      :node="node" />
 </template>
 
 <style lang="scss" scoped>

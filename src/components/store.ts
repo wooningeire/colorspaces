@@ -11,21 +11,21 @@ export const tree = reactive<Tree>(new Tree());
 
 //#region Node tree nodes setup
 export interface DeviceNodes {
-	transformNode: externals.DeviceTransformNode;
-	postprocessingNode: externals.DevicePostprocessingNode;
-	environmentNode: externals.EnvironmentNode;
-	visionNode: externals.VisionNode;
+  transformNode: externals.DeviceTransformNode;
+  postprocessingNode: externals.DevicePostprocessingNode;
+  environmentNode: externals.EnvironmentNode;
+  visionNode: externals.VisionNode;
 }
 
 
 export const deviceNodes = reactive(<DeviceNodes>{});
 const dn = deviceNodes;
 [
-	new spaces.SrgbNode().setPos([450, 50]),
-	// (dn.transformNode = new externals.DeviceTransformNode().setPos([1000, 100])),
-	// (dn.postprocessingNode = new externals.DevicePostprocessingNode().setPos([1200, 100])),
-	// (dn.environmentNode = new externals.EnvironmentNode().setPos([1200, 250])),
-	// (dn.visionNode = new externals.VisionNode().setPos([1200, 400])),
+  new spaces.SrgbNode().setPos([450, 50]),
+  // (dn.transformNode = new externals.DeviceTransformNode().setPos([1000, 100])),
+  // (dn.postprocessingNode = new externals.DevicePostprocessingNode().setPos([1200, 100])),
+  // (dn.environmentNode = new externals.EnvironmentNode().setPos([1200, 250])),
+  // (dn.visionNode = new externals.VisionNode().setPos([1200, 400])),
 ].forEach(tree.nodes.add, tree.nodes);
 
 // tree.linkSockets(dn.transformNode.outs[0], dn.postprocessingNode.ins[0]);
@@ -39,19 +39,19 @@ export const selectedNodes = reactive(new Set<Node>());
 
 //#region Modifier keys
 export const modifierKeys = reactive({
-	ctrl: false,
-	shift: false,
-	alt: false,
-	meta: false,
+  ctrl: false,
+  shift: false,
+  alt: false,
+  meta: false,
 });
 
 const updateModifierKeys = (event: KeyboardEvent) => {
-	Object.assign(modifierKeys, {
-		ctrl: event.ctrlKey,
-		shift: event.shiftKey,
-		alt: event.altKey,
-		meta: event.metaKey,
-	});
+  Object.assign(modifierKeys, {
+    ctrl: event.ctrlKey,
+    shift: event.shiftKey,
+    alt: event.altKey,
+    meta: event.metaKey,
+  });
 };
 
 addEventListener("keydown", updateModifierKeys);
@@ -67,60 +67,60 @@ export const currentlyDraggedNodeConstructor = ref(null as any as new <T extends
 
 //#region Global settings
 export const settings = reactive(<{
-	deviceSpace: typeof cm.Col,
-	rgbScale: number,
-	hueScale: number,
-	displayOutOfGamut: boolean,
+  deviceSpace: typeof cm.Col,
+  rgbScale: number,
+  hueScale: number,
+  displayOutOfGamut: boolean,
 }>{
-	deviceSpace: cm.Srgb,
-	rgbScale: 1,
-	hueScale: 1,
-	displayOutOfGamut: true,
+  deviceSpace: cm.Srgb,
+  rgbScale: 1,
+  hueScale: 1,
+  displayOutOfGamut: true,
 });
 //#endregion
 
 
 //#region Tooltip
 type Tooltip = {
-	key: StringKey,
-	pos: {
-		left?: string,
-		right?: string,
-		top?: string,
-		bottom?: string,
-	},
+  key: StringKey,
+  pos: {
+    left?: string,
+    right?: string,
+    top?: string,
+    bottom?: string,
+  },
 };
 const tooltips = new Set<Tooltip>();
 
 export const tooltipController = reactive({
-	text: "",
-	pos: {},
+  text: "",
+  pos: {},
 
-	showTooltip(text: string, pos: object) {
-		this.text = text;
-		this.pos = pos;
-	},
+  showTooltip(text: string, pos: object) {
+    this.text = text;
+    this.pos = pos;
+  },
 
-	hideTooltip() {
-		this.text = "";
-		this.pos = {};
-	},
+  hideTooltip() {
+    this.text = "";
+    this.pos = {};
+  },
 });
 //#endregion
 
 //#region Error popup
 export const errorPopupController =  reactive({
-	text: "",
+  text: "",
 
-	async showPopup(text: string) {
-		this.text = "";
-		await Promise.resolve();
-		this.text = text;
-	},
+  async showPopup(text: string) {
+    this.text = "";
+    await Promise.resolve();
+    this.text = text;
+  },
 
-	hidePopup() {
-		this.text = "";
-	},
+  hidePopup() {
+    this.text = "";
+  },
 })
 //#endregion
 
