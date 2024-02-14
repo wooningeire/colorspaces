@@ -1,3 +1,5 @@
+import seedrandom from "seedrandom";
+
 import { labSliderProps } from "./spaces";
 import { Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, NodeWithOverloads, OutSocket, InSocket } from "../Node";
 import * as cm from "../colormanagement";
@@ -186,8 +188,8 @@ export namespace math {
       [ArithmeticMode.Add, new Overload(
         "Add",
         node => [
-          new InSocket(node, Socket.Type.Float, "Addend"),
-          new InSocket(node, Socket.Type.Float, "Addend"),
+          new InSocket(node, Socket.Type.Float, "Addend", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "Addend", true, {sliderProps: {hasBounds: false}}),
         ],
         node => [
           new OutSocket(node, Socket.Type.Float, "Sum"),
@@ -198,8 +200,8 @@ export namespace math {
       [ArithmeticMode.Multiply, new Overload(
         "Multiply",
         node => [
-          new InSocket(node, Socket.Type.Float, "Factor"),
-          new InSocket(node, Socket.Type.Float, "Factor"),
+          new InSocket(node, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
         ],
         node => [
           new OutSocket(node, Socket.Type.Float, "Product"),
@@ -210,8 +212,8 @@ export namespace math {
       [ArithmeticMode.Subtract, new Overload(
         "Subtract",
         node => [
-          new InSocket(node, Socket.Type.Float, "Minuend"),
-          new InSocket(node, Socket.Type.Float, "Subtrahend"),
+          new InSocket(node, Socket.Type.Float, "Minuend", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "Subtrahend", true, {sliderProps: {hasBounds: false}}),
         ],
         node => [
           new OutSocket(node, Socket.Type.Float, "Difference"),
@@ -222,8 +224,8 @@ export namespace math {
       [ArithmeticMode.Divide, new Overload(
         "Divide",
         node => [
-          new InSocket(node, Socket.Type.Float, "Dividend"),
-          new InSocket(node, Socket.Type.Float, "Divisor"),
+          new InSocket(node, Socket.Type.Float, "Dividend", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "Divisor", true, {sliderProps: {hasBounds: false}}),
         ],
         node => [
           new OutSocket(node, Socket.Type.Float, "Quotient"),
@@ -234,8 +236,8 @@ export namespace math {
       [ArithmeticMode.Pow, new Overload(
         "Power",
         node => [
-          new InSocket(node, Socket.Type.Float, "Base"),
-          new InSocket(node, Socket.Type.Float, "Exponent"),
+          new InSocket(node, Socket.Type.Float, "Base", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "Exponent", true, {sliderProps: {hasBounds: false}}),
         ],
         node => [
           new OutSocket(node, Socket.Type.Float, "Power"),
@@ -246,8 +248,8 @@ export namespace math {
       [ArithmeticMode.Pow, new Overload(
         "Screen",
         node => [
-          new InSocket(node, Socket.Type.Float, "Factor"),
-          new InSocket(node, Socket.Type.Float, "Factor"),
+          new InSocket(node, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
         ],
         node => [
           new OutSocket(node, Socket.Type.Float, "Product"),
@@ -258,8 +260,8 @@ export namespace math {
       [ArithmeticMode.Lerp, new Overload(
         "Lerp",
         node => [
-          new InSocket(node, Socket.Type.Float, "Min"),
-          new InSocket(node, Socket.Type.Float, "Max"),
+          new InSocket(node, Socket.Type.Float, "Min", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "Max", true, {sliderProps: {hasBounds: false}}),
           new InSocket(node, Socket.Type.Float, "Amount"),
         ],
         node => [
@@ -271,11 +273,11 @@ export namespace math {
       [ArithmeticMode.MapRange, new Overload(
         "Map range",
         node => [
-          new InSocket(node, Socket.Type.Float, "Source value"),
-          new InSocket(node, Socket.Type.Float, "Source min"),
-          new InSocket(node, Socket.Type.Float, "Source max"),
-          new InSocket(node, Socket.Type.Float, "Target min"),
-          new InSocket(node, Socket.Type.Float, "Target max"),
+          new InSocket(node, Socket.Type.Float, "Source value", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "Source min", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "Source max", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "Target min", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "Target max", true, {sliderProps: {hasBounds: false}}),
         ],
         node => [
           new OutSocket(node, Socket.Type.Float, "Target value"),
@@ -325,7 +327,7 @@ export namespace math {
     }
 
     // output(context: NodeEvalContext): Color {
-    // 	return this.ins.map(socket => socket.inValue(context)) as Color;
+    //   return this.ins.map(socket => socket.inValue(context)) as Color;
     // }
   }
 
@@ -398,12 +400,10 @@ export namespace math {
   export class ContrastRatioNode extends Node {
     static readonly TYPE = Symbol(this.name);
     static readonly LABEL = "Contrast ratio";
-
     static readonly DESC = "desc.node.contrastRatio";
+    static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
 
     private readonly colorSockets: Socket<St.VectorOrColor>[];
-
-    static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
 
     constructor() {
       super();
@@ -425,6 +425,47 @@ export namespace math {
       const col1 = this.colorSockets[1].inValue(context);
 
       return cm.difference.contrastRatio(col0, col1);
+    }
+    
+    display(context: NodeEvalContext) {
+      return {
+        labels: [],
+        values: [this.output(context)],
+        flags: [],
+      };
+    }
+  }
+
+  export class RandomFloatNode extends Node {
+    static readonly TYPE = Symbol(this.name);
+    static readonly LABEL = "Random float";
+    static readonly DESC = "desc.node.randomFloat";
+    static readonly outputDisplayType = OutputDisplayType.Float;
+
+    constructor() {
+      super();
+      
+      this.ins.push(
+        new InSocket(this, St.Bool, "Integer", false),
+        new InSocket(this, St.Float, "Seed", true, {sliderProps: {hasBounds: false}}),
+        new InSocket(this, St.Float, "Min", true, {sliderProps: {hasBounds: false}}),
+        new InSocket(this, St.Float, "Max", true, {sliderProps: {hasBounds: false}, defaultValue: 1}),
+      );
+
+      this.outs.push(
+        new OutSocket(this, St.Float, "Value"),
+      );
+    }
+
+    output(context: NodeEvalContext): number {
+      const useFloor = this.ins[0].inValue(context)
+      const min = this.ins[2].inValue(context) as number;
+      const max = this.ins[3].inValue(context) as number;
+
+      const rng = seedrandom(this.ins[1].inValue(context).toString())
+
+      const float = rng() * (max - min) + min;
+      return useFloor ? Math.floor(float) : float;
     }
     
     display(context: NodeEvalContext) {
