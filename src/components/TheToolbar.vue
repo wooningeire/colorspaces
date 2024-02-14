@@ -12,8 +12,8 @@ const deleteSelectedNodes = () => {
 };
 
 addEventListener("keydown", event => {
-  /* if (event.key !== "Delete") return;
-  deleteSelectedNodes(); */
+  if (!["delete","backspace"].includes(event.key.toLowerCase())) return;
+  deleteSelectedNodes();
 });
 
 const fileSelector = ref<HTMLInputElement | null>(null);

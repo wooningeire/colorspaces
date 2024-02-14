@@ -65,12 +65,16 @@ body {
   margin: 0;
   font-family: Atkinson Hyperlegible, Overpass, sans-serif;
   font-weight: 300;
+  overscroll-behavior: none;
 }
 
 input,
 button,
 select {
   font-family: inherit;
+}
+div {
+  user-select: none;
 }
 
 main {
@@ -128,6 +132,7 @@ button {
   background: #000000cf;
   border: none;
   color: #ffffff7f;
+  cursor: pointer;
 
   border-radius: 0.5em;
 

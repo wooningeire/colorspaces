@@ -96,7 +96,9 @@ const showButtonTooltip = (nodeConstructor: typeof Node) => {
   .button-rack {
     display: flex;
     flex-flow: row;
-    gap: 0.5em;
+    flex-wrap: wrap;
+    justify-content: left;
+    /* gap: 0.5em; */
 
     white-space: nowrap;
     overflow-x: auto;
