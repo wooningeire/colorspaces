@@ -133,6 +133,7 @@ button {
   border: none;
   color: #ffffff7f;
   cursor: pointer;
+  transition: all 0.1s ease;
 
   border-radius: 0.5em;
 
