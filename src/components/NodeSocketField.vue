@@ -116,13 +116,15 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
     </template>
 
     <template v-else-if="socket.type === St.Dropdown">
-      <select v-model="socket.fieldValue"
-          @change="onValueChange()">
-        <option v-for="{text, value} of (socket as Socket<St.Dropdown>).data.options"
-            :value="value">
-          {{text}}
-        </option>
-      </select>
+      <label>
+        <select v-model="socket.fieldValue"
+            @change="onValueChange()">
+          <option v-for="{text, value} of (socket as Socket<St.Dropdown>).data.options"
+              :value="value">
+            {{text}}
+          </option>
+        </select>
+      </label>
     </template>
 
     <template v-else-if="socket.type === St.Image">

@@ -9,32 +9,34 @@ import {settings} from "./store";
   <div class="settings-panel">
     <div class="container">
       <div>Device color space</div>
-      <select v-model="settings.deviceSpace">
-        <option :value="cm.Srgb">sRGB</option>
-        <option :value="cm.LinearSrgb">Linear sRGB</option>
-        <option :value="cm.Rec709">Rec. 709</option>
-        <option :value="cm.Xyz">XYZ</option>
-      </select>
+      <label>
+        <select v-model="settings.deviceSpace">
+          <option :value="cm.Srgb">sRGB</option>
+          <option :value="cm.LinearSrgb">Linear sRGB</option>
+          <option :value="cm.Rec709">Rec. 709</option>
+          <option :value="cm.Xyz">XYZ</option>
+        </select>
+      </label>
     </div>
 
     <div class="container">
       <div>RGB scale</div>
-      <select v-model="settings.rgbScale">
+      <label><select v-model="settings.rgbScale">
         <option :value="1">1</option>
         <option :value="100">100</option>
         <option :value="255">255</option>
         <option :value="65535">65535</option>
-      </select>
+      </select></label>
     </div>
 
     <div class="container">
       <div>Hue scale</div>
-      <select v-model="settings.hueScale">
+      <label><select v-model="settings.hueScale">
         <option :value="1">1</option>
         <option :value="2 * Math.PI">2π</option>
         <option :value="100">100</option>
         <option :value="360">360</option>
-      </select>
+      </select></label>
     </div>
 
     <div class="container">
