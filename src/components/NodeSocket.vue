@@ -26,10 +26,9 @@ const emit = defineEmits<{
   (event: "unlink"): void,
 }>();
 
-const draggedSocket = inject("draggedSocket") as ComputedRef<Socket>;
-
-
+const draggedSocket = inject<ComputedRef<Socket>>("draggedSocket");
 const isDraggedOver = ref(false);
+const canLinkDraggedSocket = computed(() => Socket.canLink(draggedSocket?.value, props.socket));
 
 
 const shouldShowFields = computed(
@@ -178,11 +177,12 @@ Object.defineProperties(socketVue, {
         @dblclick="unlinkLinks"
         
         :class="{
-          hiding: Boolean(draggedSocket) && !Socket.canLink(draggedSocket, socket),
+          hiding: Boolean(draggedSocket) && !canLinkDraggedSocket,
         }">
       <div class="socket-display"
           :class="{
-            accepting: isDraggedOver && Socket.canLink(draggedSocket, socket),
+						excited: Boolean(draggedSocket) && canLinkDraggedSocket,
+            accepting: isDraggedOver && canLinkDraggedSocket,
           }"
           :style="{'--socket-color': socketColor} as any"></div>
     </div>
@@ -249,6 +249,10 @@ Object.defineProperties(socketVue, {
 
       --socket-color: currentcolor;
       --main-border-box-shadow: 0 0 0 4px #2f3432;
+
+			&.excited {
+				--socket-size: 16px;
+			}
 
       &.accepting {
         box-shadow: 0 0 0 2px #fff,

@@ -95,7 +95,7 @@ const showButtonTooltip = (nodeConstructor: typeof Node) => {
 
   .button-rack {
     display: flex;
-    flex-flow: row;
+    flex-flow: row /* wrap */;
     justify-content: left;
     /* gap: 0.5em; */
 

@@ -6,8 +6,8 @@ import {Color, Vec2, Vec3, pipe} from "@/util";
 
 
 export enum ChromaticityPlotMode {
-  Xy = "from xy",
   Color = "from color",
+  Xy = "from xy",
 }
 export namespace output {
   enum CssOutputMode {
@@ -50,6 +50,15 @@ export namespace output {
     static readonly DESC = "desc.node.chromaticity";
 
     static readonly overloadGroup = new OverloadGroup(new Map<ChromaticityPlotMode, Overload<void>>([
+      [ChromaticityPlotMode.Color, new Overload(
+        "From colors",
+        node => [
+          new InSocket(node, Socket.Type.ColorCoords, "Colors"),
+        ],
+        node => [],
+        () => {},
+      )],
+
       [ChromaticityPlotMode.Xy, new Overload(
         "From xy",
         node => [
@@ -63,19 +72,10 @@ export namespace output {
         node => [],
         () => {},
       )],
-
-      [ChromaticityPlotMode.Color, new Overload(
-        "From colors",
-        node => [
-          new InSocket(node, Socket.Type.ColorCoords, "Colors"),
-        ],
-        node => [],
-        () => {},
-      )],
     ]));
 
     constructor() {
-      super(ChromaticityPlotMode.Xy);
+      super(ChromaticityPlotMode.Color);
       this.width = 200;
     }
   }

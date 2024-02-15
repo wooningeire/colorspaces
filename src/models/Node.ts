@@ -375,8 +375,8 @@ export class Socket<St extends SocketType=any> {
         ?? srcType === dstType);
   }
 
-  static canLink(socket0: Socket, socket1: Socket) {
-    if (socket0.isInput === socket1.isInput || socket0.node === socket1.node) return false;
+	static canLink(socket0: Socket | undefined, socket1: Socket | undefined) {
+		if (!socket0 || !socket1 || socket0.isInput === socket1.isInput || socket0.node === socket1.node) return false;
 
     const [outSocket, inSocket] = socket1.isInput
         ? [socket0, socket1]

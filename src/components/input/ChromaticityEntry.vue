@@ -150,15 +150,15 @@ mat3 chromaticAdaptationMatrix(vec3 testWhiteXyz, vec3 refWhiteXyz, mat3 adaptat
   return adaptationShifterMatrix * adaptationMatrix;
 }
 
-vec3 adaptXyz(vec3 origXyz, vec2 targetIlluminant) {
-  vec3 testWhiteXyz = xyyToXyz(vec3(illuminant2_E, 1.));
+vec3 adaptXyz(vec3 origXyz, vec2 originalIlluminant, vec2 targetIlluminant) {
+  vec3 testWhiteXyz = xyyToXyz(vec3(originalIlluminant, 1.));
   vec3 refWhiteXyz = xyyToXyz(vec3(targetIlluminant, 1.));
 
   return chromaticAdaptationMatrix(testWhiteXyz, refWhiteXyz, bradford) * origXyz;
 }
 
-vec3 xyzToLinearSrgb(vec3 xyz) {
-  vec3 adaptedXyz = adaptXyz(xyz, illuminant2_D65);
+vec3 xyzToLinearSrgb(vec3 xyz, vec2 originalIlluminant) {
+  vec3 adaptedXyz = adaptXyz(xyz, originalIlluminant, illuminant2_D65);
 
   //https://en.wikipedia.org/wiki/SRGB#From_CIE_XYZ_to_sRGB
   return transpose(mat3(
@@ -191,7 +191,7 @@ void main() {
   vec3 xyy = vec3(v_xy / ${diagramScale.toFixed(6)}, LUM);
 
   vec3 xyz = xyyToXyz(xyy);
-  vec3 linearSrgb = xyzToLinearSrgb(xyz);
+  vec3 linearSrgb = xyzToLinearSrgb(xyz,illuminant2_D65);
   vec3 gammaSrgb = linearToGammaSrgb(linearSrgb);
 
   bool outOfGamut = 0. > gammaSrgb.r
