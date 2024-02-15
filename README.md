@@ -2,13 +2,16 @@
 A node-based color management explorer.
 
 ## Building
-This app builds to a static web page. It uses [Vite](https://vitejs.dev) for bundling.
+This app builds to a static web page. It uses [Vite](https://vitejs.dev) for bundling and uses [pnpm](https://pnpm.io/installation)'s lockfile.
+
+Initial setup:
+`pnpm install --frozen-lockfile`
 
 To build with absolute paths:
-`npm run build`
+`pnpm run build`
 
 To build with relative paths:
-`npm run build.public`
+`pnpm run build.public`
 
 To start a development server:
-`npm run dev`
+`pnpm run dev`

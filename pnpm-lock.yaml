@@ -11,9 +11,6 @@ dependencies:
   mathjs:
     specifier: ^10.5.3
     version: 10.6.4
-  pnpm:
-    specifier: ^8.15.2
-    version: 8.15.2
   seedrandom:
     specifier: ^3.0.5
     version: 3.0.5
@@ -778,12 +775,6 @@ packages:
       mlly: 1.5.0
       pathe: 1.1.2
     dev: true
-
-  /pnpm@8.15.2:
-    resolution: {integrity: sha512-CtSEkTkCu/5zmI7z2NHFEK6wxlSDur3EBYnBpmNc+GA5vDY5veOdFKPMngJx5/rRx/qJHEfKfH8esGv/3MOTnw==}
-    engines: {node: '>=16.14'}
-    hasBin: true
-    dev: false
 
   /postcss@8.4.35:
     resolution: {integrity: sha512-u5U8qYpBCpN13BsiEB0CbR1Hhh4Gc0zLFuedrHJKMctHCHAGrMdG0PRM/KErzAL3CU6/eckEtmHNB3x6e3c0vA==}
