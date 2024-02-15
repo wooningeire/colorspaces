@@ -82,7 +82,7 @@ main {
   height: 100vh;
   display: grid;
   align-items: center;
-  grid-template-rows: 1fr max(20vh, 15em);
+  grid-template-rows: 1fr max(20vh, 18em);
   grid-template-columns: 8em 1fr auto;
 
   --grid-size: 16px;

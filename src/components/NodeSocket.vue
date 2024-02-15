@@ -120,13 +120,16 @@ const showTooltip = () => {
   let tooltipString = `${getString(props.socket.data.socketDesc ?? NO_DESC)}`;
   
   if (props.socket.showSocket) {
-    tooltipString += `
+    tooltipString += `<br />
+<br />
 ${getString("general.socketDataTypeLabel")}${getString(`label.socketType.${socketTypeName}`)}<br />
 ${getString(`desc.socketType.${socketTypeName}.${props.socket.isInput ? "in" : "out"}`)}`;
   }
 
   if (props.socket.showSocket && props.socket.hasLinks) {
-    tooltipString += `${getString("general.socketUnlinkTutorial")}`;
+    tooltipString += `<br />
+<br />    
+${getString("general.socketUnlinkTutorial")}`;
   }
 
   tooltipController.showTooltip(tooltipString, {
