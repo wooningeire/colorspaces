@@ -16,6 +16,7 @@ import ErrorPopup from "./ErrorPopup.vue";
 
 
 const treeVue = ref(null as InstanceType<typeof TheNodeTree> | null);
+const nodeTreeCentererEl = ref<HTMLDivElement | null>(null);
 
 
 const viewportPos = reactive([0, 0]);
@@ -26,7 +27,14 @@ provide("treeViewportScale", viewportScale);
 provide("screenToViewport", screenToViewport);
 
 
-const addNode = <T extends Node>(nodeConstructor: new () => T, screenPos: Vec2=[0, 0]) => {
+const addNode = <T extends Node>(
+  nodeConstructor: new () => T,
+  screenPos: Vec2=[
+    nodeTreeCentererEl.value!.offsetLeft + nodeTreeCentererEl.value!.offsetWidth / 2,
+    nodeTreeCentererEl.value!.offsetTop + nodeTreeCentererEl.value!.offsetHeight / 2,
+  ] as Vec2
+) => {
+  console.log(screenPos);
   const node = new nodeConstructor().setPos(screenToViewport(screenPos) as Vec2);
   tree.nodes.add(node);
   treeVue.value!.selectNode(node);
@@ -36,6 +44,8 @@ const addNode = <T extends Node>(nodeConstructor: new () => T, screenPos: Vec2=[
 <template>
   <TheNodeTree ref="treeVue"
       @add-node="addNode" />
+  <div class="node-tree-centerer"
+      ref="nodeTreeCentererEl"></div>
   <TheNodeTray @add-node="addNode" />
 
   <TheToolbar />
@@ -100,6 +110,12 @@ main {
 
   > .node-tree {
     grid-area: 1/1 / -1/-1;
+  }
+
+  > .node-tree-centerer {
+    grid-area: 1/1 / 1/-1;
+    height: 100%;
+    pointer-events: none;
   }
 
   > .toolbar {

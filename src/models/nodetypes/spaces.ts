@@ -437,7 +437,7 @@ export namespace spaces {
       return cm.Oklab;
     }
     constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "Lab* or color", true, socketOptions);
+      return new InSocket(this, Socket.Type.VectorOrColor, "Lab or color", true, socketOptions);
     }
     inSocketOptions(): SocketOptions<St.VectorOrColor> {
       return {

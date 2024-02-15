@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {inject, computed, Ref, watch, ref, getCurrentInstance} from "vue";
+import {inject, computed, Ref, watch, ref, getCurrentInstance, onMounted} from "vue";
 import * as marked from "marked";
 
 import NodeSocket from "./NodeSocket.vue";
@@ -32,6 +32,14 @@ const emit = defineEmits<{
   (event: "tree-update"): void,
   (event: "node-selected", targetNode: Node, clearSelectionFirst: boolean): void,
 }>();
+
+
+onMounted(() => {
+  Object.assign(props.node.pos, [
+    props.node.pos[0] - (getCurrentInstance()?.proxy?.$el.offsetWidth / 2 ?? 0),
+    props.node.pos[1] - (getCurrentInstance()?.proxy?.$el.offsetHeight / 2 ?? 0),
+  ]);
+});
 
 
 const isSelected = computed(() => selectedNodes.has(props.node));
