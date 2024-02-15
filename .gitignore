@@ -4,3 +4,6 @@ node_modules
 # parcel
 .parcel-cache
 dist
+
+# macos metadata
+**/.DS_Store

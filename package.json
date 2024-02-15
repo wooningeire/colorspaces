@@ -28,9 +28,10 @@
     "vue-tsc": "^0.34.17"
   },
   "dependencies": {
-    "marked": "^4.3.0",
-    "mathjs": "^10.6.4",
+    "marked": "^4.0.16",
+    "mathjs": "^10.5.3",
+    "pnpm": "^8.15.2",
     "seedrandom": "^3.0.5",
-    "vue": "^3.4.19"
+    "vue": "^3.3.4"
   }
 }

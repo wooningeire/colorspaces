@@ -4,25 +4,25 @@ import {defineComponent, onMounted, PropType, ref, watch} from "vue";
 import {acceptAlways, identity} from "./base-functions";
 
 const props = defineProps({
-	modelValue: {
-		type: Number,
-		required: true,
-	},
+  modelValue: {
+    type: Number,
+    required: true,
+  },
 
-	validate: {
-		type: Function as PropType<<T>(proposedValue: T) => boolean>,
-		default: acceptAlways,
-	},
+  validate: {
+    type: Function as PropType<<T>(proposedValue: T) => boolean>,
+    default: acceptAlways,
+  },
 
-	convertIn: {
-		type: Function as PropType<<T>(value: T) => T>,
-		default: identity,
-	},
+  convertIn: {
+    type: Function as PropType<<T>(value: T) => T>,
+    default: identity,
+  },
 
-	convertOut: {
-		type: Function as PropType<<T>(value: T) => T>,
-		default: identity,
-	},
+  convertOut: {
+    type: Function as PropType<<T>(value: T) => T>,
+    default: identity,
+  },
 });
 
 
@@ -34,61 +34,61 @@ const userIsInputing = ref(false);
 
 
 const emit = defineEmits([
-	"update:modelValue",
+  "update:modelValue",
 ]);
 
 
 const setDisplayToTrueValue = () => {
-	displayValue.value = props.convertIn(props.modelValue);
+  displayValue.value = props.convertIn(props.modelValue);
 };
 
 
 const onInput = () => {
-	userIsInputing.value = true;
-	const proposedValue = props.convertOut(Number(displayValue.value));
+  userIsInputing.value = true;
+  const proposedValue = props.convertOut(Number(displayValue.value));
 
-	proposedValueIsValid.value = props.validate(proposedValue);
-	if (proposedValueIsValid.value) {
-		emit("update:modelValue", proposedValue);
-	}
+  proposedValueIsValid.value = props.validate(proposedValue);
+  if (proposedValueIsValid.value) {
+    emit("update:modelValue", proposedValue);
+  }
 };
 
 const onChange = () => {
-	userIsInputing.value = false;
-	setDisplayToTrueValue();
-	proposedValueIsValid.value = true;
+  userIsInputing.value = false;
+  setDisplayToTrueValue();
+  proposedValueIsValid.value = true;
 };
 
 const onBlur = () => {
-	userIsInputing.value = false;
+  userIsInputing.value = false;
 };
 
 watch(() => props.modelValue, () => {
-	if (userIsInputing.value) return;
-	setDisplayToTrueValue();
+  if (userIsInputing.value) return;
+  setDisplayToTrueValue();
 });
 </script>
 
 <template>
-	<input type="text"
-			v-model="displayValue"
-			@input="onInput"
-			@change="onChange"
-			@blur="onBlur"
-			:class="{invalid: !proposedValueIsValid}" />
+  <input type="text"
+      v-model="displayValue"
+      @input="onInput"
+      @change="onChange"
+      @blur="onBlur"
+      :class="{invalid: !proposedValueIsValid}" />
 </template>
 
 <style lang="scss" scoped>
 input {
-	background: #555857;
-	border: none;
-	color: inherit;
+  background: #555857;
+  border: none;
+  color: inherit;
 
-	margin-bottom: 0.25rem;
-	border-radius: 4px;
+  margin-bottom: 0.25rem;
+  border-radius: 4px;
 
-	&.invalid {
-		color: var(--col-invalid-input);
-	}
+  &.invalid {
+    color: var(--col-invalid-input);
+  }
 }
 </style>

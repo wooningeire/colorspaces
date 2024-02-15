@@ -5,7 +5,7 @@ import { Color, Vec3, clamp } from '@/util';
 import { Col, rgbToHsl, rgbToHwb } from '@/models/colormanagement';
 
 const props = defineProps<{
-    rgbVec: Vec3,
+  rgbVec: Vec3,
 }>();
 
 const to255 = (channel: number) => Math.round(clamp(channel, 0, 1) * 255);
@@ -13,8 +13,8 @@ const toHex = (channel: number) => to255(channel).toString(16).padStart(2, "0");
 const toHex3 = (channel: number) => Math.round(clamp(channel, 0, 1) * 15).toString(16);
 
 const hueStrings = (rgb: Vec3, fn: (rgb: Vec3) => number[]) => {
-    const hxx = fn(props.rgbVec);
-    return [Number((hxx[0] * 360).toFixed(1)).toString(), `${Number((hxx[1] * 100).toFixed(2))}%`, `${Number((hxx[2] * 100).toFixed(2))}%`];
+  const hxx = fn(props.rgbVec);
+  return [Number((hxx[0] * 360).toFixed(1)).toString(), `${Number((hxx[1] * 100).toFixed(2))}%`, `${Number((hxx[2] * 100).toFixed(2))}%`];
 };
 
 const hex = computed(() => `#${props.rgbVec.map(toHex).join("")}`);
@@ -33,29 +33,29 @@ const hslLegacy = computed(() => `hsl(${hueStrings(props.rgbVec, rgbToHsl).join(
 </script>
 
 <template>
-    <NodeOutputTable
-            :labels="[
-                'HEX',
-                'HEX3',
-                'RGB',
-                'HSL',
-                'HWB',
-                'RGB legacy',
-                'HSL legacy',
-            ]"
-            :values="[
-                hex,
-                hex3,
-                rgb,
-                hsl,
-                hwb,
-                rgbLegacy,
-                hslLegacy,
-            ]"
-            :useInputs="true"
-            v-if="props.rgbVec"/>
-    
-    <div v-else>
-        No color attached
-    </div>
+  <NodeOutputTable
+      :labels="[
+        'HEX',
+        'HEX3',
+        'RGB',
+        'HSL',
+        'HWB',
+        'RGB legacy',
+        'HSL legacy',
+      ]"
+      :values="[
+        hex,
+        hex3,
+        rgb,
+        hsl,
+        hwb,
+        rgbLegacy,
+        hslLegacy,
+      ]"
+      :useInputs="true"
+      v-if="props.rgbVec"/>
+  
+  <div v-else>
+    No color attached
+  </div>
 </template>

@@ -2,7 +2,7 @@
 A node-based color management explorer.
 
 ## Building
-This app builds to a static web page. It uses [Vite](https://vitejs.dev/) for bundling.
+This app builds to a static web page. It uses [Vite](https://vitejs.dev) for bundling.
 
 To build with absolute paths:
 `npm run build`

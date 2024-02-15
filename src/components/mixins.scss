@@ -1,23 +1,23 @@
 @mixin gradient-border($border-width, $background) {
-	position: absolute;
+  position: absolute;
 
-	inset: calc(-1 * $border-width);
-	padding: $border-width;
-	border-radius: 1em;
+  inset: calc(-1 * $border-width);
+  padding: $border-width;
+  border-radius: 1em;
 
-	background: $background;
+  background: $background;
 
-	// Border mask boilerplate from https://stackoverflow.com/a/51496341
-	-webkit-mask: 
-			linear-gradient(#fff 0 0) content-box, 
-			linear-gradient(#fff 0 0);
-	-webkit-mask-composite: xor;
+  // Border mask boilerplate from https://stackoverflow.com/a/51496341
+  -webkit-mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
 
-	mask: 
-			linear-gradient(#fff 0 0) content-box, 
-			linear-gradient(#fff 0 0);
-	mask-composite: exclude;
+  mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+  mask-composite: exclude;
 
 
-	pointer-events: none;
+  pointer-events: none;
 }
