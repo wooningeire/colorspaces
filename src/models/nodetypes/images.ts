@@ -1,6 +1,7 @@
 import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, OutSocket, Tree} from "../Node";
 
 import {Vec2, lerp} from "@/util";
+import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
 
 export namespace images {
   export class GradientNode extends Node implements AxisNode {
@@ -104,35 +105,13 @@ export namespace images {
     static readonly LABEL = "Sample";
     static readonly DESC = "desc.node.sample";
 
-    private readonly sourceSocket: InSocket<St.Any>;
     private readonly coordsSockets: [InSocket<St.Float>, InSocket<St.Float>];
 
     constructor() {
       super();
 
       this.ins.push(
-        (this.sourceSocket = new InSocket(this, St.Any, "Source", true, {
-          showFieldIfAvailable: false,
-          hasVolatileType: true,
-          onLink: (link, tree) => {
-            this.sourceSocket.changeType(link.src.type, tree);
-            this.outs[0].changeType(link.src.type, tree);
-          },
-          onUnlink: (link, tree) => {
-            let existingOutputSocket = this.outs[0].links[0]?.dst;
-            while (existingOutputSocket && existingOutputSocket.hasVolatileType) {
-              existingOutputSocket = existingOutputSocket.node.outs[0].links[0]?.dst;
-            }
-            const existingOutputType = existingOutputSocket?.type ?? St.Any;
-
-            this.sourceSocket.changeType(existingOutputType, tree);
-            this.outs[0].changeType(existingOutputType, tree);
-          },
-          onInputTypeChange: (newType, tree) => {
-            this.sourceSocket.changeType(newType, tree);
-            this.outs[0].changeType(newType, tree);
-          },
-        })),
+        new InSocket(this, St.Any, "Source", true, volatileInSocketOptions(this.ins, this.outs)),
         ...(this.coordsSockets = [
           new InSocket(this, St.Float, "X"),
           new InSocket(this, St.Float, "Y"),
@@ -140,54 +119,12 @@ export namespace images {
       );
 
       this.outs.push(
-        new OutSocket(this, St.Any, "Output", true, {
-          hasVolatileType: true,
-          onLink: (link, tree) => {
-            this.sourceSocket.changeType(link.src.type, tree);
-            this.outs[0].changeType(link.src.type, tree);
-          },
-          onUnlink: (link, tree) => {
-            let existingInputSocket = this.ins[0].links[0]?.src;
-            while (existingInputSocket && existingInputSocket.hasVolatileType) {
-              // TODO this assumes the position of a volatile-type socket, which is not necessarily true for future node types
-              existingInputSocket = existingInputSocket.node.ins[0].links[0]?.src;
-            }
-            let newType: St = existingInputSocket?.type;
-
-            // There could be more links on this socket
-            if (!newType) {
-              let existingOutputSocket = this.outs[0].links[0]?.dst;
-              while (existingOutputSocket && existingOutputSocket.hasVolatileType) {
-                existingOutputSocket = existingOutputSocket.node.outs[0].links[0]?.dst;
-              }
-              newType = existingOutputSocket?.type;
-            }
-            
-            newType ??= St.Any;
-
-            this.sourceSocket.changeType(newType, tree);
-            this.outs[0].changeType(newType, tree);
-          },
-          onOutputTypeChange: (newType, tree) => {
-            // Prioritize an existing input type rather than an output type
-
-            let existingInputSocket = this.ins[0].links[0]?.src;
-            while (existingInputSocket && existingInputSocket.hasVolatileType) {
-              // TODO ditto
-              existingInputSocket = existingInputSocket.node.ins[0].links[0]?.src;
-            }
-            const existingInputType = existingInputSocket?.type;
-            if (existingInputSocket !== undefined && existingInputType !== newType) return;
-
-            this.sourceSocket.changeType(newType, tree);
-            this.outs[0].changeType(newType, tree);
-          },
-        }),
+        new OutSocket(this, St.Any, "Output", true, volatileOutSocketOptions(this.ins, this.outs)),
       );
     }
 
     output(context: NodeEvalContext) {
-      const output = this.sourceSocket.inValue({
+      const output = this.ins[0].inValue({
         coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
       });
 

@@ -132,6 +132,7 @@ watch(props.node, () => { // update please :(
       :class="[{
         'subtle': isSubtle,
         'selected': isSelected,
+        'reroute': node instanceof organization.RerouteNode,
       }, nodeCategoryClass]">
     <div class="node-border"></div>
 
@@ -199,7 +200,7 @@ watch(props.node, () => { // update please :(
   position: absolute;
   // display: inline grid;
   display: flex;
-  flex-direction: column;
+  flex-flow: column;
   width: var(--node-width);
   padding: 0.5em 0;
 
@@ -263,6 +264,15 @@ watch(props.node, () => { // update please :(
     position: absolute;
     right: .5em;
     height: 1em;
+  }
+
+  &.reroute {
+    flex-flow: row;
+    justify-content: space-between;
+
+    :deep(.socket-container) {
+      --socket-text-padding: 0;
+    }
   }
   
 
