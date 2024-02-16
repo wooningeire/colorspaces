@@ -32,6 +32,7 @@ const canLinkDraggedSocket = computed(() => Socket.canLink(draggedSocket?.value,
 const shouldShowFields = computed(
   () => props.socket.isInput
       && (!props.socket.hasLinks || props.socket.links[0].causesCircularDependency)
+      && props.socket.showFieldIfAvailable
 );
 
 
@@ -95,6 +96,7 @@ const willAcceptLink = () => {
 
 
 const socketTypeColors = new Map([
+  [St.Unknown, "#000"],
   [St.Any, "#fff"],
   [St.Float, "#aaa"],
   [St.Vector, "#75d"],

@@ -112,13 +112,21 @@ export namespace images {
 
       this.ins.push(
         (this.sourceSocket = new InSocket(this, St.Any, "Source", true, {
+          showFieldIfAvailable: false,
+          hasVolatileType: true,
           onLink: (link, tree) => {
             this.sourceSocket.changeType(link.src.type, tree);
             this.outs[0].changeType(link.src.type, tree);
           },
           onUnlink: (link, tree) => {
-            this.sourceSocket.changeType(St.Any, tree);
-            this.outs[0].changeType(St.Any, tree);
+            let existingOutputSocket = this.outs[0].links[0]?.dst;
+            while (existingOutputSocket && existingOutputSocket.hasVolatileType) {
+              existingOutputSocket = existingOutputSocket.node.outs[0].links[0]?.dst;
+            }
+            const existingOutputType = existingOutputSocket?.type ?? St.Any;
+
+            this.sourceSocket.changeType(existingOutputType, tree);
+            this.outs[0].changeType(existingOutputType, tree);
           },
           onInputTypeChange: (newType, tree) => {
             this.sourceSocket.changeType(newType, tree);
@@ -127,12 +135,54 @@ export namespace images {
         })),
         ...(this.coordsSockets = [
           new InSocket(this, St.Float, "X"),
-          new InSocket(this, St.Float, "Y")
+          new InSocket(this, St.Float, "Y"),
         ])
       );
 
       this.outs.push(
-        new OutSocket(this, St.Any, "Output"),
+        new OutSocket(this, St.Any, "Output", true, {
+          hasVolatileType: true,
+          onLink: (link, tree) => {
+            this.sourceSocket.changeType(link.src.type, tree);
+            this.outs[0].changeType(link.src.type, tree);
+          },
+          onUnlink: (link, tree) => {
+            let existingInputSocket = this.ins[0].links[0]?.src;
+            while (existingInputSocket && existingInputSocket.hasVolatileType) {
+              // TODO this assumes the position of a volatile-type socket, which is not necessarily true for future node types
+              existingInputSocket = existingInputSocket.node.ins[0].links[0]?.src;
+            }
+            let newType: St = existingInputSocket?.type;
+
+            // There could be more links on this socket
+            if (!newType) {
+              let existingOutputSocket = this.outs[0].links[0]?.dst;
+              while (existingOutputSocket && existingOutputSocket.hasVolatileType) {
+                existingOutputSocket = existingOutputSocket.node.outs[0].links[0]?.dst;
+              }
+              newType = existingOutputSocket?.type;
+            }
+            
+            newType ??= St.Any;
+
+            this.sourceSocket.changeType(newType, tree);
+            this.outs[0].changeType(newType, tree);
+          },
+          onOutputTypeChange: (newType, tree) => {
+            // Prioritize an existing input type rather than an output type
+
+            let existingInputSocket = this.ins[0].links[0]?.src;
+            while (existingInputSocket && existingInputSocket.hasVolatileType) {
+              // TODO ditto
+              existingInputSocket = existingInputSocket.node.ins[0].links[0]?.src;
+            }
+            const existingInputType = existingInputSocket?.type;
+            if (existingInputSocket !== undefined && existingInputType !== newType) return;
+
+            this.sourceSocket.changeType(newType, tree);
+            this.outs[0].changeType(newType, tree);
+          },
+        }),
       );
     }
 
@@ -141,7 +191,7 @@ export namespace images {
         coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
       });
 
-      return output
+      return output;
     }
 
     getDependencyAxes() {

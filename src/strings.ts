@@ -86,7 +86,8 @@ const strings = {
   "desc.socketType.colorCoords.in": "A list of (usually 3) coordinates in a color space.",
   "label.socketType.any": "Any",
   "desc.socketType.any.in": "This socket accepts any data type.",
-  "desc.socketType.any.out": "The data type of this socket is not yet known. It will likely depend on the data type of one of the input sockets.",
+  "label.socketType.unknown": "Unknown",
+  "desc.socketType.unknown.out": "The data type of this socket is not yet known. It will likely depend on the data type of one of the input sockets.",
 
   "error.import": "**Error occurred while importing tree**: ",
   "error.import.unknownNodeType": "Node type \"`{}`\" does not exist.",

@@ -6,7 +6,7 @@ export class Tree {
   readonly links = new Set<Link>();
   readonly nodes = new Set<Node>();
 
-  linkSockets(src: Socket, dst: Socket) {
+  linkSockets(src: InSocket, dst: OutSocket) {
     if (src.isInput) throw new Error("Source is an input");
     if (dst.isOutput) throw new Error("Dest is an output");
     if (src.node === dst.node) throw new Error("Sockets belong to same node");
@@ -34,11 +34,14 @@ export class Tree {
     if (!existingDstLink) {
       dst.onLink(link, this);
       dst.node.onSocketLink(dst, link, this);
+      src.onOutputTypeChange(dst.type, this);
+      
       dst.node.onDependencyUpdate();
     }
 
     src.onLink(link, this);
     src.node.onSocketLink(src, link, this);
+    dst.onInputTypeChange(src.type, this);
   }
 
   private unlinkWithoutEvents(link: Link) {
@@ -52,8 +55,10 @@ export class Tree {
 
     link.src.onUnlink(link, this);
     link.srcNode.onSocketUnlink(link.src, link, this);
+
     link.dst.onUnlink(link, this);
     link.dstNode.onSocketUnlink(link.dst, link, this);
+    
     link.dstNode.onDependencyUpdate();
   }
 
@@ -361,10 +366,13 @@ type SocketData<St extends SocketType=any> =
 export type SocketOptions<St extends SocketType=any> =
     {
       defaultValue?: SocketValue<St>,
+      hasVolatileType?: boolean,
+      showFieldIfAvailable?: boolean,
       onValueChange?: (this: Socket<St>, tree: Tree) => void,
       onLink?: (this: Socket<St>, link: Link, tree: Tree) => void,
       onUnlink?: (this: Socket<St>, link: Link, tree: Tree) => void,
       onInputTypeChange?: (this: Socket<St>, type: SocketType, tree: Tree) => void,
+      onOutputTypeChange?: (this: Socket<St>, type: SocketType, tree: Tree) => void,
     } & SocketData<St>;
 
 export class Socket<St extends SocketType=any> {
@@ -388,8 +396,9 @@ export class Socket<St extends SocketType=any> {
   /** Checks if a source socket type can be linked to a destination socket type */
   static canLinkTypes(srcType: SocketType, dstType: SocketType) {
     return dstType === St.Any
+        || srcType === St.Any
         || (this.typeCanBeLinkedTo.get(srcType)?.includes(dstType)
-        ?? srcType === dstType);
+            ?? srcType === dstType);
   }
 
 	static canLink(socket0: Socket | undefined, socket1: Socket | undefined) {
@@ -406,7 +415,11 @@ export class Socket<St extends SocketType=any> {
   readonly links: Link[] = [];
 
   /** The value of the entry field input for this socket */
-  fieldValue: SocketValue<St>;//number | Color;
+  fieldValue: SocketValue<St>;
+  readonly showFieldIfAvailable: boolean;
+  /** Semantic field that determines whether the socket should not be trusted to maintain its type (used by St.Any
+   * sockets to determine whether they should mock this socket's type to prevent cyclical dependencies) */
+  readonly hasVolatileType: boolean;
   flags: SocketFlag;
 
   readonly data: SocketData<St>;
@@ -424,9 +437,21 @@ export class Socket<St extends SocketType=any> {
     /** Object that specifies SocketType-independent options for this socket as well as SocketType-specific properties/data */
     options=<SocketOptions<St>>{},
   ) {
-    const {defaultValue, onValueChange, onLink, onUnlink, onInputTypeChange, ...data} = options;
+    const {
+      defaultValue,
+      showFieldIfAvailable,
+      hasVolatileType,
+      onValueChange,
+      onLink,
+      onUnlink,
+      onInputTypeChange,
+      onOutputTypeChange, 
+      ...data
+    } = options;
 
     this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
+    this.showFieldIfAvailable = showFieldIfAvailable ?? true;
+    this.hasVolatileType = hasVolatileType ?? false;
     this.data = data as any as SocketData<St>;
 
     this.flags = SocketFlag.None;
@@ -434,6 +459,7 @@ export class Socket<St extends SocketType=any> {
     this.onLink = onLink ?? (() => {});
     this.onUnlink = onUnlink ?? (() => {});
     this.onInputTypeChange = onInputTypeChange ?? (() => {});
+    this.onOutputTypeChange = onOutputTypeChange ?? (() => {});
   }
 
   get isOutput() {
@@ -467,17 +493,25 @@ export class Socket<St extends SocketType=any> {
     return this;
   }
 
-  changeType(newType: SocketType, tree: Tree) {
+  /** Changes the type of a socket, with event handling */
+  changeType<T extends SocketType>(this: Socket<T>, newType: T, tree: Tree) {
     if (this.type === newType) return;
 
-    //@ts-ignore
     this.type = newType;
 
+    if (this.isInput) {
+      this.fieldValue = Socket.defaultValues.get(newType) as SocketValue<T>;
+    }
+
     for (const link of this.links) {
-      if (Socket.canLinkTypes(link.src.type, link.dst.type)) {
-        if (this === link.dst || this.isInput) continue;
+      if (this.isOutput) {
         link.dst.onInputTypeChange(newType, tree);
-      } else {
+      }
+      if (this.isInput) {
+        link.src.onOutputTypeChange(newType, tree);
+      }
+
+      if (!Socket.canLinkTypes(link.src.type, link.dst.type)) {
         tree.unlink(link);
       }
     }
@@ -490,9 +524,14 @@ export class Socket<St extends SocketType=any> {
   }
 
   onValueChange(tree: Tree) {}
+  /** Called whenever a new link is attached to this socket */
   onLink(link: Link, tree: Tree) {}
+  /** Called whenever a link is removed from this socket */
   onUnlink(link: Link, tree: Tree) {}
+  /** Called whenever the type of the source socket of a link to this input socket changes, or a link is removed */
   onInputTypeChange(type: SocketType, tree: Tree) {}
+  /** Called whenever the type of the destination socket of a link to this output socket changes, or a link is removed */
+  onOutputTypeChange(type: SocketType, tree: Tree) {}
 }
 
 export class InSocket<St extends SocketType=any> extends Socket<St> {
