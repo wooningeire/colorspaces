@@ -464,7 +464,7 @@ export namespace math {
 
       const rng = seedrandom(this.ins[1].inValue(context).toString())
 
-      const float = rng() * (max - min) + min;
+      const float = rng() * (max - min + (useFloor ? 1 : 0)) + min;
       return useFloor ? Math.floor(float) : float;
     }
     

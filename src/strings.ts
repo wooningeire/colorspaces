@@ -3,7 +3,8 @@ import * as marked from "marked";
 export type StringKey = keyof typeof strings;
 export const NO_DESC = Symbol();
 
-export default (key: string | StringKey, ...replacements: string[]) => replacements.reduce(
+let getString: (key: string | StringKey, ...replacements: string[]) => string;
+export default getString = (key: string | StringKey, ...replacements: string[]) => replacements.reduce(
   (acc, replacement) => acc.replace("{}", replacement),
   marked.parseInline(strings.hasOwnProperty(key) ? strings[key as keyof typeof strings] : `[missing text: \`${String(key)}\`]`),
 );
@@ -45,6 +46,7 @@ const strings = {
   "desc.node.contrastRatio": "Compares the relative luminance between two colors.",
   "desc.node.gradient": "Generates a range of numbers.",
   "desc.node.imageFile": "Reads RGB data from a local image file.",
+  "desc.node.sample": "Samples data from a single point in an image.",
 
   "desc.node.cssOutput": "CSS formats for an RGB color.",
 
@@ -82,6 +84,9 @@ const strings = {
   "label.socketType.colorCoords": "Color",
   "desc.socketType.colorCoords.out": "A list of (usually 3) coordinates in a color space.",
   "desc.socketType.colorCoords.in": "A list of (usually 3) coordinates in a color space.",
+  "label.socketType.any": "Any",
+  "desc.socketType.any.in": "This socket accepts any data type.",
+  "desc.socketType.any.out": "The data type of this socket is not yet known. It will likely depend on the data type of one of the input sockets.",
 
   "error.import": "**Error occurred while importing tree**: ",
   "error.import.unknownNodeType": "Node type \"`{}`\" does not exist.",

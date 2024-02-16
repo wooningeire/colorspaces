@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef, watch} from "vue";
+import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef, watch, reactive} from "vue";
 
 import NodeSocketField from "./NodeSocketField.vue";
 import NodeSocket from "./NodeSocket.vue";
@@ -12,12 +12,9 @@ import getString, {NO_DESC} from "@/strings";
 const socketVue = getCurrentInstance()!.proxy;
 
 
-const props = defineProps({
-  socket: {
-    type: Socket,
-    required: true,
-  },
-});
+const props = defineProps<{
+  socket: Socket,
+}>();
 
 const emit = defineEmits<{
   (event: "value-change"): void,
@@ -26,7 +23,8 @@ const emit = defineEmits<{
   (event: "unlink"): void,
 }>();
 
-const draggedSocket = inject<ComputedRef<Socket>>("draggedSocket");
+
+const draggedSocket = inject<ComputedRef<Socket | undefined>>("draggedSocket")!;
 const isDraggedOver = ref(false);
 const canLinkDraggedSocket = computed(() => Socket.canLink(draggedSocket?.value, props.socket));
 
@@ -90,20 +88,24 @@ const willAcceptLink = () => {
 
   return props.socket.isInput !== draggedSocket.value.isInput
       && props.socket.node !== draggedSocket.value.node
-      && Socket.canLinkTypeTo(src.type, dst.type)
+      && Socket.canLinkTypes(src.type, dst.type)
       && props.socket.node.canEditLinks
       && draggedSocket.value.node.canEditLinks;
 };
 
 
 const socketTypeColors = new Map([
+  [St.Any, "#fff"],
   [St.Float, "#aaa"],
   [St.Vector, "#75d"],
   [St.ColorCoords, "#dd3"],
   [St.VectorOrColor, "linear-gradient(45deg, #75d 50%, #dd3 50%)"],
 ]);
-const socketColor = computed(() => socketTypeColors.get(props.socket.type) ?? "");
-
+const socketType = ref(props.socket.type);
+const socketColor = computed(() => socketTypeColors.get(socketType.value) ?? "");
+watch(props.socket, () => {
+  socketType.value = props.socket.type;
+});
 
 
 const socketContainer = ref(null as HTMLDivElement | null);

@@ -12,7 +12,15 @@ const deleteSelectedNodes = () => {
 };
 
 addEventListener("keydown", event => {
-  if (!["delete","backspace"].includes(event.key.toLowerCase())) return;
+  if (!["delete", "backspace"].includes(event.key.toLowerCase())) return;
+
+  if (
+    (event.target instanceof HTMLInputElement && !["", "checkbox"].includes(event.target.type))
+    || event.target instanceof HTMLTextAreaElement
+  ) {
+    return;
+  }
+
   deleteSelectedNodes();
 });
 

@@ -34,7 +34,6 @@ const addNode = <T extends Node>(
     nodeTreeCentererEl.value!.offsetTop + nodeTreeCentererEl.value!.offsetHeight / 2,
   ] as Vec2
 ) => {
-  console.log(screenPos);
   const node = new nodeConstructor().setPos(screenToViewport(screenPos) as Vec2);
   tree.nodes.add(node);
   treeVue.value!.selectNode(node);

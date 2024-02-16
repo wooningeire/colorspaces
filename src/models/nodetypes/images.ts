@@ -1,4 +1,4 @@
-import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, OutSocket} from "../Node";
+import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, OutSocket, Tree} from "../Node";
 
 import {Vec2, lerp} from "@/util";
 
@@ -96,6 +96,67 @@ export namespace images {
         return colorData;
       }
       return [0, 0, 0];
+    }
+  }
+
+  export class SampleNode extends Node {
+    static readonly TYPE = Symbol(this.name);
+    static readonly LABEL = "Sample";
+    static readonly DESC = "desc.node.sample";
+
+    private readonly sourceSocket: InSocket<St.Any>;
+    private readonly coordsSockets: [InSocket<St.Float>, InSocket<St.Float>];
+
+    constructor() {
+      super();
+
+      this.ins.push(
+        (this.sourceSocket = new InSocket(this, St.Any, "Source", true, {
+          onLink: (link, tree) => {
+            this.sourceSocket.changeType(link.src.type, tree);
+            this.outs[0].changeType(link.src.type, tree);
+          },
+          onUnlink: (link, tree) => {
+            this.sourceSocket.changeType(St.Any, tree);
+            this.outs[0].changeType(St.Any, tree);
+          },
+          onInputTypeChange: (newType, tree) => {
+            this.sourceSocket.changeType(newType, tree);
+            this.outs[0].changeType(newType, tree);
+          },
+        })),
+        ...(this.coordsSockets = [
+          new InSocket(this, St.Float, "X"),
+          new InSocket(this, St.Float, "Y")
+        ])
+      );
+
+      this.outs.push(
+        new OutSocket(this, St.Any, "Output"),
+      );
+    }
+
+    output(context: NodeEvalContext) {
+      const output = this.sourceSocket.inValue({
+        coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
+      });
+
+      return output
+    }
+
+    getDependencyAxes() {
+      const axes = new Set<number>();
+
+      for (const socket of this.ins.slice(1)) {
+        for (const link of socket.links) {
+          if (link.causesCircularDependency) continue;
+          for (const axis of link.srcNode.getDependencyAxes()) {
+            axes.add(axis);
+          }
+        }
+      }
+
+      return axes;
     }
   }
 }

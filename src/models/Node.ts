@@ -18,6 +18,8 @@ export class Tree {
     }
 
     if (existingDstLink && src !== existingDstLink.src) {
+      src.onUnlink(existingDstLink, this);
+      dst.onInputTypeChange(src.type, this);
       existingDstLink.srcNode.onSocketUnlink(existingDstLink.src, existingDstLink, this);
     }
 
@@ -30,10 +32,12 @@ export class Tree {
     this.links.add(link);
 
     if (!existingDstLink) {
+      dst.onLink(link, this);
       dst.node.onSocketLink(dst, link, this);
       dst.node.onDependencyUpdate();
     }
 
+    src.onLink(link, this);
     src.node.onSocketLink(src, link, this);
   }
 
@@ -46,7 +50,9 @@ export class Tree {
   unlink(link: Link) {
     this.unlinkWithoutEvents(link);
 
+    link.src.onUnlink(link, this);
     link.srcNode.onSocketUnlink(link.src, link, this);
+    link.dst.onUnlink(link, this);
     link.dstNode.onSocketUnlink(link.dst, link, this);
     link.dstNode.onDependencyUpdate();
   }
@@ -135,10 +141,7 @@ export abstract class Node {
    * Called when a new link is added to any socket on this node, but not if the link is immediately replaced
    */
   onSocketLink(socket: Socket, link: Link, tree: Tree) {
-    const {duplicateLinks, allVisitedLinks} = this.findCyclicalLinks();
-    for (const link of allVisitedLinks) {
-      link.causesCircularDependency = duplicateLinks.has(link);
-    }
+    this.markCyclicalLinks();
   }
 
   // /**
@@ -155,7 +158,7 @@ export abstract class Node {
    * @param tree 
    */
   onSocketUnlink(socket: Socket, link: Link, tree: Tree) {
-    Node.prototype.onSocketLink.call(this, socket, link, tree);
+    this.markCyclicalLinks();
   }
 
   onSocketFieldValueChange(socket: Socket, tree: Tree) {
@@ -211,6 +214,13 @@ export abstract class Node {
     return duplicateNodes;
   } */
 
+  private markCyclicalLinks() {
+    const {duplicateLinks, allVisitedLinks} = this.findCyclicalLinks();
+    for (const link of allVisitedLinks) {
+      link.causesCircularDependency = duplicateLinks.has(link);
+    }
+  }
+
   findCyclicalLinks(visitedLinks=new Set<Link>(), duplicateLinks=new Set<Link>(), allVisitedLinks=new Set<Link>()) {
     this.forEachInLink(link => {
       if (duplicateLinks.has(link)) {
@@ -235,14 +245,18 @@ export abstract class Node {
     return "axes" in this;
   }
 
-  getDependencyAxes(axes=new Set<number>()) {
+  getDependencyAxes() {
+    const axes = new Set<number>();
+
     if (this.isAxisNode()) {
       this.axes.forEach(axis => axes.add(axis));
     }
 
     this.forEachInLink(link => {
       if (link.causesCircularDependency) return;
-      link.srcNode.getDependencyAxes(axes);
+      for (const axis of link.srcNode.getDependencyAxes()) {
+        axes.add(axis);
+      }
     });
     return axes;
   }
@@ -347,7 +361,10 @@ type SocketData<St extends SocketType=any> =
 export type SocketOptions<St extends SocketType=any> =
     {
       defaultValue?: SocketValue<St>,
-      onValueChange?: (tree: Tree) => void,
+      onValueChange?: (this: Socket<St>, tree: Tree) => void,
+      onLink?: (this: Socket<St>, link: Link, tree: Tree) => void,
+      onUnlink?: (this: Socket<St>, link: Link, tree: Tree) => void,
+      onInputTypeChange?: (this: Socket<St>, type: SocketType, tree: Tree) => void,
     } & SocketData<St>;
 
 export class Socket<St extends SocketType=any> {
@@ -369,7 +386,7 @@ export class Socket<St extends SocketType=any> {
   ]);
 
   /** Checks if a source socket type can be linked to a destination socket type */
-  static canLinkTypeTo(srcType: SocketType, dstType: SocketType) {
+  static canLinkTypes(srcType: SocketType, dstType: SocketType) {
     return dstType === St.Any
         || (this.typeCanBeLinkedTo.get(srcType)?.includes(dstType)
         ?? srcType === dstType);
@@ -382,7 +399,7 @@ export class Socket<St extends SocketType=any> {
         ? [socket0, socket1]
         : [socket1, socket0];
 
-    return this.canLinkTypeTo(outSocket.type, inSocket.type);
+    return this.canLinkTypes(outSocket.type, inSocket.type);
   }
 
 
@@ -407,13 +424,16 @@ export class Socket<St extends SocketType=any> {
     /** Object that specifies SocketType-independent options for this socket as well as SocketType-specific properties/data */
     options=<SocketOptions<St>>{},
   ) {
-    const {defaultValue, onValueChange, ...data} = options;
+    const {defaultValue, onValueChange, onLink, onUnlink, onInputTypeChange, ...data} = options;
 
     this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
     this.data = data as any as SocketData<St>;
 
     this.flags = SocketFlag.None;
     this.onValueChange = onValueChange ?? (() => {});
+    this.onLink = onLink ?? (() => {});
+    this.onUnlink = onUnlink ?? (() => {});
+    this.onInputTypeChange = onInputTypeChange ?? (() => {});
   }
 
   get isOutput() {
@@ -447,7 +467,32 @@ export class Socket<St extends SocketType=any> {
     return this;
   }
 
+  changeType(newType: SocketType, tree: Tree) {
+    if (this.type === newType) return;
+
+    //@ts-ignore
+    this.type = newType;
+
+    for (const link of this.links) {
+      if (Socket.canLinkTypes(link.src.type, link.dst.type)) {
+        if (this === link.dst || this.isInput) continue;
+        link.dst.onInputTypeChange(newType, tree);
+      } else {
+        tree.unlink(link);
+      }
+    }
+  }
+
+  removeAllLinks(tree: Tree) {
+    for (const link of this.links) {
+      tree.unlink(link);
+    }
+  }
+
   onValueChange(tree: Tree) {}
+  onLink(link: Link, tree: Tree) {}
+  onUnlink(link: Link, tree: Tree) {}
+  onInputTypeChange(type: SocketType, tree: Tree) {}
 }
 
 export class InSocket<St extends SocketType=any> extends Socket<St> {
