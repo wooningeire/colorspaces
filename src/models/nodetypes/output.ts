@@ -85,29 +85,36 @@ export namespace output {
     static readonly LABEL = "Image plot";
     static readonly DESC = "desc.node.imagePlot";
 
-    constructor() {
-      super();
-      this.ins.push(
-        new InSocket(this, St.ColorCoords, "Colors"),
-        new InSocket(this, St.Float, "Width", true, {
-          defaultValue: 42,
-          sliderProps: {
-            hasBounds: false,
-          },
-        }),
-        new InSocket(this, St.Float, "Height", true, {
-          defaultValue: 42,
-          sliderProps: {
-            hasBounds: false,
-          },
-        }),
-      );
-    }
+    readonly normalizeCoordsSocket: InSocket<St.Bool>;
+    readonly widthSocket: InSocket<St.Float>;
+    readonly heightSocket: InSocket<St.Float>;
 
     width = 240;
 
+    constructor() {
+      super();
+      this.ins.push(
+        (this.normalizeCoordsSocket = new InSocket(this, St.Bool, "Normalize coordinates", false, {
+          defaultValue: true,
+        })),
+        new InSocket(this, St.ColorCoords, "Colors"),
+        (this.widthSocket = new InSocket(this, St.Float, "Width", true, {
+          defaultValue: 42,
+          sliderProps: {
+            hasBounds: false,
+          },
+        })),
+        (this.heightSocket = new InSocket(this, St.Float, "Height", true, {
+          defaultValue: 42,
+          sliderProps: {
+            hasBounds: false,
+          },
+        })),
+      );
+    }
+
     output(context: NodeEvalContext) {
-      return (context.socket ?? this.ins[0]).inValue(context);
+      return (context.socket ?? this.ins[1]).inValue(context);
     }
   }
 }

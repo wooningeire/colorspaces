@@ -9,10 +9,14 @@ const props = withDefaults(defineProps<{
   socket?: Socket | null,
   width?: number,
   height?: number,
+  imageWidth?: number,
+  imageHeight?: number,
 }>(),{
   socket: null,
   width: 42,
   height: 42,
+  imageWidth: 1,
+  imageHeight: 1,
 });
 
 const canvas = ref(null as HTMLCanvasElement | null);
@@ -35,10 +39,10 @@ const rerenderCanvas = () => {
 
   const imageData = cx.value.getImageData(0, 0, width, height);
   for (let xPixels = 0; xPixels < width; xPixels++) {
-    const xFacFrac = (xPixels + 0.5) / width;
+    const xFacFrac = (xPixels + 0.5) / width * props.imageWidth;
 
     for (let yPixels = 0; yPixels < height; yPixels++) {
-      const yFacFrac = (yPixels + 0.5) / height;
+      const yFacFrac = (yPixels + 0.5) / height * props.imageHeight;
   
       const colorData = dataOutput({coords: [xFacFrac, yFacFrac], socket: props.socket});
       if (!colorData) return; // Deals with extraneous call from watcher when nodes are deleted; not ideal
@@ -108,7 +112,6 @@ const nAxes = computed(() => props.node.getDependencyAxes().size);
   --height: 42;
 
   box-shadow: 0 0 0 2px var(--node-border-color);
-  max-height: calc(var(--width) * 1px);
 
   width: calc(var(--width) * 1px);
   aspect-ratio: var(--width) / var(--height);

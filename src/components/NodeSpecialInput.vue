@@ -23,14 +23,10 @@ const props = defineProps<{
 
   <NodeOutputColorDisplay v-else-if="node instanceof output.ImagePlotNode"
       :node="node"
-      :width="Math.max(1, node.output({
-        coords: [0, 0],
-        socket: node.ins[1],
-      }) as number)"
-      :height="Math.max(1, node.output({
-        coords: [0, 0],
-        socket: node.ins[2],
-      }) as number)" />
+      :width="Math.max(1, node.widthSocket.inValue())"
+      :height="Math.max(1, node.heightSocket.inValue())"
+      :imageWidth="node.normalizeCoordsSocket.inValue() ? 1 : node.widthSocket.inValue()"
+      :imageHeight="node.normalizeCoordsSocket.inValue() ? 1 : node.heightSocket.inValue()" />
 </template>
 
 <style lang="scss" scoped>
