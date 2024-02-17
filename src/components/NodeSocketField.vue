@@ -27,14 +27,14 @@ const readFile = (): Promise<ImageData> => new Promise(resolve => {
   const reader = new FileReader();
   reader.addEventListener("load", () => {
     const canvas = document.createElement("canvas");
-    canvas.width = 42;
-    canvas.height = 42;
     const cx = canvas.getContext("2d")!;
 
     const image = new Image();
     image.addEventListener("load", () => {
-      cx.drawImage(image, 0, 0, 42, 42);
-      resolve(cx.getImageData(0, 0, 42, 42));
+      canvas.width = image.width;
+      canvas.height = image.height;
+      cx.drawImage(image, 0, 0, image.width, image.height);
+      resolve(cx.getImageData(0, 0, image.width, image.height));
     }, {once: true});
     image.src = reader.result as string;
   }, {once: true});

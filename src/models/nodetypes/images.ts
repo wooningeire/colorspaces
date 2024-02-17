@@ -65,6 +65,7 @@ export namespace images {
     static readonly DESC = "desc.node.imageFile";
 
     private readonly inSocket: Socket<St.Image>;
+    private readonly normalizeCoordinatesSocket: Socket<St.Bool>
 
     get axes() {
       return [0, 1];
@@ -74,19 +75,39 @@ export namespace images {
       super();
 
       this.ins.push(
-        (this.inSocket = new InSocket(this, Socket.Type.Image, "File", false)),
+        (this.inSocket = new InSocket(this, St.Image, "File", false)),
+        (this.normalizeCoordinatesSocket = new InSocket(this, St.Bool, "Normalize coordinates", false, {
+          defaultValue: true,
+        })),
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Vector, "RGB"),
+        new OutSocket(this, St.Vector, "RGB"),
+        new OutSocket(this, St.Float, "Width"),
+        new OutSocket(this, St.Float, "Height"),
       );
     }
 
     output(context: NodeEvalContext) {
       const imageData = this.inSocket.inValue(context);
       if (imageData) {
-        const x = Math.round((context.coords?.[0] ?? 0) * imageData.width);
-        const y = Math.round((context.coords?.[1] ?? 0) * imageData.height);
+        if (context.socket === this.outs[1]) {
+          return imageData.width;
+        }
+        if (context.socket === this.outs[2]) {
+          return imageData.height;
+        }
+
+
+        const [x, y] = this.normalizeCoordinatesSocket.inValue(context)
+            ? [
+              Math.round((context.coords?.[0] ?? 0) * imageData.width),
+              Math.round((context.coords?.[1] ?? 0) * imageData.height),
+            ]
+            : [
+              Math.round(context.coords?.[0] ?? 0),
+              Math.round(context.coords?.[1] ?? 0),
+            ];
 
         const index = (x + y * imageData.width) * 4;
         const colorData = [...imageData.data.slice(index, index + 3)]
@@ -96,7 +117,12 @@ export namespace images {
 
         return colorData;
       }
-      return [0, 0, 0];
+      switch (context.socket) {
+        default:
+        case this.outs[0]: return [0, 0, 0];
+        case this.outs[1]: return 0;
+        case this.outs[2]: return 0;
+      }
     }
   }
 

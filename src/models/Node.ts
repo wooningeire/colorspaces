@@ -297,7 +297,7 @@ export interface AxisNode extends Node {
 
 export interface NodeEvalContext {
   readonly coords?: Vec2;
-  readonly socket?: OutSocket;
+  readonly socket?: Socket | null;
 }
 
 

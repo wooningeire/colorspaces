@@ -7,8 +7,12 @@ import {tree, settings} from "./store";
 const props = withDefaults(defineProps<{
   node: Node,
   socket?: Socket | null,
+  width?: number,
+  height?: number,
 }>(),{
   socket: null,
+  width: 42,
+  height: 42,
 });
 
 const canvas = ref(null as HTMLCanvasElement | null);
@@ -86,6 +90,10 @@ const nAxes = computed(() => props.node.getDependencyAxes().size);
       :class="{
         'out-of-gamut': imageIsOutOfGamut,
       }"
+      :style="{
+        '--width': `${width}`,
+        '--height': `${height}`,
+      }"
       :title="imageIsOutOfGamut ? 'Colors are out of gamut of the device color space; it cannot accurately represent this color.' : ''"
       ref="canvas"
       width="1"
@@ -94,9 +102,17 @@ const nAxes = computed(() => props.node.getDependencyAxes().size);
 
 <style lang="scss" scoped>
 .color-display-box {
-  width: 3em;
+  // width: 3em;
+
+  --width: 42;
+  --height: 42;
 
   box-shadow: 0 0 0 2px var(--node-border-color);
+  max-height: calc(var(--width) * 1px);
+
+  width: calc(var(--width) * 1px);
+  aspect-ratio: var(--width) / var(--height);
+  // height: calc(var(--height) * 1px);
 
   &.out-of-gamut {
     cursor: help;

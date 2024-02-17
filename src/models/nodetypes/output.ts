@@ -47,7 +47,7 @@ export namespace output {
   export class ChromaticityPlotNode extends NodeWithOverloads<ChromaticityPlotMode> {
     static readonly TYPE = Symbol(this.name);
     static readonly LABEL = "Chromaticity plot";
-    static readonly DESC = "desc.node.chromaticity";
+    static readonly DESC = "desc.node.chromaticityPlot";
 
     static readonly overloadGroup = new OverloadGroup(new Map<ChromaticityPlotMode, Overload<void>>([
       [ChromaticityPlotMode.Color, new Overload(
@@ -77,6 +77,37 @@ export namespace output {
     constructor() {
       super(ChromaticityPlotMode.Color);
       this.width = 200;
+    }
+  }
+
+  export class ImagePlotNode extends Node {
+    static readonly TYPE = Symbol(this.name);
+    static readonly LABEL = "Image plot";
+    static readonly DESC = "desc.node.imagePlot";
+
+    constructor() {
+      super();
+      this.ins.push(
+        new InSocket(this, St.ColorCoords, "Colors"),
+        new InSocket(this, St.Float, "Width", true, {
+          defaultValue: 42,
+          sliderProps: {
+            hasBounds: false,
+          },
+        }),
+        new InSocket(this, St.Float, "Height", true, {
+          defaultValue: 42,
+          sliderProps: {
+            hasBounds: false,
+          },
+        }),
+      );
+    }
+
+    width = 240;
+
+    output(context: NodeEvalContext) {
+      return (context.socket ?? this.ins[0]).inValue(context);
     }
   }
 }
