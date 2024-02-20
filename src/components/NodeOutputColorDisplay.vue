@@ -37,6 +37,9 @@ let rerenderCanvas = async () => {
   const width = canvas.value!.width = axes.has(0) ? canvas.value!.offsetWidth * devicePixelRatio : 1;
   const height = canvas.value!.height = axes.has(1) ? canvas.value!.offsetHeight * devicePixelRatio : 1;
 
+  const transpilation = WebglVariables.transpileNodeOutput(props.node);
+  // console.log(transpilation);
+
   const vertexShaderSource = `#version 300 es
 in vec4 a_pos;
 
@@ -46,10 +49,10 @@ void main() {
   gl_Position = a_pos;
 
   // Map [-1, 1] to [0, 1]
-  v_uv = (a_pos.xy + 1.) / 2.;
+  v_uv = (a_pos.xy + 1.) / 2. * vec2(1., -1.);
 }`;
 
-  const fragmentShaderSource = WebglVariables.transpileNodeOutput(props.node);
+  const fragmentShaderSource = transpilation.template;
   // console.log(fragmentShaderSource);
   
 
@@ -107,6 +110,7 @@ void main() {
   //#region Setting uniforms
   const alphaUnif = gl.getUniformLocation(glProgram, "alphaFac");
   const detectGamutUnif = gl.getUniformLocation(glProgram, "detectGamut");
+  transpilation.initializeUniforms(gl, glProgram);
   //#endregion
   
   // gl.clearColor(0, 0, 0, 0);
@@ -117,7 +121,7 @@ void main() {
 
   gl.bindVertexArray(vertArray);
   gl.uniform1f(alphaUnif, 0.25);
-  gl.uniform1i(detectGamutUnif, 1);
+  gl.uniform1i(detectGamutUnif, Number(!settings.displayOutOfGamut));
   gl.drawArrays(gl.TRIANGLES, 0, nVerts);
 };
 

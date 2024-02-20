@@ -129,6 +129,7 @@ export class WebglModule {
   ) {}
 }
 
+/** Stores a chunk of GLSL code with macro-like slots for variables. */
 export class WebglVariables {
   static readonly FRAGMENT = new WebglVariables(`#version 300 es
 
@@ -140,7 +141,7 @@ out vec4 fragColor;
 uniform float alphaFac;
 uniform bool detectGamut;
 
-const float LUM = 1.;
+{beforePrelude}
 
 ${prelude}
 
@@ -163,32 +164,53 @@ void main() {
   );
 
   constructor(
-    private readonly template: string,
+    /** The GLSL code that takes in GLSL variables and computes new ones. Templates may include "slots" for GLSL code
+     * or variables to be inserted.
+     * 
+     * A slot is of the form `{name}` or `{name:descriptor}`. Names that are only numbers belong to new variables that
+     * result from the template's code.
+     */
+    readonly template: string,
     private readonly outVariables: Record<string, string>,
-    private readonly slots: string[]=[],
-    private readonly dependencies: WebglModule[]=[],
+    /** A secondary template that declares variables in the prelude, inserted at the end. */
+    private readonly preludeTemplate: string="",
+    /** The names of uniforms (which can be variable slots), mapped to functions to initialize those uniforms. */
+    private readonly uniforms: Record<string, (gl: WebGL2RenderingContext, unif: WebGLUniformLocation | null) => void>={},
   ) {}
 
-
-  fillSlots(mappings: Record<string, string>) {
+  /** Fills in the given slots with values or true GLSL variables.
+   * @param mappings Of the form {name: substitution}.
+   */
+  fillSlots(mappings: Record<string, string>, newUniforms: WebglVariables["uniforms"]={}) {
     const outVariables: Record<string, string> = {...this.outVariables};
+    const uniforms: WebglVariables["uniforms"] = {...this.uniforms, ...newUniforms};
     let template = this.template;
+    let preludeTemplate = this.preludeTemplate;
     for (const [mappingName, mappingValue] of Object.entries(mappings)) {
-      template = template.replaceAll(
-        new RegExp(`{${mappingName}(:\\w+)?}`, "g"),
-        mappingValue,
-      );
+      const slotRegex = new RegExp(`{${mappingName}(:\\w+)?}`, "g");
+
+      template = template.replaceAll(slotRegex, mappingValue);
+      preludeTemplate = preludeTemplate.replaceAll(slotRegex, mappingValue);
       for (const [name, value] of Object.entries(outVariables)) {
-        outVariables[name] = value.replaceAll(
-          new RegExp(`{${mappingName}(:\\w+)?}`, "g"),
-          mappingValue,
-        );
+        outVariables[name] = value.replaceAll(slotRegex, mappingValue);
+      }
+      for (const [name, value] of Object.entries(uniforms)) {
+        delete uniforms[name];
+        uniforms[name.replaceAll(slotRegex, mappingValue)] = value;
       }
     }
 
-    return new WebglVariables(template, outVariables);
+    return new WebglVariables(template, outVariables, preludeTemplate, uniforms);
   }
 
+  /**
+   * Inserts this object's template in front of another `WebglVariables`'s template, while substituting in
+   * variables from the other object into this object
+   * @param source The `WebglVariables` object to insert the variable source from
+   * @param sourceVariableSlotMapping Mappings of variable names in `source` to variable slots in this object's
+   * template
+   * @returns 
+   */
   follow(source: WebglVariables, sourceVariableSlotMapping: Record<string, string>) {
     const outVariables: Record<string, string> = {};
     const remainderOutVariables = {...this.outVariables};
@@ -197,14 +219,23 @@ void main() {
       delete remainderOutVariables[oldName];
     }
 
-    const variables = this.fillSlots(outVariables);
+    const variables = this.fillSlots({...remainderOutVariables, ...outVariables});
     return new WebglVariables(source.template ? `${source.template}
 
 ${variables.template}` : variables.template,
       {...remainderOutVariables, ...outVariables},
+      source.preludeTemplate ? `${source.preludeTemplate}
+      
+${variables.preludeTemplate}` : variables.preludeTemplate,
+      {...source.uniforms, ...variables.uniforms},
     )
   }
 
+  /**
+   * Assigns random GLSL variable names to slots named with a number up to `nSlots`
+   * @param nSlots 
+   * @returns 
+   */
   nameVariableSlots(nSlots: number) {
     return this.fillSlots(Object.fromEntries(
       Array(nSlots).fill(0).map((_, i) => {
@@ -213,13 +244,21 @@ ${variables.template}` : variables.template,
     ));
   }
 
-  static transpileNodeOutput(node: Node): string {
+  initializeUniforms(gl: WebGL2RenderingContext, program: WebGLProgram) {
+    for (const [unifName, initializeUnif] of Object.entries(this.uniforms)) {
+      const unif = gl.getUniformLocation(program, unifName);
+      initializeUnif(gl, unif);
+    }
+  }
+
+  static transpileNodeOutput(node: Node) {
     let variables = node.webglOutput();
 
     return WebglVariables.FRAGMENT.fillSlots({
       "main": variables.template,
       "xyz": variables.outVariables["xyz"],
       "color": variables.outVariables["color"],
-    }).template;
+      "beforePrelude": variables.preludeTemplate,
+    }, variables.uniforms);
   }
 }

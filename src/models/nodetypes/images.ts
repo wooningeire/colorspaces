@@ -135,6 +135,32 @@ export namespace images {
         case this.outs[2]: return 0;
       }
     }
+    
+    webglOutput(context?: NodeEvalContext): WebglVariables {
+      return new WebglVariables(
+        `vec4 {0:val} = texture({1:texture}, v_uv);`,
+        {
+          "val": "{0:val}.xyz",
+        },
+        `uniform sampler2D {1:texture};`,
+        {
+          "{1:texture}": (gl, unif) => {
+            const texture = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.ins[0].inValue() as ImageData);
+            gl.uniform1i(unif, 0);
+          }
+        },
+      )
+          .nameVariableSlots(2);
+    }
   }
 
   export class SampleNode extends Node {

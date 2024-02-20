@@ -1,3 +1,4 @@
+import { WebglVariables } from "@/webgl-compute/WebglVariables";
 import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, NodeWithOverloads, InSocket} from "../Node";
 import { Overload, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
@@ -115,6 +116,10 @@ export namespace output {
 
     output(context: NodeEvalContext) {
       return (context.socket ?? this.ins[1]).inValue(context);
+    }
+
+    webglOutput(context?: NodeEvalContext): WebglVariables {
+      return this.ins[1].webglVariables(context);
     }
   }
 }

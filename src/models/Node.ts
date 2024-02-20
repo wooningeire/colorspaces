@@ -578,9 +578,12 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     switch (this.effectiveType()) {
       case St.ColorCoords:
         return new WebglVariables("", {
-          "color": `vec3(${(this.inValue(context) as number[]).map(channel => channel.toFixed(7)).join(", ")})`,
+          "color": this.hasLinks
+              ? `vec3(${(this.inValue(context) as number[]).map(channel => channel.toFixed(7)).join(", ")})`
+              : `vec3(0., 0., 0.)`,
           "illuminant": "illuminant2_D65",
-          "toXyz": `vec3()`,
+          "xyz": "vec3(0., 0., 0.)",
+          "toXyz": ``,
         });
 
       case St.Vector:
