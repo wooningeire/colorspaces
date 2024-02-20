@@ -1,3 +1,4 @@
+import { WebglVariables } from "@/webgl-compute/WebglVariables";
 import { InSocket, Node, NodeEvalContext, OutSocket, Socket, SocketType as St, Tree } from "./Node";
 
 /** A collection of input/output sockets, as well as a function to compute outputs from the inputs' values */
@@ -7,6 +8,7 @@ export class Overload<OutputType, NodeType extends Node=any, InSockets extends I
     readonly ins: (node: NodeType) => [...InSockets],
     readonly outs: (node: NodeType) => [...OutSockets],
     readonly evaluate: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => OutputType,
+    readonly webglEvaluate: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => WebglVariables,
     private readonly maintainExistingLinks = false,
   ) {}
 }
@@ -36,9 +38,9 @@ export class OverloadGroup<Mode extends string, NodeType extends Node=any> {
  * function when needed and updates the sockets when the selected overload changes
  */
 export class OverloadManager<Mode extends string> {
-  readonly dropdown: Socket<St.Dropdown>;
-  private ins: Socket[];
-  private outs: Socket[];
+  readonly dropdown: InSocket<St.Dropdown>;
+  private ins: InSocket[];
+  private outs: OutSocket[];
 
   constructor(
     private readonly node: Node,
@@ -60,6 +62,10 @@ export class OverloadManager<Mode extends string> {
 
   evaluate(context: NodeEvalContext) {
     return this.overload.evaluate(this.ins, this.outs, context, this.node);
+  }
+
+  webglEvaluate(context: NodeEvalContext) {
+    return this.overload.webglEvaluate(this.ins, this.outs, context, this.node);
   }
 
   handleModeChange(tree: Tree) {

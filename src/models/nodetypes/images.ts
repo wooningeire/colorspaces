@@ -2,6 +2,7 @@ import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, Out
 
 import {Vec2, lerp} from "@/util";
 import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
+import { WebglVariables } from "@/webgl-compute/WebglVariables";
 
 export namespace images {
   export class GradientNode extends Node implements AxisNode {
@@ -56,6 +57,16 @@ export namespace images {
       const value0 = this.boundsSockets[0].inValue(context);
       const value1 = this.boundsSockets[1].inValue(context);
       return lerp(value0, value1, fac);
+    }
+
+    webglOutput(context: NodeEvalContext={}): WebglVariables {
+      return new WebglVariables(
+        `float {0:val} = v_uv.${this.whichDimension === 0 ? "x" : "y"};`,
+        {
+          "val": "{0:val}",
+        },
+      )
+          .nameVariableSlots(1);
     }
   }
 

@@ -1,13 +1,11 @@
 import { Vec3 } from "@/util";
-import {Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, NodeWithOverloads, SliderProps, SocketOptions, InSocket, OutSocket} from "../Node";
+import { Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, NodeWithOverloads, SocketOptions, InSocket, OutSocket } from "../Node";
 import { Overload, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
-import {StringKey} from "@/strings";
+import { StringKey } from "@/strings";
+import { WebglVariables } from "@/webgl-compute/WebglVariables";
 
 
-abstract class SpaceNode extends Node { 
-  static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Color;
-}
 
 export const labSliderProps = [
   {
@@ -83,7 +81,7 @@ export namespace spaces {
       [SpaceMode.FromVec, new Overload(
         "From vector",
         node => {
-          const sockets: Socket[] = [];
+          const sockets: InSocket[] = [];
           if (node.includeWhitePoint) {
             sockets.push(new InSocket(node, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions));
           }
@@ -104,6 +102,75 @@ export namespace spaces {
             case outs[3]: return col[2];
           };
         },
+        (ins, outs, context, node) => {
+          let outVariables: Record<string, string>;
+          const illuminant = node.includeWhitePoint
+              ? getIlluminant(ins[1] as InSocket<St.Dropdown>, context)
+              : node.ColClass.defaultIlluminant;
+
+          switch (context?.socket) {
+            default:
+            case outs[0]:
+              outVariables = {
+                "color": "{2:color}",
+                "illuminant": "{1:illuminant}",
+                "xyz": "{0:xyz}",
+                "toXyz": node.webglToXyz,
+              };
+              break;
+            
+            case outs[1]:
+              outVariables = {
+                "val": "{2:color}.x",
+              };
+              break;
+          
+            case outs[2]:
+              outVariables = {
+                "val": "{2:color}.y",
+              };
+              break;
+        
+            case outs[3]:
+              outVariables = {
+                "val": "{2:color}.z",
+              };
+              break;
+          }
+
+          if (ins[0].effectiveType() === St.ColorCoords) {
+            let variables = new WebglVariables(
+`vec3 {2:color} = ${node.webglFromXyz};
+vec2 {1:newIlluminant} = vec2(${illuminant.x.toFixed(6)}, ${illuminant.y.toFixed(6)});
+vec3 {0:xyz} = {xyz};`,
+              outVariables,
+            )
+                .nameVariableSlots(3);
+  
+            variables = variables.follow(ins[0].webglVariables(), {
+              "color": "color",
+              "illuminant": "originalIlluminant",
+              "xyz": "xyz",
+              "toXyz": "toXyz",
+            });
+  
+            return variables;
+          } else {
+            let variables = new WebglVariables(
+`vec3 {2:val} = {val};
+vec2 {1:newIlluminant} = vec2(${illuminant.x.toFixed(6)}, ${illuminant.y.toFixed(6)});
+vec3 {0:xyz} = ${node.webglToXyz};`,
+              outVariables,
+            )
+                .nameVariableSlots(3);
+  
+            variables = variables.follow(ins[0].webglVariables(), {
+              "val": "val",
+            });
+
+            return variables;
+          }
+        },
       )],
 
       [SpaceMode.FromValues, new Overload(
@@ -120,7 +187,7 @@ export namespace spaces {
             return floatSocketOptions;
           });
 
-          const sockets: Socket[] = [];
+          const sockets: InSocket[] = [];
           if (node.includeWhitePoint) {
             sockets.push(new InSocket(node, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions));
           }
@@ -131,6 +198,34 @@ export namespace spaces {
           new OutSocket(node, Socket.Type.ColorCoords, "Color"),
         ],
         (ins, outs, context, node) => node.computeColor(ins, context, false),
+        (ins, outs, context, node) => {
+          const illuminant = node.includeWhitePoint
+              ? getIlluminant(ins[1] as InSocket<St.Dropdown>, context)
+              : node.ColClass.defaultIlluminant;
+
+          let variables = new WebglVariables(
+`vec3 {2:color} = vec3({x}, {y}, {z});
+vec2 {1:newIlluminant} = vec2(${illuminant.x.toFixed(6)}, ${illuminant.y.toFixed(6)});
+vec3 {0:xyz} = ${node.webglToXyz};`,
+            {
+              "color": "{2:color}",
+              "illuminant": "{1:newIlluminant}",
+              "xyz": "{0:xyz}",
+              "toXyz": node.webglToXyz,
+            },
+          )
+              .nameVariableSlots(3);
+
+          variables = variables.follow(ins[0].webglVariables(), {
+            "val": "x",
+          }).follow(ins[1].webglVariables(), {
+            "val": "y",
+          }).follow(ins[2].webglVariables(), {
+            "val": "z",
+          });
+
+          return variables;
+        },
       )],
     ]));
 
@@ -155,6 +250,12 @@ export namespace spaces {
     }
     get includeWhitePoint() {
       return true;
+    }
+    get webglToXyz() {
+      return "";
+    }
+    get webglFromXyz() {
+      return "";
     }
 
     private getIlluminant(ins: Socket[], context: NodeEvalContext) {
@@ -212,6 +313,12 @@ export namespace spaces {
     get ColClass() {
       return cm.LinearSrgb;
     }
+    get webglToXyz() {
+      return "linearSrgbToXyz({2:color}, {1:newIlluminant})";
+    }
+    get webglFromXyz() {
+      return "xyzToLinearSrgb({color}, {originalIlluminant})";
+    }
   }
 
   export class SrgbNode extends RgbSpaceNode {
@@ -221,6 +328,12 @@ export namespace spaces {
 
     get ColClass() {
       return cm.Srgb;
+    }
+    get webglToXyz() {
+      return "gammaSrgbToXyz({2:color}, {1:newIlluminant})";
+    }
+    get webglFromXyz() {
+      return "xyzToGammaSrgb({color}, {originalIlluminant})";
     }
   }
 
@@ -423,7 +536,14 @@ export namespace spaces {
     }
   }
 
-
+  enum NodeOutputTarget {
+    Main,
+    Socket,
+  }
+  type NodeOutputDetail<T extends NodeOutputTarget> =
+      T extends NodeOutputTarget.Socket ? OutSocket :
+      T extends NodeOutputTarget.Main ? void :
+      never;
   export class OklabNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
     static readonly LABEL = "Oklab";
@@ -451,6 +571,12 @@ export namespace spaces {
 
     get includeWhitePoint() {
       return false;
+    }
+    get webglToXyz() {
+      return "oklabToXyz({0:color}, {targetIlluminant})";
+    }
+    get webglFromXyz() {
+      return "xyzToOklab({0:color}, {originalIlluminant})";
     }
   }
 

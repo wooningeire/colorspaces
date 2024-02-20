@@ -1,3 +1,4 @@
+import { WebglVariables } from "@/webgl-compute/WebglVariables";
 import {StringKey, NO_DESC} from "../strings";
 import {Color, Vec2} from "../util";
 import { OverloadGroup, OverloadManager } from "./Overload";
@@ -125,6 +126,10 @@ export abstract class Node {
   output(context: NodeEvalContext={}): any {
     throw new TypeError("Abstract method / not implemented");
   }
+
+  webglOutput(context: NodeEvalContext={}): WebglVariables {
+    throw new TypeError("Abstract method / not implemented");
+  }
   
   display(context: NodeEvalContext={}): NodeDisplay {
     return {
@@ -140,6 +145,10 @@ export abstract class Node {
 
   get displayFlags(): SocketFlag[] {
     return [];
+  }
+
+  fillWebglVariables(variables: WebglVariables) {
+    throw new TypeError("Abstract method / not implemented");
   }
 
   /**
@@ -288,6 +297,10 @@ export abstract class NodeWithOverloads<Mode extends string> extends Node {
 
   output(context: NodeEvalContext): number {
     return this.overloadManager.evaluate(context);
+  }
+
+  webglOutput(context: NodeEvalContext): WebglVariables {
+    return this.overloadManager.webglEvaluate(context);
   }
 }
 
@@ -546,6 +559,55 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     options=<SocketOptions<St>>{},
   ) {
     super(node, true, type, label, showSocket, options);
+  }
+
+  get link() {
+    return this.links[0];
+  }
+
+  webglVariables(context: NodeEvalContext={}): WebglVariables {
+    return this.hasLinks
+        ? this.link.srcNode.webglOutput({
+          ...context,
+          socket: this.link.src,
+        })
+        : this.webglFieldVariables(context);
+  }
+
+  private webglFieldVariables(context: NodeEvalContext={}) {
+    switch (this.effectiveType()) {
+      case St.ColorCoords:
+        return new WebglVariables("", {
+          "color": `vec3(${(this.inValue(context) as number[]).map(channel => channel.toFixed(7)).join(", ")})`,
+          "illuminant": "illuminant2_D65",
+          "toXyz": `vec3()`,
+        });
+
+      case St.Vector:
+        return new WebglVariables("", {
+          "val": `vec3(${(this.inValue(context) as number[]).map(channel => channel.toFixed(7)).join(", ")})`,
+        });
+
+      case St.Float:
+        return new WebglVariables("", {
+          "val": (this.inValue(context) as number).toFixed(7),
+        });
+
+      default:
+        throw new Error("not implemented");
+    }
+  }
+
+  /** Determines the effective type (specifically to filter out `St.VectorOrColor`) */
+  effectiveType() {
+    if (this.type !== St.VectorOrColor) {
+      return this.type;
+    }
+  
+    if (!this.hasLinks || this.link.src.type === St.VectorOrColor) {
+      return St.Vector;
+    }
+    return this.link.src.type;
   }
 }
 

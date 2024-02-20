@@ -245,7 +245,7 @@ export namespace math {
         (ins, outs, context) => ins[0].inValue(context) ** ins[1].inValue(context),
       )],
       
-      [ArithmeticMode.Pow, new Overload(
+      [ArithmeticMode.Screen, new Overload(
         "Screen",
         node => [
           new InSocket(node, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),

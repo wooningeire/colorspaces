@@ -30,10 +30,6 @@ export namespace models {
     output(context: NodeEvalContext): Color {
       return this.ins.map(socket => socket.inValue(context)) as Color;
     }
-
-    pipeOutput() {
-      return pipe();
-    }
   }
 
   enum RgbMode {

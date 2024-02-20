@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch} from "vue";
+import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch, nextTick} from "vue";
 
 import {Node, Socket, NodeEvalContext} from "@/models/Node";
 import {tree, settings} from "./store";
+import { WebglVariables } from "@/webgl-compute/WebglVariables";
 
 const props = withDefaults(defineProps<{
   node: Node,
@@ -20,14 +21,108 @@ const props = withDefaults(defineProps<{
 });
 
 const canvas = ref(null as HTMLCanvasElement | null);
-const cx = computed(() => canvas.value?.getContext("2d")!);
+// const cx = computed(() => canvas.value?.getContext("2d")!);
+const glObj = computed(() => canvas.value?.getContext("webgl2"));
 
 
 const dataOutput = (context: NodeEvalContext) => props.node.output(context);
 
 const imageIsOutOfGamut = ref(false);
 
+let rerenderCanvas = async () => {
+  // canvas.value!.width = canvas.value!.offsetWidth * devicePixelRatio;
+  // canvas.value!.height = canvas.value!.offsetWidth * devicePixelRatio;
+
+  const axes = props.node.getDependencyAxes();
+  const width = canvas.value!.width = axes.has(0) ? canvas.value!.offsetWidth * devicePixelRatio : 1;
+  const height = canvas.value!.height = axes.has(1) ? canvas.value!.offsetHeight * devicePixelRatio : 1;
+
+  const vertexShaderSource = `#version 300 es
+in vec4 a_pos;
+
+out vec2 v_uv;
+
+void main() {
+  gl_Position = a_pos;
+
+  // Map [-1, 1] to [0, 1]
+  v_uv = (a_pos.xy + 1.) / 2.;
+}`;
+
+  const fragmentShaderSource = WebglVariables.transpileNodeOutput(props.node);
+  // console.log(fragmentShaderSource);
+  
+
+  //#region Shader setup
+
+  const gl = glObj.value!;
+  gl.viewport(0, 0, width, height);
+
+  const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
+  gl.shaderSource(vertexShader, vertexShaderSource);
+  gl.compileShader(vertexShader);
+
+  const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+  gl.shaderSource(fragmentShader, fragmentShaderSource);
+  gl.compileShader(fragmentShader);
+
+  const glProgram = gl.createProgram()!;
+  gl.attachShader(glProgram, vertexShader);
+  gl.attachShader(glProgram, fragmentShader);
+  gl.linkProgram(glProgram);
+
+  gl.useProgram(glProgram);
+
+  //#endregion
+
+
+  //#region Setting attributes
+  const vertArray = gl.createVertexArray();
+  gl.bindVertexArray(vertArray);
+
+  const vertCoords = new Float32Array([
+    // Coordinates of the triangles that cover the canvas
+    -1, -1,
+    -1, 1,
+    1, -1,
+
+    -1, 1,
+    1, -1,
+    1, 1,
+  ]);
+
+  const COORD_DIMENSION = 2;
+  const nVerts = vertCoords.length / COORD_DIMENSION;
+
+  const vertBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, vertCoords, gl.STATIC_DRAW);
+
+  const posAttr = gl.getAttribLocation(glProgram, "a_pos");
+  gl.vertexAttribPointer(posAttr, COORD_DIMENSION, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(posAttr);
+  //#endregion
+
+  
+  //#region Setting uniforms
+  const alphaUnif = gl.getUniformLocation(glProgram, "alphaFac");
+  const detectGamutUnif = gl.getUniformLocation(glProgram, "detectGamut");
+  //#endregion
+  
+  // gl.clearColor(0, 0, 0, 0);
+  // gl.clear(gl.COLOR_BUFFER_BIT);
+
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+  gl.bindVertexArray(vertArray);
+  gl.uniform1f(alphaUnif, 0.25);
+  gl.uniform1i(detectGamutUnif, 1);
+  gl.drawArrays(gl.TRIANGLES, 0, nVerts);
+};
+
 // Performance bottleneck
+/* 
 const rerenderCanvas = () => {
   if (!canvas.value) return;
 
@@ -70,7 +165,7 @@ const rerenderCanvas = () => {
 
   imageIsOutOfGamut.value = hasPixelOutOfGamut;
 };
-
+ */
 onMounted(rerenderCanvas);
 onUpdated(rerenderCanvas);
 watch(settings, rerenderCanvas);
