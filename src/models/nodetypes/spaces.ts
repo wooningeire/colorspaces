@@ -103,72 +103,89 @@ export namespace spaces {
           };
         },
         (ins, outs, context, node) => {
-          let outVariables: Record<string, string>;
           const illuminant = node.includeWhitePoint
               ? getIlluminant(ins[1] as InSocket<St.Dropdown>, context)
               : node.ColClass.defaultIlluminant;
 
-          switch (context?.socket) {
-            default:
-            case outs[0]:
-              outVariables = {
-                "color": "{2:color}",
-                "illuminant": "{1:illuminant}",
-                "xyz": "{0:xyz}",
-                "toXyz": node.webglToXyz,
-              };
-              break;
-            
-            case outs[1]:
-              outVariables = {
-                "val": "{2:color}.x",
-              };
-              break;
-          
-            case outs[2]:
-              outVariables = {
-                "val": "{2:color}.y",
-              };
-              break;
-        
-            case outs[3]:
-              outVariables = {
-                "val": "{2:color}.z",
-              };
-              break;
-          }
+          const outVariables = new Map<OutSocket | undefined, Record<string, string>>([
+            [undefined, {
+              "color": "{0:color}",
+              "illuminant": "{1:illuminant}",
+              "xyz": "{2:xyz}",
+              "toXyz": node.webglToXyz,
+            }],
+
+            [outs[0], {
+              "color": "{0:color}",
+              "illuminant": "{1:illuminant}",
+              "xyz": "{2:xyz}",
+              "toXyz": node.webglToXyz,
+            }],
+
+            [outs[1], {
+              "val": "{0:color}.x",
+            }],
+
+            [outs[2], {
+              "val": "{0:color}.y",
+            }],
+
+            [outs[3], {
+              "val": "{0:color}.z",
+            }],
+          ]);
+
 
           if (ins[0].effectiveType() === St.ColorCoords) {
             let variables = new WebglVariables(
-`vec3 {2:color} = ${node.webglFromXyz};
+`vec3 {0:color} = ${node.webglFromXyz};
 vec2 {1:newIlluminant} = vec2(${illuminant.x.toFixed(6)}, ${illuminant.y.toFixed(6)});
-vec3 {0:xyz} = {xyz};`,
+vec3 {2:xyz} = {xyz};`,
               outVariables,
             )
                 .nameVariableSlots(3);
   
-            variables = variables.follow(ins[0].webglVariables(), {
+            if (!ins[0].hasLinks) {
+              variables = variables.fillWith(ins[0].webglVariables(), undefined, {
+                "color": "color",
+                "illuminant": "originalIlluminant",
+                "xyz": "xyz",
+                "toXyz": "toXyz",
+              });
+            }
+  
+            return variables;
+          } else {
+            let variables = new WebglVariables(
+`vec3 {0:val} = {val};
+vec2 {1:newIlluminant} = vec2(${illuminant.x.toFixed(6)}, ${illuminant.y.toFixed(6)});
+vec3 {2:xyz} = ${node.webglToXyz};`,
+              outVariables,
+            )
+                .nameVariableSlots(3);
+
+  
+            if (!ins[0].hasLinks) {
+              variables = variables.fillWith(ins[0].webglVariables(), undefined, {
+                "val": "val",
+              });
+            }
+
+            return variables;
+          }
+        },
+        (source, target, inSocket, ins) => {
+          if (ins[0].effectiveType() === St.ColorCoords) {
+            return target.fillWith(source, undefined, {
               "color": "color",
               "illuminant": "originalIlluminant",
               "xyz": "xyz",
               "toXyz": "toXyz",
             });
-  
-            return variables;
           } else {
-            let variables = new WebglVariables(
-`vec3 {2:val} = {val};
-vec2 {1:newIlluminant} = vec2(${illuminant.x.toFixed(6)}, ${illuminant.y.toFixed(6)});
-vec3 {0:xyz} = ${node.webglToXyz};`,
-              outVariables,
-            )
-                .nameVariableSlots(3);
-  
-            variables = variables.follow(ins[0].webglVariables(), {
+            return target.fillWith(source, undefined, {
               "val": "val",
             });
-
-            return variables;
           }
         },
       )],
@@ -204,27 +221,61 @@ vec3 {0:xyz} = ${node.webglToXyz};`,
               : node.ColClass.defaultIlluminant;
 
           let variables = new WebglVariables(
-`vec3 {2:color} = vec3({x}, {y}, {z});
+`vec3 {0:color} = vec3({x}, {y}, {z});
 vec2 {1:newIlluminant} = vec2(${illuminant.x.toFixed(6)}, ${illuminant.y.toFixed(6)});
-vec3 {0:xyz} = ${node.webglToXyz};`,
-            {
-              "color": "{2:color}",
-              "illuminant": "{1:newIlluminant}",
-              "xyz": "{0:xyz}",
-              "toXyz": node.webglToXyz,
-            },
+vec3 {2:xyz} = ${node.webglToXyz};`,
+            new Map([
+              [undefined, {
+                "color": "{0:color}",
+                "illuminant": "{1:newIlluminant}",
+                "xyz": "{2:xyz}",
+                "toXyz": node.webglToXyz,
+              }],
+
+              [outs[0], {
+                "color": "{0:color}",
+                "illuminant": "{1:newIlluminant}",
+                "xyz": "{2:xyz}",
+                "toXyz": node.webglToXyz,
+              }],
+            ]),
           )
               .nameVariableSlots(3);
 
-          variables = variables.follow(ins[0].webglVariables(), {
-            "val": "x",
-          }).follow(ins[1].webglVariables(), {
-            "val": "y",
-          }).follow(ins[2].webglVariables(), {
-            "val": "z",
-          });
+          if (!ins[0].hasLinks) {
+            variables = variables.fillWith(ins[0].webglVariables(), undefined, {
+              "val": "x",
+            });
+          }
+          if (!ins[1].hasLinks) {
+            variables = variables.fillWith(ins[1].webglVariables(), undefined, {
+              "val": "y",
+            });
+          }
+          if (!ins[2].hasLinks) {
+            variables = variables.fillWith(ins[2].webglVariables(), undefined, {
+              "val": "z",
+            });
+          }
 
           return variables;
+        },
+        (source, target, inSocket, ins) => {
+          if (inSocket === ins[0]) {
+            return target.fillWith(source, inSocket.link?.src, {
+              "val": "x",
+            });
+          }
+          else if (inSocket === ins[1]) {
+            return target.fillWith(source, inSocket.link?.src, {
+              "val": "y",
+            });
+          }
+          else {
+            return target.fillWith(source, inSocket.link?.src, {
+              "val": "z",
+            });
+          }
         },
       )],
     ]));
@@ -314,10 +365,10 @@ vec3 {0:xyz} = ${node.webglToXyz};`,
       return cm.LinearSrgb;
     }
     get webglToXyz() {
-      return "linearSrgbToXyz({2:color}, {1:newIlluminant})";
+      return "linearSrgbToXyz({0:color}, {1:newIlluminant})";
     }
     get webglFromXyz() {
-      return "xyzToLinearSrgb({color}, {originalIlluminant})";
+      return "xyzToLinearSrgb({xyz}, {originalIlluminant})";
     }
   }
 
@@ -330,10 +381,10 @@ vec3 {0:xyz} = ${node.webglToXyz};`,
       return cm.Srgb;
     }
     get webglToXyz() {
-      return "gammaSrgbToXyz({2:color}, {1:newIlluminant})";
+      return "gammaSrgbToXyz({0:color}, {1:newIlluminant})";
     }
     get webglFromXyz() {
-      return "xyzToGammaSrgb({color}, {originalIlluminant})";
+      return "xyzToGammaSrgb({xyz}, {originalIlluminant})";
     }
   }
 
@@ -573,10 +624,10 @@ vec3 {0:xyz} = ${node.webglToXyz};`,
       return false;
     }
     get webglToXyz() {
-      return "oklabToXyz({0:color}, {targetIlluminant})";
+      return "oklabToXyz({0:color}, {1:newIlluminant})";
     }
     get webglFromXyz() {
-      return "xyzToOklab({0:color}, {originalIlluminant})";
+      return "xyzToOklab({xyz}, {originalIlluminant})";
     }
   }
 
@@ -621,6 +672,12 @@ vec3 {0:xyz} = ${node.webglToXyz};`,
 
     get includeWhitePoint() {
       return false;
+    }
+    get webglToXyz() {
+      return "oklabToXyz(decylindrify({0:color}), {1:newIlluminant})";
+    }
+    get webglFromXyz() {
+      return "cylindrify(xyzToOklab({xyz}, {originalIlluminant}))";
     }
   }
 

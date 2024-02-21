@@ -53,31 +53,31 @@ export class OklchAb extends Col {
 
 //#region Conversion functions// https://bottosson.github.io/posts/oklab/
 const xyzToLmsMat = [
-    [0.8189330101, 0.3618667424, -0.1288597137],
-    [0.0329845436, 0.9293118715,  0.0361456387],
-    [0.0482003018, 0.2643662691,  0.6338517070],
+  [0.8189330101, 0.3618667424, -0.1288597137],
+  [0.0329845436, 0.9293118715,  0.0361456387],
+  [0.0482003018, 0.2643662691,  0.6338517070],
 ];
 const lmsNonlinearToOklabMat = [
-    [0.2104542553,  0.7936177850, -0.0040720468],
-    [1.9779984951, -2.4285922050,  0.4505937099],
-    [0.0259040371,  0.7827717662, -0.8086757660],
+  [0.2104542553,  0.7936177850, -0.0040720468],
+  [1.9779984951, -2.4285922050,  0.4505937099],
+  [0.0259040371,  0.7827717662, -0.8086757660],
 ];
 
 const oklabToXyz = (lab: Oklab, newIlluminant: Xy) => {
-    const lmsNonlinear = math.multiply(math.inv(lmsNonlinearToOklabMat), lab).flat();
-    const lms = lmsNonlinear.map(comp => comp ** 3);
+  const lmsNonlinear = math.multiply(math.inv(lmsNonlinearToOklabMat), lab).flat();
+  const lms = lmsNonlinear.map(comp => comp ** 3);
 
-    const xyzD65 = math.multiply(math.inv(xyzToLmsMat), lms).flat() as Vec3;
-    return adaptXyz(new Xyz(xyzD65, d65), newIlluminant);
+  const xyzD65 = math.multiply(math.inv(xyzToLmsMat), lms).flat() as Vec3;
+  return adaptXyz(new Xyz(xyzD65, d65), newIlluminant);
 };
 
 const xyzToOklab = (xyz: Xyz) => {
   const adaptedXyz = adaptXyz(xyz, d65);
 
-    const lms = math.multiply(xyzToLmsMat, adaptedXyz).flat();
-    const lmsNonlinear = lms.map(comp => comp ** (1/3));
+  const lms = math.multiply(xyzToLmsMat, adaptedXyz).flat();
+  const lmsNonlinear = lms.map(comp => comp ** (1/3));
 
-    const oklab = math.multiply(lmsNonlinearToOklabMat, lmsNonlinear).flat();
+  const oklab = math.multiply(lmsNonlinearToOklabMat, lmsNonlinear).flat();
   return new Oklab(oklab as Vec3);
 };
 

@@ -53,7 +53,7 @@ void main() {
 }`;
 
   const fragmentShaderSource = transpilation.template;
-  // console.log(fragmentShaderSource);
+  console.log(fragmentShaderSource);
   
 
   //#region Shader setup

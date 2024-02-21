@@ -9,6 +9,7 @@ export class Overload<OutputType, NodeType extends Node=any, InSockets extends I
     readonly outs: (node: NodeType) => [...OutSockets],
     readonly evaluate: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => OutputType,
     readonly webglEvaluate: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => WebglVariables,
+    readonly webglFill: (source: WebglVariables, target: WebglVariables, inSocket: InSocket, ins: InSockets) => WebglVariables,
     private readonly maintainExistingLinks = false,
   ) {}
 }
@@ -66,6 +67,10 @@ export class OverloadManager<Mode extends string> {
 
   webglEvaluate(context: NodeEvalContext) {
     return this.overload.webglEvaluate(this.ins, this.outs, context, this.node);
+  }
+
+  webglFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket) {
+    return this.overload.webglFill(source, target, inSocket, this.ins);
   }
 
   handleModeChange(tree: Tree) {

@@ -130,6 +130,9 @@ export abstract class Node {
   webglOutput(context: NodeEvalContext={}): WebglVariables {
     throw new TypeError("Abstract method / not implemented");
   }
+  webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket): WebglVariables {
+    throw new TypeError("Abstract method / not implemented");
+  }
   
   display(context: NodeEvalContext={}): NodeDisplay {
     return {
@@ -145,10 +148,6 @@ export abstract class Node {
 
   get displayFlags(): SocketFlag[] {
     return [];
-  }
-
-  fillWebglVariables(variables: WebglVariables) {
-    throw new TypeError("Abstract method / not implemented");
   }
 
   /**
@@ -301,6 +300,10 @@ export abstract class NodeWithOverloads<Mode extends string> extends Node {
 
   webglOutput(context: NodeEvalContext): WebglVariables {
     return this.overloadManager.webglEvaluate(context);
+  }
+
+  webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket<any>): WebglVariables {
+    return this.overloadManager.webglFill(source, target, inSocket);
   }
 }
 
@@ -577,24 +580,30 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
   private webglFieldVariables(context: NodeEvalContext={}) {
     switch (this.effectiveType()) {
       case St.ColorCoords:
-        return new WebglVariables("", {
+        return new WebglVariables("", new Map([
+          [undefined, {
           "color": this.hasLinks
               ? `vec3(${(this.inValue(context) as number[]).map(channel => channel.toFixed(7)).join(", ")})`
               : `vec3(0., 0., 0.)`,
           "illuminant": "illuminant2_D65",
           "xyz": "vec3(0., 0., 0.)",
           "toXyz": ``,
-        });
+          }],
+        ]));
 
       case St.Vector:
-        return new WebglVariables("", {
-          "val": `vec3(${(this.inValue(context) as number[]).map(channel => channel.toFixed(7)).join(", ")})`,
-        });
+        return new WebglVariables("", new Map([
+          [undefined, {
+            "val": `vec3(${(this.inValue(context) as number[]).map(channel => channel.toFixed(7)).join(", ")})`,
+          }],
+        ]));
 
       case St.Float:
-        return new WebglVariables("", {
-          "val": (this.inValue(context) as number).toFixed(7),
-        });
+        return new WebglVariables("", new Map([
+          [undefined, {
+            "val": (this.inValue(context) as number).toFixed(7),
+          }],
+        ]));
 
       default:
         throw new Error("not implemented");

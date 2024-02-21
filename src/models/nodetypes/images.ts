@@ -60,11 +60,15 @@ export namespace images {
     }
 
     webglOutput(context: NodeEvalContext={}): WebglVariables {
+      const value0 = this.boundsSockets[0].inValue(context);
+      const value1 = this.boundsSockets[1].inValue(context);
       return new WebglVariables(
-        `float {0:val} = v_uv.${this.whichDimension === 0 ? "x" : "y"};`,
-        {
-          "val": "{0:val}",
-        },
+        `float {0:val} = mix(${value0.toFixed(7)}, ${value1.toFixed(7)}, v_uv.${this.whichDimension === 0 ? "x" : "y * -1."});`,
+        new Map([
+          [this.outs[0], {
+            "val": "{0:val}",
+          }]
+        ]),
       )
           .nameVariableSlots(1);
     }
@@ -138,28 +142,46 @@ export namespace images {
     
     webglOutput(context?: NodeEvalContext): WebglVariables {
       return new WebglVariables(
-        `vec4 {0:val} = texture({1:texture}, v_uv);`,
-        {
-          "val": "{0:val}.xyz",
-        },
-        `uniform sampler2D {1:texture};`,
+        `vec3 {0:val} = texture({1:texture}, v_uv).rgb;`,
+        new Map([
+          [this.outs[0], {
+            "val": "{0:val}",
+          }],
+          [this.outs[1], {
+            "val": "{2:width}",
+          }],
+          [this.outs[2], {
+            "val": "{3:height}",
+          }],
+        ]),
+        `uniform sampler2D {1:texture};
+uniform float {2:width};
+uniform float {3:height};`,
         {
           "{1:texture}": (gl, unif) => {
             const texture = gl.createTexture();
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, texture);
-            
+
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.ins[0].inValue() as ImageData);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.ins[0].inValue() as ImageData ?? new Image());
             gl.uniform1i(unif, 0);
-          }
+          },
+
+          "{2:width}": (gl, unif) => {
+            gl.uniform1i(unif, (this.ins[0].inValue() as ImageData)?.width ?? 0);
+          },
+
+          "{3:height}": (gl, unif) => {
+            gl.uniform1i(unif, (this.ins[0].inValue() as ImageData)?.height ?? 0);
+          },
         },
       )
-          .nameVariableSlots(2);
+          .nameVariableSlots(4);
     }
   }
 

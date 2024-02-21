@@ -120,6 +120,62 @@ vec3 xyzToGammaSrgb(vec3 xyz, vec2 originalIlluminant) {
 vec3 gammaSrgbToXyz(vec3 rgb, vec2 newIlluminant) {
   return linearSrgbToXyz(gammaToLinearSrgb(rgb), newIlluminant);
 }
+
+// https://bottosson.github.io/posts/oklab/
+vec3 xyzToOklab(vec3 xyz, vec2 originalIlluminant) {
+  vec3 adaptedXyz = adaptXyz(xyz, originalIlluminant, illuminant2_D65);
+
+  vec3 lms = mat3(
+    0.8189330101, 0.3618667424, -0.1288597137,
+    0.0329845436, 0.9293118715,  0.0361456387,
+    0.0482003018, 0.2643662691,  0.6338517070
+  ) * adaptedXyz;
+  
+  vec3 nonlinearLms = vec3(
+    pow(lms.x, 1./3.),
+    pow(lms.y, 1./3.),
+    pow(lms.z, 1./3.)
+  );
+
+  return mat3(
+    0.2104542553,  0.7936177850, -0.0040720468,
+    1.9779984951, -2.4285922050,  0.4505937099,
+    0.0259040371,  0.7827717662, -0.8086757660
+  ) * nonlinearLms;
+}
+vec3 oklabToXyz(vec3 oklab, vec2 newIlluminant) {
+  vec3 nonlinearLms = inverse(transpose(mat3(
+    0.2104542553,  0.7936177850, -0.0040720468,
+    1.9779984951, -2.4285922050,  0.4505937099,
+    0.0259040371,  0.7827717662, -0.8086757660
+  ))) * oklab;
+  
+  vec3 lms = nonlinearLms * nonlinearLms * nonlinearLms;
+
+  vec3 xyz = inverse(transpose(mat3(
+    0.8189330101, 0.3618667424, -0.1288597137,
+    0.0329845436, 0.9293118715,  0.0361456387,
+    0.0482003018, 0.2643662691,  0.6338517070
+  ))) * lms;
+
+  return adaptXyz(xyz, illuminant2_D65, newIlluminant);
+}
+
+vec3 cylindrify(vec3 lxx) {
+  return vec3(
+    lxx.x,
+    sqrt(lxx.y * lxx.y + lxx.z * lxx.z),
+    atan(lxx.z, lxx.y) / REV
+  );
+}
+
+vec3 decylindrify(vec3 lch) {
+  return vec3(
+    lch.x,
+    cos(lch.z * REV) * lch.y,
+    sin(lch.z * REV) * lch.y
+  );
+}
 `;
 
 export class WebglModule {
@@ -132,6 +188,9 @@ export class WebglModule {
 /** Stores a chunk of GLSL code with macro-like slots for variables. */
 export class WebglVariables {
   static readonly FRAGMENT = new WebglVariables(`#version 300 es
+
+#define PI 3.1415926538
+#define REV 6.2831853071
 
 precision mediump float;
 
@@ -160,7 +219,9 @@ void main() {
 
   fragColor = vec4(gammaSrgb, 1.);
 }`,
-    {},
+    new Map([
+      [undefined, {}],
+    ]),
   );
 
   constructor(
@@ -171,7 +232,7 @@ void main() {
      * result from the template's code.
      */
     readonly template: string,
-    private readonly outVariables: Record<string, string>,
+    private readonly outVariables: Map<OutSocket | undefined, Record<string, string>>,
     /** A secondary template that declares variables in the prelude, inserted at the end. */
     private readonly preludeTemplate: string="",
     /** The names of uniforms (which can be variable slots), mapped to functions to initialize those uniforms. */
@@ -182,7 +243,7 @@ void main() {
    * @param mappings Of the form {name: substitution}.
    */
   fillSlots(mappings: Record<string, string>, newUniforms: WebglVariables["uniforms"]={}) {
-    const outVariables: Record<string, string> = {...this.outVariables};
+    const outVariables: WebglVariables["outVariables"] = new Map(this.outVariables.entries());
     const uniforms: WebglVariables["uniforms"] = {...this.uniforms, ...newUniforms};
     let template = this.template;
     let preludeTemplate = this.preludeTemplate;
@@ -191,8 +252,14 @@ void main() {
 
       template = template.replaceAll(slotRegex, mappingValue);
       preludeTemplate = preludeTemplate.replaceAll(slotRegex, mappingValue);
-      for (const [name, value] of Object.entries(outVariables)) {
-        outVariables[name] = value.replaceAll(slotRegex, mappingValue);
+
+      // Also look for slots in the `outVariables` substitution strings
+      for (const [socket, variables] of outVariables) {
+        const newOuts: Record<string, string> = {};
+        for (const [name, value] of Object.entries(variables)) {
+          newOuts[name] = value.replaceAll(slotRegex, mappingValue);
+        }
+        outVariables.set(socket, newOuts);
       }
       for (const [name, value] of Object.entries(uniforms)) {
         delete uniforms[name];
@@ -203,6 +270,27 @@ void main() {
     return new WebglVariables(template, outVariables, preludeTemplate, uniforms);
   }
 
+  fillWith(source: WebglVariables, socket: OutSocket | undefined, sourceVariableSlotMapping: Record<string, string>) {
+    const outVariables: Record<string, string> = {};
+    const remainderOutVariables = {...this.outVariables.get(socket)!};
+    for (const [oldName, newName] of Object.entries(sourceVariableSlotMapping)) {
+      outVariables[newName] = source.outVariables.get(socket)![oldName];
+      delete remainderOutVariables[oldName];
+    }
+
+    return this.fillSlots({...remainderOutVariables, ...outVariables});
+  }
+
+  join(target: WebglVariables) {
+    // TODO
+    return new WebglVariables(
+      this.template,
+      {...this.outVariables, ...target.outVariables},
+      this.preludeTemplate,
+      this.uniforms,
+    )
+  }
+
   /**
    * Inserts this object's template in front of another `WebglVariables`'s template, while substituting in
    * variables from the other object into this object
@@ -211,7 +299,7 @@ void main() {
    * template
    * @returns 
    */
-  follow(source: WebglVariables, sourceVariableSlotMapping: Record<string, string>) {
+  /* follow(source: WebglVariables, sourceVariableSlotMapping: Record<string, string>) {
     const outVariables: Record<string, string> = {};
     const remainderOutVariables = {...this.outVariables};
     for (const [oldName, newName] of Object.entries(sourceVariableSlotMapping)) {
@@ -230,6 +318,10 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
       {...source.uniforms, ...variables.uniforms},
     )
   }
+
+  pipe(target: WebglVariables, variableSlotMapping: Record<string, string>) {
+    return target.follow(this, variableSlotMapping);
+  } */
 
   /**
    * Assigns random GLSL variable names to slots named with a number up to `nSlots`
@@ -251,14 +343,74 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
     }
   }
 
+  private static toposortDependencies(node: Node) {
+    const topoOrder: Node[] = [];
+    const visited = new Set<Node>();
+
+    const dfs = (node: Node) => {
+      visited.add(node);
+
+      for (const socket of node.ins) {
+        if (!socket.hasLinks) continue;
+
+        const srcNode = socket.link.srcNode;
+        if (visited.has(srcNode)) continue;
+        
+        dfs(srcNode);
+      }
+
+      topoOrder.push(node);
+    };
+    dfs(node);
+
+    return topoOrder;
+  }
+
   static transpileNodeOutput(node: Node) {
-    let variables = node.webglOutput();
+    const dependencies = this.toposortDependencies(node);
+    const dependencyIndices = new Map([...dependencies.entries()].map(([i, node]) => [node, i]));
+
+    const segments: WebglVariables[] = [];
+
+    dependencies.forEach((node, i) => {
+      let variables = node.webglOutput();
+
+      // for (const socket of node.outs) {
+      //   if (!socket.hasLinks) continue;
+      //   variables = variables.join(node.webglOutput({socket}));
+      // }
+
+      for (const socket of node.ins) {
+        if (!socket.hasLinks) continue;
+
+        const srcNode = socket.link.srcNode;
+        const srcIndex = dependencyIndices.get(srcNode)!;
+
+        // variables = node.webglVariablesFill(segments[srcIndex], variables, socket);
+        variables = node.webglVariablesFill(segments[srcIndex], variables, socket);
+
+        // segments[i] = segments[i].fill(segments[srcIndex], {
+        //   "color": "color",
+        //   "illuminant": "originalIlluminant",
+        //   "xyz": "xyz",
+        //   "toXyz": "toXyz",
+        // });
+      }
+      segments[i] = variables;
+    });
+
+    const uniforms: WebglVariables["uniforms"] = {};
+    for (const segment of segments) {
+      Object.assign(uniforms, segment.uniforms);
+    }
 
     return WebglVariables.FRAGMENT.fillSlots({
-      "main": variables.template,
-      "xyz": variables.outVariables["xyz"],
-      "color": variables.outVariables["color"],
-      "beforePrelude": variables.preludeTemplate,
-    }, variables.uniforms);
+      "main": segments.map(segment => segment.template)
+          .join("\n\n"),
+      "xyz": segments.at(-1)!.outVariables.get(undefined)!["xyz"],
+      "color": segments.at(-1)!.outVariables.get(undefined)!["color"],
+      "beforePrelude": segments.map(segment => segment.preludeTemplate)
+          .join("\n"),
+    }, uniforms);
   }
 }
