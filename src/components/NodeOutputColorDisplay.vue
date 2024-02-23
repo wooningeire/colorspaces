@@ -22,22 +22,21 @@ const props = withDefaults(defineProps<{
 
 const canvas = ref(null as HTMLCanvasElement | null);
 // const cx = computed(() => canvas.value?.getContext("2d")!);
-const glObj = computed(() => canvas.value?.getContext("webgl2"));
+const glLast = computed(() => canvas.value?.getContext("webgl2"));
+let glProgramLast: WebGLProgram;
+let nVertsLast = 0;
 
 
 const dataOutput = (context: NodeEvalContext) => props.node.output(context);
 
 const imageIsOutOfGamut = ref(false);
 
-let rerenderCanvas = async () => {
+let lastTranspilation: WebglVariables;
+const reinitializeShader = async () => {
   // canvas.value!.width = canvas.value!.offsetWidth * devicePixelRatio;
   // canvas.value!.height = canvas.value!.offsetWidth * devicePixelRatio;
 
-  const axes = props.node.getDependencyAxes();
-  const width = canvas.value!.width = axes.has(0) ? canvas.value!.offsetWidth * devicePixelRatio : 1;
-  const height = canvas.value!.height = axes.has(1) ? canvas.value!.offsetHeight * devicePixelRatio : 1;
-
-  const transpilation = WebglVariables.transpileNodeOutput(props.node);
+  lastTranspilation = WebglVariables.transpileNodeOutput(props.node);
   // console.log(transpilation);
 
   const vertexShaderSource = `#version 300 es
@@ -52,14 +51,13 @@ void main() {
   v_uv = (a_pos.xy + 1.) / 2. * vec2(1., -1.);
 }`;
 
-  const fragmentShaderSource = transpilation.template;
+  const fragmentShaderSource = lastTranspilation.template;
   // console.log(fragmentShaderSource);
   
 
   //#region Shader setup
 
-  const gl = glObj.value!;
-  gl.viewport(0, 0, width, height);
+  const gl = glLast.value!;
 
   const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
   gl.shaderSource(vertexShader, vertexShaderSource);
@@ -75,6 +73,7 @@ void main() {
   gl.linkProgram(glProgram);
 
   gl.useProgram(glProgram);
+  glProgramLast = glProgram;
 
   //#endregion
 
@@ -96,6 +95,7 @@ void main() {
 
   const COORD_DIMENSION = 2;
   const nVerts = vertCoords.length / COORD_DIMENSION;
+  nVertsLast = nVerts;
 
   const vertBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertBuffer);
@@ -110,7 +110,6 @@ void main() {
   //#region Setting uniforms
   const alphaUnif = gl.getUniformLocation(glProgram, "alphaFac");
   const detectGamutUnif = gl.getUniformLocation(glProgram, "detectGamut");
-  transpilation.initializeUniforms(gl, glProgram);
   //#endregion
   
   // gl.clearColor(0, 0, 0, 0);
@@ -122,7 +121,20 @@ void main() {
   gl.bindVertexArray(vertArray);
   gl.uniform1f(alphaUnif, 0.25);
   gl.uniform1i(detectGamutUnif, Number(!settings.displayOutOfGamut));
-  gl.drawArrays(gl.TRIANGLES, 0, nVerts);
+
+  rerender();
+};
+const rerender = () => {
+  const gl = glLast.value!;
+
+  const axes = props.node.getDependencyAxes();
+  const width = canvas.value!.width = axes.has(0) ? canvas.value!.offsetWidth * devicePixelRatio : 1;
+  const height = canvas.value!.height = axes.has(1) ? canvas.value!.offsetHeight * devicePixelRatio : 1;
+  gl.viewport(0, 0, width, height);
+
+  lastTranspilation.initializeUniforms(gl, glProgramLast);
+
+  gl.drawArrays(gl.TRIANGLES, 0, nVertsLast);
 };
 
 // Performance bottleneck
@@ -170,16 +182,18 @@ const rerenderCanvas = () => {
   imageIsOutOfGamut.value = hasPixelOutOfGamut;
 };
  */
-onMounted(rerenderCanvas);
-onUpdated(rerenderCanvas);
-watch(settings, rerenderCanvas);
+onMounted(reinitializeShader);
+onUpdated(reinitializeShader);
+watch(settings, rerender);
+watch(() => tree.links.size, rerender);
 
 // `coords` property is needed to update when Gradient node axis changes, might want to make this check more robust?
 // When is this check being triggered? (whenever function dependencies update according to Vue?)
-watch(() => dataOutput({socket: props.socket, coords: [0, 0]}), rerenderCanvas);
+// watch(() => dataOutput({socket: props.socket, coords: [0, 0]}), retranspileShaderAndRerender);
 
-
-const nAxes = computed(() => props.node.getDependencyAxes().size);
+defineExpose({
+  rerender,
+});
 </script>
 
 <template>

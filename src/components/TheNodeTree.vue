@@ -70,12 +70,21 @@ const rerenderLinks = () => {
   // Delay to next tick because socket positions in DOM have not updated yet
   nextTick(() => {
     for (const link of tree.links) {
+      //@ts-ignore
       linkVues.get(link)!.$forceUpdate();
     }
   });
 };
 
 onMounted(rerenderLinks);
+
+
+const nodeVues = ref<InstanceType<typeof NodeVue>[]>([]);
+const reloadOutputs = () => {
+  for (const nodeVue of nodeVues.value) {
+    nodeVue.reloadOutput();
+  }
+};
 
 
 const selectNode = (node: Node, clearSelection: boolean=true) => {
@@ -191,7 +200,11 @@ defineExpose({
           @node-selected="selectNode"
 
           @tree-update="void 0/* recomputeOutputColor */"
-          @potential-socket-position-change="rerenderLinks" />
+          @potential-socket-position-change="rerenderLinks"
+          
+          @socket-field-value-change="reloadOutputs"
+          
+          ref="nodeVues" />
     </div>
 
     <svg class="links"

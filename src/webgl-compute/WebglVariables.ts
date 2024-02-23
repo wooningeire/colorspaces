@@ -242,11 +242,12 @@ void main() {
   /** Fills in the given slots with values or true GLSL variables.
    * @param mappings Of the form {name: substitution}.
    */
-  fillSlots(mappings: Record<string, string>, newUniforms: WebglVariables["uniforms"]={}) {
+  fillSlots(mappings: Record<string, string>, sourcePreludeTemplate: string="", sourceUniforms: WebglVariables["uniforms"]={}) {
     const outVariables: WebglVariables["outVariables"] = new Map(this.outVariables.entries());
-    const uniforms: WebglVariables["uniforms"] = {...this.uniforms, ...newUniforms};
+    const uniforms: WebglVariables["uniforms"] = {...sourceUniforms, ...this.uniforms};
     let template = this.template;
-    let preludeTemplate = this.preludeTemplate;
+    let preludeTemplate = `${sourcePreludeTemplate}
+${this.preludeTemplate}`;
     for (const [mappingName, mappingValue] of Object.entries(mappings)) {
       const slotRegex = new RegExp(`{${mappingName}(:\\w+)?}`, "g");
 
@@ -278,7 +279,7 @@ void main() {
       delete remainderOutVariables[oldName];
     }
 
-    return this.fillSlots({...remainderOutVariables, ...outVariables});
+    return this.fillSlots({...remainderOutVariables, ...outVariables}, source.preludeTemplate, source.uniforms);
   }
 
   join(target: WebglVariables) {
@@ -396,15 +397,21 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
       Object.assign(uniforms, segment.uniforms);
     }
 
-    console.log(segments.map(segment => segment.template)
-        .join("\n\n"));
+    // console.log(segments.map(segment => segment.template)
+    //     .join("\n\n"));
+    // console.log(segments.map(segment => segment.preludeTemplate)
+    //     .join("\n"));
+    // console.log(uniforms);
 
-    return WebglVariables.FRAGMENT.fillSlots({
-      "main": segments.map(segment => segment.template)
-          .join("\n\n"),
-      "xyz": segments.at(-1)!.outVariables.get(undefined)!["xyz"],
-      "beforePrelude": segments.map(segment => segment.preludeTemplate)
-          .join("\n"),
-    }, uniforms);
+    return WebglVariables.FRAGMENT.fillSlots(
+      {
+        "main": segments.map(segment => segment.template)
+            .join("\n\n"),
+        "xyz": segments.at(-1)!.outVariables.get(undefined)!["xyz"],
+        "beforePrelude": segments.map(segment => segment.preludeTemplate)
+            .join("\n"),
+      },
+      "",
+      uniforms);
   }
 }

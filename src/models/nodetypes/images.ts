@@ -10,8 +10,8 @@ export namespace images {
     static readonly LABEL = "Gradient";
     static readonly DESC = "desc.node.gradient";
 
-    private readonly axisSocket: Socket<St.Dropdown>;
-    private readonly boundsSockets: Socket<St.Float>[];
+    private readonly axisSocket: InSocket<St.Dropdown>;
+    private readonly boundsSockets: InSocket<St.Float>[];
 
     get axes() {
       return [this.whichDimension];
@@ -79,8 +79,8 @@ export namespace images {
     static readonly LABEL = "Image file";
     static readonly DESC = "desc.node.imageFile";
 
-    private readonly inSocket: Socket<St.Image>;
-    private readonly normalizeCoordinatesSocket: Socket<St.Bool>
+    private readonly inSocket: InSocket<St.Image>;
+    private readonly normalizeCoordinatesSocket: InSocket<St.Bool>
 
     get axes() {
       return [0, 1];

@@ -59,7 +59,7 @@ export const whitePointSocketOptions = {
   defaultValue: "2deg/D65",
   socketDesc: "desc.socket.illuminant" as StringKey,
 };
-export const getIlluminant = (socket: Socket<St.Dropdown>, context: NodeEvalContext) => {
+export const getIlluminant = (socket: InSocket<St.Dropdown>, context: NodeEvalContext) => {
   const illuminantId = socket.inValue(context);
   if (illuminantId !== "custom") {
     const [standard, illuminantName] = illuminantId.split("/"); 
@@ -109,29 +109,29 @@ export namespace spaces {
 
           const outVariables = new Map<OutSocket | undefined, Record<string, string>>([
             [undefined, {
-              "color": "{0:color}",
+              "color": "{val}",
               "illuminant": "{1:illuminant}",
               "xyz": "{2:xyz}",
               "toXyz": node.webglToXyz,
             }],
 
             [outs[0], {
-              "color": "{0:color}",
+              "color": "{val}",
               "illuminant": "{1:illuminant}",
               "xyz": "{2:xyz}",
               "toXyz": node.webglToXyz,
             }],
 
             [outs[1], {
-              "val": "{0:color}.x",
+              "val": "{val}.x",
             }],
 
             [outs[2], {
-              "val": "{0:color}.y",
+              "val": "{val}.y",
             }],
 
             [outs[3], {
-              "val": "{0:color}.z",
+              "val": "{val}.z",
             }],
           ]);
 
@@ -157,7 +157,7 @@ vec3 {2:xyz} = {xyz};`,
             return variables;
           } else {
             let variables = new WebglVariables(
-`vec3 {0:val} = {val};
+`vec3 {0:color} = {val};
 vec2 {1:newIlluminant} = vec2(${illuminant.x.toFixed(6)}, ${illuminant.y.toFixed(6)});
 vec3 {2:xyz} = ${node.webglToXyz};`,
               outVariables,
@@ -309,15 +309,15 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return "";
     }
 
-    private getIlluminant(ins: Socket[], context: NodeEvalContext) {
+    private getIlluminant(ins: InSocket[], context: NodeEvalContext) {
       return this.includeWhitePoint ? getIlluminant(ins[0], context) : this.ColClass.defaultIlluminant;
     }
-    private getColorVector(ins: Socket[], context: NodeEvalContext, fromVector: boolean) {
+    private getColorVector(ins: InSocket[], context: NodeEvalContext, fromVector: boolean) {
       return fromVector
           ? (this.includeWhitePoint ? ins[1] as Socket<St.VectorOrColor> : ins[0] as Socket<St.VectorOrColor>).inValue(context)
           : (this.includeWhitePoint ? [1, 2, 3] : [0, 1, 2]).map(index => ins[index].inValue(context)) as Vec3;
     }
-    private computeColor(ins: Socket[], context: NodeEvalContext, fromVector: boolean) {
+    private computeColor(ins: InSocket[], context: NodeEvalContext, fromVector: boolean) {
       // const lchuv = node.memoize(() => {
       // 	const illuminant = getIlluminant(ins[0], context);
       // 	return cm.LchUv.from(ins[1].inValue(context), illuminant);

@@ -31,6 +31,15 @@ const nDecimals = 4;
 watch(() => props.node.getDependencyAxes().size, () => {
   getCurrentInstance()?.proxy?.$forceUpdate();
 });
+
+
+const colorDisplayVue = ref<InstanceType<typeof NodeOutputColorDisplay>>();
+const reload = () => {
+  colorDisplayVue.value?.rerender();
+};
+defineExpose({
+  reload,
+});
 </script>
 
 <template>
@@ -42,7 +51,8 @@ watch(() => props.node.getDependencyAxes().size, () => {
           :labels="output.labels"
           :flags="output.flags"
           v-if="hasConstantOutput" />
-      <NodeOutputColorDisplay :node="node" />
+      <NodeOutputColorDisplay :node="node"
+          ref="colorDisplayVue" />
     </template>
 
     <template v-else-if="type === OutputDisplayType.Float">

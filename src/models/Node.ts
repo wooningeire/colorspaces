@@ -7,7 +7,7 @@ export class Tree {
   readonly links = new Set<Link>();
   readonly nodes = new Set<Node>();
 
-  linkSockets(src: InSocket, dst: OutSocket) {
+  linkSockets(src: OutSocket, dst: InSocket) {
     if (src.isInput) throw new Error("Source is an input");
     if (dst.isOutput) throw new Error("Dest is an output");
     if (src.node === dst.node) throw new Error("Sockets belong to same node");
@@ -342,6 +342,24 @@ export type SocketValue<St extends SocketType=any> =
     St extends SocketType.Bool ? boolean :
     never;
 
+export type WebglSocketValue<St extends SocketType=any> =
+    St extends SocketType.Float ? {
+      "val": string,
+    } :
+    St extends SocketType.Integer ? WebglSocketValue<SocketType.Float> :
+    St extends SocketType.Vector ? WebglSocketValue<SocketType.Float> :
+    St extends SocketType.ColorCoords ? {
+      "color": string,
+      "illuminant": string,
+      "xyz": string,
+      "toXyz": string,
+    } :
+    St extends SocketType.VectorOrColor ? WebglSocketValue<SocketType.ColorCoords> | WebglSocketValue<SocketType.Vector> :
+    St extends SocketType.Dropdown ? never :
+    St extends SocketType.Image ? never :
+    St extends SocketType.Bool ? WebglSocketValue<SocketType.Float> :
+    never;
+
 export enum SocketFlag {
   None = 0,
   Rgb = 1 << 0,
@@ -378,6 +396,7 @@ type SocketData<St extends SocketType=any> =
       sliderProps?: SliderProps[],
     } :
     {});
+
 
 export type SocketOptions<St extends SocketType=any> =
     {
@@ -482,24 +501,6 @@ export abstract class Socket<St extends SocketType=any> {
     return !this.isInput;
   }
 
-  /** Evaluates the value of this input socket (uses the value from the link attached to this socket if the link is
-   * valid, or the value from the socket's field input otherwise) */
-  inValue(context: NodeEvalContext={}): SocketValue<St> {
-    return this.links[0]?.causesCircularDependency
-        ? this.fieldValue
-        : (this.links[0]?.src.outValue(context) as SocketValue<St>) ?? this.fieldValue;
-  }
-
-  /** Evaluates the value of this output socket */
-  outValue(context: NodeEvalContext={}): SocketValue<St> {
-    const newContext = {
-      ...context,
-      socket: this,
-    };
-
-    return this.node.output(newContext);
-  }
-
   get hasLinks() {
     return this.links.length > 0;
   }
@@ -584,30 +585,62 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
   private webglFieldVariables(context: NodeEvalContext={}) {
     switch (this.effectiveType()) {
       case St.ColorCoords:
-        return new WebglVariables("", new Map([
-          [undefined, {
-          "color": !this.usesFieldValue
-              ? `vec3(${(this.inValue(context) as number[]).map(channel => channel.toFixed(7)).join(", ")})`
-              : `vec3(0., 0., 0.)`,
-          "illuminant": "illuminant2_D65",
-          "xyz": "vec3(0., 0., 0.)",
-          "toXyz": ``,
-          }],
-        ]));
+        return new WebglVariables(
+          "",
+          new Map([
+            [undefined, {
+              "color": "{0:unif}",
+              "illuminant": "illuminant2_D65",
+              "xyz": "vec3(0., 0., 0.)",
+              "toXyz": ``,
+            }]
+          ]),
+          `uniform vec3 {0:unif};`,
+          {
+            "{0:unif}": (gl, unif) => {
+              if (this.usesFieldValue) {
+                gl.uniform3fv(unif, this.inValue(context) as number[]);
+              } else {
+                gl.uniform3fv(unif, [0, 0, 0]);
+              }
+            },
+          },
+        )
+            .nameVariableSlots(1);
 
       case St.Vector:
-        return new WebglVariables("", new Map([
-          [undefined, {
-            "val": `vec3(${(this.inValue(context) as number[]).map(channel => channel.toFixed(7)).join(", ")})`,
-          }],
-        ]));
+        return new WebglVariables(
+          "",
+          new Map([
+            [undefined, {
+              "val": `{0:unif}`,
+            }],
+          ]),
+          `uniform vec3 {0:unif};`,
+          {
+            "{0:unif}": (gl, unif) => {
+              gl.uniform3fv(unif, this.inValue(context) as number[]);
+            },
+          },
+        )
+            .nameVariableSlots(1);
 
       case St.Float:
-        return new WebglVariables("", new Map([
-          [undefined, {
-            "val": (this.inValue(context) as number).toFixed(7),
-          }],
-        ]));
+        return new WebglVariables(
+          "",
+          new Map([
+            [undefined, {
+              "val": "{0:unif}",
+            }],
+          ]),
+          `uniform vec3 {0:unif};`,
+          {
+            "{0:unif}": (gl, unif) => {
+              gl.uniform1f(unif, this.inValue(context) as number);
+            },
+          },
+        )
+            .nameVariableSlots(1);
 
       default:
         throw new Error("not implemented");
@@ -630,6 +663,14 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     return (!this.hasLinks || this.link.causesCircularDependency)
         && this.showFieldIfAvailable;
   }
+
+  /** Evaluates the value of this input socket (uses the value from the link attached to this socket if the link is
+   * valid, or the value from the socket's field input otherwise) */
+  inValue(context: NodeEvalContext={}): SocketValue<St> {
+    return this.link?.causesCircularDependency
+        ? this.fieldValue
+        : (this.link?.src.outValue(context) as SocketValue<St>) ?? this.fieldValue;
+  }
 }
 
 export class OutSocket<St extends SocketType=any> extends Socket<St> {
@@ -645,6 +686,16 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
   ) {
     super(node, false, type, label, showSocket, options);
   }
+
+  /** Evaluates the value of this output socket */
+  outValue(context: NodeEvalContext={}): SocketValue<St> {
+    const newContext = {
+      ...context,
+      socket: this,
+    };
+
+    return this.node.output(newContext);
+  }
 }
 
 export class Link {
@@ -658,9 +709,9 @@ export class Link {
 
   constructor(
     /** Source socket. */
-    readonly src: Socket,
+    readonly src: OutSocket,
     /** Destination socket. */
-    readonly dst: Socket,
+    readonly dst: InSocket,
   ) {}
 
   get srcNode() {

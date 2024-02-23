@@ -16,8 +16,9 @@ const props = defineProps<{
   socket: Socket,
 }>();
 
+// @ts-ignore
 const emit = defineEmits<{
-  (event: "value-change"): void,
+  (event: "field-value-change"): void,
   (event: "drag-socket", socketVue: InstanceType<typeof NodeSocket>): void,
   (event: "link-to-socket", socketVue: InstanceType<typeof NodeSocket>): void,
   (event: "unlink"): void,
@@ -172,7 +173,7 @@ Object.defineProperties(socketVue, {
         @drop="event => (ondrop(event), isDraggedOver = false)"
         @pointerdown="event => event.button === 0 && event.stopPropagation()"
         @dragleave="isDraggedOver = false"
-        @dragend="event => event.currentTarget?.blur()"
+        @dragend="event => (event.currentTarget as HTMLDivElement)?.blur()"
 
         @dblclick="unlinkLinks"
         
@@ -192,7 +193,10 @@ Object.defineProperties(socketVue, {
 
     <NodeSocketField v-if="shouldShowFields"
         :socket="socket"
-        @value-change="socket.node.onSocketFieldValueChange(socket, tree as Tree)" />
+        @value-change="() => {
+          socket.node.onSocketFieldValueChange(socket, tree as Tree);
+          $emit('field-value-change');
+        }" />
   </div>
 </template>
 

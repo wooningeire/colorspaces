@@ -10,12 +10,9 @@ import {settings, tree} from "./store";
 import {Socket, SocketType as St, SocketFlag, Tree} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
 
-const props = defineProps({
-  socket: {
-    type: Socket as PropType<Socket<any>>,
-    required: true,
-  },
-});
+const props = defineProps<{
+  socket: Socket,
+}>();
 const emit = defineEmits(["value-change"]);
 
 const fileInput = ref(null as any as HTMLInputElement);

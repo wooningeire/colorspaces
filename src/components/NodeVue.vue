@@ -31,6 +31,7 @@ const emit = defineEmits<{
   (event: "potential-socket-position-change"): void,
   (event: "tree-update"): void,
   (event: "node-selected", targetNode: Node, clearSelectionFirst: boolean): void,
+  (event: "socket-field-value-change"): void,
 }>();
 
 
@@ -116,6 +117,15 @@ watch(props.node, () => { // update please :(
   instance?.proxy?.$forceUpdate();
 });
 
+
+const outputVue = ref<InstanceType<typeof NodeOutput>>();
+const reloadOutput = () => {
+  outputVue.value?.reload();
+};
+defineExpose({
+  reloadOutput,
+});
+
 </script>
 
 <template>
@@ -169,7 +179,9 @@ watch(props.node, () => { // update please :(
             @value-change="$emit('tree-update')"
             @unlink="
               $emit('tree-update'),
-              $emit('potential-socket-position-change')" />
+              $emit('potential-socket-position-change')"
+          
+          @field-value-change="$emit('socket-field-value-change')" />
       </template>
     </div>
 
@@ -185,11 +197,12 @@ watch(props.node, () => { // update please :(
 
           @unlink="
             $emit('tree-update'),
-            $emit('potential-socket-position-change')" />
+            $emit('potential-socket-position-change')"/>
     </div>
 
     <!-- {{node.output().map((x: number) => x.toFixed(4))}} -->
-    <NodeOutput :node="node" />
+    <NodeOutput :node="node"
+        ref="outputVue" />
   </div>
 </template>
 
