@@ -235,7 +235,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
         (ins, outs, context, node) => node.computeColor(ins, context, false),
         (ins, outs, context, node) => {
           const illuminant = node.includeWhitePoint
-              ? getIlluminant(ins[1] as InSocket<St.Dropdown>, context)
+              ? getIlluminant(node.illuminantSocket!, context)
               : node.ColClass.defaultIlluminant;
 
           let variables = new WebglVariables(

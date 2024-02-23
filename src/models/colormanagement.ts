@@ -12,14 +12,16 @@ export {cmyToRgb, rgbToCmy, rgbToHsl, hslToRgb, rgbToHsv, hsvToRgb, rgbToHwb, hw
 export * as difference from "./colormanagement/difference";
 
 import {webglXyzDeclarations} from "./colormanagement/spaces/col-xyz-xyy-illuminants";
-import {webglLabDeclarations} from "./colormanagement/spaces/lab";
-import {webglOklabDeclarations} from "./colormanagement/spaces/oklab";
 import {webglSrgbDeclarations} from "./colormanagement/spaces/srgb";
 import {webglAdobeRgbDeclarations} from "./colormanagement/spaces/adobe-rgb";
+import {webglLabDeclarations} from "./colormanagement/spaces/lab";
+import {webglLuvDeclarations} from "./colormanagement/spaces/luv";
+import {webglOklabDeclarations} from "./colormanagement/spaces/oklab";
 export const webglDeclarations = [
   webglXyzDeclarations,
   webglSrgbDeclarations,
   webglAdobeRgbDeclarations,
   webglLabDeclarations,
+  webglLuvDeclarations,
   webglOklabDeclarations,
 ].join("\n\n");

@@ -111,3 +111,54 @@ const lchUvToLuv = (lch: LchUv) => new Luv([
   Math.sin(lch.h * turn) * lch.c,
 ], lch.illuminant);
 //#endregion
+
+//#region WebGL conversion functions
+export const webglLuvDeclarations = `vec2 luvUvHelper(vec3 xyz) {
+  float denominator = xyz.x + (15. * xyz.y) + (3. * xyz.z);
+
+  return vec2(
+    4. * xyz.x / denominator,
+    9. * xyz.y / denominator
+  );
+}
+
+vec3 xyzToLuv(vec3 xyz, vec2 originalIlluminant, vec2 newIlluminant) {
+  vec3 adaptedXyz = adaptXyz(xyz, originalIlluminant, newIlluminant);
+  vec3 referenceWhiteXyz = xyyToXyz(vec3(newIlluminant, 1.));
+
+  float relativeLum = adaptedXyz.y / referenceWhiteXyz.y;
+
+  float l =
+      relativeLum > (6./29.) * (6./29.) * (6./29.)
+          ? pow(relativeLum, 1./3.) * 116. - 16.
+          : relativeLum * (29./3.) * (29./3.) * (29./3.);
+
+  vec2 tempUv = luvUvHelper(adaptedXyz);
+  vec2 referenceUv = luvUvHelper(referenceWhiteXyz);
+
+  return vec3(
+    l,
+    13. * l * (tempUv.x - referenceUv.x),
+    13. * l * (tempUv.y - referenceUv.y)
+  );
+}
+vec3 luvToXyz(vec3 luv, vec2 originalIlluminant, vec2 newIlluminant) {
+  float tempY = (luv.x + 16.) / 116.;
+
+  float y = 
+      tempY > 6./29.
+          ? tempY * tempY * tempY
+          : 3. * (6./29.) * (6./29.) * (tempY - 4./29.);
+
+  vec3 referenceWhiteXyz = xyyToXyz(vec3(originalIlluminant, 1.));
+  vec2 referenceUv = luvUvHelper(referenceWhiteXyz);
+
+  float tempU = luv.y / (13. * luv.x) + referenceUv.x;
+  float tempV = luv.z / (13. * luv.x) + referenceUv.y;
+  
+  float x = -9. * y * tempU / ((tempU - 4.) * tempV - tempU * tempV);
+  float z = (9. * y - (15. * tempV * y) - (tempV * x)) / (3. * tempV);
+
+  return adaptXyz(vec3(x, y, z), originalIlluminant, newIlluminant);
+}`;
+//#endregion
