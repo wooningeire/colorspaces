@@ -119,11 +119,12 @@ watch(props.node, () => { // update please :(
 
 
 const outputVue = ref<InstanceType<typeof NodeOutput>>();
-const reloadOutput = () => {
-  outputVue.value?.reload();
-};
+const inputVue = ref<InstanceType<typeof NodeSpecialInput>>();
 defineExpose({
-  reloadOutput,
+  reloadOutput: (isFromTreeUpdate: boolean) => {
+    outputVue.value?.reload(isFromTreeUpdate);
+    inputVue.value?.reload(isFromTreeUpdate);
+  },
 });
 
 </script>
@@ -151,7 +152,8 @@ defineExpose({
         v-html="marked.parseInline(node.label)">
     </div>
 
-    <NodeSpecialInput :node="node" />
+    <NodeSpecialInput :node="node"
+        ref="inputVue" />
 
     <!-- <div class="node-content">
       <div class="fields">
@@ -181,7 +183,7 @@ defineExpose({
               $emit('tree-update'),
               $emit('potential-socket-position-change')"
           
-          @field-value-change="$emit('socket-field-value-change')" />
+            @field-value-change="$emit('socket-field-value-change')" />
       </template>
     </div>
 

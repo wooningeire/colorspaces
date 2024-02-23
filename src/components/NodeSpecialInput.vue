@@ -5,11 +5,20 @@ import ChromaticityEntry from "./input/ChromaticityEntry.vue";
 import {Node} from "@/models/Node";
 import {models, output} from "@/models/nodetypes";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
+import { ref } from "vue";
 
 
 const props = defineProps<{
   node: Node,
 }>();
+
+
+const colorDisplayVue = ref<InstanceType<typeof NodeOutputColorDisplay>>();
+defineExpose({
+  reload: (isFromTreeUpdate: boolean) => {
+    colorDisplayVue.value?.reload(isFromTreeUpdate);
+  },
+});
 </script>
 
 <template class="special-input">
@@ -26,7 +35,9 @@ const props = defineProps<{
       :width="Math.max(1, node.widthSocket.inValue())"
       :height="Math.max(1, node.heightSocket.inValue())"
       :imageWidth="node.normalizeCoordsSocket.inValue() ? 1 : node.widthSocket.inValue()"
-      :imageHeight="node.normalizeCoordsSocket.inValue() ? 1 : node.heightSocket.inValue()" />
+      :imageHeight="node.normalizeCoordsSocket.inValue() ? 1 : node.heightSocket.inValue()"
+      
+      ref="colorDisplayVue" />
 </template>
 
 <style lang="scss" scoped>

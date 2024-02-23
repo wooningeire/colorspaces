@@ -246,8 +246,10 @@ void main() {
     const outVariables: WebglVariables["outVariables"] = new Map(this.outVariables.entries());
     const uniforms: WebglVariables["uniforms"] = {...sourceUniforms, ...this.uniforms};
     let template = this.template;
-    let preludeTemplate = `${sourcePreludeTemplate}
-${this.preludeTemplate}`;
+    let preludeTemplate = sourcePreludeTemplate
+        ? `${sourcePreludeTemplate}
+${this.preludeTemplate}`
+        : this.preludeTemplate;
     for (const [mappingName, mappingValue] of Object.entries(mappings)) {
       const slotRegex = new RegExp(`{${mappingName}(:\\w+)?}`, "g");
 
@@ -271,7 +273,7 @@ ${this.preludeTemplate}`;
     return new WebglVariables(template, outVariables, preludeTemplate, uniforms);
   }
 
-  fillWith(source: WebglVariables, socket: OutSocket | undefined, sourceVariableSlotMapping: Record<string, string>) {
+  fillWith(source: WebglVariables, socket: OutSocket | undefined, sourceVariableSlotMapping: Record<string, string>, keepSourcePrelude: boolean=false) {
     const outVariables: Record<string, string> = {};
     const remainderOutVariables = {...this.outVariables.get(socket)!};
     for (const [oldName, newName] of Object.entries(sourceVariableSlotMapping)) {
@@ -279,7 +281,9 @@ ${this.preludeTemplate}`;
       delete remainderOutVariables[oldName];
     }
 
-    return this.fillSlots({...remainderOutVariables, ...outVariables}, source.preludeTemplate, source.uniforms);
+    return keepSourcePrelude
+        ? this.fillSlots({...remainderOutVariables, ...outVariables}, source.preludeTemplate, source.uniforms)
+        : this.fillSlots({...remainderOutVariables, ...outVariables});
   }
 
   join(target: WebglVariables) {

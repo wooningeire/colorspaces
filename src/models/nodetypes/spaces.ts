@@ -151,7 +151,7 @@ vec3 {2:xyz} = {xyz};`,
                 "illuminant": "originalIlluminant",
                 "xyz": "xyz",
                 "toXyz": "toXyz",
-              });
+              }, true);
             }
   
             return variables;
@@ -168,7 +168,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
             if (ins[0].usesFieldValue) {
               variables = variables.fillWith(ins[0].webglVariables(), undefined, {
                 "val": "val",
-              });
+              }, true);
             }
 
             return variables;
@@ -245,17 +245,17 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
           if (ins[0].usesFieldValue) {
             variables = variables.fillWith(ins[0].webglVariables(), undefined, {
               "val": "x",
-            });
+            }, true);
           }
           if (ins[1].usesFieldValue) {
             variables = variables.fillWith(ins[1].webglVariables(), undefined, {
               "val": "y",
-            });
+            }, true);
           }
           if (ins[2].usesFieldValue) {
             variables = variables.fillWith(ins[2].webglVariables(), undefined, {
               "val": "z",
-            });
+            }, true);
           }
 
           return variables;

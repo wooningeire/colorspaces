@@ -34,11 +34,10 @@ watch(() => props.node.getDependencyAxes().size, () => {
 
 
 const colorDisplayVue = ref<InstanceType<typeof NodeOutputColorDisplay>>();
-const reload = () => {
-  colorDisplayVue.value?.rerender();
-};
 defineExpose({
-  reload,
+  reload: (isFromTreeUpdate: boolean) => {
+    colorDisplayVue.value?.reload(isFromTreeUpdate);
+  },
 });
 </script>
 

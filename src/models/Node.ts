@@ -598,7 +598,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           `uniform vec3 {0:unif};`,
           {
             "{0:unif}": (gl, unif) => {
-              if (this.usesFieldValue) {
+              if (!this.usesFieldValue) {
                 gl.uniform3fv(unif, this.inValue(context) as number[]);
               } else {
                 gl.uniform3fv(unif, [0, 0, 0]);
@@ -619,7 +619,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           `uniform vec3 {0:unif};`,
           {
             "{0:unif}": (gl, unif) => {
-              gl.uniform3fv(unif, this.inValue(context) as number[]);
+              gl.uniform3fv(unif, this.fieldValue as number[]);
             },
           },
         )
@@ -636,7 +636,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           `uniform vec3 {0:unif};`,
           {
             "{0:unif}": (gl, unif) => {
-              gl.uniform1f(unif, this.inValue(context) as number);
+              gl.uniform1f(unif, this.fieldValue as number);
             },
           },
         )

@@ -27,8 +27,6 @@ let glProgramLast: WebGLProgram;
 let nVertsLast = 0;
 
 
-const dataOutput = (context: NodeEvalContext) => props.node.output(context);
-
 const imageIsOutOfGamut = ref(false);
 
 let lastTranspilation: WebglVariables;
@@ -124,7 +122,9 @@ void main() {
 
   rerender();
 };
-const rerender = () => {
+const rerender = async () => {
+  await nextTick();
+
   const gl = glLast.value!;
 
   const axes = props.node.getDependencyAxes();
@@ -183,16 +183,21 @@ const rerenderCanvas = () => {
 };
  */
 onMounted(reinitializeShader);
-onUpdated(reinitializeShader);
 watch(settings, rerender);
-watch(() => tree.links.size, rerender);
 
 // `coords` property is needed to update when Gradient node axis changes, might want to make this check more robust?
 // When is this check being triggered? (whenever function dependencies update according to Vue?)
-// watch(() => dataOutput({socket: props.socket, coords: [0, 0]}), retranspileShaderAndRerender);
+// watch(() => dataOutput({socket: props.socket, coords: [0, 0]}), reinitializeShader);
+
 
 defineExpose({
-  rerender,
+  reload: (isFromTreeUpdate: boolean) => {
+    if (isFromTreeUpdate) {
+      reinitializeShader();
+    } else {
+      rerender();
+    }
+  },
 });
 </script>
 

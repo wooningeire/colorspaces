@@ -80,9 +80,9 @@ onMounted(rerenderLinks);
 
 
 const nodeVues = ref<InstanceType<typeof NodeVue>[]>([]);
-const reloadOutputs = () => {
+const reloadOutputs = (isFromTreeUpdate: boolean) => {
   for (const nodeVue of nodeVues.value) {
-    nodeVue.reloadOutput();
+    nodeVue.reloadOutput(isFromTreeUpdate);
   }
 };
 
@@ -159,21 +159,6 @@ const onWheel = (event: WheelEvent) => {
 defineExpose({
   selectNode,
 });
-
-/* srgbOutput() {
-  const resultSocket = this.deviceNodes.transformNode.ins[0];
-
-  for (const link of resultSocket.links) {
-    if (link.src.type !== Socket.Type.ColorCoords) continue;
-    return link.src.node.output();
-  }
-
-  return [1, 1, 1];
-}, */
-
-// recomputeOutputColor() {
-//   const displayColor = this.srgbOutput() as Color;
-// },
 </script>
 
 <template>
@@ -199,10 +184,10 @@ defineExpose({
           @link-to-socket="onLinkToSocket"
           @node-selected="selectNode"
 
-          @tree-update="void 0/* recomputeOutputColor */"
           @potential-socket-position-change="rerenderLinks"
           
-          @socket-field-value-change="reloadOutputs"
+          @socket-field-value-change="reloadOutputs(false)"
+          @tree-update="reloadOutputs(true)"
           
           ref="nodeVues" />
     </div>
