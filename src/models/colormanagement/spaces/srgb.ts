@@ -167,3 +167,67 @@ export const linearToXyz = (linear: LinearSrgb, newIlluminant: Xy) => {
   return adaptXyz(new Xyz(xyz as any as Vec3, linear.illuminant), newIlluminant);
 };
 //#endregion
+
+//#region WebGL conversion functions
+export const webglSrgbDeclarations = `float linearCompToGammaSrgb(float comp) {
+  return comp <= 0.0031308
+      ? 12.9232102 * comp
+      : 1.055 * pow(comp, 1./2.4) - 0.055;
+}
+float gammaCompToLinearSrgb(float comp) {
+  return comp <= 0.04045
+      ? comp / 12.9232102
+      : pow((comp + 0.055) / 1.055, 2.4);
+}
+
+float linCompToRec709(float comp) {
+  return comp < 0.018
+      ? 4.5 * comp
+      : 1.099 * pow(comp, 1./2.2) - 0.099;
+}
+
+float rec709CompToLin(float comp) {
+  return comp < 0.081
+      ? comp / 4.5
+      : pow((comp + 0.099) / 1.099, 2.2);
+}
+
+vec3 linearToGammaSrgb(vec3 linear) {
+  return vec3(
+    linearCompToGammaSrgb(linear.r),
+    linearCompToGammaSrgb(linear.g),
+    linearCompToGammaSrgb(linear.b)
+  );
+}
+
+vec3 gammaToLinearSrgb(vec3 linear) {
+  return vec3(
+    gammaCompToLinearSrgb(linear.r),
+    gammaCompToLinearSrgb(linear.g),
+    gammaCompToLinearSrgb(linear.b)
+  );
+}
+
+vec3 linearToRec709(vec3 linear) {
+  return vec3(
+    linCompToRec709(linear.r),
+    linCompToRec709(linear.g),
+    linCompToRec709(linear.b)
+  );
+}
+
+vec3 rec709ToLinearSrgb(vec3 linear) {
+  return vec3(
+    rec709CompToLin(linear.r),
+    rec709CompToLin(linear.g),
+    rec709CompToLin(linear.b)
+  );
+}
+
+vec3 xyzToGammaSrgb(vec3 xyz, vec2 originalIlluminant) {
+  return linearToGammaSrgb(xyzToLinearSrgb(xyz, originalIlluminant));
+}
+vec3 gammaSrgbToXyz(vec3 rgb, vec2 newIlluminant) {
+  return linearSrgbToXyz(gammaToLinearSrgb(rgb), newIlluminant);
+}`;
+//#endregion

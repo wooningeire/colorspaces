@@ -100,3 +100,43 @@ const gammaCompToLinAdobeRgb = (comp: number) => comp**(2 + 51/256);
 const linToGammaAdobeRgb = (linear: LinearAdobeRgb) => new AdobeRgb(linear.map(linCompToGammaAdobeRgb) as Vec3);
 const gammaToLinAdobeRgb = (adobe: AdobeRgb) => new LinearAdobeRgb(adobe.map(gammaCompToLinAdobeRgb) as Vec3);
 //#endregion
+
+//#region WebGL conversion functions
+export const webglAdobeRgbDeclarations = `vec3 xyzToLinAdobeRgb(vec3 xyz, vec2 originalIlluminant) {
+  vec3 adaptedXyz = adaptXyz(xyz, originalIlluminant, illuminant2_D65);
+
+  return transpose(mat3(
+    +2.0413690, -0.5649464, -0.3446944,
+    -0.9692660, +1.8760108, +0.0415560,
+    +0.0134474, -0.1183897, +1.0154096
+  )) * adaptedXyz;
+}
+
+const float gammaToLinAdobeRgbExp = 2. + 51./256.;
+const float linToGammaAdobeRgbExp = 1. / gammaToLinAdobeRgbExp;
+vec3 linToGammaAdobeRgb(vec3 rgb) {
+  return vec3(
+    pow(rgb.r, linToGammaAdobeRgbExp),
+    pow(rgb.g, linToGammaAdobeRgbExp),
+    pow(rgb.b, linToGammaAdobeRgbExp)
+  );
+}
+
+vec3 linAdobeRgbToXyz(vec3 rgb, vec2 newIlluminant) {
+  vec3 xyz = transpose(mat3(
+    +2.0413690, -0.5649464, -0.3446944,
+    -0.9692660, +1.8760108, +0.0415560,
+    +0.0134474, -0.1183897, +1.0154096
+  )) * rgb;
+  
+  return adaptXyz(xyz, illuminant2_D65, newIlluminant);
+}
+
+vec3 gammaToLinAdobeRgb(vec3 rgb) {
+  return vec3(
+    pow(rgb.r, gammaToLinAdobeRgbExp),
+    pow(rgb.g, gammaToLinAdobeRgbExp),
+    pow(rgb.b, gammaToLinAdobeRgbExp)
+  );
+}`;
+//#endregion

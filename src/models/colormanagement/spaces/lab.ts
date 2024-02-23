@@ -101,3 +101,63 @@ const lchAbToLab = (lch: LchAb) => new Lab([
   Math.sin(lch.h * turn) * lch.c,
 ], lch.illuminant);
 //#endregion
+
+//#region WebGL conversion functions
+export const webglLabDeclarations = `float xyzToLabCompHelper(float comp) {
+  return comp > (6./29.) * (6./29.) * (6./29.)
+      ? pow(comp, 1./3.)
+      : comp / (3. * (6./29.) * (6./29.)) + 4./29.;
+}
+vec3 xyzToLab(vec3 xyz, vec2 originalIlluminant, vec2 newIlluminant) {
+  vec3 adaptedXyz = adaptXyz(xyz, originalIlluminant, newIlluminant);
+  vec3 referenceWhiteXyz = xyyToXyz(vec3(newIlluminant, 1.));
+
+  vec3 tempXyz = adaptedXyz / referenceWhiteXyz;
+  vec3 newXyz = vec3(
+    xyzToLabCompHelper(tempXyz.x),
+    xyzToLabCompHelper(tempXyz.y),
+    xyzToLabCompHelper(tempXyz.z)
+  );
+
+  return vec3(
+    116. * newXyz.y - 16.,
+    500. * (newXyz.x - newXyz.y),
+    200. * (newXyz.y - newXyz.z)
+  );
+}
+
+float labToXyzCompHelper(float comp) {
+  return comp > 6./29.
+      ? comp * comp * comp
+      : 3. * (6./29.) * (6./29.) * (comp - 4./29.);
+}
+vec3 labToXyz(vec3 lab, vec2 originalIlluminant, vec2 newIlluminant) {
+    float tempY = (lab.x + 16.) / 116.;
+    float tempX = tempY + lab.y / 500.;
+    float tempZ = tempY - lab.z / 200.;
+  
+    vec3 referenceWhiteXyz = xyyToXyz(vec3(originalIlluminant, 1.));
+  
+    return adaptXyz(vec3(
+      labToXyzCompHelper(tempX) * referenceWhiteXyz.x,
+      labToXyzCompHelper(tempY) * referenceWhiteXyz.y,
+      labToXyzCompHelper(tempZ) * referenceWhiteXyz.z
+    ), originalIlluminant, newIlluminant);
+}
+
+vec3 lxxToLch(vec3 lxx) {
+  return vec3(
+    lxx.x,
+    sqrt(lxx.y * lxx.y + lxx.z * lxx.z),
+    atan(lxx.z, lxx.y) / REV
+  );
+}
+
+vec3 lchToLxx(vec3 lch) {
+  return vec3(
+    lch.x,
+    cos(lch.z * REV) * lch.y,
+    sin(lch.z * REV) * lch.y
+  );
+}`;
+//#endregion

@@ -252,3 +252,88 @@ export const xyyToXyzNoAdapt = (xyy: Xy | Xyy) => {
       ], xyy.illuminant);
 };
 //#endregion
+
+//#region WebGL conversion functions
+export const webglXyzDeclarations = `const mat3 bradford = transpose(mat3(
+   0.8951,  0.2664, -0.1614,
+  -0.7502,  1.7135,  0.0367,
+   0.0389, -0.0685,  1.0296
+));
+
+const vec2 illuminant2_D65 = vec2(0.31270, 0.32900);
+const vec2 illuminant2_E = vec2(1./3., 1./3.);
+
+
+vec3 xyyToXyz(vec3 xyy) {
+  float x = xyy.x;
+  float y = xyy.y;
+  float lum = xyy.z;
+
+  return y == 0.
+      ? vec3(0., 0., 0.)
+      : vec3(
+        lum / y * x,
+        lum,
+        lum / y * (1. - x - y)
+      );
+}
+vec3 xyzToXyy(vec3 xyz){
+  float x = xyz.x;
+  float y = xyz.y;
+  float z = xyz.z;
+
+  float dot1 = x + y + z;
+
+  return dot1 == 0.
+      ? vec3(0., 0., 0.)
+      : vec3(
+        x / dot1,
+        y / dot1,
+        y
+      );
+}
+
+mat3 chromaticAdaptationMatrix(vec3 testWhiteXyz, vec3 refWhiteXyz, mat3 adaptationMatrix) {
+  vec3 newTestWhiteXyz = adaptationMatrix * testWhiteXyz;
+  vec3 newRefWhiteXyz = adaptationMatrix * refWhiteXyz;
+
+  vec3 dotDivision = newRefWhiteXyz / newTestWhiteXyz;
+
+  mat3 scalarMatrix = mat3(
+    dotDivision.x, 0., 0.,
+    0., dotDivision.y, 0.,
+    0., 0., dotDivision.z
+  );
+
+  mat3 adaptationShifterMatrix = inverse(adaptationMatrix) * scalarMatrix;
+  return adaptationShifterMatrix * adaptationMatrix;
+}
+
+vec3 adaptXyz(vec3 origXyz, vec2 originalIlluminant, vec2 targetIlluminant) {
+  vec3 testWhiteXyz = xyyToXyz(vec3(originalIlluminant, 1.));
+  vec3 refWhiteXyz = xyyToXyz(vec3(targetIlluminant, 1.));
+
+  return chromaticAdaptationMatrix(testWhiteXyz, refWhiteXyz, bradford) * origXyz;
+}
+
+vec3 xyzToLinearSrgb(vec3 xyz, vec2 originalIlluminant) {
+  vec3 adaptedXyz = adaptXyz(xyz, originalIlluminant, illuminant2_D65);
+
+  //https://en.wikipedia.org/wiki/SRGB#From_CIE_XYZ_to_sRGB
+  return transpose(mat3(
+    +3.2404542, -1.5371385, -0.4985314,
+    -0.9692660, +1.8760108, +0.0415560,
+    +0.0556434, -0.2040259, +1.0572252
+  )) * adaptedXyz;
+}
+
+vec3 linearSrgbToXyz(vec3 rgb, vec2 newIlluminant) {
+  vec3 xyz = inverse(transpose(mat3(
+    +3.2404542, -1.5371385, -0.4985314,
+    -0.9692660, +1.8760108, +0.0415560,
+    +0.0556434, -0.2040259, +1.0572252
+  ))) * rgb;
+
+  return adaptXyz(xyz, illuminant2_D65, newIlluminant);
+}`;
+//#endregion
