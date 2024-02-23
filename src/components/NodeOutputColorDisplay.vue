@@ -106,8 +106,10 @@ void main() {
 
   
   //#region Setting uniforms
-  const alphaUnif = gl.getUniformLocation(glProgram, "alphaFac");
-  const detectGamutUnif = gl.getUniformLocation(glProgram, "detectGamut");
+  const outOfGamutAlphaUnif = gl.getUniformLocation(glProgram, "outOfGamutAlpha");
+  setUniforms = () => {
+    gl.uniform1f(outOfGamutAlphaUnif, settings.outOfGamutAlpha);
+  };
   //#endregion
   
   // gl.clearColor(0, 0, 0, 0);
@@ -117,11 +119,11 @@ void main() {
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
   gl.bindVertexArray(vertArray);
-  gl.uniform1f(alphaUnif, 0.25);
-  gl.uniform1i(detectGamutUnif, Number(!settings.displayOutOfGamut));
 
+  setUniforms();
   rerender();
 };
+let setUniforms: () => void;
 const rerender = async () => {
   await nextTick();
 
@@ -183,7 +185,10 @@ const rerenderCanvas = () => {
 };
  */
 onMounted(reinitializeShader);
-watch(settings, rerender);
+watch(settings, () => {
+  setUniforms();
+  rerender();
+});
 
 // `coords` property is needed to update when Gradient node axis changes, might want to make this check more robust?
 // When is this check being triggered? (whenever function dependencies update according to Vue?)
@@ -191,8 +196,8 @@ watch(settings, rerender);
 
 
 defineExpose({
-  reload: (isFromTreeUpdate: boolean) => {
-    if (isFromTreeUpdate) {
+  reload: (requiresShaderReload: boolean) => {
+    if (requiresShaderReload) {
       reinitializeShader();
     } else {
       rerender();

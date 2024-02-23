@@ -40,12 +40,14 @@ import {settings} from "./store";
     </div>
 
     <div class="container">
-      <div class="control-row">
-        <input type="checkbox"
-            id="settings-display-out-of-gamut"
-            v-model="settings.displayOutOfGamut" />
-        <label for="settings-display-out-of-gamut">Display out-of-gamut colors</label>
-      </div>
+      <div>Alpha for out-of-gamut colors</div>
+      <input type="range"
+          min="0"
+          max="1"
+          step="any"
+
+          id="settings-display-out-of-gamut"
+          v-model="settings.outOfGamutAlpha" />
     </div>
   </div>
 </template>

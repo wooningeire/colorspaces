@@ -18,7 +18,7 @@ const props = defineProps<{
 
 // @ts-ignore
 const emit = defineEmits<{
-  (event: "field-value-change"): void,
+  (event: "field-value-change", requiresShaderReload: boolean): void,
   (event: "drag-socket", socketVue: InstanceType<typeof NodeSocket>): void,
   (event: "link-to-socket", socketVue: InstanceType<typeof NodeSocket>): void,
   (event: "unlink"): void,
@@ -193,9 +193,9 @@ Object.defineProperties(socketVue, {
 
     <NodeSocketField v-if="shouldShowFields"
         :socket="socket"
-        @value-change="() => {
+        @value-change="(requiresShaderReload) => {
           socket.node.onSocketFieldValueChange(socket, tree as Tree);
-          $emit('field-value-change');
+          $emit('field-value-change', requiresShaderReload);
         }" />
   </div>
 </template>

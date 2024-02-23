@@ -31,7 +31,7 @@ const emit = defineEmits<{
   (event: "potential-socket-position-change"): void,
   (event: "tree-update"): void,
   (event: "node-selected", targetNode: Node, clearSelectionFirst: boolean): void,
-  (event: "socket-field-value-change"): void,
+  (event: "socket-field-value-change", requiresShaderReload: boolean): void,
 }>();
 
 
@@ -121,9 +121,9 @@ watch(props.node, () => { // update please :(
 const outputVue = ref<InstanceType<typeof NodeOutput>>();
 const inputVue = ref<InstanceType<typeof NodeSpecialInput>>();
 defineExpose({
-  reloadOutput: (isFromTreeUpdate: boolean) => {
-    outputVue.value?.reload(isFromTreeUpdate);
-    inputVue.value?.reload(isFromTreeUpdate);
+  reloadOutput: (requiresShaderReload: boolean) => {
+    outputVue.value?.reload(requiresShaderReload);
+    inputVue.value?.reload(requiresShaderReload);
   },
 });
 
@@ -183,7 +183,7 @@ defineExpose({
               $emit('tree-update'),
               $emit('potential-socket-position-change')"
           
-            @field-value-change="$emit('socket-field-value-change')" />
+            @field-value-change="(requiresShaderReload: boolean) => $emit('socket-field-value-change', requiresShaderReload)" />
       </template>
     </div>
 

@@ -80,9 +80,9 @@ onMounted(rerenderLinks);
 
 
 const nodeVues = ref<InstanceType<typeof NodeVue>[]>([]);
-const reloadOutputs = (isFromTreeUpdate: boolean) => {
+const reloadOutputs = (requiresShaderReload: boolean) => {
   for (const nodeVue of nodeVues.value) {
-    nodeVue.reloadOutput(isFromTreeUpdate);
+    nodeVue.reloadOutput(requiresShaderReload);
   }
 };
 
@@ -179,14 +179,14 @@ defineExpose({
     <div class="nodes">
       <NodeVue v-for="node of tree.nodes"
           :key="node.id"
-          :node="node"
+          :node="(node as Node)"
           @drag-socket="onDragSocket"
           @link-to-socket="onLinkToSocket"
           @node-selected="selectNode"
 
           @potential-socket-position-change="rerenderLinks"
           
-          @socket-field-value-change="reloadOutputs(false)"
+          @socket-field-value-change="requiresShaderReload => reloadOutputs(requiresShaderReload)"
           @tree-update="reloadOutputs(true)"
           
           ref="nodeVues" />

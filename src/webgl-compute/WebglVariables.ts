@@ -197,8 +197,7 @@ precision mediump float;
 in vec2 v_uv;
 out vec4 fragColor;
 
-uniform float alphaFac;
-uniform bool detectGamut;
+uniform float outOfGamutAlpha;
 
 {beforePrelude}
 
@@ -209,15 +208,19 @@ void main() {
   
   vec3 gammaSrgb = xyzToGammaSrgb({xyz}, illuminant2_D65);
 
-  bool outOfGamut = 0. > gammaSrgb.r
-      || 0. > gammaSrgb.g
-      || 0. > gammaSrgb.b;
+  float alpha = 1.;
 
-  float alpha = detectGamut && outOfGamut
-      ? 0.75
-      : 1.;
+  if (outOfGamutAlpha != 1.) {
+    bool outOfGamut = 0. > gammaSrgb.r || gammaSrgb.r > 1.
+        || 0. > gammaSrgb.g || gammaSrgb.g > 1.
+        || 0. > gammaSrgb.b || gammaSrgb.b > 1.;
+  
+    if (outOfGamut) {
+      alpha *= outOfGamutAlpha;
+    }
+  }
 
-  fragColor = vec4(gammaSrgb, 1.);
+  fragColor = vec4(gammaSrgb, alpha);
 }`,
     new Map([
       [undefined, {}],

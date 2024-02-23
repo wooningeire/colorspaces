@@ -27,6 +27,7 @@ export namespace images {
             {text: "Y", value: "1"},
           ],
           defaultValue: "0",
+          valueChangeRequiresShaderReload: true,
         })),
         ...(this.boundsSockets = [
           new InSocket(this, Socket.Type.Float, "From", true, {
@@ -60,17 +61,40 @@ export namespace images {
     }
 
     webglOutput(context: NodeEvalContext={}): WebglVariables {
-      const value0 = this.boundsSockets[0].inValue(context);
-      const value1 = this.boundsSockets[1].inValue(context);
-      return new WebglVariables(
-        `float {0:val} = mix(${value0.toFixed(7)}, ${value1.toFixed(7)}, v_uv.${this.whichDimension === 0 ? "x" : "y * -1."});`,
+      let variables =  new WebglVariables(
+        `float {0:val} = mix({from}, {to}, v_uv.${this.whichDimension === 0 ? "x" : "y * -1."});`,
         new Map([
           [this.outs[0], {
             "val": "{0:val}",
           }]
         ]),
       )
-          .nameVariableSlots(1);
+          .nameVariableSlots(3);
+
+      if (this.boundsSockets[0].usesFieldValue) {
+        variables = variables.fillWith(this.boundsSockets[0].webglVariables(), undefined, {
+          "val": "from",
+        }, true);
+      }
+      if (this.boundsSockets[1].usesFieldValue) {
+        variables = variables.fillWith(this.boundsSockets[1].webglVariables(), undefined, {
+          "val": "to",
+        }, true);
+      }
+
+      return variables;
+    }
+
+    webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket<any>): WebglVariables {
+      if (inSocket === this.boundsSockets[0]) {
+        return target.fillWith(source, inSocket.link?.src, {
+          "val": "from",
+        });
+      } else {
+        return target.fillWith(source, inSocket.link?.src, {
+          "val": "to",
+        });
+      }
     }
   }
 

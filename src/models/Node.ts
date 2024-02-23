@@ -403,6 +403,7 @@ export type SocketOptions<St extends SocketType=any> =
       defaultValue?: SocketValue<St>,
       hasVolatileType?: boolean,
       showFieldIfAvailable?: boolean,
+      valueChangeRequiresShaderReload?: boolean,
       onValueChange?: (this: Socket<St>, tree: Tree) => void,
       onLink?: (this: Socket<St>, link: Link, tree: Tree) => void,
       onUnlink?: (this: Socket<St>, link: Link, tree: Tree) => void,
@@ -455,6 +456,7 @@ export abstract class Socket<St extends SocketType=any> {
   /** Semantic field that determines whether the socket should not be trusted to maintain its type (used by St.Any
    * sockets to determine whether they should mock this socket's type to prevent cyclical dependencies) */
   readonly hasVolatileType: boolean;
+  readonly valueChangeRequiresShaderReload: boolean;
   flags: SocketFlag;
 
   readonly data: SocketData<St>;
@@ -476,6 +478,7 @@ export abstract class Socket<St extends SocketType=any> {
       defaultValue,
       showFieldIfAvailable,
       hasVolatileType,
+      valueChangeRequiresShaderReload,
       onValueChange,
       onLink,
       onUnlink,
@@ -487,6 +490,7 @@ export abstract class Socket<St extends SocketType=any> {
     this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
     this.showFieldIfAvailable = showFieldIfAvailable ?? true;
     this.hasVolatileType = hasVolatileType ?? false;
+    this.valueChangeRequiresShaderReload = valueChangeRequiresShaderReload ?? false;
     this.data = data as any as SocketData<St>;
 
     this.flags = SocketFlag.None;
@@ -633,7 +637,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
               "val": "{0:unif}",
             }],
           ]),
-          `uniform vec3 {0:unif};`,
+          `uniform float {0:unif};`,
           {
             "{0:unif}": (gl, unif) => {
               gl.uniform1f(unif, this.fieldValue as number);

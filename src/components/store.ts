@@ -70,12 +70,12 @@ export const settings = reactive(<{
   deviceSpace: typeof cm.Col,
   rgbScale: number,
   hueScale: number,
-  displayOutOfGamut: boolean,
+  outOfGamutAlpha: number,
 }>{
   deviceSpace: cm.Srgb,
   rgbScale: 1,
   hueScale: 1,
-  displayOutOfGamut: true,
+  outOfGamutAlpha: 0.5,
 });
 //#endregion
 

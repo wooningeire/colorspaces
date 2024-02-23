@@ -13,7 +13,9 @@ import {externals} from "@/models/nodetypes";
 const props = defineProps<{
   socket: Socket,
 }>();
-const emit = defineEmits(["value-change"]);
+const emit = defineEmits<{
+  (event: "value-change", requiresShaderReload: boolean): void,
+}>();
 
 const fileInput = ref(null as any as HTMLInputElement);
 
@@ -38,9 +40,9 @@ const readFile = (): Promise<ImageData> => new Promise(resolve => {
   reader.readAsDataURL(file);
 });
 
-const onValueChange = () => {
-  emit("value-change");
+const onValueChange = (requiresShaderReload=false) => {
   props.socket.onValueChange(tree as Tree);
+  emit("value-change", requiresShaderReload);
 };
 
 
@@ -64,7 +66,7 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
       ref="editorContainer">
     <template v-if="isFloat">
       <EntrySlider v-model="(socket as FloatSocket).fieldValue"
-          @update:modelValue="onValueChange()"
+          @update:modelValue="onValueChange(socket.valueChangeRequiresShaderReload)"
           
           :convertIn="
             isRgb ? (value: number) => value / settings.rgbScale :
@@ -89,7 +91,7 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
 
     <template v-else-if="isVector">
       <EntryRgb v-model="(socket as VectorSocket).fieldValue"
-          @update:modelValue="onValueChange()"
+          @update:modelValue="onValueChange(socket.valueChangeRequiresShaderReload)"
 
           :convertIn="
             isRgb ? (color: number[]) => color.map(value => value / settings.rgbScale) :
@@ -115,7 +117,7 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
     <template v-else-if="socket.type === St.Dropdown">
       <label>
         <select v-model="socket.fieldValue"
-            @change="onValueChange()">
+            @change="onValueChange(socket.valueChangeRequiresShaderReload)">
           <option v-for="{text, value} of (socket as Socket<St.Dropdown>).data.options"
               :value="value">
             {{text}}
@@ -130,14 +132,14 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
           ref="fileInput"
           @change="async () => {
             socket.fieldValue = await readFile();
-            onValueChange();
+            onValueChange(socket.valueChangeRequiresShaderReload);
           }" />
     </template>
 
     <template v-else-if="socket.type === St.Bool">
       <input type="checkbox"
           v-model="socket.fieldValue"
-          @change="onValueChange()" />
+          @change="onValueChange(socket.valueChangeRequiresShaderReload)" />
     </template>
   </div>
 </template>
