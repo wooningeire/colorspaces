@@ -40,14 +40,33 @@ import {settings} from "./store";
     </div>
 
     <div class="container">
-      <div>Alpha for out-of-gamut colors</div>
-      <input type="range"
-          min="0"
-          max="1"
-          step="any"
+      <div>Alpha for <span title="Colors that cannot be represented correctly using the currently selected device color space">out-of-gamut colors</span></div>
+      <div class="control-row">
+        <input type="range"
+            min="0"
+            max="1"
+            step="any"
 
-          id="settings-display-out-of-gamut"
-          v-model="settings.outOfGamutAlpha" />
+            id="settings-display-out-of-gamut"
+            :value="settings.outOfGamutAlpha"
+            @input="settings.outOfGamutAlpha = Number(($event.currentTarget as HTMLInputElement)!.value)" />
+        {{ settings.outOfGamutAlpha.toFixed(3) }}
+      </div>
+    </div>
+
+    <div class="container">
+      <div>Alpha for <span title="Colors that cannot physically exist">imaginary colors</span></div>
+      <div class="control-row">
+        <input type="range"
+            min="0"
+            max="1"
+            step="any"
+
+            id="settings-display-out-of-gamut"
+            :value="settings.imaginaryColorAlpha"
+            @input="settings.imaginaryColorAlpha = Number(($event.currentTarget as HTMLInputElement)!.value)" />
+        {{ settings.imaginaryColorAlpha.toFixed(3) }}
+      </div>
     </div>
   </div>
 </template>
@@ -78,11 +97,17 @@ import {settings} from "./store";
 .control-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
 
   > div {
     display: flex;
     flex-flow: row;
     gap: 0.25em;
   }
+}
+
+span[title] {
+  text-decoration: underline dotted;
+  cursor: help;
 }
 </style>

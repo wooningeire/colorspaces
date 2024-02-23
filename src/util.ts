@@ -93,3 +93,10 @@ const matrixDotVector3 = (matrix: number[][], vector: number[]) => [
   matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2] * vector[2],
   matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2] * vector[2],
 ];
+
+
+export const assert = (value: boolean) => {
+  if (!value) {
+    throw new Error("assertion failed");
+  }
+};

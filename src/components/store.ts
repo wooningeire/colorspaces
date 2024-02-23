@@ -71,11 +71,13 @@ export const settings = reactive(<{
   rgbScale: number,
   hueScale: number,
   outOfGamutAlpha: number,
+  imaginaryColorAlpha: number,
 }>{
   deviceSpace: cm.Srgb,
   rgbScale: 1,
   hueScale: 1,
   outOfGamutAlpha: 0.5,
+  imaginaryColorAlpha: 0.5,
 });
 //#endregion
 

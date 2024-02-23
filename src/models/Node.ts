@@ -352,7 +352,6 @@ export type WebglSocketValue<St extends SocketType=any> =
       "color": string,
       "illuminant": string,
       "xyz": string,
-      "toXyz": string,
     } :
     St extends SocketType.VectorOrColor ? WebglSocketValue<SocketType.ColorCoords> | WebglSocketValue<SocketType.Vector> :
     St extends SocketType.Dropdown ? never :
@@ -596,7 +595,6 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
               "color": "{0:unif}",
               "illuminant": "illuminant2_D65",
               "xyz": "vec3(0., 0., 0.)",
-              "toXyz": ``,
             }]
           ]),
           `uniform vec3 {0:unif};`,

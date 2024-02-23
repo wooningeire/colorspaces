@@ -4,10 +4,9 @@ export type StringKey = keyof typeof strings;
 export const NO_DESC = Symbol();
 
 let getString: (key: string | StringKey, ...replacements: string[]) => string;
-export default getString = (key: string | StringKey, ...replacements: string[]) => replacements.reduce(
-  (acc, replacement) => acc.replace("{}", replacement),
-  marked.parseInline(strings.hasOwnProperty(key) ? strings[key as keyof typeof strings] : `[missing text: \`${String(key)}\`]`),
-);
+export default getString = (key: string | StringKey, ...replacements: string[]) =>
+  marked.parseInline(strings.hasOwnProperty(key) ? strings[key as keyof typeof strings] : `[missing text: \`${String(key)}\`]`)
+      .replaceAll(/\{(\d+)\}/g, (match, slotIndex) => replacements[Number(slotIndex)]);
 
 const strings = {
   "general.socketDataTypeLabel": "**Data type**: ",
@@ -90,8 +89,8 @@ const strings = {
   "label.socketType.unknown": "Unknown",
 
   "error.import": "**Error occurred while importing tree**: ",
-  "error.import.unknownNodeType": "Node type \"`{}`\" does not exist.",
-  "error.import.unknownOverload": "Node type \"`{}`\" does not have a mode named \"`{}`\".",
+  "error.import.unknownNodeType": "Node type \"`{0}`\" does not exist.",
+  "error.import.unknownOverload": "Node type \"`{0}`\" does not have a mode named \"`{1}`\".",
 
   [NO_DESC]: "",
 };
