@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {getCurrentInstance, inject, nextTick, onMounted, ref, Ref, watch} from "vue";
 
-import NodeLink from "./NodeLink.vue";
+import NodeLink from "./node/NodeLink.vue";
 
 import {Tree, Socket, Link} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
@@ -14,7 +14,7 @@ const props = defineProps(["socketVues"]);
 <template>
   <NodeLink v-for="link of tree.links"
       :key="link.id"
-      :link="link"
+      :link="(link as Link)"
       :socketVues="socketVues"
 
       :invalid="link.causesCircularDependency" />

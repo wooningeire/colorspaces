@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {PropType, computed} from 'vue';
 
-import {settings} from "./store";
+import {settings} from "../store";
 
 import {Col} from "@/models/colormanagement";
 import {SocketFlag} from '@/models/Node';

@@ -2,7 +2,7 @@
 import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch, nextTick} from "vue";
 
 import {Node, Socket, NodeEvalContext} from "@/models/Node";
-import {tree, settings} from "./store";
+import {tree, settings} from "../store";
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
 
 const props = withDefaults(defineProps<{

@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import {ref, computed, PropType} from "vue";
 
-import BaseEntry from "./input/BaseEntry.vue";
-import EntryRgb from "./input/EntryRgb.vue";
-import EntrySlider from "./input/EntrySlider.vue";
+import BaseEntry from "../input/BaseEntry.vue";
+import EntryRgb from "../input/EntryRgb.vue";
+import EntrySlider from "../input/EntrySlider.vue";
 
-import {settings, tree} from "./store";
+import {settings, tree} from "../store";
 
 import {Socket, SocketType as St, SocketFlag, Tree} from "@/models/Node";
 import {externals} from "@/models/nodetypes";

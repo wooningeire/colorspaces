@@ -15,8 +15,8 @@ import {Listen, clearTextSelection, Vec2} from "@/util";
 
 import getString from "@/strings";
 
-import {selectedNodes, modifierKeys} from "./store";
-import makeDragListener from "./draggable";
+import {selectedNodes, modifierKeys} from "../store";
+import makeDragListener from "../draggable";
 
 
 const props = defineProps<{
@@ -209,7 +209,7 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
-@import "./mixins.scss";
+@import "../mixins.scss";
 
 .node {
   position: absolute;

@@ -9,7 +9,7 @@ import NodeOutputCssColor from "./NodeOutputCssColor.vue";
 import {Node, NodeWithOverloads, OutputDisplayType} from "@/models/Node";
 import {Col} from "@/models/colormanagement";
 import { Vec3 } from "@/util";
-import { tree } from "./store";
+import { tree } from "../store";
 
 const props = defineProps<{
   node: Node,

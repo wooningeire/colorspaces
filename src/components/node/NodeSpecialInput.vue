@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import SpectralPowerDistributionEntry from "./input/SpectralPowerDistributionEntry.vue";
-import ChromaticityEntry from "./input/ChromaticityEntry.vue";
+import SpectralPowerDistributionEntry from "../input/SpectralPowerDistributionEntry.vue";
+import ChromaticityEntry from "../input/ChromaticityEntry.vue";
 
 import {Node} from "@/models/Node";
 import {models, output} from "@/models/nodetypes";

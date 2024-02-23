@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Tree } from "@/models/Node";
+import { Tree, Node } from "@/models/Node";
 import {tree, selectedNodes} from "./store";
 import {downloadNodeTree, importNodeTree} from "@/file-management/node-tree-io";
 import { ref } from "vue";
@@ -7,7 +7,7 @@ import { ref } from "vue";
 const deleteSelectedNodes = () => {
   selectedNodes.forEach(node => {
     if (!node.canMove) return;
-    tree.deleteNode(node);
+    tree.deleteNode(node as Node);
   });
 };
 

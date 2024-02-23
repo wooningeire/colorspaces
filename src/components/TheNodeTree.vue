@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import {computed, ref, reactive, provide, nextTick, onMounted, Ref, inject, watch} from "vue";
 
-import NodeVue from "./NodeVue.vue";
-import NodeSocket from "./NodeSocket.vue";
+import NodeVue from "./node/NodeVue.vue";
+import NodeSocket from "./node/NodeSocket.vue";
 import TheNodeTreeLinks from "./TheNodeTreeLinks.vue";
-import NodeLink from "./NodeLink.vue";
+import NodeLink from "./node/NodeLink.vue";
 
 import {Vec2, Listen, clearTextSelection} from "@/util";
 import {Socket, Node, Link} from "@/models/Node";
