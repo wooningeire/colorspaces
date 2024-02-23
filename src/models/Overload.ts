@@ -8,8 +8,8 @@ export class Overload<OutputType, NodeType extends Node=any, InSockets extends I
     readonly ins: (node: NodeType) => [...InSockets],
     readonly outs: (node: NodeType) => [...OutSockets],
     readonly evaluate: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => OutputType,
-    readonly webglEvaluate: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => WebglVariables,
-    readonly webglFill: (source: WebglVariables, target: WebglVariables, inSocket: InSocket, ins: InSockets) => WebglVariables,
+    readonly webglEvaluate: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => WebglVariables=() => { throw new Error("not implemented"); },
+    readonly webglFill: (source: WebglVariables, target: WebglVariables, inSocket: InSocket, ins: InSockets) => WebglVariables=() => { throw new Error("not implemented"); },
     private readonly maintainExistingLinks = false,
   ) {}
 }

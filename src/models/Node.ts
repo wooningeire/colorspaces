@@ -391,7 +391,7 @@ export type SocketOptions<St extends SocketType=any> =
       onOutputTypeChange?: (this: Socket<St>, type: SocketType, tree: Tree) => void,
     } & SocketData<St>;
 
-export class Socket<St extends SocketType=any> {
+export abstract class Socket<St extends SocketType=any> {
   private static nextId = 0;
   readonly id = Socket.nextId++;
 
@@ -539,6 +539,10 @@ export class Socket<St extends SocketType=any> {
     }
   }
 
+  get usesFieldValue() {
+    return false;
+  }
+
   onValueChange(tree: Tree) {}
   /** Called whenever a new link is attached to this socket */
   onLink(link: Link, tree: Tree) {}
@@ -569,7 +573,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
   }
 
   webglVariables(context: NodeEvalContext={}): WebglVariables {
-    return this.hasLinks
+    return !this.usesFieldValue
         ? this.link.srcNode.webglOutput({
           ...context,
           socket: this.link.src,
@@ -582,7 +586,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
       case St.ColorCoords:
         return new WebglVariables("", new Map([
           [undefined, {
-          "color": this.hasLinks
+          "color": !this.usesFieldValue
               ? `vec3(${(this.inValue(context) as number[]).map(channel => channel.toFixed(7)).join(", ")})`
               : `vec3(0., 0., 0.)`,
           "illuminant": "illuminant2_D65",
@@ -616,10 +620,15 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
       return this.type;
     }
   
-    if (!this.hasLinks || this.link.src.type === St.VectorOrColor) {
+    if (this.usesFieldValue || this.link.src.type === St.VectorOrColor) {
       return St.Vector;
     }
     return this.link.src.type;
+  }
+
+  get usesFieldValue() {
+    return (!this.hasLinks || this.link.causesCircularDependency)
+        && this.showFieldIfAvailable;
   }
 }
 

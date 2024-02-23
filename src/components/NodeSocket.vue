@@ -29,11 +29,7 @@ const isDraggedOver = ref(false);
 const canLinkDraggedSocket = computed(() => Socket.canLink(draggedSocket?.value, props.socket));
 
 
-const shouldShowFields = computed(
-  () => props.socket.isInput
-      && (!props.socket.hasLinks || props.socket.links[0].causesCircularDependency)
-      && props.socket.showFieldIfAvailable
-);
+const shouldShowFields = computed(() => props.socket.usesFieldValue);
 
 
 const socketVues = inject("socketVues") as WeakMap<Socket, InstanceType<typeof NodeSocket>>;

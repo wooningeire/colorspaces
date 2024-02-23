@@ -145,7 +145,7 @@ vec3 {2:xyz} = {xyz};`,
             )
                 .nameVariableSlots(3);
   
-            if (!ins[0].hasLinks) {
+            if (ins[0].usesFieldValue) {
               variables = variables.fillWith(ins[0].webglVariables(), undefined, {
                 "color": "color",
                 "illuminant": "originalIlluminant",
@@ -165,7 +165,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
                 .nameVariableSlots(3);
 
   
-            if (!ins[0].hasLinks) {
+            if (ins[0].usesFieldValue) {
               variables = variables.fillWith(ins[0].webglVariables(), undefined, {
                 "val": "val",
               });
@@ -176,14 +176,14 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
         },
         (source, target, inSocket, ins) => {
           if (ins[0].effectiveType() === St.ColorCoords) {
-            return target.fillWith(source, undefined, {
+            return target.fillWith(source, inSocket.link?.src, {
               "color": "color",
               "illuminant": "originalIlluminant",
               "xyz": "xyz",
               "toXyz": "toXyz",
             });
           } else {
-            return target.fillWith(source, undefined, {
+            return target.fillWith(source, inSocket.link?.src, {
               "val": "val",
             });
           }
@@ -242,17 +242,17 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
           )
               .nameVariableSlots(3);
 
-          if (!ins[0].hasLinks) {
+          if (ins[0].usesFieldValue) {
             variables = variables.fillWith(ins[0].webglVariables(), undefined, {
               "val": "x",
             });
           }
-          if (!ins[1].hasLinks) {
+          if (ins[1].usesFieldValue) {
             variables = variables.fillWith(ins[1].webglVariables(), undefined, {
               "val": "y",
             });
           }
-          if (!ins[2].hasLinks) {
+          if (ins[2].usesFieldValue) {
             variables = variables.fillWith(ins[2].webglVariables(), undefined, {
               "val": "z",
             });
@@ -674,10 +674,10 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return false;
     }
     get webglToXyz() {
-      return "oklabToXyz(decylindrify({0:color}), {1:newIlluminant})";
+      return "oklabToXyz(lchToLxx({0:color}), {1:newIlluminant})";
     }
     get webglFromXyz() {
-      return "cylindrify(xyzToOklab({xyz}, {originalIlluminant}))";
+      return "lxxToLch(xyzToOklab({xyz}, {originalIlluminant}))";
     }
   }
 

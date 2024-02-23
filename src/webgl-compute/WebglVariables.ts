@@ -125,11 +125,11 @@ vec3 gammaSrgbToXyz(vec3 rgb, vec2 newIlluminant) {
 vec3 xyzToOklab(vec3 xyz, vec2 originalIlluminant) {
   vec3 adaptedXyz = adaptXyz(xyz, originalIlluminant, illuminant2_D65);
 
-  vec3 lms = mat3(
+  vec3 lms = transpose(mat3(
     0.8189330101, 0.3618667424, -0.1288597137,
     0.0329845436, 0.9293118715,  0.0361456387,
     0.0482003018, 0.2643662691,  0.6338517070
-  ) * adaptedXyz;
+  )) * adaptedXyz;
   
   vec3 nonlinearLms = vec3(
     pow(lms.x, 1./3.),
@@ -137,11 +137,11 @@ vec3 xyzToOklab(vec3 xyz, vec2 originalIlluminant) {
     pow(lms.z, 1./3.)
   );
 
-  return mat3(
+  return transpose(mat3(
     0.2104542553,  0.7936177850, -0.0040720468,
     1.9779984951, -2.4285922050,  0.4505937099,
     0.0259040371,  0.7827717662, -0.8086757660
-  ) * nonlinearLms;
+  )) * nonlinearLms;
 }
 vec3 oklabToXyz(vec3 oklab, vec2 newIlluminant) {
   vec3 nonlinearLms = inverse(transpose(mat3(
@@ -161,7 +161,7 @@ vec3 oklabToXyz(vec3 oklab, vec2 newIlluminant) {
   return adaptXyz(xyz, illuminant2_D65, newIlluminant);
 }
 
-vec3 cylindrify(vec3 lxx) {
+vec3 lxxToLch(vec3 lxx) {
   return vec3(
     lxx.x,
     sqrt(lxx.y * lxx.y + lxx.z * lxx.z),
@@ -169,7 +169,7 @@ vec3 cylindrify(vec3 lxx) {
   );
 }
 
-vec3 decylindrify(vec3 lch) {
+vec3 lchToLxx(vec3 lch) {
   return vec3(
     lch.x,
     cos(lch.z * REV) * lch.y,
@@ -351,7 +351,7 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
       visited.add(node);
 
       for (const socket of node.ins) {
-        if (!socket.hasLinks) continue;
+        if (socket.usesFieldValue) continue;
 
         const srcNode = socket.link.srcNode;
         if (visited.has(srcNode)) continue;
@@ -376,25 +376,17 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
       let variables = node.webglOutput();
 
       // for (const socket of node.outs) {
-      //   if (!socket.hasLinks) continue;
+      //   if (socket.usesFieldValues) continue;
       //   variables = variables.join(node.webglOutput({socket}));
       // }
 
       for (const socket of node.ins) {
-        if (!socket.hasLinks) continue;
+        if (socket.usesFieldValue) continue;
 
         const srcNode = socket.link.srcNode;
         const srcIndex = dependencyIndices.get(srcNode)!;
 
-        // variables = node.webglVariablesFill(segments[srcIndex], variables, socket);
         variables = node.webglVariablesFill(segments[srcIndex], variables, socket);
-
-        // segments[i] = segments[i].fill(segments[srcIndex], {
-        //   "color": "color",
-        //   "illuminant": "originalIlluminant",
-        //   "xyz": "xyz",
-        //   "toXyz": "toXyz",
-        // });
       }
       segments[i] = variables;
     });
@@ -404,11 +396,13 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
       Object.assign(uniforms, segment.uniforms);
     }
 
+    console.log(segments.map(segment => segment.template)
+        .join("\n\n"));
+
     return WebglVariables.FRAGMENT.fillSlots({
       "main": segments.map(segment => segment.template)
           .join("\n\n"),
       "xyz": segments.at(-1)!.outVariables.get(undefined)!["xyz"],
-      "color": segments.at(-1)!.outVariables.get(undefined)!["color"],
       "beforePrelude": segments.map(segment => segment.preludeTemplate)
           .join("\n"),
     }, uniforms);

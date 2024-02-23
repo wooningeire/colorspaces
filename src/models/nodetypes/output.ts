@@ -119,7 +119,29 @@ export namespace output {
     }
 
     webglOutput(context?: NodeEvalContext): WebglVariables {
-      return this.ins[1].webglVariables(context);
+      let variables = new WebglVariables(
+        `vec3 {0:xyz} = {xyz};`,
+        new Map([
+          [undefined, {
+            "xyz": "{0:xyz}",
+          }],
+        ])
+      )
+          .nameVariableSlots(1);
+  
+      if (this.ins[1].usesFieldValue) {
+        variables = variables.fillWith(this.ins[1].webglVariables(), undefined, {
+          "xyz": "xyz",
+        });
+      }
+
+      return variables;
+    }
+
+    webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket) {
+      return target.fillWith(source, inSocket.link?.src, {
+        "xyz": "xyz",
+      });
     }
   }
 }
