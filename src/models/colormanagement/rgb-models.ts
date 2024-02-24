@@ -20,7 +20,7 @@ export const hslToRgb = ([hue, sat, lightness]: Vec3) => {
       : lightness * (1 - sat) + sat;
   const p = 2 * lightness - q;
 
-    return [
+  return [
     rgbCompDistribFromHue(p, q, hue + 1/3),
     rgbCompDistribFromHue(p, q, hue),
     rgbCompDistribFromHue(p, q, hue - 1/3),
@@ -28,9 +28,9 @@ export const hslToRgb = ([hue, sat, lightness]: Vec3) => {
 };
 
 export const rgbToHsl = ([red, green, blue]: Vec3) => {
-  red = clamp(red, 0, 1);
-  green = clamp(green, 0, 1);
-  blue = clamp(blue, 0, 1);
+  // red = clamp(red, 0, 1);
+  // green = clamp(green, 0, 1);
+  // blue = clamp(blue, 0, 1);
 
   const componentMax = Math.max(red, green, blue);
   const componentMin = Math.min(red, green, blue);
@@ -76,9 +76,9 @@ export const hsvToRgb = ([hue, sat, value]: Vec3) => {
 };
 
 export const rgbToHsv = ([red, green, blue]: Vec3) => {
-  red = clamp(red, 0, 1);
-  green = clamp(green, 0, 1);
-  blue = clamp(blue, 0, 1);
+  // red = clamp(red, 0, 1);
+  // green = clamp(green, 0, 1);
+  // blue = clamp(blue, 0, 1);
 
   const componentMax = Math.max(red, green, blue);
   const componentMin = Math.min(red, green, blue);
@@ -128,3 +128,62 @@ export const rgbToHwb = ([red, green, blue]: Vec3) => {
     1 - hsv[2],
   ];
 };
+
+//#region WebGL
+export const webglRgbDeclarations = `float rgbCompDistribFromHue(float p, float q, float hue) {
+  hue = mod(hue, 1.);
+
+  if (hue < 1./6.) return p + (q - p) * 6. * hue;
+  if (hue < 3./6.) return q;
+  if (hue < 4./6.) return p + (q - p) * (2./3. - hue) * 6.;
+  return p;
+}
+
+vec3 hslToRgb(float hue, float sat, float lightness) {
+  if (sat == 0.) {
+    return vec3(lightness, lightness, lightness);
+  }
+
+  float q = lightness < 0.5
+      ? lightness * (1. + sat)
+      : lightness * (1. - sat) + sat;
+  float p = 2. * lightness - q;
+
+  return vec3(
+    rgbCompDistribFromHue(p, q, hue + 1./3.),
+    rgbCompDistribFromHue(p, q, hue),
+    rgbCompDistribFromHue(p, q, hue - 1./3.)
+  );
+}
+
+vec3 rgbToHsl(vec3 rgb) {
+  // rgb.r = clamp(rgb.r, 0, 1);
+  // rgb.g = clamp(rgb.g, 0, 1);
+  // rgb.b = clamp(rgb.b, 0, 1);
+
+  float componentMax = max(max(rgb.r, rgb.g), rgb.b);
+  float componentMin = min(min(rgb.r, rgb.g), rgb.b);
+  float componentRange = componentMax - componentMin;
+
+  float hue;
+  if (componentRange == 0.) {
+    hue = 0.;
+  } else if (componentMax == rgb.r) {
+    hue = mod((rgb.g - rgb.b) / componentRange, 6.);
+  } else if (componentMax == rgb.b) {
+    hue = (rgb.b - rgb.r) / componentRange + 2.;
+  } else {
+    hue = (rgb.r - rgb.g) / componentRange + 2.;
+  }
+
+  float lightness = (componentMin + componentMax) / 2.;
+
+  return vec3(
+    hue / 6.,
+    componentRange == 0.
+        ? 0.
+        : componentRange / (1. - abs(2. * lightness - 1.)),
+    lightness
+  );
+}`;
+//#endregion

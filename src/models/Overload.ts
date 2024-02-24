@@ -12,25 +12,6 @@ export class Overload<OutputType, NodeType extends Node=any, InSockets extends I
     readonly webglGetMapping: <T extends St>(inSocket: InSocket<T>, ins: InSockets, node: NodeType) => WebglSocketValue<T> | null=() => { throw new Error("not implemented"); },
     private readonly maintainExistingLinks = false,
   ) {}
-
-  webglEvaluate(ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) {
-    let variables = this.webglGetBaseVariables(ins, outs, context, node);
-    for (const inSocket of ins) {
-      if (!inSocket.usesFieldValue) continue;
-
-      const mapping = this.webglGetMapping(inSocket, ins, node);
-      if (mapping === null) continue;
-
-      variables = variables.fillWith(inSocket.webglVariables(), undefined, mapping, true);
-    }
-    return variables;
-  }
-
-  webglFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket, ins: InSockets, node: NodeType) {
-    const mapping = this.webglGetMapping(inSocket, ins, node);
-    if (mapping === null) throw new Error("assertion failed");
-    return target.fillWith(source, inSocket?.link.src, mapping);
-  }
 }
 
 /** Descriptor of a set of overloads, usually to store those specific to a certain subclass of Node */
@@ -84,12 +65,12 @@ export class OverloadManager<Mode extends string> {
     return this.overload.evaluate(this.ins, this.outs, context, this.node);
   }
 
-  webglEvaluate(context: NodeEvalContext) {
-    return this.overload.webglEvaluate(this.ins, this.outs, context, this.node);
+  webglGetBaseVariables(context: NodeEvalContext) {
+    return this.overload.webglGetBaseVariables(this.ins, this.outs, context, this.node);
   }
 
-  webglFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket) {
-    return this.overload.webglFill(source, target, inSocket, this.ins, this.node);
+  webglGetMapping(inSocket: InSocket) {
+    return this.overload.webglGetMapping(inSocket, this.ins, this.node);
   }
 
   handleModeChange(tree: Tree) {

@@ -123,16 +123,28 @@ export abstract class Node {
     public label: string=new.target.LABEL,
   ) {}
 
-  output(context: NodeEvalContext={}): any {
-    throw new TypeError("Abstract method / not implemented");
-  }
+  abstract output(context: NodeEvalContext): any;
 
   webglOutput(context: NodeEvalContext={}): WebglVariables {
-    throw new TypeError("Abstract method / not implemented");
+    let variables = this.webglGetBaseVariables();
+    for (const inSocket of this.ins) {
+      if (!inSocket.usesFieldValue) continue;
+
+      const mapping = this.webglGetMapping(inSocket);
+      if (mapping === null) continue;
+
+      variables = variables.fillWith(inSocket.webglVariables(), undefined, mapping, true);
+    }
+    return variables;
   }
   webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket): WebglVariables {
-    throw new TypeError("Abstract method / not implemented");
+    const mapping = this.webglGetMapping(inSocket);
+    if (mapping === null) throw new Error("the implementation of webglGetMapping for this node does not support this socket");
+    return target.fillWith(source, inSocket?.link.src, mapping);
   }
+
+  abstract webglGetBaseVariables(): WebglVariables;
+  abstract webglGetMapping<St extends SocketType>(inSocket: InSocket<St>): WebglSocketValue<St> | null;
   
   display(context: NodeEvalContext={}): NodeDisplay {
     return {
@@ -298,12 +310,12 @@ export abstract class NodeWithOverloads<Mode extends string> extends Node {
     return this.overloadManager.evaluate(context);
   }
 
-  webglOutput(context: NodeEvalContext): WebglVariables {
-    return this.overloadManager.webglEvaluate(context);
+  webglGetBaseVariables(context: NodeEvalContext={}) {
+    return this.overloadManager.webglGetBaseVariables(context);
   }
 
-  webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket<any>): WebglVariables {
-    return this.overloadManager.webglFill(source, target, inSocket);
+  webglGetMapping<St extends SocketType>(inSocket: InSocket<St>) {
+    return this.overloadManager.webglGetMapping(inSocket) as WebglSocketValue<St>;
   }
 }
 

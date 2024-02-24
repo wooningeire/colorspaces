@@ -24,15 +24,15 @@ export namespace math {
     static readonly LABEL = "Vector arithmetic";
     static readonly outputDisplayType = OutputDisplayType.Vec;
 
-    //@ts-ignore
-    private static threeValueMapping: ConstructorParameters<typeof Overload<ArithmeticNode>>[5] = (inSocket, ins, node) => {
-      switch (inSocket) {
-        case ins[0]: return <WebglSocketValue<St.Vector>>{"val": "fac"};
-        case ins[1]: return <WebglSocketValue<St.Vector>>{"val": "val0"};
-        case ins[2]: return <WebglSocketValue<St.Vector>>{"val": "val1"};
-        default: return null;
-      }
-    };
+    private static threeValueMapping: ConstructorParameters<typeof Overload<VectorArithmeticMode>>[5] =
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticMode) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<T>>{"val": "fac"};
+            case ins[1]: return <WebglSocketValue<T>>{"val": "val0"};
+            case ins[2]: return <WebglSocketValue<T>>{"val": "val1"};
+            default: return null;
+          }
+        };
 
     static readonly overloadGroup = new OverloadGroup(new Map<VectorArithmeticMode, Overload<Vec3 | number>>([
       [VectorArithmeticMode.Lerp, new Overload(
@@ -199,11 +199,10 @@ export namespace math {
             [outs[0], {"val": "length({val0} - {val1})"}],
           ]),
         ),
-        // @ts-ignore
-        (inSocket, ins, node) => {
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<St.Float>>{"val": "val0"};
-            case ins[1]: return <WebglSocketValue<St.Float>>{"val": "val1"};
+            case ins[0]: return <WebglSocketValue<T>>{"val": "val0"};
+            case ins[1]: return <WebglSocketValue<T>>{"val": "val1"};
             default: return null;
           }
         },
@@ -229,11 +228,10 @@ export namespace math {
             [outs[0], {"val": "{vector} * {scalar}"}],
           ]),
         ),
-        // @ts-ignore
-        (inSocket, ins, node) => {
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<St.Vector>>{"val": "vector"};
-            case ins[1]: return <WebglSocketValue<St.Vector>>{"val": "scalar"};
+            case ins[0]: return <WebglSocketValue<T>>{"val": "vector"};
+            case ins[1]: return <WebglSocketValue<T>>{"val": "scalar"};
             default: return null;
           }
         },
@@ -273,14 +271,14 @@ export namespace math {
     static readonly LABEL = "Arithmetic";
     static readonly outputDisplayType = OutputDisplayType.Float;
 
-    //@ts-ignore
-    private static twoValueMapping: ConstructorParameters<typeof Overload<ArithmeticNode>>[5] = (inSocket, ins, node) => {
-      switch (inSocket) {
-        case ins[0]: return <WebglSocketValue<St.Float>>{"val": "val0"};
-        case ins[1]: return <WebglSocketValue<St.Float>>{"val": "val1"};
-        default: return null;
-      }
-    };
+    private static twoValueMapping: ConstructorParameters<typeof Overload<ArithmeticNode>>[5] =
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticMode) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<T>>{"val": "val0"};
+            case ins[1]: return <WebglSocketValue<T>>{"val": "val1"};
+            default: return null;
+          }
+        };
 
     static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticMode, Overload<number>>([
       [ArithmeticMode.Add, new Overload(
@@ -421,12 +419,11 @@ export namespace math {
             [outs[0], {"val": "mix({min}, {max}, {fac})"}],
           ]),
         ),
-        // @ts-ignore
-        (inSocket, ins, node) => {
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<St.Float>>{"val": "min"};
-            case ins[1]: return <WebglSocketValue<St.Float>>{"val": "max"};
-            case ins[2]: return <WebglSocketValue<St.Float>>{"val": "fac"};
+            case ins[0]: return <WebglSocketValue<T>>{"val": "min"};
+            case ins[1]: return <WebglSocketValue<T>>{"val": "max"};
+            case ins[2]: return <WebglSocketValue<T>>{"val": "fac"};
             default: return null;
           }
         },
@@ -452,14 +449,13 @@ export namespace math {
             [outs[0], {"val": "mix({targetMin}, {targetMax}, {source} / ({sourceMax} - {sourceMin}))"}],
           ]),
         ),
-        // @ts-ignore
-        (inSocket, ins, node) => {
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<St.Float>>{"val": "source"};
-            case ins[1]: return <WebglSocketValue<St.Float>>{"val": "sourceMin"};
-            case ins[2]: return <WebglSocketValue<St.Float>>{"val": "sourceMax"};
-            case ins[3]: return <WebglSocketValue<St.Float>>{"val": "targetMin"};
-            case ins[4]: return <WebglSocketValue<St.Float>>{"val": "targetMax"};
+            case ins[0]: return <WebglSocketValue<T>>{"val": "source"};
+            case ins[1]: return <WebglSocketValue<T>>{"val": "sourceMin"};
+            case ins[2]: return <WebglSocketValue<T>>{"val": "sourceMax"};
+            case ins[3]: return <WebglSocketValue<T>>{"val": "targetMin"};
+            case ins[4]: return <WebglSocketValue<T>>{"val": "targetMax"};
             default: return null;
           }
         },
@@ -505,10 +501,6 @@ export namespace math {
       const value = this.inSocket.inValue(context);
       return value[this.outs.indexOf(context.socket! as OutSocket)];
     }
-
-    // output(context: NodeEvalContext): Color {
-    //   return this.ins.map(socket => socket.inValue(context)) as Color;
-    // }
   }
 
   enum ColorDifferenceMode {

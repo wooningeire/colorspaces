@@ -1,5 +1,5 @@
 import { Vec3 } from "@/util";
-import { Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, NodeWithOverloads, SocketOptions, InSocket, OutSocket } from "../Node";
+import { Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, NodeWithOverloads, SocketOptions, InSocket, OutSocket, WebglSocketValue } from "../Node";
 import { Overload, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
 import { StringKey } from "@/strings";
@@ -172,18 +172,17 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
                 .nameVariableSlots(3);
           }
         },
-        //@ts-ignore
-        (inSocket, ins, node) => {
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: TripletSpaceNode) => {
           switch (inSocket.effectiveType()) {
             case St.ColorCoords:
-              return {
+              return <WebglSocketValue<T>>{
                 "color": "color",
                 "illuminant": "originalIlluminant",
                 "xyz": "xyz",
               };
             
             case St.Vector:
-              return {
+              return <WebglSocketValue<T>>{
                 "val": "color",
               };
 
@@ -266,26 +265,12 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
 
           return variables;
         },
-        //@ts-ignore
-        (inSocket, ins, node) => {
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: TripletSpaceNode) => {
           switch (inSocket) {
-            case node.valuesSockets[0]:
-              return {
-                "val": "x",
-              };
-
-            case node.valuesSockets[1]: 
-              return {
-                "val": "y",
-              };
-
-            case node.valuesSockets[2]: 
-              return {
-                "val": "z",
-              };
-
-            default:
-              return null;
+            case node.valuesSockets[0]: return <WebglSocketValue<T>>{"val": "x"};
+            case node.valuesSockets[1]: return <WebglSocketValue<T>>{"val": "y"};
+            case node.valuesSockets[2]: return <WebglSocketValue<T>>{"val": "z"};
+            default: return null;
           }
         },
       )],
