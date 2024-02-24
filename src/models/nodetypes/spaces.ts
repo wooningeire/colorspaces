@@ -145,7 +145,7 @@ export namespace spaces {
           ]);
 
           if (node.colorInputSocket.effectiveType() === St.ColorCoords) {
-            let variables = new WebglVariables(
+            return new WebglVariables(
 `vec3 {2:xyz} = {xyz};
 vec3 {0:color} = ${node.webglFromXyz};`,
               outVariables,
@@ -157,18 +157,8 @@ vec3 {0:color} = ${node.webglFromXyz};`,
               },
             )
                 .nameVariableSlots(3);
-  
-            if (node.colorInputSocket.usesFieldValue) {
-              variables = variables.fillWith(node.colorInputSocket.webglVariables(), undefined, {
-                "color": "color",
-                "illuminant": "originalIlluminant",
-                "xyz": "xyz",
-              }, true);
-            }
-  
-            return variables;
           } else {
-            let variables = new WebglVariables(
+            return new WebglVariables(
 `vec3 {0:color} = {color};
 vec3 {2:xyz} = ${node.webglToXyz};`,
               outVariables,
@@ -180,31 +170,26 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
               },
             )
                 .nameVariableSlots(3);
-
-  
-            if (node.colorInputSocket.usesFieldValue) {
-              variables = variables.fillWith(node.colorInputSocket.webglVariables(), undefined, {
-                "val": "color",
-              }, true);
-            }
-
-            return variables;
           }
         },
-        (source, target, inSocket, ins, node) => {
-          if (node.colorInputSocket.effectiveType() === St.ColorCoords) {
-            return target.fillWith(source, inSocket.link?.src, {
-              "color": "color",
-              "illuminant": "originalIlluminant",
-              "xyz": "xyz",
-            });
-          } else if (node.colorInputSocket.effectiveType() === St.Vector) {
-            return target.fillWith(source, inSocket.link?.src, {
-              "val": "color",
-            });
-          }
+        //@ts-ignore
+        (inSocket, ins, node) => {
+          switch (inSocket.effectiveType()) {
+            case St.ColorCoords:
+              return {
+                "color": "color",
+                "illuminant": "originalIlluminant",
+                "xyz": "xyz",
+              };
+            
+            case St.Vector:
+              return {
+                "val": "color",
+              };
 
-          throw new Error("assertion failed");
+            default:
+              return null;
+          }
         },
       )],
 
@@ -281,22 +266,27 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
 
           return variables;
         },
-        (source, target, inSocket, ins, node) => {
-          if (inSocket === node.valuesSockets[0]) {
-            return target.fillWith(source, inSocket.link?.src, {
-              "val": "x",
-            });
-          } else if (inSocket === node.valuesSockets[1]) {
-            return target.fillWith(source, inSocket.link?.src, {
-              "val": "y",
-            });
-          } else if (inSocket === node.valuesSockets[2]) {
-            return target.fillWith(source, inSocket.link?.src, {
-              "val": "z",
-            });
-          }
+        //@ts-ignore
+        (inSocket, ins, node) => {
+          switch (inSocket) {
+            case node.valuesSockets[0]:
+              return {
+                "val": "x",
+              };
 
-          throw new Error("assertion failed");
+            case node.valuesSockets[1]: 
+              return {
+                "val": "y",
+              };
+
+            case node.valuesSockets[2]: 
+              return {
+                "val": "z",
+              };
+
+            default:
+              return null;
+          }
         },
       )],
     ]));

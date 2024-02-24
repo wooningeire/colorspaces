@@ -1,11 +1,12 @@
 import seedrandom from "seedrandom";
 
 import { labSliderProps } from "./spaces";
-import { Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, NodeWithOverloads, OutSocket, InSocket } from "../Node";
+import { Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, NodeWithOverloads, OutSocket, InSocket, WebglSocketValue } from "../Node";
 import * as cm from "../colormanagement";
 
 import { Color, Vec3, lerp } from "@/util";
 import { Overload, OverloadGroup } from "../Overload";
+import { WebglVariables } from "@/webgl-compute/WebglVariables";
 
 export namespace math {
   enum VectorArithmeticMode {
@@ -23,6 +24,16 @@ export namespace math {
     static readonly LABEL = "Vector arithmetic";
     static readonly outputDisplayType = OutputDisplayType.Vec;
 
+    //@ts-ignore
+    private static threeValueMapping: ConstructorParameters<typeof Overload<ArithmeticNode>>[5] = (inSocket, ins, node) => {
+      switch (inSocket) {
+        case ins[0]: return <WebglSocketValue<St.Vector>>{"val": "fac"};
+        case ins[1]: return <WebglSocketValue<St.Vector>>{"val": "val0"};
+        case ins[2]: return <WebglSocketValue<St.Vector>>{"val": "val1"};
+        default: return null;
+      }
+    };
+
     static readonly overloadGroup = new OverloadGroup(new Map<VectorArithmeticMode, Overload<Vec3 | number>>([
       [VectorArithmeticMode.Lerp, new Overload(
         "Lerp",
@@ -38,6 +49,14 @@ export namespace math {
           const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
           return col0.map((_, i) => lerp(col0[i], col1[i], fac)) as Vec3;
         },
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "mix({val0}, {val1}, {fac})"}],
+            [outs[0], {"val": "mix({val0}, {val1}, {fac})"}],
+          ]),
+        ),
+        this.threeValueMapping,
       )],
 
       [VectorArithmeticMode.Add, new Overload(
@@ -54,6 +73,14 @@ export namespace math {
           const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
           return col0.map((_, i) => col0[i] + col1[i] * fac) as Vec3;
         },
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "{val0} + {val1} * {fac}"}],
+            [outs[0], {"val": "{val0} + {val1} * {fac}"}],
+          ]),
+        ),
+        this.threeValueMapping,
       )],
 
       [VectorArithmeticMode.Multiply, new Overload(
@@ -70,6 +97,14 @@ export namespace math {
           const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
           return col0.map((_, i) => col0[i] * ((1 - fac) + col1[i] * fac)) as Vec3;
         },
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "{val0} * ((1. - {fac}) + {val1} * {fac})"}],
+            [outs[0], {"val": "{val0} * ((1. - {fac}) + {val1} * {fac})"}],
+          ]),
+        ),
+        this.threeValueMapping,
       )],
 
       [VectorArithmeticMode.Subtract, new Overload(
@@ -86,6 +121,14 @@ export namespace math {
           const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
           return col0.map((_, i) => col0[i] - col1[i] * fac) as Vec3;
         },
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "{val0} - {val1} * {fac}"}],
+            [outs[0], {"val": "{val0} - {val1} * {fac}"}],
+          ]),
+        ),
+        this.threeValueMapping,
       )],
 
       [VectorArithmeticMode.Divide, new Overload(
@@ -102,6 +145,14 @@ export namespace math {
           const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
           return col0.map((_, i) => col0[i] / ((1 - fac) + col1[i] * fac)) as Vec3;
         },
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "{val0} / ((1. - {fac}) + {val1} * {fac})"}],
+            [outs[0], {"val": "{val0} / ((1. - {fac}) + {val1} * {fac})"}],
+          ]),
+        ),
+        this.threeValueMapping,
       )],
 
       [VectorArithmeticMode.Screen, new Overload(
@@ -118,6 +169,14 @@ export namespace math {
           const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
           return col0.map((_, i) => 1 - (1 - col0[i]) * (1 - col1[i] * fac)) as Vec3;
         },
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, { "val": "1. - (1. - {val0}) * (1. - {val1} * {fac})"}],
+            [outs[0], { "val": "1. - (1. - {val0}) * (1. - {val1} * {fac})"}],
+          ]),
+        ),
+        this.threeValueMapping,
       )],
 
       [VectorArithmeticMode.Distance, new Overload(
@@ -133,6 +192,21 @@ export namespace math {
           const [col0, col1] = ins.map(socket => socket.inValue(context)) as [Vec3, Vec3];
           return Math.hypot(...col0.map((_, i) => col0[i] - col1[i]));
         },
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "length({val0} - {val1})"}],
+            [outs[0], {"val": "length({val0} - {val1})"}],
+          ]),
+        ),
+        // @ts-ignore
+        (inSocket, ins, node) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<St.Float>>{"val": "val0"};
+            case ins[1]: return <WebglSocketValue<St.Float>>{"val": "val1"};
+            default: return null;
+          }
+        },
       )],
 
       [VectorArithmeticMode.Scale, new Overload(
@@ -147,6 +221,21 @@ export namespace math {
         (ins, outs, context) => {
           const [col, scalar] = ins.map(socket => socket.inValue(context)) as [Vec3, number];
           return col.map((_, i) => col[i] * scalar) as Vec3;
+        },
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "{vector} * {scalar}"}],
+            [outs[0], {"val": "{vector} * {scalar}"}],
+          ]),
+        ),
+        // @ts-ignore
+        (inSocket, ins, node) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<St.Vector>>{"val": "vector"};
+            case ins[1]: return <WebglSocketValue<St.Vector>>{"val": "scalar"};
+            default: return null;
+          }
         },
       )],
     ]));
@@ -184,6 +273,15 @@ export namespace math {
     static readonly LABEL = "Arithmetic";
     static readonly outputDisplayType = OutputDisplayType.Float;
 
+    //@ts-ignore
+    private static twoValueMapping: ConstructorParameters<typeof Overload<ArithmeticNode>>[5] = (inSocket, ins, node) => {
+      switch (inSocket) {
+        case ins[0]: return <WebglSocketValue<St.Float>>{"val": "val0"};
+        case ins[1]: return <WebglSocketValue<St.Float>>{"val": "val1"};
+        default: return null;
+      }
+    };
+
     static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticMode, Overload<number>>([
       [ArithmeticMode.Add, new Overload(
         "Add",
@@ -194,7 +292,15 @@ export namespace math {
         node => [
           new OutSocket(node, Socket.Type.Float, "Sum"),
         ],
-        (ins, outs, context) => ins[0].inValue(context) + ins[1].inValue(context),
+        (ins, outs, context, node) => ins[0].inValue(context) + ins[1].inValue(context),
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "{val0} + {val1}"}],
+            [outs[0], {"val": "{val0} + {val1}"}],
+          ]),
+        ),
+        this.twoValueMapping,
       )],
       
       [ArithmeticMode.Multiply, new Overload(
@@ -207,6 +313,14 @@ export namespace math {
           new OutSocket(node, Socket.Type.Float, "Product"),
         ],
         (ins, outs, context) => ins[0].inValue(context) * ins[1].inValue(context),
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "{val0} * {val1}"}],
+            [outs[0], {"val": "{val0} * {val1}"}],
+          ]),
+        ),
+        this.twoValueMapping,
       )],
       
       [ArithmeticMode.Subtract, new Overload(
@@ -219,6 +333,14 @@ export namespace math {
           new OutSocket(node, Socket.Type.Float, "Difference"),
         ],
         (ins, outs, context) => ins[0].inValue(context) - ins[1].inValue(context),
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "{val0} - {val1}"}],
+            [outs[0], {"val": "{val0} - {val1}"}],
+          ]),
+        ),
+        this.twoValueMapping,
       )],
       
       [ArithmeticMode.Divide, new Overload(
@@ -231,6 +353,14 @@ export namespace math {
           new OutSocket(node, Socket.Type.Float, "Quotient"),
         ],
         (ins, outs, context) => ins[0].inValue(context) / ins[1].inValue(context),
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "{val0} / {val1}"}],
+            [outs[0], {"val": "{val0} / {val1}"}],
+          ]),
+        ),
+        this.twoValueMapping,
       )],
       
       [ArithmeticMode.Pow, new Overload(
@@ -243,6 +373,14 @@ export namespace math {
           new OutSocket(node, Socket.Type.Float, "Power"),
         ],
         (ins, outs, context) => ins[0].inValue(context) ** ins[1].inValue(context),
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "pow({val0}, {val1})"}],
+            [outs[0], {"val": "pow({val0}, {val1})"}],
+          ]),
+        ),
+        this.twoValueMapping,
       )],
       
       [ArithmeticMode.Screen, new Overload(
@@ -255,6 +393,14 @@ export namespace math {
           new OutSocket(node, Socket.Type.Float, "Product"),
         ],
         (ins, outs, context) => 1 - (1 - ins[0].inValue(context)) * (1 - ins[1].inValue(context)),
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "1. - (1. - {val0}) * (1. - {val1})"}],
+            [outs[0], {"val": "1. - (1. - {val0}) * (1. - {val1})"}],
+          ]),
+        ),
+        this.twoValueMapping,
       )],
       
       [ArithmeticMode.Lerp, new Overload(
@@ -268,6 +414,22 @@ export namespace math {
           new OutSocket(node, Socket.Type.Float, "Value"),
         ],
         (ins, outs, context) => lerp(ins[0].inValue(context), ins[1].inValue(context), ins[2].inValue(context)),
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "mix({min}, {max}, {fac})"}],
+            [outs[0], {"val": "mix({min}, {max}, {fac})"}],
+          ]),
+        ),
+        // @ts-ignore
+        (inSocket, ins, node) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<St.Float>>{"val": "min"};
+            case ins[1]: return <WebglSocketValue<St.Float>>{"val": "max"};
+            case ins[2]: return <WebglSocketValue<St.Float>>{"val": "fac"};
+            default: return null;
+          }
+        },
       )],
       
       [ArithmeticMode.MapRange, new Overload(
@@ -283,6 +445,24 @@ export namespace math {
           new OutSocket(node, Socket.Type.Float, "Target value"),
         ],
         (ins, outs, context) => lerp(ins[3].inValue(context), ins[4].inValue(context), ins[0].inValue(context) / (ins[2].inValue(context) - ins[1].inValue(context))),
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "mix({targetMin}, {targetMax}, {source} / ({sourceMax} - {sourceMin}))"}],
+            [outs[0], {"val": "mix({targetMin}, {targetMax}, {source} / ({sourceMax} - {sourceMin}))"}],
+          ]),
+        ),
+        // @ts-ignore
+        (inSocket, ins, node) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<St.Float>>{"val": "source"};
+            case ins[1]: return <WebglSocketValue<St.Float>>{"val": "sourceMin"};
+            case ins[2]: return <WebglSocketValue<St.Float>>{"val": "sourceMax"};
+            case ins[3]: return <WebglSocketValue<St.Float>>{"val": "targetMin"};
+            case ins[4]: return <WebglSocketValue<St.Float>>{"val": "targetMax"};
+            default: return null;
+          }
+        },
       )],
     ]));
 
@@ -305,7 +485,7 @@ export namespace math {
 
     static readonly DESC = "desc.node.explode";
 
-    private readonly inSocket: Socket<St.Vector>;
+    private readonly inSocket: InSocket<St.Vector>;
 
     constructor() {
       super();
@@ -323,7 +503,7 @@ export namespace math {
 
     output(context: NodeEvalContext): number {
       const value = this.inSocket.inValue(context);
-      return value[this.outs.indexOf(context.socket!)];
+      return value[this.outs.indexOf(context.socket! as OutSocket)];
     }
 
     // output(context: NodeEvalContext): Color {
@@ -354,7 +534,7 @@ export namespace math {
         node => [
           new OutSocket(node, Socket.Type.Float, "Difference"),
         ],
-        (ins: Socket<St.VectorOrColor>[], outs, context) => {
+        (ins: InSocket<St.VectorOrColor>[], outs, context) => {
           const col0 = ins[0].inValue(context);
           const col1 = ins[1].inValue(context);
 
@@ -375,7 +555,7 @@ export namespace math {
         node => [
           new OutSocket(node, Socket.Type.Float, "Difference"),
         ],
-        (ins: Socket<St.VectorOrColor>[], outs, context) => {
+        (ins: InSocket<St.VectorOrColor>[], outs, context) => {
           const col0 = ins[0].inValue(context);
           const col1 = ins[1].inValue(context);
 
@@ -403,7 +583,7 @@ export namespace math {
     static readonly DESC = "desc.node.contrastRatio";
     static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
 
-    private readonly colorSockets: Socket<St.VectorOrColor>[];
+    private readonly colorSockets: InSocket<St.VectorOrColor>[];
 
     constructor() {
       super();

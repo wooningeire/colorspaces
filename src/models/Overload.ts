@@ -1,5 +1,5 @@
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
-import { InSocket, Node, NodeEvalContext, OutSocket, Socket, SocketType as St, Tree } from "./Node";
+import { InSocket, Node, NodeEvalContext, OutSocket, Socket, SocketType as St, Tree, WebglSocketValue } from "./Node";
 
 /** A collection of input/output sockets, as well as a function to compute outputs from the inputs' values */
 export class Overload<OutputType, NodeType extends Node=any, InSockets extends InSocket[]=any, OutSockets extends OutSocket[]=any> {
@@ -8,10 +8,29 @@ export class Overload<OutputType, NodeType extends Node=any, InSockets extends I
     readonly ins: (node: NodeType) => [...InSockets],
     readonly outs: (node: NodeType) => [...OutSockets],
     readonly evaluate: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => OutputType,
-    readonly webglEvaluate: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => WebglVariables=() => { throw new Error("not implemented"); },
-    readonly webglFill: (source: WebglVariables, target: WebglVariables, inSocket: InSocket, ins: InSockets, node: NodeType) => WebglVariables=() => { throw new Error("not implemented"); },
+    readonly webglGetBaseVariables: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => WebglVariables=() => { throw new Error("not implemented"); },
+    readonly webglGetMapping: <T extends St>(inSocket: InSocket<T>, ins: InSockets, node: NodeType) => WebglSocketValue<T> | null=() => { throw new Error("not implemented"); },
     private readonly maintainExistingLinks = false,
   ) {}
+
+  webglEvaluate(ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) {
+    let variables = this.webglGetBaseVariables(ins, outs, context, node);
+    for (const inSocket of ins) {
+      if (!inSocket.usesFieldValue) continue;
+
+      const mapping = this.webglGetMapping(inSocket, ins, node);
+      if (mapping === null) continue;
+
+      variables = variables.fillWith(inSocket.webglVariables(), undefined, mapping, true);
+    }
+    return variables;
+  }
+
+  webglFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket, ins: InSockets, node: NodeType) {
+    const mapping = this.webglGetMapping(inSocket, ins, node);
+    if (mapping === null) throw new Error("assertion failed");
+    return target.fillWith(source, inSocket?.link.src, mapping);
+  }
 }
 
 /** Descriptor of a set of overloads, usually to store those specific to a certain subclass of Node */
