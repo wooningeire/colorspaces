@@ -66,7 +66,7 @@ export const hsvToRgb = ([hue, sat, value]: Vec3) => {
   const valley = value * (1 - sat);
   const falling = value * (1 - sat * (hue - segmentStart));
   const rising = value * (1 - sat * (1 - (hue - segmentStart)));
- 
+
   if      (hue < 1) return [plateau, rising,  valley];
   else if (hue < 2) return [falling, plateau, valley];
   else if (hue < 3) return [valley,  plateau, rising];
@@ -116,9 +116,9 @@ export const hwbToRgb = ([hue, whiteness, blackness]: Vec3) => {
 };
 
 export const rgbToHwb = ([red, green, blue]: Vec3) => {
-  red = clamp(red, 0, 1);
-  green = clamp(green, 0, 1);
-  blue = clamp(blue, 0, 1);
+  // red = clamp(red, 0, 1);
+  // green = clamp(green, 0, 1);
+  // blue = clamp(blue, 0, 1);
   
   const hsv = rgbToHsv([red, green, blue]);
   
@@ -157,10 +157,6 @@ vec3 hslToRgb(float hue, float sat, float lightness) {
 }
 
 vec3 rgbToHsl(vec3 rgb) {
-  // rgb.r = clamp(rgb.r, 0, 1);
-  // rgb.g = clamp(rgb.g, 0, 1);
-  // rgb.b = clamp(rgb.b, 0, 1);
-
   float componentMax = max(max(rgb.r, rgb.g), rgb.b);
   float componentMin = min(min(rgb.r, rgb.g), rgb.b);
   float componentRange = componentMax - componentMin;
@@ -185,5 +181,75 @@ vec3 rgbToHsl(vec3 rgb) {
         : componentRange / (1. - abs(2. * lightness - 1.)),
     lightness
   );
+}
+
+vec3 hsvToRgb(float hue, float sat, float value) {
+  hue = mod(hue, 1.) * 6.;
+  float segmentStart = floor(hue);
+
+  float plateau = value;
+  float valley = value * (1. - sat);
+  float falling = value * (1. - sat * (hue - segmentStart));
+  float rising = value * (1. - sat * (1. - (hue - segmentStart)));
+
+  if      (hue < 1.) return vec3(plateau, rising,  valley);
+  else if (hue < 2.) return vec3(falling, plateau, valley);
+  else if (hue < 3.) return vec3(valley,  plateau, rising);
+  else if (hue < 4.) return vec3(valley,  falling, plateau);
+  else if (hue < 5.) return vec3(rising,  valley,  plateau);
+  else               return vec3(plateau, valley,  falling);
+}
+
+vec3 rgbToHsv(vec3 rgb) {
+  float componentMax = max(max(rgb.r, rgb.g), rgb.b);
+  float componentMin = min(min(rgb.r, rgb.g), rgb.b);
+  float componentRange = componentMax - componentMin;
+
+  float hue;
+  if (componentRange == 0.) {
+    hue = 0.;
+  } else if (componentMax == rgb.r) {
+    hue = mod((rgb.g - rgb.b) / componentRange, 6.);
+  } else if (componentMax == rgb.b) {
+    hue = (rgb.b - rgb.r) / componentRange + 2.;
+  } else {
+    hue = (rgb.r - rgb.g) / componentRange + 2.;
+  }
+
+  return vec3(
+    hue / 6.,
+    componentRange == 0.
+        ? 0.
+        : componentRange / componentMax,
+    componentMax
+  );
+}
+
+vec3 hwbToRgb(float hue, float whiteness, float blackness) {
+  float scaledWhiteness = whiteness / max(1., whiteness + blackness);
+  float scaledBlackness = blackness / max(1., whiteness + blackness);
+
+  return hsvToRgb(
+    hue,
+    1. - scaledWhiteness / (1. - scaledBlackness),
+    1. - scaledBlackness
+  );
+}
+
+vec3 rgbToHwb(vec3 rgb) {
+  vec3 hsv = rgbToHsv(rgb);
+  
+  return vec3(
+    hsv.x,
+    (1. - hsv.y) * hsv.z,
+    1. - hsv.z
+  );
+}
+
+vec3 cmyToRgb(vec3 cmy) {
+  return 1. - cmy;
+}
+vec3 rgbToCmy(vec3 rgb) {
+  return 1. - rgb;
 }`;
 //#endregion

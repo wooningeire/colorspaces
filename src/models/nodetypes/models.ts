@@ -101,10 +101,12 @@ export namespace models {
         ],
         (ins, outs, context) => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
         (ins, outs, context) => new WebglVariables(
-          "vec3 {0:rgb} = rgbToHsl({rgb});",
+          "vec3 {0:hsl} = rgbToHsl({rgb});",
           new Map([
-            [undefined, {"val": "{0:rgb}"}],
-            [outs[0], {"val": "{0:rgb}"}],
+            [undefined, {"val": "{0:hsl}"}],
+            [outs[0], {"val": "{0:hsl}.x"}],
+            [outs[1], {"val": "{0:hsl}.y"}],
+            [outs[2], {"val": "{0:hsl}.z"}],
           ]),
         ).nameVariableSlots(1),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
@@ -162,6 +164,21 @@ export namespace models {
           new OutSocket(node, Socket.Type.Vector, "RGB"),
         ],
         (ins, outs, context) => cm.hsvToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
+        (ins, outs, context) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "hsvToRgb({hue}, {saturation}, {value})"}],
+            [outs[0], {"val": "hsvToRgb({hue}, {saturation}, {value})"}],
+          ]),
+        ),
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<T>>{"val": "hue"};
+            case ins[1]: return <WebglSocketValue<T>>{"val": "saturation"};
+            case ins[2]: return <WebglSocketValue<T>>{"val": "value"};
+            default: return null;
+          }
+        },
       )],
 
       [RgbMode.FromRgb, new Overload(
@@ -175,6 +192,21 @@ export namespace models {
           new OutSocket(node, Socket.Type.Float, "Value"),
         ],
         (ins, outs, context) => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
+        (ins, outs, context) => new WebglVariables(
+          "vec3 {0:hsv} = rgbToHsv({rgb});",
+          new Map([
+            [undefined, {"val": "{0:hsv}"}],
+            [outs[0], {"val": "{0:hsv}.x"}],
+            [outs[1], {"val": "{0:hsv}.y"}],
+            [outs[2], {"val": "{0:hsv}.z"}],
+          ]),
+        ).nameVariableSlots(1),
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HsvNode) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<T>>{"val": "rgb"};
+            default: return null;
+          }
+        },
       )],
     ]));
 
@@ -224,6 +256,21 @@ export namespace models {
           new OutSocket(node, Socket.Type.Vector, "RGB"),
         ],
         (ins, outs, context) => cm.hwbToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
+        (ins, outs, context) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "hsvToRgb({hue}, {whiteness}, {blackness})"}],
+            [outs[0], {"val": "hsvToRgb({hue}, {whiteness}, {blackness})"}],
+          ]),
+        ),
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<T>>{"val": "hue"};
+            case ins[1]: return <WebglSocketValue<T>>{"val": "whiteness"};
+            case ins[2]: return <WebglSocketValue<T>>{"val": "blackness"};
+            default: return null;
+          }
+        },
       )],
 
       [RgbMode.FromRgb, new Overload(
@@ -237,6 +284,21 @@ export namespace models {
           new OutSocket(node, Socket.Type.Float, "Blackness"),
         ],
         (ins, outs, context) => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
+        (ins, outs, context) => new WebglVariables(
+          "vec3 {0:hwb} = rgbToHsl({rgb});",
+          new Map([
+            [undefined, {"val": "{0:hwb}"}],
+            [outs[0], {"val": "{0:hwb}.x"}],
+            [outs[1], {"val": "{0:hwb}.y"}],
+            [outs[2], {"val": "{0:hwb}.z"}],
+          ]),
+        ).nameVariableSlots(1),
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HwbNode) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<T>>{"val": "rgb"};
+            default: return null;
+          }
+        },
       )],
     ]));
 
@@ -286,6 +348,21 @@ export namespace models {
           new OutSocket(node, Socket.Type.Vector, "RGB"),
         ],
         (ins, outs, context) => cm.cmyToRgb(ins.map(socket => socket.inValue(context)) as Color) as Color,
+        (ins, outs, context) => new WebglVariables(
+          "",
+          new Map([
+            [undefined, {"val": "cmyToRgb({cyan}, {magenta}, {yellow})"}],
+            [outs[0], {"val": "cmyToRgb({cyan}, {magenta}, {yellow})"}],
+          ]),
+        ),
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<T>>{"val": "cyan"};
+            case ins[1]: return <WebglSocketValue<T>>{"val": "magenta"};
+            case ins[2]: return <WebglSocketValue<T>>{"val": "yellow"};
+            default: return null;
+          }
+        },
       )],
 
       [RgbMode.FromRgb, new Overload(
@@ -299,6 +376,21 @@ export namespace models {
           new OutSocket(node, Socket.Type.Float, "Yellow").flag(SocketFlag.Rgb),
         ],
         (ins, outs, context) => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[outs.indexOf(context.socket!)],
+        (ins, outs, context) => new WebglVariables(
+          "vec3 {0:cmy} = rgbToCmy({rgb});",
+          new Map([
+            [undefined, {"val": "{0:cmy}"}],
+            [outs[0], {"val": "{0:cmy}.x"}],
+            [outs[1], {"val": "{0:cmy}.y"}],
+            [outs[2], {"val": "{0:cmy}.z"}],
+          ]),
+        ).nameVariableSlots(1),
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: CmyNode) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<T>>{"val": "rgb"};
+            default: return null;
+          }
+        },
       )],
     ]));
 
@@ -386,6 +478,23 @@ export namespace models {
 
     output(context: NodeEvalContext): Color {
       return this.ins.map(socket => socket.inValue(context)) as Color;
+    }
+
+    webglGetBaseVariables(): WebglVariables {
+      return new WebglVariables(
+        "",
+        new Map([
+          [this.outs[0], {"val": "vec3({x}, {y}, {z})"}],
+        ])
+      );
+    }
+    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      switch (inSocket) {
+        case this.ins[0]: return <WebglSocketValue<T>>{"val": "x"};
+        case this.ins[1]: return <WebglSocketValue<T>>{"val": "y"};
+        case this.ins[2]: return <WebglSocketValue<T>>{"val": "z"};
+        default: return null;
+      }
     }
   }
 

@@ -120,13 +120,13 @@ export namespace spaces {
 
           const outVariables = new Map<OutSocket | undefined, Record<string, string>>([
             [undefined, {
-              "color": "{0:color}",
+              "val": "{0:color}",
               "illuminant": "{1:illuminant}",
               "xyz": "{2:xyz}",
             }],
 
             [outs[0], {
-              "color": "{0:color}",
+              "val": "{0:color}",
               "illuminant": "{1:illuminant}",
               "xyz": "{2:xyz}",
             }],
@@ -159,7 +159,7 @@ vec3 {0:color} = ${node.webglFromXyz};`,
                 .nameVariableSlots(3);
           } else {
             return new WebglVariables(
-`vec3 {0:color} = {color};
+`vec3 {0:color} = {val};
 vec3 {2:xyz} = ${node.webglToXyz};`,
               outVariables,
               `uniform vec2 {1:newIlluminant};`,
@@ -176,14 +176,14 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
           switch (inSocket.effectiveType()) {
             case St.ColorCoords:
               return <WebglSocketValue<T>>{
-                "color": "color",
+                "val": "val",
                 "illuminant": "originalIlluminant",
                 "xyz": "xyz",
               };
             
             case St.Vector:
               return <WebglSocketValue<T>>{
-                "val": "color",
+                "val": "val",
               };
 
             default:
@@ -227,13 +227,13 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
 vec3 {2:xyz} = ${node.webglToXyz};`,
             new Map([
               [undefined, {
-                "color": "{0:color}",
+                "val": "{0:color}",
                 "illuminant": "{1:newIlluminant}",
                 "xyz": "{2:xyz}",
               }],
 
               [outs[0], {
-                "color": "{0:color}",
+                "val": "{0:color}",
                 "illuminant": "{1:newIlluminant}",
                 "xyz": "{2:xyz}",
               }],

@@ -361,7 +361,7 @@ export type WebglSocketValue<St extends SocketType=any> =
     St extends SocketType.Integer ? WebglSocketValue<SocketType.Float> :
     St extends SocketType.Vector ? WebglSocketValue<SocketType.Float> :
     St extends SocketType.ColorCoords ? {
-      "color": string,
+      "val": string,
       "illuminant": string,
       "xyz": string,
     } :
@@ -604,7 +604,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           "",
           new Map([
             [undefined, {
-              "color": "{0:unif}",
+              "val": "{0:unif}",
               "illuminant": "illuminant2_D65",
               "xyz": "vec3(0., 0., 0.)",
             }]
