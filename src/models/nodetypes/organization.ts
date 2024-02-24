@@ -1,7 +1,8 @@
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, InSocket, OutSocket} from "../Node";
+import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, InSocket, OutSocket, WebglSocketValue} from "../Node";
 
 import {Vec2} from "@/util";
 import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
+import { WebglVariables } from "@/webgl-compute/WebglVariables";
 
 export namespace organization {
   export class RerouteNode extends Node {
@@ -24,6 +25,62 @@ export namespace organization {
 
     output(context: NodeEvalContext) {
       return this.ins[0].inValue(context);
+    }
+    
+    webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
+      let outVars: WebglSocketValue<(typeof this.outs[0])["type"]>;
+
+      switch (this.outs[0].type) {
+        case St.Float:
+        case St.Integer:
+        case St.Vector:
+        case St.Bool:
+          outVars = {
+            "val": "{val}",
+          };
+          break;
+
+        case St.ColorCoords:
+        case St.VectorOrColor:
+          outVars = {
+            "val": "{val}",
+            "illuminant": "{illuminant}",
+            "xyz": "{xyz}",
+          };
+          break;
+        
+        default:
+          throw new Error("not implemented");
+      }
+
+      return new WebglVariables(
+        "",
+        new Map([
+          [this.outs[0], outVars],
+        ]),
+      );
+    }
+
+    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      switch (inSocket.effectiveType()) {
+        case St.Float:
+        case St.Integer:
+        case St.Vector:
+        case St.Bool:
+          return <WebglSocketValue<T>>{
+            "val": "val",
+          };
+
+        case St.ColorCoords:
+          return <WebglSocketValue<T>>{
+            "val": "val",
+            "illuminant": "illuminant",
+            "xyz": "xyz",
+          };
+        
+        default:
+          return null;
+      }
     }
 
     /*

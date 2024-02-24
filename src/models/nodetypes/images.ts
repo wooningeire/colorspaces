@@ -1,4 +1,4 @@
-import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, OutSocket, Tree} from "../Node";
+import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, OutSocket, Tree, WebglSocketValue} from "../Node";
 
 import {Vec2, lerp} from "@/util";
 import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
@@ -60,40 +60,22 @@ export namespace images {
       return lerp(value0, value1, fac);
     }
 
-    webglOutput(context: NodeEvalContext={}): WebglVariables {
-      let variables =  new WebglVariables(
+    webglGetBaseVariables(context: NodeEvalContext={}): WebglVariables {
+      return new WebglVariables(
         `float {0:val} = mix({from}, {to}, v_uv.${this.whichDimension === 0 ? "x" : "y * -1."});`,
         new Map([
           [this.outs[0], {
             "val": "{0:val}",
           }]
         ]),
-      )
-          .nameVariableSlots(3);
-
-      if (this.boundsSockets[0].usesFieldValue) {
-        variables = variables.fillWith(this.boundsSockets[0].webglVariables(), undefined, {
-          "val": "from",
-        }, true);
-      }
-      if (this.boundsSockets[1].usesFieldValue) {
-        variables = variables.fillWith(this.boundsSockets[1].webglVariables(), undefined, {
-          "val": "to",
-        }, true);
-      }
-
-      return variables;
+      ).nameVariableSlots(3);
     }
 
-    webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket<any>): WebglVariables {
-      if (inSocket === this.boundsSockets[0]) {
-        return target.fillWith(source, inSocket.link?.src, {
-          "val": "from",
-        });
-      } else {
-        return target.fillWith(source, inSocket.link?.src, {
-          "val": "to",
-        });
+    webglGetMapping<T extends St>(inSocket: InSocket<any>) {
+      switch (inSocket) {
+        case this.boundsSockets[0]: return <WebglSocketValue<T>>{"val": "from"};
+        case this.boundsSockets[1]: return <WebglSocketValue<T>>{"val": "to"};
+        default: return null;
       }
     }
   }
@@ -126,7 +108,7 @@ export namespace images {
         new OutSocket(this, St.Float, "Height"),
       );
     }
-
+  
     output(context: NodeEvalContext) {
       const imageData = this.inSocket.inValue(context);
       if (imageData) {
@@ -164,7 +146,7 @@ export namespace images {
       }
     }
     
-    webglOutput(context?: NodeEvalContext): WebglVariables {
+    webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
       return new WebglVariables(
         `vec3 {0:val} = texture({1:texture}, v_uv).rgb;`,
         new Map([
@@ -204,8 +186,11 @@ uniform float {3:height};`,
             gl.uniform1i(unif, (this.ins[0].inValue() as ImageData)?.height ?? 0);
           },
         },
-      )
-          .nameVariableSlots(4);
+      ).nameVariableSlots(4);
+    }
+
+    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      return null;
     }
   }
 

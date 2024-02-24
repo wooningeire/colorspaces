@@ -674,8 +674,8 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
   }
 
   get usesFieldValue() {
-    return (!this.hasLinks || this.link.causesCircularDependency)
-        && this.showFieldIfAvailable;
+    return !this.hasLinks || this.link.causesCircularDependency;
+        // && this.showFieldIfAvailable;
   }
 
   /** Evaluates the value of this input socket (uses the value from the link attached to this socket if the link is

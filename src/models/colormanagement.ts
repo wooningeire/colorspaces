@@ -18,6 +18,7 @@ import {webglLabDeclarations} from "./colormanagement/spaces/lab";
 import {webglLuvDeclarations} from "./colormanagement/spaces/luv";
 import {webglOklabDeclarations} from "./colormanagement/spaces/oklab";
 import {webglRgbDeclarations} from "./colormanagement/rgb-models";
+import { webglCmfDeclarations } from "./colormanagement/spectral-power-distribution";
 export const webglDeclarations = [
   webglXyzDeclarations,
   webglSrgbDeclarations,
@@ -26,4 +27,5 @@ export const webglDeclarations = [
   webglLuvDeclarations,
   webglOklabDeclarations,
   webglRgbDeclarations,
+  webglCmfDeclarations,
 ].join("\n\n");

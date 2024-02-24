@@ -59,7 +59,7 @@ void main() {
      */
     readonly template: string,
     private readonly outVariables: Map<OutSocket | undefined, Record<string, string>>,
-    /** A secondary template that declares variables in the prelude, inserted at the end. */
+    /** A secondary template that declares variables in the prelude, inserted when the main body has been produced. */
     private readonly preludeTemplate: string="",
     /** The names of uniforms (which can be variable slots), mapped to functions to initialize those uniforms. */
     private readonly uniforms: Record<string, (gl: WebGL2RenderingContext, unif: WebGLUniformLocation | null) => void>={},

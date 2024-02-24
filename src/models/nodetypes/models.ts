@@ -539,6 +539,32 @@ export namespace models {
     flushCache() {
       this.cachedOutput = null;
     }
+
+    webglGetBaseVariables(): WebglVariables {
+      const xyz = this.cachedOutput
+          ?? (this.cachedOutput = [...cm.spectralPowerDistribution(this.distribution, this.colorMatchingDataset)] as any as Vec3);
+
+      return new WebglVariables(
+        "",
+        new Map([
+          [this.outs[0], <Record<string, string>>{"val": "{0:unif}"}],
+          [this.outs[1], {
+            "val": "{0:unif}",
+            "illuminant": "illuminant2_E",
+            "xyz": "{0:unif}",
+          }],
+        ]),
+        "uniform vec3 {0:unif};",
+        {
+          "{0:unif}": (gl, unif) => {
+            gl.uniform3fv(unif, xyz);
+          },
+        },
+      ).nameVariableSlots(1);
+    }
+    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      return null;
+    }
   }
 
   export class WavelengthNode extends Node {
@@ -574,6 +600,7 @@ export namespace models {
             {value: "2deg", text: "CIE 2° observer (1931)"},
             {value: "10deg", text: "CIE 10° observer (1964)"},
           ],
+          valueChangeRequiresShaderReload: true,
         })),
       );
       
@@ -596,6 +623,31 @@ export namespace models {
 
         case this.outs[1]:
           return new cm.Xyz(xyz, illuminantE);
+      }
+    }
+
+    webglGetBaseVariables(): WebglVariables {
+      const arrayName = this.datasetSocket.fieldValue === "2deg"
+          ? "cmf2"
+          : "cmf10";
+
+      return new WebglVariables(
+        `vec3 {0:xyz} = ${arrayName}[int(round({wavelength})) - 360] * {power};`,
+        new Map([
+          [this.outs[0], <Record<string, string>>{"val": "{0:xyz}"}],
+          [this.outs[1], {
+            "val": "{0:xyz}",
+            "illuminant": "illuminant2_E",
+            "xyz": "{0:xyz}",
+          }],
+        ]),
+      ).nameVariableSlots(1);
+    }
+    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      switch (inSocket) {
+        case this.ins[0]: return <WebglSocketValue<T>>{"val": "wavelength"};
+        case this.ins[1]: return <WebglSocketValue<T>>{"val": "power"};
+        default: return null;
       }
     }
   }

@@ -992,3 +992,19 @@ export const datasets = {
     ],
   },
 };
+
+export const webglCmfDeclarations = `const vec3 cmf2[471] = vec3[](
+  ${
+    [...datasets["2deg"].colorMatchingFunctions.values()]
+        .map(vec => `vec3(${vec.join(",")})`)
+        .join(",")
+  }
+);
+
+const vec3 cmf10[471] = vec3[](
+  ${
+    [...datasets["10deg"].colorMatchingFunctions.values()]
+        .map(vec => `vec3(${vec.join(",")})`)
+        .join(",")
+  }
+);`;
