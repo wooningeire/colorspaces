@@ -445,59 +445,6 @@ export namespace models {
     }
   } */
 
-  export class VectorNode extends Node {
-    static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Vector";
-    static readonly DESC = "desc.node.vector";
-
-    constructor() {
-      super();
-
-      this.ins.push(
-        new InSocket(this, Socket.Type.Float, "", true, {
-          sliderProps: {
-            hasBounds: false,
-          },
-        }),
-        new InSocket(this, Socket.Type.Float, "", true, {
-          sliderProps: {
-            hasBounds: false,
-          },
-        }),
-        new InSocket(this, Socket.Type.Float, "", true, {
-          sliderProps: {
-            hasBounds: false,
-          },
-        }),
-      );
-
-      this.outs.push(
-        new OutSocket(this, Socket.Type.Vector, "Vector"),
-      );
-    }
-
-    output(context: NodeEvalContext): Color {
-      return this.ins.map(socket => socket.inValue(context)) as Color;
-    }
-
-    webglGetBaseVariables(): WebglVariables {
-      return new WebglVariables(
-        "",
-        new Map([
-          [this.outs[0], {"val": "vec3({x}, {y}, {z})"}],
-        ])
-      );
-    }
-    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
-      switch (inSocket) {
-        case this.ins[0]: return <WebglSocketValue<T>>{"val": "x"};
-        case this.ins[1]: return <WebglSocketValue<T>>{"val": "y"};
-        case this.ins[2]: return <WebglSocketValue<T>>{"val": "z"};
-        default: return null;
-      }
-    }
-  }
-
   export class SpectralPowerDistributionNode extends Node {
     static readonly TYPE = Symbol(this.name);
     static readonly LABEL = "Spectral power distribution";

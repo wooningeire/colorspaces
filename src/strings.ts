@@ -17,7 +17,7 @@ const strings = {
 
   "label.node.srgb": "sRGB",
   "label.node.linearSrgb": "Linear sRGB",
-  "label.node.explode": "Explode",
+  "label.node.splitVector": "Split vector",
   "label.node.css": "CSS",
   
   "label.socket.color": "Color",
@@ -41,7 +41,7 @@ const strings = {
   "desc.node.lchab": "A variant of L\\*a\\*b\\* that uses hue (h) and colorfulness (C\\*) to define colors, somewhat similar to HSV.",
   "desc.node.lchuv": "A variant of L\\*u\\*v\\* that uses hue (h) and colorfulness (C\\*) to define colors, somewhat similar to HSV.",
   "desc.node.rec709": "RGB space with the same gamut as sRGB, but a different gamma correction function. Commonly used in videos.",
-  "desc.node.explode": "Accesses the individual components of a vector or color.",
+  "desc.node.splitVector": "Accesses the individual components of a vector or color.",
   "desc.node.contrastRatio": "Compares the relative luminance between two colors.",
   "desc.node.gradient": "Generates a range of numbers.",
   "desc.node.imageFile": "Reads RGB data from a local image file.",
