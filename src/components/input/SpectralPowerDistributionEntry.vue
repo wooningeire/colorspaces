@@ -32,11 +32,15 @@ const HEIGHT = 81;
 
 const emit = defineEmits<{
   (name: "update:datasetId", id: typeof props.datasetId): void,
+  (name: "update:distribution"): void,
 }>();
 
 
 const modelValue = reactive(props.modelValue);
-watch(modelValue, () => props.node.flushCache());
+watch(modelValue, () => {
+  props.node.flushCache();
+  emit("update:distribution");
+});
 
 const d = computed(() => `M0,0${modelValue.map((intensity, i) => `L${i},${intensity * HEIGHT}`).join("")}L${WIDTH},0`);
 

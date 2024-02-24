@@ -12,6 +12,10 @@ const props = defineProps<{
   node: Node,
 }>();
 
+const emit = defineEmits<{
+  (event: "value-change", requiresShaderReload: boolean): void,
+}>();
+
 
 const colorDisplayVue = ref<InstanceType<typeof NodeOutputColorDisplay>>();
 defineExpose({
@@ -25,7 +29,9 @@ defineExpose({
   <SpectralPowerDistributionEntry v-if="node instanceof models.SpectralPowerDistributionNode"
       :node="node"
       v-model="node.distribution"
-      v-model:datasetId="node.colorMatchingDataset" />
+      v-model:datasetId="node.colorMatchingDataset"
+      @update:distribution="$emit('value-change', false)"
+      @update:dataset-id="$emit('value-change', true)" />
 
   <ChromaticityEntry v-else-if="node instanceof output.ChromaticityPlotNode"
       :node="node" />

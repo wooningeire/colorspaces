@@ -25,3 +25,48 @@ export const blackbody = (temperature: number, datasetId: keyof typeof datasets)
         .reduce((cumsum, [wavelength, cmf]) => cumsum + blackbodyExitance(wavelength * 1e-9, temperature) * 1e-9 * cmf[i], 0)
   ).map((comp, i) => comp / datasets[datasetId].colorMatchingFunctionsIntegrals[i]) as Vec3,
 );
+
+export const webglBlackbodyDeclarations = `#define PLANCK 6.62607015e-34
+#define SPEED_OF_LIGHT 299792458.
+#define BOLTZMANN 1.380649e-23
+
+const float radConst1 = REV * PLANCK * SPEED_OF_LIGHT * SPEED_OF_LIGHT;
+const float radConst2 = PLANCK * SPEED_OF_LIGHT / BOLTZMANN;
+
+float blackbodyExitance(float wavelength, float temperature) {
+  float wavelengthSq = wavelength * wavelength;
+  float wavelengthQuint = wavelengthSq * wavelengthSq * wavelength;
+  return radConst1 / wavelengthQuint / exp(radConst2 / wavelength / temperature) / PI;
+}
+
+vec3 blackbodyTemp2ToXyz(float temperature) {
+  vec3 cumsum = vec3(0., 0., 0.);
+  for (int wavelengthIndex = 0; wavelengthIndex < cmf2.length(); wavelengthIndex++) {
+    float wavelength = float(wavelengthIndex + 360) * 1e-9;
+    float exitance = blackbodyExitance(wavelength, temperature) * 1e-9;
+
+    cumsum += vec3(
+      exitance * cmf2[wavelengthIndex].x,
+      exitance * cmf2[wavelengthIndex].y,
+      exitance * cmf2[wavelengthIndex].z
+    );
+  }
+
+  return cumsum / cmf2Integrals;
+}
+
+vec3 blackbodyTemp10ToXyz(float temperature) {
+  vec3 cumsum = vec3(0., 0., 0.);
+  for (int wavelengthIndex = 0; wavelengthIndex < cmf10.length(); wavelengthIndex++) {
+    float wavelength = float(wavelengthIndex + 360) * 1e-9;
+    float exitance = blackbodyExitance(wavelength, temperature) * 1e-9;
+
+    cumsum += vec3(
+      exitance * cmf10[wavelengthIndex].x,
+      exitance * cmf10[wavelengthIndex].y,
+      exitance * cmf10[wavelengthIndex].z
+    );
+  }
+
+  return cumsum / cmf10Integrals;
+}`;

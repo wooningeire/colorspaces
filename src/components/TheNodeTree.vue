@@ -186,7 +186,7 @@ defineExpose({
 
           @potential-socket-position-change="rerenderLinks"
           
-          @socket-field-value-change="requiresShaderReload => reloadOutputs(requiresShaderReload)"
+          @field-value-change="requiresShaderReload => reloadOutputs(requiresShaderReload)"
           @tree-update="reloadOutputs(true)"
           
           ref="nodeVues" />

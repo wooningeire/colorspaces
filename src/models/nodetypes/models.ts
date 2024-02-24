@@ -506,7 +506,6 @@ export namespace models {
     distribution: number[] =
       Array(830 - 360 + 1).fill(0)
           .map((_, x) => Math.exp(-(((x - 235) / 90)**2)));
-    ;
 
     colorMatchingDataset: "2deg" | "10deg" = "2deg";
 
@@ -541,9 +540,6 @@ export namespace models {
     }
 
     webglGetBaseVariables(): WebglVariables {
-      const xyz = this.cachedOutput
-          ?? (this.cachedOutput = [...cm.spectralPowerDistribution(this.distribution, this.colorMatchingDataset)] as any as Vec3);
-
       return new WebglVariables(
         "",
         new Map([
@@ -557,6 +553,9 @@ export namespace models {
         "uniform vec3 {0:unif};",
         {
           "{0:unif}": (gl, unif) => {
+            const xyz = this.cachedOutput
+                ?? (this.cachedOutput = [...cm.spectralPowerDistribution(this.distribution, this.colorMatchingDataset)] as any as Vec3);
+
             gl.uniform3fv(unif, xyz);
           },
         },
@@ -700,6 +699,30 @@ export namespace models {
           return new cm.Xyz(xyz, illuminantE);
       }
     }
+
+    webglGetBaseVariables(context: NodeEvalContext={}): WebglVariables {
+      const funcName = this.datasetSocket.fieldValue === "2deg"
+          ? "blackbodyTemp2ToXyz"
+          : "blackbodyTemp10ToXyz";
+
+      return new WebglVariables(
+        `vec3 {0:xyz} = ${funcName}({temperature});`,
+        new Map([
+          [this.outs[0], <Record<string, string>>{"val": "{0:xyz}"}],
+          [this.outs[1], {
+            "val": "{0:xyz}",
+            "illuminant": "illuminant2_E",
+            "xyz": "{0:xyz}",
+          }],
+        ]),
+      ).nameVariableSlots(1);
+    }
+    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      switch (inSocket) {
+        case this.ins[0]: return <WebglSocketValue<T>>{"val": "temperature"};
+        default: return null;
+      }
+    }
   }
 
   export class StandardIlluminantNode extends Node {
@@ -707,10 +730,10 @@ export namespace models {
     static readonly LABEL = "Standard illuminant";
     static readonly DESC = "desc.node.standardIlluminant";
 
-    private readonly whitePointSocket: Socket<St.Dropdown>;
+    private readonly whitePointSocket: InSocket<St.Dropdown>;
 
-    private readonly outXyzSocket: Socket<St.Vector>;
-    private readonly outXyySocket: Socket<St.Vector>;
+    private readonly outXyzSocket: OutSocket<St.Vector>;
+    private readonly outXyySocket: OutSocket<St.Vector>;
 
     constructor() {
       super();
@@ -740,6 +763,35 @@ export namespace models {
         case this.outs[2]:
           return cm.Xyz.from(illuminant);
       }
+    }
+
+    webglGetBaseVariables(context: NodeEvalContext={}): WebglVariables {
+      const illuminant = getIlluminant(this.whitePointSocket, context);
+      return new WebglVariables(
+        "",
+        new Map([
+          [this.outs[0], <Record<string, string>>{"val": "{0:xyz}"}],
+          [this.outs[1], <Record<string, string>>{"val": "{1:xyy}"}],
+          [this.outs[2], {
+            "val": "{0:xyz}",
+            "illuminant": "illuminant2_E",
+            "xyz": "{0:xyz}",
+          }],
+        ]),
+        `uniform vec3 {0:xyz};
+uniform vec3 {1:xyy};`,
+        {
+          "{0:xyz}": (gl, unif) => {
+            gl.uniform3fv(unif, cm.Xyz.from(illuminant));
+          },
+          "{1:xyz}": (gl, unif) => {
+            gl.uniform3fv(unif, cm.Xyy.from(illuminant));
+          },
+        }
+      ).nameVariableSlots(2);
+    }
+    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      return null;
     }
   }
 }

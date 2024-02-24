@@ -1000,6 +1000,7 @@ export const webglCmfDeclarations = `const vec3 cmf2[471] = vec3[](
         .join(",")
   }
 );
+const vec3 cmf2Integrals = vec3(${datasets["2deg"].colorMatchingFunctionsIntegrals.join(", ")});
 
 const vec3 cmf10[471] = vec3[](
   ${
@@ -1007,4 +1008,5 @@ const vec3 cmf10[471] = vec3[](
         .map(vec => `vec3(${vec.join(",")})`)
         .join(",")
   }
-);`;
+);
+const vec3 cmf10Integrals = vec3(${datasets["10deg"].colorMatchingFunctionsIntegrals.join(", ")});`;
