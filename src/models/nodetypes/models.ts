@@ -553,6 +553,7 @@ export namespace models {
         "uniform vec3 {0:unif};",
         {
           "{0:unif}": (gl, unif) => {
+            // we can bake this value from the CPU for now. If sockets are introduced, this must be GPU-computed
             const xyz = this.cachedOutput
                 ?? (this.cachedOutput = [...cm.spectralPowerDistribution(this.distribution, this.colorMatchingDataset)] as any as Vec3);
 

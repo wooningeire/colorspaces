@@ -105,7 +105,7 @@ const changeValue = (newPos: number[], lastPos: number[]) => {
   const minX = Math.min(x1, x2);
   const maxX = Math.max(x1, x2);
 
-  for (let x = minX; x <= maxX; x++) {
+  for (let x = minX; x <= Math.min(maxX, 830 - 360 + 1); x++) {
     if (0 > x || x > modelValue.length) continue;
     
     const lerpFac = (x - x1) / (x2 - x1);
@@ -217,7 +217,8 @@ const beginInput = (downEvent: PointerEvent) => {
 
     svg {
       transform: scaleY(-1);
-
+      overflow: visible;
+      
       path {
         fill: #ffffff3f;
         stroke: var(--node-border-color);
