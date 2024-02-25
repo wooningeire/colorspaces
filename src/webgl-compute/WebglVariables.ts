@@ -62,7 +62,7 @@ void main() {
     /** A secondary template that declares variables in the prelude, inserted when the main body has been produced. */
     private readonly preludeTemplate: string="",
     /** The names of uniforms (which can be variable slots), mapped to functions to initialize those uniforms. */
-    private readonly uniforms: Record<string, (gl: WebGL2RenderingContext, unif: WebGLUniformLocation | null) => void>={},
+    private readonly uniforms: Record<string, (gl: WebGL2RenderingContext, unif: WebGLUniformLocation | null, nUsedTextures: number) => boolean | void>={},
   ) {}
 
   /** Fills in the given slots with values or true GLSL variables.
@@ -171,9 +171,14 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
   }
 
   initializeUniforms(gl: WebGL2RenderingContext, program: WebGLProgram) {
+    let nUsedTextures = 0;
     for (const [unifName, initializeUnif] of Object.entries(this.uniforms)) {
       const unif = gl.getUniformLocation(program, unifName);
-      initializeUnif(gl, unif);
+      const usedTexture = initializeUnif(gl, unif, nUsedTextures);
+
+      if (usedTexture) {
+        nUsedTextures++;
+      }
     }
   }
 

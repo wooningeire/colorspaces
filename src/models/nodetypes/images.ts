@@ -164,9 +164,9 @@ export namespace images {
 uniform float {2:width};
 uniform float {3:height};`,
         {
-          "{1:texture}": (gl, unif) => {
+          "{1:texture}": (gl, unif, nUsedTextures) => {
             const texture = gl.createTexture();
-            gl.activeTexture(gl.TEXTURE0);
+            gl.activeTexture(gl.TEXTURE0 + nUsedTextures);
             gl.bindTexture(gl.TEXTURE_2D, texture);
 
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -175,7 +175,9 @@ uniform float {3:height};`,
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.ins[0].inValue() as ImageData ?? new Image());
-            gl.uniform1i(unif, 0);
+            gl.uniform1i(unif, nUsedTextures);
+            
+            return true;
           },
 
           "{2:width}": (gl, unif) => {
