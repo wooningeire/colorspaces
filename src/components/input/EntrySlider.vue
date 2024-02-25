@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import {computed, PropType, ref, watch} from "vue";
+import {computed, nextTick, PropType, ref, watch} from "vue";
 
 import {acceptAlways, identity} from "./base-functions";
 import {modifierKeys, tooltipController} from "../store";
 import makeDragListener from "../draggable";
 
 import getString, {NO_DESC, StringKey} from "@/strings";
+import { clearTextSelection } from "@/util";
 
 const props = defineProps({
   modelValue: {
@@ -111,7 +112,7 @@ const onChange = () => {
   proposedValueIsValid.value = true;
 };
 
-const onBlur = () => {
+const onBlur = (event: FocusEvent) => {
   entryActive.value = false;
 };
 
@@ -160,14 +161,22 @@ const beginSliderInput = makeDragListener({
 
   },
 
-  onUp() {
+  onUpAfterPassTolerance() {
     document.exitPointerLock();
+
+    setTimeout(() => {
+      entryActive.value = false;
+      clearTextSelection();
+    }, 0);
   },
 });
 
 const beginTextInput = (event: PointerEvent) => {
   entryActive.value = true;
-  textbox.value!.select();
+
+  nextTick(() => {
+    textbox.value!.select();
+  });
 };
 
 watch(() => [props.modelValue, props.convertOut], () => {

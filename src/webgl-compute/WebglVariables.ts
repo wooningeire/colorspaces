@@ -17,6 +17,12 @@ export class WebglVariables {
 
 precision mediump float;
 
+struct Color {
+  vec3 val;
+  vec2 illuminant;
+  vec3 xyz;
+};
+
 in vec2 v_uv;
 out vec4 fragColor;
 
@@ -29,21 +35,21 @@ ${webglDeclarations}
 void main() {
   {main}
   
-  vec3 gammaSrgb = xyzToGammaSrgb({xyz}, illuminant2_D65);
+  vec3 outRgb = xyzToGammaSrgb({xyz}, {illuminant});
 
   float alpha = 1.;
 
   if (outOfGamutAlpha != 1.) {
-    bool outOfGamut = 0. > gammaSrgb.r || gammaSrgb.r > 1.
-        || 0. > gammaSrgb.g || gammaSrgb.g > 1.
-        || 0. > gammaSrgb.b || gammaSrgb.b > 1.;
+    bool outOfGamut = 0. > outRgb.r || outRgb.r > 1.
+        || 0. > outRgb.g || outRgb.g > 1.
+        || 0. > outRgb.b || outRgb.b > 1.;
   
     if (outOfGamut) {
       alpha *= outOfGamutAlpha;
     }
   }
 
-  fragColor = vec4(gammaSrgb, alpha);
+  fragColor = vec4(outRgb, alpha);
 }`,
     new Map([
       [undefined, {}],
@@ -246,6 +252,7 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
         "main": segments.map(segment => segment.template)
             .join("\n\n"),
         "xyz": segments.at(-1)!.outVariables.get(undefined)!["xyz"],
+        "illuminant": segments.at(-1)!.outVariables.get(undefined)!["illuminant"],
         "beforePrelude": segments.map(segment => segment.preludeTemplate)
             .join("\n"),
       },
