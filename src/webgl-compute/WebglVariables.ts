@@ -136,10 +136,25 @@ ${this.preludeTemplate}`
     return new WebglVariables(template, outVariables, preludeTemplate, uniforms, functionDependencies);
   }
 
-  /** Slot names that are not included in `sourceVariableSlotMapping` will use the names from `source`'s `outVariables` list */
-  fillWith(source: WebglVariables, socket: NodeOutputTarget, sourceVariableSlotMapping: Record<string, string>, keepSourcePrelude: boolean=false) {
+  /**
+   * 
+   * @param source 
+   * @param socket 
+   * @param sourceVariableSlotMapping 
+   * @param keepSourcePrelude 
+   * @param includeUnmappedVariables Whether slot names that are not included in `sourceVariableSlotMapping` will use
+   * the names from `source`'s `outVariables` list
+   * @returns 
+   */
+  fillWith(
+    source: WebglVariables,
+    socket: NodeOutputTarget,
+    sourceVariableSlotMapping: Record<string, string>,
+    keepSourcePrelude: boolean=false,
+    includeUnmappedVariables: boolean=false,
+  ) {
     const outVariables: Record<string, string> = {};
-    const remainderOutVariables = {...source.outVariables.get(socket)!};
+    const remainderOutVariables = includeUnmappedVariables ? {...source.outVariables.get(socket)!} : {};
     for (const [oldName, newName] of Object.entries(sourceVariableSlotMapping)) {
       outVariables[newName] = source.outVariables.get(socket)![oldName];
       delete remainderOutVariables[oldName];
@@ -367,9 +382,7 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
         "main": relevantSegments.map(segment => segment.template)
             .join("\n\n"),
         // no prelude/uniforms because uniforms will be shared with the primary function
-        "output": outputVariables.fillWith(segments[nodeIndex], socket, {
-          // "val": "val",
-        }).template,
+        "output": outputVariables.fillWith(segments[nodeIndex], socket, {}, false, true).template,
         "outputType": outputType,
         "functionName": functionName,
       },

@@ -175,7 +175,7 @@ uniform float {3:height};`,
               gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
               gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
-              gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.ins[0].inValue() as ImageData ?? new Image());
+              gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.imageSocket.fieldValue ?? new Image());
               gl.uniform1i(unif, nUsedTextures);
               
               return true;
@@ -185,14 +185,14 @@ uniform float {3:height};`,
 
           "{2:width}": {
             set: (gl, unif) => {
-              gl.uniform1i(unif, this.imageSocket.fieldValue.width ?? 0);
+              gl.uniform1i(unif, this.imageSocket.fieldValue?.width ?? 0);
             },
             dependencySockets: [this.imageSocket],
           },
 
           "{3:height}": {
             set: (gl, unif) => {
-              gl.uniform1i(unif, this.imageSocket.fieldValue.height ?? 0);
+              gl.uniform1i(unif, this.imageSocket.fieldValue?.height ?? 0);
             },
             dependencySockets: [this.imageSocket],
           },
