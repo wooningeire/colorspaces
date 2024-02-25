@@ -122,7 +122,7 @@ export namespace output {
       let variables = new WebglVariables(
         `vec3 {0:xyz} = {xyz};`,
         new Map([
-          [undefined, {
+          [null, {
             "xyz": "{0:xyz}",
           }],
         ])
@@ -130,7 +130,7 @@ export namespace output {
           .nameVariableSlots(1);
   
       if (this.ins[1].usesFieldValue) {
-        variables = variables.fillWith(this.ins[1].webglVariables(), undefined, {
+        variables = variables.fillWith(this.ins[1].webglVariables(), null, {
           "xyz": "xyz",
         });
       }

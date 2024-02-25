@@ -75,7 +75,7 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "hslToRgb({hue}, {saturation}, {lightness})"}],
+            [null, {"val": "hslToRgb({hue}, {saturation}, {lightness})"}],
             [outs[0], {"val": "hslToRgb({hue}, {saturation}, {lightness})"}],
           ]),
         ),
@@ -103,7 +103,7 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "vec3 {0:hsl} = rgbToHsl({rgb});",
           new Map([
-            [undefined, {"val": "{0:hsl}"}],
+            [null, {"val": "{0:hsl}"}],
             [outs[0], {"val": "{0:hsl}.x"}],
             [outs[1], {"val": "{0:hsl}.y"}],
             [outs[2], {"val": "{0:hsl}.z"}],
@@ -167,7 +167,7 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "hsvToRgb({hue}, {saturation}, {value})"}],
+            [null, {"val": "hsvToRgb({hue}, {saturation}, {value})"}],
             [outs[0], {"val": "hsvToRgb({hue}, {saturation}, {value})"}],
           ]),
         ),
@@ -195,7 +195,7 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "vec3 {0:hsv} = rgbToHsv({rgb});",
           new Map([
-            [undefined, {"val": "{0:hsv}"}],
+            [null, {"val": "{0:hsv}"}],
             [outs[0], {"val": "{0:hsv}.x"}],
             [outs[1], {"val": "{0:hsv}.y"}],
             [outs[2], {"val": "{0:hsv}.z"}],
@@ -259,7 +259,7 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "hsvToRgb({hue}, {whiteness}, {blackness})"}],
+            [null, {"val": "hsvToRgb({hue}, {whiteness}, {blackness})"}],
             [outs[0], {"val": "hsvToRgb({hue}, {whiteness}, {blackness})"}],
           ]),
         ),
@@ -287,7 +287,7 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "vec3 {0:hwb} = rgbToHsl({rgb});",
           new Map([
-            [undefined, {"val": "{0:hwb}"}],
+            [null, {"val": "{0:hwb}"}],
             [outs[0], {"val": "{0:hwb}.x"}],
             [outs[1], {"val": "{0:hwb}.y"}],
             [outs[2], {"val": "{0:hwb}.z"}],
@@ -351,7 +351,7 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "cmyToRgb({cyan}, {magenta}, {yellow})"}],
+            [null, {"val": "cmyToRgb({cyan}, {magenta}, {yellow})"}],
             [outs[0], {"val": "cmyToRgb({cyan}, {magenta}, {yellow})"}],
           ]),
         ),
@@ -379,7 +379,7 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "vec3 {0:cmy} = rgbToCmy({rgb});",
           new Map([
-            [undefined, {"val": "{0:cmy}"}],
+            [null, {"val": "{0:cmy}"}],
             [outs[0], {"val": "{0:cmy}.x"}],
             [outs[1], {"val": "{0:cmy}.y"}],
             [outs[2], {"val": "{0:cmy}.z"}],

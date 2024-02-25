@@ -1,5 +1,5 @@
 import { Vec3 } from "@/util";
-import { Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, NodeWithOverloads, SocketOptions, InSocket, OutSocket, WebglSocketValue } from "../Node";
+import { Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, NodeWithOverloads, SocketOptions, InSocket, OutSocket, WebglSocketValue, NodeOutputTarget } from "../Node";
 import { Overload, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
 import { StringKey } from "@/strings";
@@ -118,36 +118,40 @@ export namespace spaces {
               ? getIlluminant(node.illuminantSocket!, context)
               : node.ColClass.defaultIlluminant;
 
-          const outVariables = new Map<OutSocket | undefined, Record<string, string>>([
-            [undefined, {
-              "val": "{0:color}",
-              "illuminant": "{1:illuminant}",
-              "xyz": "{2:xyz}",
+          const outVariables = new Map<NodeOutputTarget, Record<string, string>>([
+            [null, {
+              "val": "{0:color}.val",
+              "illuminant": "{0:color}.illuminant",
+              "xyz": "{0:color}.xyz",
+              "output": "{0:color}",
             }],
 
             [outs[0], {
-              "val": "{0:color}",
-              "illuminant": "{1:illuminant}",
-              "xyz": "{2:xyz}",
+              "val": "{0:color}.val",
+              "illuminant": "{0:color}.illuminant",
+              "xyz": "{0:color}.xyz",
+              "output": "{0:color}",
             }],
 
             [outs[1], {
-              "val": "{0:color}.x",
+              "val": "{0:color}.val.x",
+              "output": "{0:color}.val.x",
             }],
 
             [outs[2], {
-              "val": "{0:color}.y",
+              "val": "{0:color}.val.y",
+              "output": "{0:color}.val.y",
             }],
 
             [outs[3], {
-              "val": "{0:color}.z",
+              "val": "{0:color}.val.z",
+              "output": "{0:color}.val.z",
             }],
           ]);
 
           if (node.colorInputSocket.effectiveType() === St.ColorCoords) {
             return new WebglVariables(
-`vec3 {2:xyz} = {xyz};
-vec3 {0:color} = ${node.webglFromXyz};`,
+              `Color {0:color} = Color(${node.webglFromXyz}, {1:newIlluminant}, {xyz});`,
               outVariables,
               `uniform vec2 {1:newIlluminant};`,
               {
@@ -156,11 +160,10 @@ vec3 {0:color} = ${node.webglFromXyz};`,
                 },
               },
             )
-                .nameVariableSlots(3);
+                .nameVariableSlots(2);
           } else {
             return new WebglVariables(
-`vec3 {0:color} = {val};
-vec3 {2:xyz} = ${node.webglToXyz};`,
+              `Color {0:color} = Color({val}, {1:newIlluminant}, ${node.webglToXyz});`,
               outVariables,
               `uniform vec2 {1:newIlluminant};`,
               {
@@ -169,7 +172,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
                 },
               },
             )
-                .nameVariableSlots(3);
+                .nameVariableSlots(2);
           }
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: TripletSpaceNode) => {
@@ -223,42 +226,43 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
               : node.ColClass.defaultIlluminant;
 
           let variables = new WebglVariables(
-`vec3 {0:color} = vec3({x}, {y}, {z});
-vec3 {2:xyz} = ${node.webglToXyz};`,
+            `Color {0:color} = Color(vec3({x}, {y}, {z}), {1:newIlluminant}, ${node.webglToXyz});`,
             new Map([
-              [undefined, {
-                "val": "{0:color}",
-                "illuminant": "{1:newIlluminant}",
-                "xyz": "{2:xyz}",
+              [null, {
+                "val": "{0:color}.val",
+                "illuminant": "{0:color}.illuminant",
+                "xyz": "{0:color}.xyz",
+                "output": "{0:color}",
               }],
 
               [outs[0], {
-                "val": "{0:color}",
-                "illuminant": "{1:newIlluminant}",
-                "xyz": "{2:xyz}",
+                "val": "{0:color}.val",
+                "illuminant": "{0:color}.illuminant",
+                "xyz": "{0:color}.xyz",
+                "output": "{0:color}",
               }],
             ]),
-              `uniform vec2 {1:newIlluminant};`,
-              {
-                "{1:newIlluminant}": (gl, unif) => {
-                  gl.uniform2fv(unif, illuminant);
-                },
+            `uniform vec2 {1:newIlluminant};`,
+            {
+              "{1:newIlluminant}": (gl, unif) => {
+                gl.uniform2fv(unif, illuminant);
               },
+            },
           )
-              .nameVariableSlots(3);
+              .nameVariableSlots(2);
 
           if (node.valuesSockets[0].usesFieldValue) {
-            variables = variables.fillWith(node.valuesSockets[0].webglVariables(), undefined, {
+            variables = variables.fillWith(node.valuesSockets[0].webglVariables(), null, {
               "val": "x",
             }, true);
           }
           if (node.valuesSockets[1].usesFieldValue) {
-            variables = variables.fillWith(node.valuesSockets[1].webglVariables(), undefined, {
+            variables = variables.fillWith(node.valuesSockets[1].webglVariables(), null, {
               "val": "y",
             }, true);
           }
           if (node.valuesSockets[2].usesFieldValue) {
-            variables = variables.fillWith(node.valuesSockets[2].webglVariables(), undefined, {
+            variables = variables.fillWith(node.valuesSockets[2].webglVariables(), null, {
               "val": "z",
             }, true);
           }
@@ -298,11 +302,11 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
     get includeWhitePoint() {
       return true;
     }
-    /** A GLSL expression that takes slots `{0:color}` and `{1:newIlluminant}` of a color and supplies a value for
-     * `{2:xyz}`, the XYZ coordinates of that color. */
+    /** A GLSL expression that takes slots `{val}` and `{1:newIlluminant}` of a color and supplies a value for
+     * `{0:color}.xyz`, the XYZ coordinates of that color. */
     abstract get webglToXyz(): string;
     /** A GLSL expression that takes slots `{xyz}` and `{originalIlluminant}` of the XYZ coordinates of a color, as
-     * well as `{2:xyz}` or `{1:newIlluminant}`, and supplies a value for `{0:color}`, the current color space's
+     * well as `{1:newIlluminant}`, and supplies a value for `{0:color}.val`, the current color space's
      * coordinates of that color. */
     abstract get webglFromXyz(): string;
 
@@ -362,7 +366,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return cm.LinearSrgb;
     }
     get webglToXyz() {
-      return "linearSrgbToXyz({0:color}, {1:newIlluminant})";
+      return "linearSrgbToXyz({val}, {1:newIlluminant})";
     }
     get webglFromXyz() {
       return "xyzToLinearSrgb({xyz}, {originalIlluminant})";
@@ -378,7 +382,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return cm.Srgb;
     }
     get webglToXyz() {
-      return "gammaSrgbToXyz({0:color}, {1:newIlluminant})";
+      return "gammaSrgbToXyz({val}, {1:newIlluminant})";
     }
     get webglFromXyz() {
       return "xyzToGammaSrgb({xyz}, {originalIlluminant})";
@@ -489,7 +493,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return ["L*", "a*", "b*"];
     }
     get webglToXyz() {
-      return "labToXyz({0:color}, {1:newIlluminant}, {1:newIlluminant})";
+      return "labToXyz({val}, {1:newIlluminant}, {1:newIlluminant})";
     }
     get webglFromXyz() {
       return "xyzToLab({xyz}, {originalIlluminant}, {1:newIlluminant})";
@@ -535,7 +539,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return ["L*", "C*", "h"];
     }
     get webglToXyz() {
-      return "labToXyz(lchToLxx({0:color}), {1:newIlluminant}, {1:newIlluminant})";
+      return "labToXyz(lchToLxx({val}), {1:newIlluminant}, {1:newIlluminant})";
     }
     get webglFromXyz() {
       return "lxxToLch(xyzToLab({xyz}, {originalIlluminant}, {1:newIlluminant}))";
@@ -567,7 +571,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return ["L*", "u*", "v*"];
     }
     get webglToXyz() {
-      return "luvToXyz({0:color}, {1:newIlluminant}, {1:newIlluminant})";
+      return "luvToXyz({val}, {1:newIlluminant}, {1:newIlluminant})";
     }
     get webglFromXyz() {
       return "xyzToLuv({xyz}, {originalIlluminant}, {1:newIlluminant})";
@@ -613,21 +617,13 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return ["L*", "C*", "h"];
     }
     get webglToXyz() {
-      return "luvToXyz(lchToLxx({0:color}), {1:newIlluminant}, {1:newIlluminant})";
+      return "luvToXyz(lchToLxx({val}), {1:newIlluminant}, {1:newIlluminant})";
     }
     get webglFromXyz() {
       return "lxxToLch(xyzToLuv({xyz}, {originalIlluminant}, {1:newIlluminant}))";
     }
   }
 
-  enum NodeOutputTarget {
-    Main,
-    Socket,
-  }
-  type NodeOutputDetail<T extends NodeOutputTarget> =
-      T extends NodeOutputTarget.Socket ? OutSocket :
-      T extends NodeOutputTarget.Main ? void :
-      never;
   export class OklabNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
     static readonly LABEL = "Oklab";
@@ -657,7 +653,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return false;
     }
     get webglToXyz() {
-      return "oklabToXyz({0:color}, {1:newIlluminant})";
+      return "oklabToXyz({val}, {1:newIlluminant})";
     }
     get webglFromXyz() {
       return "xyzToOklab({xyz}, {originalIlluminant})";
@@ -707,7 +703,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return false;
     }
     get webglToXyz() {
-      return "oklabToXyz(lchToLxx({0:color}), {1:newIlluminant})";
+      return "oklabToXyz(lchToLxx({val}), {1:newIlluminant})";
     }
     get webglFromXyz() {
       return "lxxToLch(xyzToOklab({xyz}, {originalIlluminant}))";
@@ -722,7 +718,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return cm.LinearAdobeRgb;
     }
     get webglToXyz() {
-      return "linAdobeRgbToXyz({0:color}, {1:newIlluminant})";
+      return "linAdobeRgbToXyz({val}, {1:newIlluminant})";
     }
     get webglFromXyz() {
       return "xyzToLinAdobeRgb({xyz}, {originalIlluminant})";
@@ -737,7 +733,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return cm.AdobeRgb;
     }
     get webglToXyz() {
-      return "linAdobeRgbToXyz(gammaToLinAdobeRgb({0:color}), {1:newIlluminant})";
+      return "linAdobeRgbToXyz(gammaToLinAdobeRgb({val}), {1:newIlluminant})";
     }
     get webglFromXyz() {
       return "linToGammaAdobeRgb(xyzToLinAdobeRgb({xyz}, {originalIlluminant}))";
@@ -753,7 +749,7 @@ vec3 {2:xyz} = ${node.webglToXyz};`,
       return cm.Rec709;
     }
     get webglToXyz() {
-      return "linearSrgbToXyz(rec709ToLinearSrgb({0:color}), {1:newIlluminant})";
+      return "linearSrgbToXyz(rec709ToLinearSrgb({val}), {1:newIlluminant})";
     }
     get webglFromXyz() {
       return "linearToRec709(xyzToLinearSrgb({xyz}, {originalIlluminant}))";

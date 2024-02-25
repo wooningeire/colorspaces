@@ -51,7 +51,6 @@ const onDragSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 
   ((socketVue.socketEl as any as Ref<HTMLDivElement>).value 
       ?? socketVue.socketEl).addEventListener("dragend", () => {
-    console.log("hey");
     draggedSocketVue.value = null;
 
     dragListener.detach();

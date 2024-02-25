@@ -52,7 +52,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "mix({val0}, {val1}, {fac})"}],
+            [null, {"val": "mix({val0}, {val1}, {fac})"}],
             [outs[0], {"val": "mix({val0}, {val1}, {fac})"}],
           ]),
         ),
@@ -76,7 +76,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "{val0} + {val1} * {fac}"}],
+            [null, {"val": "{val0} + {val1} * {fac}"}],
             [outs[0], {"val": "{val0} + {val1} * {fac}"}],
           ]),
         ),
@@ -100,7 +100,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "{val0} * ((1. - {fac}) + {val1} * {fac})"}],
+            [null, {"val": "{val0} * ((1. - {fac}) + {val1} * {fac})"}],
             [outs[0], {"val": "{val0} * ((1. - {fac}) + {val1} * {fac})"}],
           ]),
         ),
@@ -124,7 +124,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "{val0} - {val1} * {fac}"}],
+            [null, {"val": "{val0} - {val1} * {fac}"}],
             [outs[0], {"val": "{val0} - {val1} * {fac}"}],
           ]),
         ),
@@ -148,7 +148,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "{val0} / ((1. - {fac}) + {val1} * {fac})"}],
+            [null, {"val": "{val0} / ((1. - {fac}) + {val1} * {fac})"}],
             [outs[0], {"val": "{val0} / ((1. - {fac}) + {val1} * {fac})"}],
           ]),
         ),
@@ -172,7 +172,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, { "val": "1. - (1. - {val0}) * (1. - {val1} * {fac})"}],
+            [null, { "val": "1. - (1. - {val0}) * (1. - {val1} * {fac})"}],
             [outs[0], { "val": "1. - (1. - {val0}) * (1. - {val1} * {fac})"}],
           ]),
         ),
@@ -195,7 +195,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "length({val0} - {val1})"}],
+            [null, {"val": "length({val0} - {val1})"}],
             [outs[0], {"val": "length({val0} - {val1})"}],
           ]),
         ),
@@ -224,7 +224,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "{vector} * {scalar}"}],
+            [null, {"val": "{vector} * {scalar}"}],
             [outs[0], {"val": "{vector} * {scalar}"}],
           ]),
         ),
@@ -294,7 +294,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "{val0} + {val1}"}],
+            [null, {"val": "{val0} + {val1}"}],
             [outs[0], {"val": "{val0} + {val1}"}],
           ]),
         ),
@@ -314,7 +314,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "{val0} * {val1}"}],
+            [null, {"val": "{val0} * {val1}"}],
             [outs[0], {"val": "{val0} * {val1}"}],
           ]),
         ),
@@ -334,7 +334,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "{val0} - {val1}"}],
+            [null, {"val": "{val0} - {val1}"}],
             [outs[0], {"val": "{val0} - {val1}"}],
           ]),
         ),
@@ -354,7 +354,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "{val0} / {val1}"}],
+            [null, {"val": "{val0} / {val1}"}],
             [outs[0], {"val": "{val0} / {val1}"}],
           ]),
         ),
@@ -374,7 +374,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "pow({val0}, {val1})"}],
+            [null, {"val": "pow({val0}, {val1})"}],
             [outs[0], {"val": "pow({val0}, {val1})"}],
           ]),
         ),
@@ -394,7 +394,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "1. - (1. - {val0}) * (1. - {val1})"}],
+            [null, {"val": "1. - (1. - {val0}) * (1. - {val1})"}],
             [outs[0], {"val": "1. - (1. - {val0}) * (1. - {val1})"}],
           ]),
         ),
@@ -415,7 +415,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "mix({min}, {max}, {fac})"}],
+            [null, {"val": "mix({min}, {max}, {fac})"}],
             [outs[0], {"val": "mix({min}, {max}, {fac})"}],
           ]),
         ),
@@ -445,7 +445,7 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [undefined, {"val": "mix({targetMin}, {targetMax}, {source} / ({sourceMax} - {sourceMin}))"}],
+            [null, {"val": "mix({targetMin}, {targetMax}, {source} / ({sourceMax} - {sourceMin}))"}],
             [outs[0], {"val": "mix({targetMin}, {targetMax}, {source} / ({sourceMax} - {sourceMin}))"}],
           ]),
         ),
@@ -613,7 +613,7 @@ export namespace math {
           return new WebglVariables(
             `float {0:difference} = deltaE1976({xyz0}, ${illuminant0}, {xyz1}, ${illuminant1});`,
             new Map([
-              [undefined, {"val": "{0:difference}"}],
+              [null, {"val": "{0:difference}"}],
               [outs[0], {"val": "{0:difference}"}],
             ]),
           ).nameVariableSlots(1);
@@ -680,7 +680,7 @@ export namespace math {
           return new WebglVariables(
             `float {0:difference} = deltaE2000({xyz0}, ${illuminant0}, {xyz1}, ${illuminant1});`,
             new Map([
-              [undefined, {"val": "{0:difference}"}],
+              [null, {"val": "{0:difference}"}],
               [outs[0], {"val": "{0:difference}"}],
             ]),
           ).nameVariableSlots(1);
@@ -780,7 +780,7 @@ export namespace math {
       return new WebglVariables(
         `float {0:contrastRatio} = contrastRatio({xyz0}, ${illuminant0}, {xyz1}, ${illuminant1});`,
         new Map([
-          [undefined, {"val": "{0:contrastRatio}"}],
+          [null, {"val": "{0:contrastRatio}"}],
           [this.outs[0], {"val": "{0:contrastRatio}"}],
         ]),
       ).nameVariableSlots(1);

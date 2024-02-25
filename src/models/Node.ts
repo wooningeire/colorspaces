@@ -133,7 +133,7 @@ export abstract class Node {
       const mapping = this.webglGetMapping(inSocket);
       if (mapping === null) continue;
 
-      variables = variables.fillWith(inSocket.webglVariables(), undefined, mapping, true);
+      variables = variables.fillWith(inSocket.webglVariables(), null, mapping, true);
     }
     return variables;
   }
@@ -328,6 +328,8 @@ export interface NodeEvalContext {
   readonly socket?: Socket | null;
 }
 
+export type NodeOutputTarget = OutSocket | null;
+
 
 export enum SocketType {
   Unknown,
@@ -354,22 +356,23 @@ export type SocketValue<St extends SocketType=any> =
     St extends SocketType.Bool ? boolean :
     never;
 
-export type WebglSocketValue<St extends SocketType=any> =
-    St extends SocketType.Float ? {
-      "val": string,
-    } :
-    St extends SocketType.Integer ? WebglSocketValue<SocketType.Float> :
-    St extends SocketType.Vector ? WebglSocketValue<SocketType.Float> :
-    St extends SocketType.ColorCoords ? {
-      "val": string,
-      "illuminant": string,
-      "xyz": string,
-    } :
-    St extends SocketType.VectorOrColor ? WebglSocketValue<SocketType.ColorCoords> | WebglSocketValue<SocketType.Vector> :
-    St extends SocketType.Dropdown ? never :
-    St extends SocketType.Image ? never :
-    St extends SocketType.Bool ? WebglSocketValue<SocketType.Float> :
-    never;
+export type WebglSocketValue<St extends SocketType=any> = (
+  St extends SocketType.Float ? {
+    "val": string,
+  } :
+  St extends SocketType.Integer ? WebglSocketValue<SocketType.Float> :
+  St extends SocketType.Vector ? WebglSocketValue<SocketType.Float> :
+  St extends SocketType.ColorCoords ? {
+    "val": string,
+    "illuminant": string,
+    "xyz": string,
+  } :
+  St extends SocketType.VectorOrColor ? WebglSocketValue<SocketType.ColorCoords> | WebglSocketValue<SocketType.Vector> :
+  St extends SocketType.Dropdown ? never :
+  St extends SocketType.Image ? never :
+  St extends SocketType.Bool ? WebglSocketValue<SocketType.Float> :
+  never
+);
 
 export enum SocketFlag {
   None = 0,
@@ -603,7 +606,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
         return new WebglVariables(
           "",
           new Map([
-            [undefined, {
+            [null, {
               "val": "{0:unif}",
               "illuminant": "illuminant2_D65",
               "xyz": "vec3(0., 0., 0.)",
@@ -626,7 +629,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
         return new WebglVariables(
           "",
           new Map([
-            [undefined, {
+            [null, {
               "val": `{0:unif}`,
             }],
           ]),
@@ -643,7 +646,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
         return new WebglVariables(
           "",
           new Map([
-            [undefined, {
+            [null, {
               "val": "{0:unif}",
             }],
           ]),

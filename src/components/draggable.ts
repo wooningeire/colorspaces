@@ -57,7 +57,7 @@ export default <T>({
       // Temporary hardcoded value until pointer lock has a mechanism to detect when lock begins
       setTimeout(() => {
         displacementLocked = false;
-      }, 50);
+      }, 75);
 
       addEventListener("pointerup", (upEvent: PointerEvent) => {
         onUpAfterPassTolerance(upEvent);
