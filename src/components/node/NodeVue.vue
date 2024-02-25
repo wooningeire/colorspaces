@@ -180,7 +180,6 @@ defineExpose({
               $emit('tree-update'),
               $emit('potential-socket-position-change'))"
 
-            @value-change="$emit('tree-update')"
             @unlink="
               $emit('tree-update'),
               $emit('potential-socket-position-change')"

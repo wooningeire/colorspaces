@@ -602,6 +602,52 @@ export namespace math {
 
           return cm.difference.deltaE1976(col0, col1);
         },
+        (ins, outs, context) => {
+          const illuminant0 = ins[0].effectiveType() === St.Vector
+              ? "illuminant2_E"
+              : "{illuminant0}"
+          const illuminant1 = ins[1].effectiveType() === St.Vector
+              ? "illuminant2_E"
+              : "{illuminant1}"
+    
+          return new WebglVariables(
+            `float {0:difference} = deltaE1976({xyz0}, ${illuminant0}, {xyz1}, ${illuminant1});`,
+            new Map([
+              [undefined, {"val": "{0:difference}"}],
+              [outs[0], {"val": "{0:difference}"}],
+            ]),
+          ).nameVariableSlots(1);
+        },
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: ColorDifferenceNode) => {
+          switch (inSocket) {
+            case ins[0]: 
+              if (ins[0].effectiveType() === St.ColorCoords) {
+                return <WebglSocketValue<T>>{
+                  "xyz": "xyz0",
+                  "illuminant": "illuminant0",
+                };
+              } else {
+                return <WebglSocketValue<T>>{
+                  "val": "xyz0",
+                };
+              }
+    
+            case ins[1]: 
+              if (ins[1].effectiveType() === St.ColorCoords) {
+                return <WebglSocketValue<T>>{
+                  "xyz": "xyz1",
+                  "illuminant": "illuminant1",
+                };
+              } else {
+                return <WebglSocketValue<T>>{
+                  "val": "xyz1",
+                };
+              }
+    
+            default:
+              return null;
+          }
+        },
       )],
       
       [ColorDifferenceMode.DeltaE2000, new Overload(
@@ -622,6 +668,52 @@ export namespace math {
           const col1 = ins[1].inValue(context);
 
           return cm.difference.deltaE2000(col0, col1);
+        },
+        (ins, outs, context) => {
+          const illuminant0 = ins[0].effectiveType() === St.Vector
+              ? "illuminant2_E"
+              : "{illuminant0}"
+          const illuminant1 = ins[1].effectiveType() === St.Vector
+              ? "illuminant2_E"
+              : "{illuminant1}"
+    
+          return new WebglVariables(
+            `float {0:difference} = deltaE2000({xyz0}, ${illuminant0}, {xyz1}, ${illuminant1});`,
+            new Map([
+              [undefined, {"val": "{0:difference}"}],
+              [outs[0], {"val": "{0:difference}"}],
+            ]),
+          ).nameVariableSlots(1);
+        },
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: ColorDifferenceNode) => {
+          switch (inSocket) {
+            case ins[0]: 
+              if (ins[0].effectiveType() === St.ColorCoords) {
+                return <WebglSocketValue<T>>{
+                  "xyz": "xyz0",
+                  "illuminant": "illuminant0",
+                };
+              } else {
+                return <WebglSocketValue<T>>{
+                  "val": "xyz0",
+                };
+              }
+    
+            case ins[1]: 
+              if (ins[1].effectiveType() === St.ColorCoords) {
+                return <WebglSocketValue<T>>{
+                  "xyz": "xyz1",
+                  "illuminant": "illuminant1",
+                };
+              } else {
+                return <WebglSocketValue<T>>{
+                  "val": "xyz1",
+                };
+              }
+    
+            default:
+              return null;
+          }
         },
       )],
     ]));
@@ -675,6 +767,53 @@ export namespace math {
         values: [this.output(context)],
         flags: [],
       };
+    }
+
+    webglGetBaseVariables(): WebglVariables {
+      const illuminant0 = this.colorSockets[0].effectiveType() === St.Vector
+          ? "illuminant2_E"
+          : "{illuminant0}"
+      const illuminant1 = this.colorSockets[1].effectiveType() === St.Vector
+          ? "illuminant2_E"
+          : "{illuminant1}"
+
+      return new WebglVariables(
+        `float {0:contrastRatio} = contrastRatio({xyz0}, ${illuminant0}, {xyz1}, ${illuminant1});`,
+        new Map([
+          [undefined, {"val": "{0:contrastRatio}"}],
+          [this.outs[0], {"val": "{0:contrastRatio}"}],
+        ]),
+      ).nameVariableSlots(1);
+    }
+    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      switch (inSocket) {
+        case this.colorSockets[0]: 
+          if (this.colorSockets[0].effectiveType() === St.ColorCoords) {
+            return <WebglSocketValue<T>>{
+              "xyz": "xyz0",
+              "illuminant": "illuminant0",
+            };
+          } else {
+            return <WebglSocketValue<T>>{
+              "val": "xyz0",
+            };
+          }
+
+        case this.colorSockets[1]: 
+          if (this.colorSockets[1].effectiveType() === St.ColorCoords) {
+            return <WebglSocketValue<T>>{
+              "xyz": "xyz1",
+              "illuminant": "illuminant1",
+            };
+          } else {
+            return <WebglSocketValue<T>>{
+              "val": "xyz1",
+            };
+          }
+
+        default:
+          return null;
+      }
     }
   }
 

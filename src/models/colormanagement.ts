@@ -20,6 +20,7 @@ import {webglOklabDeclarations} from "./colormanagement/spaces/oklab";
 import {webglRgbDeclarations} from "./colormanagement/rgb-models";
 import {webglCmfDeclarations} from "./colormanagement/spectral-power-distribution";
 import {webglBlackbodyDeclarations} from "./colormanagement/blackbody";
+import {webglDiffDeclarations} from "./colormanagement/difference";
 export const webglDeclarations = [
   webglXyzDeclarations,
   webglSrgbDeclarations,
@@ -30,4 +31,5 @@ export const webglDeclarations = [
   webglRgbDeclarations,
   webglCmfDeclarations,
   webglBlackbodyDeclarations,
+  webglDiffDeclarations,
 ].join("\n\n");
