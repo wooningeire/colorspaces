@@ -76,8 +76,8 @@ export const settings = reactive(<{
   deviceSpace: cm.Srgb,
   rgbScale: 1,
   hueScale: 1,
-  outOfGamutAlpha: 0.5,
-  imaginaryColorAlpha: 0.5,
+  outOfGamutAlpha: 0.25,
+  imaginaryColorAlpha: 0.25,
 });
 //#endregion
 

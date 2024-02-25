@@ -35,9 +35,13 @@ provide("draggingSocket", draggingSocket);
 
 
 const onDragSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
-  draggedSocketVue.value = socketVue;
+  // setTimeout required due to bug in Chromium
+  // https://stackoverflow.com/questions/19639969/html5-dragend-event-firing-immediately  
+  setTimeout(() => {
+    draggedSocketVue.value = socketVue;
+  }, 0);
 
-  [pointerX.value, pointerY.value] = draggedSocketVue.value.socketPos();
+  [pointerX.value, pointerY.value] = socketVue.socketPos();
 
   const dragListener = Listen.for(window, "dragover", (event: DragEvent) => {
     const pos = screenToViewport([event.pageX, event.pageY]);
@@ -47,6 +51,7 @@ const onDragSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 
   ((socketVue.socketEl as any as Ref<HTMLDivElement>).value 
       ?? socketVue.socketEl).addEventListener("dragend", () => {
+    console.log("hey");
     draggedSocketVue.value = null;
 
     dragListener.detach();
