@@ -6,7 +6,7 @@ import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 import NodeOutputCssRgbVec from "./NodeOutputCssRgbVec.vue";
 import NodeOutputCssColor from "./NodeOutputCssColor.vue";
 
-import {Node, NodeWithOverloads, OutputDisplayType} from "@/models/Node";
+import {InSocket, Node, NodeWithOverloads, OutputDisplayType} from "@/models/Node";
 import {Col} from "@/models/colormanagement";
 import { Vec3 } from "@/util";
 import { tree } from "../store";
@@ -35,8 +35,8 @@ watch(() => props.node.getDependencyAxes().size, () => {
 
 const colorDisplayVue = ref<InstanceType<typeof NodeOutputColorDisplay>>();
 defineExpose({
-  reload: (requiresShaderReload: boolean) => {
-    colorDisplayVue.value?.reload(requiresShaderReload);
+  reload: (requiresShaderReload: boolean, editedSocket: Node | InSocket | null) => {
+    colorDisplayVue.value?.reload(requiresShaderReload, editedSocket);
   },
 });
 </script>

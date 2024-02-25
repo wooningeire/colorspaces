@@ -85,7 +85,7 @@ export namespace images {
     static readonly LABEL = "Image file";
     static readonly DESC = "desc.node.imageFile";
 
-    private readonly inSocket: InSocket<St.Image>;
+    private readonly imageSocket: InSocket<St.Image>;
     private readonly normalizeCoordinatesSocket: InSocket<St.Bool>
 
     get axes() {
@@ -96,7 +96,7 @@ export namespace images {
       super();
 
       this.ins.push(
-        (this.inSocket = new InSocket(this, St.Image, "File", false)),
+        (this.imageSocket = new InSocket(this, St.Image, "File", false)),
         (this.normalizeCoordinatesSocket = new InSocket(this, St.Bool, "Normalize coordinates", false, {
           defaultValue: true,
         })),
@@ -110,7 +110,7 @@ export namespace images {
     }
   
     output(context: NodeEvalContext) {
-      const imageData = this.inSocket.inValue(context);
+      const imageData = this.imageSocket.inValue(context);
       if (imageData) {
         if (context.socket === this.outs[1]) {
           return imageData.width;
@@ -164,28 +164,37 @@ export namespace images {
 uniform float {2:width};
 uniform float {3:height};`,
         {
-          "{1:texture}": (gl, unif, nUsedTextures) => {
-            const texture = gl.createTexture();
-            gl.activeTexture(gl.TEXTURE0 + nUsedTextures);
-            gl.bindTexture(gl.TEXTURE_2D, texture);
+          "{1:texture}": {
+            set: (gl, unif, nUsedTextures) => {
+              const texture = gl.createTexture();
+              gl.activeTexture(gl.TEXTURE0 + nUsedTextures);
+              gl.bindTexture(gl.TEXTURE_2D, texture);
 
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+              gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+              gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+              gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+              gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.ins[0].inValue() as ImageData ?? new Image());
-            gl.uniform1i(unif, nUsedTextures);
-            
-            return true;
+              gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.ins[0].inValue() as ImageData ?? new Image());
+              gl.uniform1i(unif, nUsedTextures);
+              
+              return true;
+            },
+            dependencySockets: [this.imageSocket],
           },
 
-          "{2:width}": (gl, unif) => {
-            gl.uniform1i(unif, (this.ins[0].inValue() as ImageData)?.width ?? 0);
+          "{2:width}": {
+            set: (gl, unif) => {
+              gl.uniform1i(unif, this.imageSocket.fieldValue.width ?? 0);
+            },
+            dependencySockets: [this.imageSocket],
           },
 
-          "{3:height}": (gl, unif) => {
-            gl.uniform1i(unif, (this.ins[0].inValue() as ImageData)?.height ?? 0);
+          "{3:height}": {
+            set: (gl, unif) => {
+              gl.uniform1i(unif, this.imageSocket.fieldValue.height ?? 0);
+            },
+            dependencySockets: [this.imageSocket],
           },
         },
       ).nameVariableSlots(4);

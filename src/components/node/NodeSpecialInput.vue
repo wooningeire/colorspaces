@@ -2,7 +2,7 @@
 import SpectralPowerDistributionEntry from "../input/SpectralPowerDistributionEntry.vue";
 import ChromaticityEntry from "../input/ChromaticityEntry.vue";
 
-import {Node} from "@/models/Node";
+import {InSocket, Node} from "@/models/Node";
 import {models, output} from "@/models/nodetypes";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 import { ref } from "vue";
@@ -13,14 +13,14 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (event: "value-change", requiresShaderReload: boolean): void,
+  (event: "value-change", requiresShaderReload: boolean, editedSocket: Node | InSocket): void,
 }>();
 
 
 const colorDisplayVue = ref<InstanceType<typeof NodeOutputColorDisplay>>();
 defineExpose({
-  reload: (requiresShaderReload: boolean) => {
-    colorDisplayVue.value?.reload(requiresShaderReload);
+  reload: (requiresShaderReload: boolean, editedSocket: Node | InSocket | null) => {
+    colorDisplayVue.value?.reload(requiresShaderReload, editedSocket);
   },
 });
 </script>
@@ -30,8 +30,8 @@ defineExpose({
       :node="node"
       v-model="node.distribution"
       v-model:datasetId="node.colorMatchingDataset"
-      @update:distribution="$emit('value-change', false)"
-      @update:dataset-id="$emit('value-change', true)" />
+      @update:distribution="$emit('value-change', false, node)"
+      @update:dataset-id="$emit('value-change', true, node)" />
 
   <ChromaticityEntry v-else-if="node instanceof output.ChromaticityPlotNode"
       :node="node" />

@@ -125,6 +125,9 @@ export abstract class Node {
 
   abstract output(context: NodeEvalContext): any;
 
+  /** Constructs a `WebglVariables` object, where slots that can be filled by its socket field values have been filled
+   * 
+  */
   webglOutput(context: NodeEvalContext={}): WebglVariables {
     let variables = this.webglGetBaseVariables();
     for (const inSocket of this.ins) {
@@ -137,13 +140,20 @@ export abstract class Node {
     }
     return variables;
   }
+  /** Fills the slots of a target `WebglVariables` with the output of a source `WebglVariables`, whose output variables
+   * are mapped to target slots according to `webglGetMapping(inSocket)`
+   */
   webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket): WebglVariables {
     const mapping = this.webglGetMapping(inSocket);
     if (mapping === null) throw new Error("the implementation of webglGetMapping for this node does not support this socket");
     return target.fillWith(source, inSocket?.link.src, mapping);
   }
 
+  /** A `WebglVariables` object that provides a template to fill, output variables, and uniforms */
   abstract webglGetBaseVariables(): WebglVariables;
+  /** Provides a mapping from output names from a source socket to input slot names in `webglGetBaseVariables`
+   * depending on which input socket `inSocket` we are inspecting
+   */
   abstract webglGetMapping<St extends SocketType>(inSocket: InSocket<St>): WebglSocketValue<St> | null;
   
   display(context: NodeEvalContext={}): NodeDisplay {
@@ -614,12 +624,15 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           ]),
           `uniform vec3 {0:unif};`,
           {
-            "{0:unif}": (gl, unif) => {
-              if (!this.usesFieldValue) {
-                gl.uniform3fv(unif, this.inValue(context) as number[]);
-              } else {
-                gl.uniform3fv(unif, [0, 0, 0]);
-              }
+            "{0:unif}": {
+              set: (gl, unif) => {
+                if (!this.usesFieldValue) {
+                  gl.uniform3fv(unif, this.inValue(context) as number[]);
+                } else {
+                  gl.uniform3fv(unif, [0, 0, 0]);
+                }
+              },
+              dependencySockets: [this],
             },
           },
         )
@@ -635,8 +648,11 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           ]),
           `uniform vec3 {0:unif};`,
           {
-            "{0:unif}": (gl, unif) => {
-              gl.uniform3fv(unif, this.fieldValue as number[]);
+            "{0:unif}": {
+              set: (gl, unif) => {
+                gl.uniform3fv(unif, this.fieldValue as number[]);
+              },
+              dependencySockets: [this],
             },
           },
         )
@@ -652,8 +668,11 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           ]),
           `uniform float {0:unif};`,
           {
-            "{0:unif}": (gl, unif) => {
-              gl.uniform1f(unif, this.fieldValue as number);
+            "{0:unif}": {
+              set: (gl, unif) => {
+                gl.uniform1f(unif, this.fieldValue as number);
+              },
+              dependencySockets: [this],
             },
           },
         )

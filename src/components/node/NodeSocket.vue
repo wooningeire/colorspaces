@@ -5,7 +5,7 @@ import NodeSocketField from "./NodeSocketField.vue";
 import NodeSocket from "./NodeSocket.vue";
 import {tree, tooltipController} from "../store";
 
-import {Tree, Socket, SocketType as St} from "@/models/Node";
+import {Tree, Socket, SocketType as St, InSocket} from "@/models/Node";
 import getString, {NO_DESC} from "@/strings";
 
 
@@ -18,7 +18,7 @@ const props = defineProps<{
 
 // @ts-ignore
 const emit = defineEmits<{
-  (event: "field-value-change", requiresShaderReload: boolean): void,
+  (event: "field-value-change", requiresShaderReload: boolean, editedSocket: InSocket): void,
   (event: "drag-socket", socketVue: InstanceType<typeof NodeSocket>): void,
   (event: "link-to-socket", socketVue: InstanceType<typeof NodeSocket>): void,
   (event: "unlink"): void,
@@ -195,7 +195,7 @@ Object.defineProperties(socketVue, {
         :socket="socket"
         @value-change="(requiresShaderReload) => {
           socket.node.onSocketFieldValueChange(socket, tree as Tree);
-          $emit('field-value-change', requiresShaderReload);
+          $emit('field-value-change', requiresShaderReload, socket);
         }" />
   </div>
 </template>

@@ -83,7 +83,11 @@ void main() {
     /** A secondary template that declares variables in the prelude, inserted after the main body has been produced. */
     private readonly preludeTemplate: string="",
     /** The names of uniforms (which can be variable slots), mapped to functions to initialize those uniforms. */
-    private readonly uniforms: Record<string, (gl: WebGL2RenderingContext, unif: WebGLUniformLocation | null, nUsedTextures: number) => boolean | void>={},
+    private readonly uniforms: Record<string, {
+      set(gl: WebGL2RenderingContext, unif: WebGLUniformLocation | null, nUsedTextures: number): boolean | void,
+      /** Can be a `Node` if the dependency is a `NodeSpecialInput` */
+      dependencySockets: (Node | InSocket)[],
+    }>={},
     /** The names of functions (which can be variable slots), mapped to sockets whose outputs will be converted to the
      * bodies of those functions rather than included in the template.
      */
@@ -132,9 +136,10 @@ ${this.preludeTemplate}`
     return new WebglVariables(template, outVariables, preludeTemplate, uniforms, functionDependencies);
   }
 
+  /** Slot names that are not included in `sourceVariableSlotMapping` will use the names from `source`'s `outVariables` list */
   fillWith(source: WebglVariables, socket: NodeOutputTarget, sourceVariableSlotMapping: Record<string, string>, keepSourcePrelude: boolean=false) {
     const outVariables: Record<string, string> = {};
-    const remainderOutVariables = {...this.outVariables.get(socket)!};
+    const remainderOutVariables = {...source.outVariables.get(socket)!};
     for (const [oldName, newName] of Object.entries(sourceVariableSlotMapping)) {
       outVariables[newName] = source.outVariables.get(socket)![oldName];
       delete remainderOutVariables[oldName];
@@ -210,14 +215,53 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
     ));
   }
 
-  initializeUniforms(gl: WebGL2RenderingContext, program: WebGLProgram) {
+  initializeUniforms(gl: WebGL2RenderingContext, program: WebGLProgram): UniformReloadData {
+    const textureIdMap = new Map<WebGLUniformLocation, number>();
+    const socketDependents = new Map<Node | InSocket, string[]>();
+
     let nUsedTextures = 0;
-    for (const [unifName, initializeUnif] of Object.entries(this.uniforms)) {
-      const unif = gl.getUniformLocation(program, unifName);
+    for (const [unifName, {set: initializeUnif, dependencySockets}] of Object.entries(this.uniforms)) {
+      const unif = gl.getUniformLocation(program, unifName)!;
+
       const usedTexture = initializeUnif(gl, unif, nUsedTextures);
 
       if (usedTexture) {
+        textureIdMap.set(unif, nUsedTextures);
         nUsedTextures++;
+      }
+
+      for (const socket of dependencySockets) {
+        if (socketDependents.has(socket)) {
+          socketDependents.get(socket)!.push(unifName);
+        } else {
+          socketDependents.set(socket, [unifName]);
+        }
+      }
+    }
+
+    return {
+      textureIdMap,
+      socketDependents,
+    };
+  }
+
+  refreshUniforms(
+    gl: WebGL2RenderingContext,
+    program: WebGLProgram,
+    socket: Node | InSocket,
+    uniformData: UniformReloadData,
+  ) {
+    const dependents = uniformData.socketDependents.get(socket) ?? [];
+
+    for (const unifName of dependents) {
+      const {set: initializeUnif} = this.uniforms[unifName];
+
+      const unif = gl.getUniformLocation(program, unifName)!;
+
+      if (uniformData.textureIdMap.has(unif!)) {
+        initializeUnif(gl, unif, uniformData.textureIdMap.get(unif)!);
+      } else {
+        initializeUnif(gl, unif, 0);
       }
     }
   }
@@ -294,18 +338,22 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
 
   private static getTranspiledNodeOutputFunction(socket: OutSocket, functionName: string, segments: WebglVariables[], nodeIndex: number) {
     let outputType: string;
+    let outputVariables: WebglVariables;
     switch (socket.type) {
       case SocketType.ColorCoords:
         outputType = "Color";
+        outputVariables = new WebglVariables("Color({val}, {illuminant}, {xyz})", new Map([]));
         break;
 
       case SocketType.Vector:
       case SocketType.VectorOrColor:
         outputType = "vec3";
+        outputVariables = new WebglVariables("{val}", new Map([]));
         break;
 
       case SocketType.Float:
         outputType = "float";
+        outputVariables = new WebglVariables("{val}", new Map([]));
         break;
       
       default:
@@ -319,7 +367,9 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
         "main": relevantSegments.map(segment => segment.template)
             .join("\n\n"),
         // no prelude/uniforms because uniforms will be shared with the primary function
-        "output": relevantSegments.at(-1)!.outVariables.get(socket)!["output"],
+        "output": outputVariables.fillWith(segments[nodeIndex], socket, {
+          // "val": "val",
+        }).template,
         "outputType": outputType,
         "functionName": functionName,
       },
@@ -349,4 +399,13 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
       uniforms,
     );
   }
+}
+
+class WebglTranspilation {
+
+}
+
+export interface UniformReloadData {
+  textureIdMap: Map<WebGLUniformLocation, number>,
+  socketDependents: Map<Node | InSocket, string[]>,
 }

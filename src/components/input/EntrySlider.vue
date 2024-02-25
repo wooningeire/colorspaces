@@ -162,11 +162,11 @@ const beginSliderInput = makeDragListener({
   
     const newValue = origValue + displacement.x * amountPerPixel.value * modifierFac;
     
-    if (Math.abs(newValue - internalMin.value) / stickToBoundTolerance <= amountPerPixel.value * modifierFac) {
+    if (props.hasBounds && Math.abs(newValue - internalMin.value) / stickToBoundTolerance <= amountPerPixel.value * modifierFac) {
       emit("update:modelValue", internalMin.value);
       onDrag();
       return;
-    } else if (Math.abs(newValue - internalMax.value) / stickToBoundTolerance <= amountPerPixel.value * modifierFac) {
+    } else if (props.hasBounds && Math.abs(newValue - internalMax.value) / stickToBoundTolerance <= amountPerPixel.value * modifierFac) {
       emit("update:modelValue", internalMax.value);
       onDrag();
       return;

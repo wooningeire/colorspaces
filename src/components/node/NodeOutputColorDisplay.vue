@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch, nextTick} from "vue";
 
-import {Node, Socket, NodeEvalContext} from "@/models/Node";
+import {Node, Socket, NodeEvalContext, InSocket} from "@/models/Node";
 import {tree, settings} from "../store";
-import { WebglVariables } from "@/webgl-compute/WebglVariables";
+import { UniformReloadData, WebglVariables } from "@/webgl-compute/WebglVariables";
 
 const props = withDefaults(defineProps<{
   node: Node,
@@ -30,6 +30,7 @@ let nVertsLast = 0;
 const imageIsOutOfGamut = ref(false);
 
 let lastTranspilation: WebglVariables;
+let uniformReloadData: UniformReloadData;
 const reinitializeShader = async () => {
   // canvas.value!.width = canvas.value!.offsetWidth * devicePixelRatio;
   // canvas.value!.height = canvas.value!.offsetWidth * devicePixelRatio;
@@ -107,7 +108,7 @@ void main() {
   
   //#region Setting uniforms
   const outOfGamutAlphaUnif = gl.getUniformLocation(glProgram, "outOfGamutAlpha");
-  setUniforms = () => {
+  setNonSocketUniforms = () => {
     gl.uniform1f(outOfGamutAlphaUnif, settings.outOfGamutAlpha);
   };
   //#endregion
@@ -120,11 +121,11 @@ void main() {
 
   gl.bindVertexArray(vertArray);
 
-  setUniforms();
-  rerender();
+  setNonSocketUniforms();
+  rerender(true);
 };
-let setUniforms: () => void;
-const rerender = async () => {
+let setNonSocketUniforms: () => void;
+const rerender = async (setUniforms: boolean, editedSocket: Node | InSocket | null=null) => {
   await nextTick();
 
   const gl = glLast.value!;
@@ -134,7 +135,13 @@ const rerender = async () => {
   const height = canvas.value!.height = axes.has(1) ? canvas.value!.offsetHeight * devicePixelRatio : 1;
   gl.viewport(0, 0, width, height);
 
-  lastTranspilation.initializeUniforms(gl, glProgramLast);
+  if (setUniforms) {
+    if (editedSocket === null) {
+      uniformReloadData = lastTranspilation.initializeUniforms(gl, glProgramLast);
+    } else {
+      lastTranspilation.refreshUniforms(gl, glProgramLast, editedSocket, uniformReloadData);
+    }
+  }
 
   gl.drawArrays(gl.TRIANGLES, 0, nVertsLast);
 };
@@ -186,8 +193,8 @@ const rerenderCanvas = () => {
  */
 onMounted(reinitializeShader);
 watch(settings, () => {
-  setUniforms();
-  rerender();
+  setNonSocketUniforms();
+  rerender(false);
 });
 
 // `coords` property is needed to update when Gradient node axis changes, might want to make this check more robust?
@@ -196,11 +203,11 @@ watch(settings, () => {
 
 
 defineExpose({
-  reload: (requiresShaderReload: boolean) => {
+  reload: (requiresShaderReload: boolean, editedSocket: Node | InSocket | null) => {
     if (requiresShaderReload) {
       reinitializeShader();
     } else {
-      rerender();
+      rerender(true, editedSocket);
     }
   },
 });

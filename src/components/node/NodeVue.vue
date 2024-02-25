@@ -8,7 +8,7 @@ import NodeSpecialInput from "./NodeSpecialInput.vue";
 import NodeOutput from "./NodeOutput.vue";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 
-import {Node} from "@/models/Node";
+import {InSocket, Node} from "@/models/Node";
 import {models, spaces, math, images, externals, organization, output} from "@/models/nodetypes";
 
 import {Listen, clearTextSelection, Vec2} from "@/util";
@@ -31,7 +31,7 @@ const emit = defineEmits<{
   (event: "potential-socket-position-change"): void,
   (event: "tree-update"): void,
   (event: "node-selected", targetNode: Node, clearSelectionFirst: boolean): void,
-  (event: "field-value-change", requiresShaderReload: boolean): void,
+  (event: "field-value-change", requiresShaderReload: boolean, editedSocket: Node | InSocket): void,
 }>();
 
 
@@ -121,9 +121,9 @@ watch(props.node, () => { // update please :(
 const outputVue = ref<InstanceType<typeof NodeOutput>>();
 const inputVue = ref<InstanceType<typeof NodeSpecialInput>>();
 defineExpose({
-  reloadOutput: (requiresShaderReload: boolean) => {
-    outputVue.value?.reload(requiresShaderReload);
-    inputVue.value?.reload(requiresShaderReload);
+  reloadOutput: (requiresShaderReload: boolean, editedSocket:  Node |InSocket | null) => {
+    outputVue.value?.reload(requiresShaderReload, editedSocket);
+    inputVue.value?.reload(requiresShaderReload, editedSocket);
   },
 });
 
@@ -155,7 +155,7 @@ defineExpose({
     <NodeSpecialInput :node="node"
         ref="inputVue"
         
-        @value-change="requiresShaderReload => $emit('field-value-change', requiresShaderReload)" />
+        @value-change="(requiresShaderReload, editedSocket) => $emit('field-value-change', requiresShaderReload, editedSocket)" />
 
     <!-- <div class="node-content">
       <div class="fields">
@@ -184,7 +184,7 @@ defineExpose({
               $emit('tree-update'),
               $emit('potential-socket-position-change')"
           
-            @field-value-change="(requiresShaderReload: boolean) => $emit('field-value-change', requiresShaderReload)" />
+            @field-value-change="(requiresShaderReload: boolean, editedSocket: InSocket) => $emit('field-value-change', requiresShaderReload, editedSocket)" />
       </template>
     </div>
 

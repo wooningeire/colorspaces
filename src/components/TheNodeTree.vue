@@ -7,7 +7,7 @@ import TheNodeTreeLinks from "./TheNodeTreeLinks.vue";
 import NodeLink from "./node/NodeLink.vue";
 
 import {Vec2, Listen, clearTextSelection} from "@/util";
-import {Socket, Node, Link} from "@/models/Node";
+import {Socket, Node, Link, InSocket} from "@/models/Node";
 
 import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";
 
@@ -84,9 +84,9 @@ onMounted(rerenderLinks);
 
 
 const nodeVues = ref<InstanceType<typeof NodeVue>[]>([]);
-const reloadOutputs = (requiresShaderReload: boolean) => {
+const reloadOutputs = (requiresShaderReload: boolean, editedSocket: Node | InSocket | null) => {
   for (const nodeVue of nodeVues.value) {
-    nodeVue.reloadOutput(requiresShaderReload);
+    nodeVue.reloadOutput(requiresShaderReload, editedSocket);
   }
 };
 
@@ -190,8 +190,8 @@ defineExpose({
 
           @potential-socket-position-change="rerenderLinks"
           
-          @field-value-change="requiresShaderReload => reloadOutputs(requiresShaderReload)"
-          @tree-update="reloadOutputs(true)"
+          @field-value-change="(requiresShaderReload, editedSocket) => reloadOutputs(requiresShaderReload, editedSocket)"
+          @tree-update="reloadOutputs(true, null)"
           
           ref="nodeVues" />
     </div>

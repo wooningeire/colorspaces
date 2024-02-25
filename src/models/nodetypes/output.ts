@@ -1,5 +1,5 @@
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, NodeWithOverloads, InSocket} from "../Node";
+import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, NodeWithOverloads, InSocket, WebglSocketValue} from "../Node";
 import { Overload, OverloadGroup } from "../Overload";
 import * as cm from "../colormanagement";
 
@@ -118,30 +118,30 @@ export namespace output {
       return (context.socket ?? this.ins[1]).inValue(context);
     }
 
-    webglOutput(context?: NodeEvalContext): WebglVariables {
-      let variables = new WebglVariables(
-        `vec3 {0:xyz} = {xyz};`,
+    webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
+      return new WebglVariables(
+        ``,
         new Map([
           [null, {
-            "xyz": "{0:xyz}",
+            "xyz": "{xyz}",
+            "illuminant": "{illuminant}",
+            "val": "{val}",
           }],
         ])
-      )
-          .nameVariableSlots(1);
-  
-      if (this.ins[1].usesFieldValue) {
-        variables = variables.fillWith(this.ins[1].webglVariables(), null, {
-          "xyz": "xyz",
-        });
-      }
-
-      return variables;
+      ).nameVariableSlots(1);
     }
 
-    webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket) {
-      return target.fillWith(source, inSocket.link?.src, {
-        "xyz": "xyz",
-      });
+    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      switch (inSocket) {
+        case this.ins[1]: return <WebglSocketValue<T>>{
+          "xyz": "xyz",
+          "illuminant": "illuminant",
+          "val": "val",
+        }; 
+        case this.ins[2]: return <WebglSocketValue<T>>{}; 
+        case this.ins[3]: return <WebglSocketValue<T>>{}; 
+        default: return null;
+      }
     }
   }
 }

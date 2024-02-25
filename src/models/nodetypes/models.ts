@@ -499,12 +499,15 @@ export namespace models {
         ]),
         "uniform vec3 {0:unif};",
         {
-          "{0:unif}": (gl, unif) => {
-            // we can bake this value from the CPU for now. If sockets are introduced, this must be GPU-computed
-            const xyz = this.cachedOutput
-                ?? (this.cachedOutput = [...cm.spectralPowerDistribution(this.distribution, this.colorMatchingDataset)] as any as Vec3);
+          "{0:unif}": {
+            set: (gl, unif) => {
+              // we can bake this value from the CPU for now. If sockets are introduced, this must be GPU-computed
+              const xyz = this.cachedOutput
+                  ?? (this.cachedOutput = [...cm.spectralPowerDistribution(this.distribution, this.colorMatchingDataset)] as any as Vec3);
 
-            gl.uniform3fv(unif, xyz);
+              gl.uniform3fv(unif, xyz);
+            },
+            dependencySockets: [this],
           },
         },
       ).nameVariableSlots(1);
@@ -519,9 +522,9 @@ export namespace models {
     static readonly LABEL = "Wavelength";
     static readonly DESC = "desc.node.wavelength";
 
-    private readonly inSocket: Socket<St.Float>;
-    private readonly powerSocket: Socket<St.Float>;
-    private readonly datasetSocket: Socket<St.Dropdown>;
+    private readonly inSocket: InSocket<St.Float>;
+    private readonly powerSocket: InSocket<St.Float>;
+    private readonly datasetSocket: InSocket<St.Dropdown>;
 
     constructor() {
       super();
@@ -604,8 +607,8 @@ export namespace models {
     static readonly LABEL = "Blackbody";
     static readonly DESC = "desc.node.blackbody";
 
-    private readonly inSocket: Socket<St.Float>;
-    private readonly datasetSocket: Socket<St.Dropdown>;
+    private readonly inSocket: InSocket<St.Float>;
+    private readonly datasetSocket: InSocket<St.Dropdown>;
 
     constructor() {
       super();
@@ -714,7 +717,6 @@ export namespace models {
     }
 
     webglGetBaseVariables(context: NodeEvalContext={}): WebglVariables {
-      const illuminant = getIlluminant(this.whitePointSocket, context);
       return new WebglVariables(
         "",
         new Map([
@@ -729,11 +731,19 @@ export namespace models {
         `uniform vec3 {0:xyz};
 uniform vec3 {1:xyy};`,
         {
-          "{0:xyz}": (gl, unif) => {
-            gl.uniform3fv(unif, cm.Xyz.from(illuminant));
+          "{0:xyz}": {
+            set: (gl, unif) => {
+              const illuminant = getIlluminant(this.whitePointSocket, context);
+              gl.uniform3fv(unif, cm.Xyz.from(illuminant));
+            },
+            dependencySockets: [this.whitePointSocket],
           },
-          "{1:xyz}": (gl, unif) => {
-            gl.uniform3fv(unif, cm.Xyy.from(illuminant));
+          "{1:xyy}": {
+            set: (gl, unif) => {
+              const illuminant = getIlluminant(this.whitePointSocket, context);
+              gl.uniform3fv(unif, cm.Xyy.from(illuminant));
+            },
+            dependencySockets: [this.whitePointSocket],
           },
         }
       ).nameVariableSlots(2);
