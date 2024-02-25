@@ -85,6 +85,13 @@ const displayValue = computed({
 
 const textbox = ref(null as HTMLInputElement | null);
 
+const deselectInput = () => {
+  setTimeout(() => {
+    textbox.value!.selectionStart = null;
+    textbox.value!.selectionEnd = null;
+  }, 0);
+};
+
 
 const emit = defineEmits([
   "update:modelValue",
@@ -116,6 +123,12 @@ const onBlur = (event: FocusEvent) => {
   entryActive.value = false;
 };
 
+const onPointerDown = (event: PointerEvent) => {
+  if (!entryActive) return;
+  beginSliderInput(event);
+  deselectInput();
+};
+
 
 const onDrag = () => {
   setDisplayToTrueValue();
@@ -140,6 +153,8 @@ const beginSliderInput = makeDragListener({
   },
 
   onDrag(moveEvent, displacement, origValue: number) {
+    deselectInput();
+
     const modifierFac =
         modifierKeys.shift ? 1/8 :
         modifierKeys.ctrl ? 8 :
@@ -158,7 +173,6 @@ const beginSliderInput = makeDragListener({
     }
     emit("update:modelValue", roundToStep(newValue, props.step));
     onDrag();
-
   },
 
   onUpAfterPassTolerance() {
@@ -200,7 +214,7 @@ const showTooltip = () => {
       v-model="displayValue"
       @input="onInput"
       @change="onChange"
-      @pointerdown="event => !entryActive && beginSliderInput(event)"
+      @pointerdown="onPointerDown"
       @click="event => !entryActive && beginTextInput(event as any as PointerEvent)"
       @blur="onBlur"
       :class="{

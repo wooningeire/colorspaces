@@ -27,11 +27,11 @@ export const oklabSliderProps = [
   },
   {
     hasBounds: false,
-    unboundedChangePerPixel: 0.25,
+    unboundedChangePerPixel: 0.0025,
   },
   {
     hasBounds: false,
-    unboundedChangePerPixel: 0.25,
+    unboundedChangePerPixel: 0.0025,
   },
 ];
 
