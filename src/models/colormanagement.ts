@@ -21,6 +21,7 @@ import {webglRgbDeclarations} from "./colormanagement/rgb-models";
 import {webglCmfDeclarations} from "./colormanagement/spectral-power-distribution";
 import {webglBlackbodyDeclarations} from "./colormanagement/blackbody";
 import {webglDiffDeclarations} from "./colormanagement/difference";
+import {webglRandomDeclarations} from "./colormanagement/random";
 export const webglDeclarations = [
   webglXyzDeclarations,
   webglSrgbDeclarations,
@@ -32,4 +33,5 @@ export const webglDeclarations = [
   webglCmfDeclarations,
   webglBlackbodyDeclarations,
   webglDiffDeclarations,
+  webglRandomDeclarations,
 ].join("\n\n");

@@ -1,3 +1,5 @@
+import { Vec3 } from "@/util";
+
 const hashInt = (x: number) => {
   x += x << 10;
   x ^= x >> 6;
@@ -7,17 +9,24 @@ const hashInt = (x: number) => {
   return x;
 };
 
+const hashVec3 = (vec: Vec3) => {
+  return hashInt(vec[0] ^ hashInt(vec[1]) ^ hashInt(vec[2]));
+};
+
 const constructFloat = (int: number) => {
   const dataView = new DataView(new ArrayBuffer(4));
   dataView.setUint32(0, (int & 0x007FFFFF) | 0x3F800000);
   return dataView.getFloat32(0) - 1.
 };
 
-export const randFloat = (seed: number) => {
+const floatBitsAsInt = (float: number) => {
   const dataView = new DataView(new ArrayBuffer(4));
-  dataView.setFloat32(0, seed);
-  return constructFloat(hashInt(dataView.getUint32(0)));
+  dataView.setFloat32(0, float);
+  return dataView.getUint32(0);
 };
+
+export const randFloat = (seed: number) => constructFloat(hashInt(floatBitsAsInt(seed)));
+export const randFloatVec3Seed = (seed: Vec3) => constructFloat(hashVec3(seed.map(floatBitsAsInt) as Vec3));
 
 export const webglRandomDeclarations = `//#region https://stackoverflow.com/a/17479300
 uint hash(uint x) {
