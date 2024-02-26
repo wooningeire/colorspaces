@@ -7,6 +7,7 @@ import * as cm from "../colormanagement";
 import { Color, Vec3, lerp } from "@/util";
 import { Overload, OverloadGroup } from "../Overload";
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
+import { randFloat } from "../colormanagement/random";
 
 export namespace math {
   enum VectorArithmeticMode {
@@ -823,12 +824,14 @@ export namespace math {
     static readonly DESC = "desc.node.randomFloat";
     static readonly outputDisplayType = OutputDisplayType.Float;
 
+    private readonly seedSocket: InSocket<St.Float>;
+
     constructor() {
       super();
       
       this.ins.push(
         new InSocket(this, St.Bool, "Integer", false),
-        new InSocket(this, St.Float, "Seed", true, {sliderProps: {hasBounds: false}}),
+        (this.seedSocket = new InSocket(this, St.Float, "Seed", true, {sliderProps: {hasBounds: false}})),
         new InSocket(this, St.Float, "Min", true, {sliderProps: {hasBounds: false}}),
         new InSocket(this, St.Float, "Max", true, {sliderProps: {hasBounds: false}, defaultValue: 1}),
       );
@@ -843,9 +846,9 @@ export namespace math {
       const min = this.ins[2].inValue(context) as number;
       const max = this.ins[3].inValue(context) as number;
 
-      const rng = seedrandom(this.ins[1].inValue(context).toString())
+      // const rng = seedrandom(this.ins[1].inValue(context).toString())
 
-      const float = rng() * (max - min + (useFloor ? 1 : 0)) + min;
+      const float = randFloat(this.seedSocket.inValue(context)) * (max - min + (useFloor ? 1 : 0)) + min;
       return useFloor ? Math.floor(float) : float;
     }
     
@@ -855,6 +858,27 @@ export namespace math {
         values: [this.output(context)],
         flags: [],
       };
+    }
+
+    webglGetBaseVariables(): WebglVariables {
+      return new WebglVariables(
+        `float {0:float} = random({seed}) * ({max} - {min} + ({useFloor} ? 1. : 0.)) + {min};
+float {1:val} = {useFloor} ? floor({0:float}) : {0:float};`,
+        new Map([
+          [null, {"val": "{1:val}"}],
+          [this.outs[0], {"val": "{1:val}"}],
+        ]),
+      ).nameVariableSlots(2);
+    }
+
+    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      switch (inSocket) {
+        case this.ins[0]: return <WebglSocketValue<T>>{"val": "useFloor"};
+        case this.seedSocket: return <WebglSocketValue<T>>{"val": "seed"};
+        case this.ins[2]: return <WebglSocketValue<T>>{"val": "min"};
+        case this.ins[3]: return <WebglSocketValue<T>>{"val": "max"};
+        default: return null;
+      }
     }
   }
 }

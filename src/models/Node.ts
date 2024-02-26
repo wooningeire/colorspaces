@@ -635,8 +635,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
               dependencySockets: [this],
             },
           },
-        )
-            .nameVariableSlots(1);
+        ).nameVariableSlots(1);
 
       case St.Vector:
         return new WebglVariables(
@@ -655,8 +654,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
               dependencySockets: [this],
             },
           },
-        )
-            .nameVariableSlots(1);
+        ).nameVariableSlots(1);
 
       case St.Float:
         return new WebglVariables(
@@ -675,8 +673,26 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
               dependencySockets: [this],
             },
           },
-        )
-            .nameVariableSlots(1);
+        ).nameVariableSlots(1);
+
+        case St.Bool:
+          return new WebglVariables(
+            "",
+            new Map([
+              [null, {
+                "val": "{0:unif}",
+              }],
+            ]),
+            `uniform bool {0:unif};`,
+            {
+              "{0:unif}": {
+                set: (gl, unif) => {
+                  gl.uniform1i(unif, this.fieldValue as number);
+                },
+                dependencySockets: [this],
+              },
+            },
+          ).nameVariableSlots(1);
 
       default:
         throw new Error("not implemented");
