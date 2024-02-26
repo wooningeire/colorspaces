@@ -15,11 +15,50 @@ const strings = {
   "label.nodeCategory.models": "Models",
   "label.nodeCategory.spaces": "Spaces",
 
+  "label.node.rgb": "RGB",
+  "label.node.hsl": "HSL",
+  "label.node.hsv": "HSV",
+  "label.node.hwb": "HWB",
+  "label.node.cmy": "CMY",
+  "label.node.spectralPowerDistribution": "Spectral power distribution",
+  "label.node.wavelength": "Wavelength",
+  "label.node.blackbody": "Blackbody",
+  "label.node.standardIlluminant": "Standard illuminant",
+
   "label.node.srgb": "sRGB",
   "label.node.linearSrgb": "Linear sRGB",
-  "label.node.splitVector": "Split vector",
+  "label.node.xyz": "CIE 1931 XYZ",
+  "label.node.xyy": "xyY",
+  "label.node.lab": "CIE LAB (L\\*a\\*b\\*)",
+  "label.node.lchab": "L\\*C\\*h<sub>ab</sub>",
+  "label.node.luv": "CIE LUV (L\\*u\\*v\\*)",
+  "label.node.lchuv": "L\\*C\\*h<sub>uv</sub>",
+  "label.node.oklab": "Oklab",
+  "label.node.oklchab": "Oklch",
+  "label.node.linearAdobeRgb": "Linear Adobe RGB 1998",
+  "label.node.adobeRgb": "Adobe RGB 1998",
+  "label.node.rec709": "Rec. 709",
   "label.node.css": "CSS",
-  
+
+  "label.node.vectorArithmetic": "Vector arithmetic",
+  "label.node.arithmetic": "Arithmetic",
+  "label.node.vector": "Vector",
+  "label.node.splitVector": "Split vector",
+  "label.node.colorDifference": "Color difference",
+  "label.node.contrastRatio": "Contrast ratio",
+  "label.node.randomFloat": "Random float",
+
+  "label.node.gradient": "Gradient",
+  "label.node.imageFile": "Image file",
+  "label.node.sample": "Sample",
+
+  "label.node.cssOutput": "CSS output",
+  "label.node.chromaticityPlot": "Chromaticity plot",
+  "label.node.imagePlot": "Image plot",
+
+  "label.node.reroute": "Reroute",
+
+
   "label.socket.color": "Color",
   "label.socket.illuminant": "White point",
 
@@ -35,7 +74,7 @@ const strings = {
 
   "desc.node.srgb": "The default color space in most images. Each component scales almost directly with perceived brightness.",
   "desc.node.linearSrgb": "A variant of sRGB that scales directly with physical light power.",
-  "desc.node.xyz": "A color space that corresponds somewhat with each type of the human eye's cone cells. Commonly used as a basis for defining other color spaces and converting between them.",
+  "desc.node.xyz": "A color space that is commonly used as a basis for defining other color spaces and converting between them. Similar to RGB spaces, colors are represented as amounts of three “primary” colors added together, but the selected primaries are imaginary (physically impossible) and were merely mathematically convenient for computations in the 1930s. Despite this, combinations of these imaginary colors can represent existant colors. (The convenience was that it can represent the colors of all pure wavelengths of light, and therefore also their sums, using nonnegative values—something that is impossible to do with any triplet of primaries that actually exist.)<br /><br />It is derived from the CIE RGB color space, which actually uses existant colors for its primaries. The Y axis has been specifically selected to represent luminance, or an approximation of brightness, which can be calculated through some weighted combination of any RGB primaries.",
   "desc.node.xyy": "A variant of XYZ that separates chromaticity (xy) and relative luminance (Y).",
   "desc.node.lab": "An attempted *perceptually uniform* color space, defined by perceived luminance (L\\*) and color axes for green, red, blue, and yellow.",
   "desc.node.lchab": "A variant of L\\*a\\*b\\* that uses hue (h) and colorfulness (C\\*) to define colors, somewhat similar to HSV.",
@@ -56,16 +95,16 @@ const strings = {
   "desc.field.rgb.b": "**B**: Blue light.",
 
   "desc.field.lchab.l": "**L\\***: Perceived luminance. (0–100)",
-  "desc.field.lchab.c": "**C\\***: “Colorfulness” (similar to saturation).",
+  "desc.field.lchab.c": "**C\\***: Colorfulness (similar to saturation).",
   "desc.field.lchab.h": "**h**: Hue. (0–1)",
 
   "desc.field.oklchab.l": "**L\\***: Perceived luminance. (0–1)",
-  "desc.field.oklchab.c": "**C\\***: “Colorfulness” (similar to saturation).",
+  "desc.field.oklchab.c": "**C\\***: Colorfulness (similar to saturation).",
   "desc.field.oklchab.h": "**h**: Hue. (0–1)",
 
-  "desc.field.xyz.x": "**X**: Encodes some information about the stimulation of red (long) cones. (0–1)",
-  "desc.field.xyz.y": "**Y**: Relative luminance, i.e. luminance relative to the white point. Encodes some information about the stimulation of green (medium) cones. (0–1)",
-  "desc.field.xyz.z": "**Z**: Encodes some information about the stimulation of blue (short) cones. (0–1)",
+  "desc.field.xyz.x": "**X**: Imaginary color. (0–1)",
+  "desc.field.xyz.y": "**Y**: Relative luminance, i.e. how bright the color appears relative to white. (0–1)",
+  "desc.field.xyz.z": "**Z**: Imaginary color that somewhat correlates with blue. (0–1)",
 
   "desc.field.xyy.x": "**x**: One axis used to define chromaticity.",
   "desc.field.xyy.y": "**y**: Another axis used to define chromaticity.",

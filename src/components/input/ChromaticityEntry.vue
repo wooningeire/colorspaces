@@ -18,7 +18,7 @@ watch(tree.links, () => {
   getCurrentInstance()?.proxy?.$forceUpdate();
 });
 
-const diagramScale = 1.15;
+const diagramScale = 1;
 const nSamplesPerAxis = computed(() => {
   switch (dependencyAxes.value.size) {
     case 1: return 128;

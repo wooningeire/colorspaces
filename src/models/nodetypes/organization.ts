@@ -7,7 +7,7 @@ import { WebglVariables } from "@/webgl-compute/WebglVariables";
 export namespace organization {
   export class RerouteNode extends Node {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Reroute";
+    static readonly id = "reroute";
     
     constructor() {
       super();

@@ -95,10 +95,13 @@ export type NodeDisplay = {
 
 export abstract class Node {
   static readonly TYPE: symbol = Symbol();
-  static readonly LABEL: string = "";
-
-  static readonly DESC: StringKey | string = NO_DESC;
-  
+  static readonly id: string = "";
+  static get LABEL(): StringKey | string {
+    return `label.node.${this.id}`;
+  }
+  static get DESC(): StringKey | string {
+    return `desc.node.${this.id}`;
+  };
   static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.None;
 
   readonly ins: InSocket[] = [];
@@ -120,7 +123,7 @@ export abstract class Node {
   // Note: If subclass constructor is called, `new.target` is the subclass
   constructor(
     readonly type: symbol=new.target.TYPE,
-    public label: string=new.target.LABEL,
+    readonly label: StringKey | string=new.target.LABEL,
   ) {}
 
   abstract output(context: NodeEvalContext): any;

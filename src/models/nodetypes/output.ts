@@ -17,8 +17,7 @@ export namespace output {
   }
   export class CssOutputNode extends NodeWithOverloads<CssOutputMode> {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "CSS output";
-    static readonly DESC = "desc.node.cssOutput";
+    static readonly id = "cssOutput";
     static readonly outputDisplayType = OutputDisplayType.Css;
 
     static readonly overloadGroup = new OverloadGroup(new Map<CssOutputMode, Overload<void>>([
@@ -47,8 +46,7 @@ export namespace output {
   }
   export class ChromaticityPlotNode extends NodeWithOverloads<ChromaticityPlotMode> {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Chromaticity plot";
-    static readonly DESC = "desc.node.chromaticityPlot";
+    static readonly id = "chromaticityPlot";
 
     static readonly overloadGroup = new OverloadGroup(new Map<ChromaticityPlotMode, Overload<void>>([
       [ChromaticityPlotMode.Color, new Overload(
@@ -83,8 +81,7 @@ export namespace output {
 
   export class ImagePlotNode extends Node {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Image plot";
-    static readonly DESC = "desc.node.imagePlot";
+    static readonly id = "imagePlot";
 
     readonly normalizeCoordsSocket: InSocket<St.Bool>;
     readonly widthSocket: InSocket<St.Float>;

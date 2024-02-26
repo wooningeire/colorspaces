@@ -22,7 +22,7 @@ export namespace math {
   }
   export class VectorArithmeticNode extends NodeWithOverloads<VectorArithmeticMode> {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Vector arithmetic";
+    static readonly id = "vectorArithmetic";
     static readonly outputDisplayType = OutputDisplayType.Vec;
 
     private static threeValueMapping: ConstructorParameters<typeof Overload<VectorArithmeticMode>>[5] =
@@ -269,7 +269,7 @@ export namespace math {
   }
   export class ArithmeticNode extends NodeWithOverloads<ArithmeticMode> {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Arithmetic";
+    static readonly id = "arithmetic";
     static readonly outputDisplayType = OutputDisplayType.Float;
 
     private static twoValueMapping: ConstructorParameters<typeof Overload<ArithmeticNode>>[5] =
@@ -478,8 +478,7 @@ export namespace math {
 
   export class VectorNode extends Node {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Vector";
-    static readonly DESC = "desc.node.vector";
+    static readonly id = "vector";
 
     constructor() {
       super();
@@ -531,9 +530,7 @@ export namespace math {
 
   export class SplitVectorNode extends Node {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Split vector";
-
-    static readonly DESC = "desc.node.splitVector";
+    static readonly id = "splitVector";
 
     private readonly inSocket: InSocket<St.Vector>;
 
@@ -580,7 +577,7 @@ export namespace math {
   }
   export class ColorDifferenceNode extends NodeWithOverloads<ColorDifferenceMode> {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Color difference";
+    static readonly id = "colorDifference";
     static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
 
     static readonly overloadGroup = new OverloadGroup(new Map<ColorDifferenceMode, Overload<Color | number>>([
@@ -734,8 +731,7 @@ export namespace math {
 
   export class ContrastRatioNode extends Node {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Contrast ratio";
-    static readonly DESC = "desc.node.contrastRatio";
+    static readonly id = "contrastRatio";
     static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
 
     private readonly colorSockets: InSocket<St.VectorOrColor>[];
@@ -824,8 +820,7 @@ export namespace math {
   }
   export class RandomFloatNode extends NodeWithOverloads<RandomFloatMode> {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Random float";
-    static readonly DESC = "desc.node.randomFloat";
+    static readonly id = "randomFloat";
     static readonly outputDisplayType = OutputDisplayType.Float;
 
     //@ts-ignore

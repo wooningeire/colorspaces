@@ -334,8 +334,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class LinearNode extends RgbSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Linear sRGB";
-    static readonly DESC = "desc.node.linearSrgb";
+    static readonly id = "linearSrgb";
 
     get ColClass() {
       return cm.LinearSrgb;
@@ -350,8 +349,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class SrgbNode extends RgbSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "sRGB";
-    static readonly DESC = "desc.node.srgb";
+    static readonly id = "srgb";
 
     get ColClass() {
       return cm.Srgb;
@@ -366,8 +364,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class XyzNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "XYZ";
-    static readonly DESC = "desc.node.xyz";
+    static readonly id = "xyz";
 
     get displayLabels() {
       return ["X", "Y", "Z"];
@@ -403,9 +400,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class XyyNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "xyY";
-
-    static readonly DESC = "desc.node.xyy";
+    static readonly id = "xyy";
 
     get displayLabels() {
       return ["x", "y", "Y"];
@@ -445,8 +440,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class LabNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "L\\*a\\*b\\*";
-    static readonly DESC = "desc.node.lab";
+    static readonly id = "lab";
 
     get displayLabels() {
       return ["L*", "a*", "b*"];
@@ -477,8 +471,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class LchAbNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "L\\*C\\*h<sub>ab</sub>";
-    static readonly DESC = "desc.node.lchab";
+    static readonly id = "lchab";
 
     get displayLabels() {
       return ["L*", "C*", "h"];
@@ -523,8 +516,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class LuvNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "L\\*u\\*v\\*";
-    static readonly DESC = "desc.node.luv";
+    static readonly id = "luv";
 
     get displayLabels() {
       return ["L*", "u*", "v*"];
@@ -555,8 +547,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class LchUvNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "L\\*C\\*h<sub>uv</sub>";
-    static readonly DESC = "desc.node.lchuv";
+    static readonly id = "lchuv";
 
     get displayLabels() {
       return ["L*", "C*", "h"];
@@ -601,8 +592,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class OklabNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Oklab";
-    static readonly DESC = "desc.node.oklab";
+    static readonly id = "oklab";
 
     get displayLabels() {
       return ["L", "a", "b"];
@@ -637,8 +627,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class OklchAbNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Oklch";
-    static readonly DESC = "desc.node.oklchab";
+    static readonly id = "oklchab";
 
     get displayLabels() {
       return ["L", "C", "h"];
@@ -687,7 +676,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class LinearAdobeRgbNode extends RgbSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Linear Adobe RGB 1998";
+    static readonly id = "linearAdobeRgb";
 
     get ColClass() {
       return cm.LinearAdobeRgb;
@@ -702,7 +691,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class AdobeRgbNode extends RgbSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Adobe RGB 1998";
+    static readonly id = "adobeRgb";
 
     get ColClass() {
       return cm.AdobeRgb;
@@ -717,8 +706,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
 
   export class Rec709Node extends RgbSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Rec. 709";
-    static readonly DESC = "desc.node.rec709";
+    static readonly id = "rec709";
 
     get ColClass() {
       return cm.Rec709;

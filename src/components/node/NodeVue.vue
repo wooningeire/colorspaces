@@ -149,7 +149,7 @@ defineExpose({
 
     <div class="label"
         v-if="shouldDisplayLabel"
-        v-html="marked.parseInline(node.label)">
+        v-html="getString(node.label)">
     </div>
 
     <NodeSpecialInput :node="node"

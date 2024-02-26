@@ -11,8 +11,7 @@ export namespace models {
   //TODO code duplication
   export class RgbNode extends Node {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "RGB";
-    static readonly DESC = "desc.node.rgb";
+    static readonly id = "rgb";
 
     constructor() {
       super();
@@ -56,8 +55,7 @@ export namespace models {
   }
   export class HslNode extends NodeWithOverloads<RgbMode> {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "HSL";
-    static readonly DESC = "desc.node.hsl";
+    static readonly id = "hsl";
     static readonly outputDisplayType = OutputDisplayType.Vec;
 
     static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
@@ -148,8 +146,7 @@ export namespace models {
 
   export class HsvNode extends NodeWithOverloads<RgbMode> {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "HSV";
-    static readonly DESC = "desc.node.hsv";
+    static readonly id = "hsv";
     static readonly outputDisplayType = OutputDisplayType.Vec;
 
     static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
@@ -240,8 +237,7 @@ export namespace models {
 
   export class HwbNode extends NodeWithOverloads<RgbMode> {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "HWB";
-    static readonly DESC = "desc.node.hwb";
+    static readonly id = "hwb";
     static readonly outputDisplayType = OutputDisplayType.Vec;
 
     static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
@@ -332,8 +328,7 @@ export namespace models {
 
   export class CmyNode extends NodeWithOverloads<RgbMode> {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "CMY";
-    static readonly DESC = "desc.node.cmy";
+    static readonly id = "cmy";
     static readonly outputDisplayType = OutputDisplayType.Vec;
 
     static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
@@ -447,8 +442,7 @@ export namespace models {
 
   export class SpectralPowerDistributionNode extends Node {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Spectral power distribution";
-    static readonly DESC = "desc.node.spectralPowerDistribution";
+    static readonly id = "spectralPowerDistribution";
 
     distribution: number[] =
       Array(830 - 360 + 1).fill(0)
@@ -519,8 +513,7 @@ export namespace models {
 
   export class WavelengthNode extends Node {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Wavelength";
-    static readonly DESC = "desc.node.wavelength";
+    static readonly id = "wavelength";
 
     private readonly inSocket: InSocket<St.Float>;
     private readonly powerSocket: InSocket<St.Float>;
@@ -604,8 +597,7 @@ export namespace models {
 
   export class BlackbodyNode extends Node {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Blackbody";
-    static readonly DESC = "desc.node.blackbody";
+    static readonly id = "blackbody";
 
     private readonly inSocket: InSocket<St.Float>;
     private readonly datasetSocket: InSocket<St.Dropdown>;
@@ -678,8 +670,7 @@ export namespace models {
 
   export class StandardIlluminantNode extends Node {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Standard illuminant";
-    static readonly DESC = "desc.node.standardIlluminant";
+    static readonly id = "standardIlluminant";
 
     private readonly whitePointSocket: InSocket<St.Dropdown>;
 

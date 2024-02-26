@@ -7,8 +7,7 @@ import { WebglVariables } from "@/webgl-compute/WebglVariables";
 export namespace images {
   export class GradientNode extends Node implements AxisNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Gradient";
-    static readonly DESC = "desc.node.gradient";
+    static readonly id = "gradient";
 
     private readonly axisSocket: InSocket<St.Dropdown>;
     private readonly boundsSockets: InSocket<St.Float>[];
@@ -82,8 +81,7 @@ export namespace images {
 
   export class ImageFileNode extends Node implements AxisNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Image file";
-    static readonly DESC = "desc.node.imageFile";
+    static readonly id = "imageFile";
 
     private readonly imageSocket: InSocket<St.Image>;
     private readonly normalizeCoordinatesSocket: InSocket<St.Bool>
@@ -207,8 +205,7 @@ uniform float {3:height};`,
 
   export class SampleNode extends Node {
     static readonly TYPE = Symbol(this.name);
-    static readonly LABEL = "Sample";
-    static readonly DESC = "desc.node.sample";
+    static readonly id = "sample";
 
     private readonly coordsSockets: [InSocket<St.Float>, InSocket<St.Float>];
 
