@@ -392,7 +392,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
       return ["X", "Y", "Z"];
     }
     get webglToXyz() {
-      return "{0:color}";
+      return "{2:val}";
     }
     get webglFromXyz() {
       return "{xyz}";
@@ -436,7 +436,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
       return ["x", "y", "Y"];
     }
     get webglToXyz() {
-      return "xyyToXyz({0:color})";
+      return "xyyToXyz({2:val})";
     }
     get webglFromXyz() {
       return "xyzToXyy({xyz})";

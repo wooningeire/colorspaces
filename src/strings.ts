@@ -49,7 +49,7 @@ const strings = {
 
   "desc.node.cssOutput": "CSS formats for an RGB color.",
 
-  "desc.socket.illuminant": "The chromaticity of the color “white”. This varies under different viewing circumstances.",
+  "desc.socket.illuminant": "The chromaticity of the color “white”, or the color of the light that illuminates an environment. Human eyes will adjust under different viewing circumstances, so different chromaticities and hues could be considered “white” (chromatic adaptation).<sup>[1]</sup><br /><br /><small>[1] https://yuhaozhu.com/blog/chromatic-adaptation.html ([archived](https://web.archive.org/web/20240226042830/https://yuhaozhu.com/blog/chromatic-adaptation.html))</small>",
 
   "desc.field.rgb.r": "**R**: Red light.",
   "desc.field.rgb.g": "**G**: Green light.",

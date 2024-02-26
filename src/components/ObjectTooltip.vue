@@ -34,5 +34,9 @@ const isVisible = computed(() => Boolean(props.text));
   max-width: 80ch;
 
   background: #000000cf;
+
+  :deep(a) {
+    color: #eef;
+  }
 }
 </style>
