@@ -142,7 +142,7 @@ export namespace spaces {
 
           if (node.colorInputSocket.effectiveType() === St.ColorCoords) {
             return new WebglVariables(
-              `Color {0:color} = Color(${node.webglFromXyz}, {1:newIlluminant}, {xyz});`,
+              `Color {0:color} = Color(${node.webglFromXyz}, {1:newIlluminant}, adaptXyz({xyz}, {originalIlluminant}, {1:newIlluminant}));`,
               outVariables,
               `uniform vec2 {1:newIlluminant};`,
               {
@@ -392,7 +392,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
       return "{2:val}";
     }
     get webglFromXyz() {
-      return "{xyz}";
+      return "adaptXyz({xyz}, {originalIlluminant}, {1:newIlluminant})";
     }
   }
 
@@ -434,7 +434,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
       return "xyyToXyz({2:val})";
     }
     get webglFromXyz() {
-      return "xyzToXyy({xyz})";
+      return "xyzToXyy(adaptXyz({xyz}, {originalIlluminant}, {1:newIlluminant})";
     }
   }
 

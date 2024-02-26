@@ -52,7 +52,7 @@ const sampleCoords = computed(() => {
   return sampleCoords;
 });
 
-/** The sampled xy values fromthe input */
+/** The sampled xy values from the input */
 const sampledXys = computed(() => {
   if (props.node.overloadManager.mode === ChromaticityPlotMode.Xy) {
     return sampleCoords.value.map(coords => sampleInputXy(coords));
@@ -62,7 +62,7 @@ const sampledXys = computed(() => {
   if (colors[0] === undefined) {
     return [];
   }
-  return colors.map(color => cm.Xyy.from(color));
+  return colors.map(color => cm.Xyy.from(color, cm.illuminantsXy["2deg"]["E"]));
 });
 
 const canvas = ref<HTMLCanvasElement | null>(null);

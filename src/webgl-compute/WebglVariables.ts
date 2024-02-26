@@ -45,9 +45,9 @@ void main() {
   float alpha = 1.;
 
   if (outOfGamutAlpha != 1.) {
-    bool outOfGamut = 0. > outRgb.r || outRgb.r > 1.
-        || 0. > outRgb.g || outRgb.g > 1.
-        || 0. > outRgb.b || outRgb.b > 1.;
+    bool outOfGamut = -0.0001 > outRgb.r || outRgb.r > 1.0001
+        || -0.0001 > outRgb.g || outRgb.g > 1.0001
+        || -0.0001 > outRgb.b || outRgb.b > 1.0001;
   
     if (outOfGamut) {
       alpha *= outOfGamutAlpha;
@@ -392,8 +392,8 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
   static transpileNodeOutput(node: Node) {
     const {segments, uniforms} = this.getTranspiledNodeOutputSegments(node);
 
-    // console.log(segments.map(segment => segment.template)
-    //     .join("\n\n"));
+    console.log(segments.map(segment => segment.template)
+        .join("\n\n"));
     // console.log(segments.map(segment => segment.preludeTemplate)
     //     .join("\n"));
     // console.log(uniforms);

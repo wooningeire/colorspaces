@@ -39,14 +39,14 @@ export namespace math {
       [VectorArithmeticMode.Lerp, new Overload(
         "Lerp",
         node => [
-          new InSocket(node, Socket.Type.Float, "Blend amount"),
+          new InSocket(node, Socket.Type.Float, "Blend amount", true, {defaultValue: 0.5}),
           new InSocket(node, Socket.Type.Vector, "Start"),
           new InSocket(node, Socket.Type.Vector, "End"),
         ],
         node => [
           new OutSocket(node, Socket.Type.Vector, "Vector"),
         ],
-        (ins, outs, context) => {
+        (ins: InSocket[], outs, context) => {
           const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
           return col0.map((_, i) => lerp(col0[i], col1[i], fac)) as Vec3;
         },
@@ -63,7 +63,7 @@ export namespace math {
       [VectorArithmeticMode.Add, new Overload(
         "Add",
         node => [
-          new InSocket(node, Socket.Type.Float, "Blend amount"),
+          new InSocket(node, Socket.Type.Float, "Blend amount", true, {defaultValue: 1}),
           new InSocket(node, Socket.Type.Vector, "Addend"),
           new InSocket(node, Socket.Type.Vector, "Addend"),
         ],
@@ -87,7 +87,7 @@ export namespace math {
       [VectorArithmeticMode.Multiply, new Overload(
         "Componentwise multiply",
         node => [
-          new InSocket(node, Socket.Type.Float, "Blend amount"),
+          new InSocket(node, Socket.Type.Float, "Blend amount", true, {defaultValue: 1}),
           new InSocket(node, Socket.Type.Vector, "Factor"),
           new InSocket(node, Socket.Type.Vector, "Factor"),
         ],
@@ -111,7 +111,7 @@ export namespace math {
       [VectorArithmeticMode.Subtract, new Overload(
         "Subtract",
         node => [
-          new InSocket(node, Socket.Type.Float, "Blend amount"),
+          new InSocket(node, Socket.Type.Float, "Blend amount", true, {defaultValue: 1}),
           new InSocket(node, Socket.Type.Vector, "Minuend"),
           new InSocket(node, Socket.Type.Vector, "Subtrahend"),
         ],
@@ -135,7 +135,7 @@ export namespace math {
       [VectorArithmeticMode.Divide, new Overload(
         "Componentwise divide",
         node => [
-          new InSocket(node, Socket.Type.Float, "Blend amount"),
+          new InSocket(node, Socket.Type.Float, "Blend amount", true, {defaultValue: 1}),
           new InSocket(node, Socket.Type.Vector, "Dividend"),
           new InSocket(node, Socket.Type.Vector, "Divisor"),
         ],
@@ -159,7 +159,7 @@ export namespace math {
       [VectorArithmeticMode.Screen, new Overload(
         "Screen",
         node => [
-          new InSocket(node, Socket.Type.Float, "Blend amount"),
+          new InSocket(node, Socket.Type.Float, "Blend amount", true, {defaultValue: 1}),
           new InSocket(node, Socket.Type.Vector, "Factor"),
           new InSocket(node, Socket.Type.Vector, "Factor"),
         ],

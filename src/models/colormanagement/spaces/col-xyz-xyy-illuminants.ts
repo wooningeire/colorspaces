@@ -314,26 +314,5 @@ vec3 adaptXyz(vec3 origXyz, vec2 originalIlluminant, vec2 targetIlluminant) {
   vec3 refWhiteXyz = xyyToXyz(vec3(targetIlluminant, 1.));
 
   return chromaticAdaptationMatrix(testWhiteXyz, refWhiteXyz, bradford) * origXyz;
-}
-
-vec3 xyzToLinearSrgb(vec3 xyz, vec2 originalIlluminant) {
-  vec3 adaptedXyz = adaptXyz(xyz, originalIlluminant, illuminant2_D65);
-
-  //https://en.wikipedia.org/wiki/SRGB#From_CIE_XYZ_to_sRGB
-  return transpose(mat3(
-    +3.2404542, -1.5371385, -0.4985314,
-    -0.9692660, +1.8760108, +0.0415560,
-    +0.0556434, -0.2040259, +1.0572252
-  )) * adaptedXyz;
-}
-
-vec3 linearSrgbToXyz(vec3 rgb, vec2 newIlluminant) {
-  vec3 xyz = inverse(transpose(mat3(
-    +3.2404542, -1.5371385, -0.4985314,
-    -0.9692660, +1.8760108, +0.0415560,
-    +0.0556434, -0.2040259, +1.0572252
-  ))) * rgb;
-
-  return adaptXyz(xyz, illuminant2_D65, newIlluminant);
 }`;
 //#endregion

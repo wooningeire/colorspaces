@@ -8,6 +8,8 @@ export default getString = (key: string | StringKey, ...replacements: string[]) 
   marked.parseInline(strings.hasOwnProperty(key) ? strings[key as keyof typeof strings] : `[missing text: \`${String(key)}\`]`)
       .replaceAll(/\{(\d+)\}/g, (match, slotIndex) => replacements[Number(slotIndex)]);
 
+const cite = (index: number, url: string, archivedUrl: string) => `<small>[${index}] ${url} ([archived](${archivedUrl}))</small>`;
+
 const strings = {
   "general.socketDataTypeLabel": "**Data type**: ",
   "general.socketUnlinkTutorial": "*Double-click to detach links*",
@@ -29,9 +31,9 @@ const strings = {
   "label.node.linearSrgb": "Linear sRGB",
   "label.node.xyz": "CIE 1931 XYZ",
   "label.node.xyy": "xyY",
-  "label.node.lab": "CIE LAB (L\\*a\\*b\\*)",
+  "label.node.lab": "CIELAB (L\\*a\\*b\\*)",
   "label.node.lchab": "L\\*C\\*h<sub>ab</sub>",
-  "label.node.luv": "CIE LUV (L\\*u\\*v\\*)",
+  "label.node.luv": "CIELUV (L\\*u\\*v\\*)",
   "label.node.lchuv": "L\\*C\\*h<sub>uv</sub>",
   "label.node.oklab": "Oklab",
   "label.node.oklchab": "Oklch",
@@ -71,24 +73,27 @@ const strings = {
   "desc.node.cmy": "Describes RGB colors by subtracting amounts of their opposites (cyan, yellow, and magenta).",
   "desc.node.vector": "A general set of three numbers, for input to color spaces.",
   "desc.node.spectralPowerDistribution": "Describes colors by the range of wavelengths that make them up.",
+  "desc.node.standardIlluminant": `A collection of common definitions for the color “white”. Human eyes will adjust under different viewing circumstances, so different chromaticities and hues could be considered “white” (chromatic adaptation / white balance).<sup>[1]</sup><br /><br />${cite(1, "https://yuhaozhu.com/blog/chromatic-adaptation.html", "https://web.archive.org/web/20240226042830/https://yuhaozhu.com/blog/chromatic-adaptation.html")}`,
 
   "desc.node.srgb": "The default color space in most images. Each component scales almost directly with perceived brightness.",
   "desc.node.linearSrgb": "A variant of sRGB that scales directly with physical light power.",
-  "desc.node.xyz": "A color space that is commonly used as a basis for defining other color spaces and converting between them. Similar to RGB spaces, colors are represented as amounts of three “primary” colors added together, but the selected primaries are imaginary (physically impossible) and were merely mathematically convenient for computations in the 1930s. Despite this, combinations of these imaginary colors can represent existant colors. (The convenience was that it can represent the colors of all pure wavelengths of light, and therefore also their sums, using nonnegative values—something that is impossible to do with any triplet of primaries that actually exist.)<br /><br />It is derived from the CIE RGB color space, which actually uses existant colors for its primaries. The Y axis has been specifically selected to represent luminance, or an approximation of brightness, which can be calculated through some weighted combination of any RGB primaries.",
+  "desc.node.xyz": `A color space that is commonly used as a basis for defining other color spaces and converting between them. Similar to RGB spaces, colors are represented as amounts of three “primary” colors added together, but the selected primaries are imaginary (physically impossible) and were merely mathematically convenient for computations in the 1930s. Despite this, combinations of these imaginary colors can represent existant colors. (The convenience was that it can represent the colors of all pure wavelengths of light, and therefore also their sums, using nonnegative coordinates—something that is impossible to do with any triplet of primaries that actually exist.)<sup>[1]</sup><br /><br />It is derived from the CIE RGB color space, which actually uses existant colors for its primaries. The Y axis has been specifically selected to represent luminance, or an approximation of brightness, which can be calculated through some weighted combination of any RGB primaries.<sup>[1]</sup><br /><br />${cite(1, "https://graphics.stanford.edu/courses/cs148-10-summer/docs/2010--kerr--cie_xyz.pdf", "https://web.archive.org/web/20230829180313/https://graphics.stanford.edu/courses/cs148-10-summer/docs/2010--kerr--cie_xyz.pdf")}`,
   "desc.node.xyy": "A variant of XYZ that separates chromaticity (xy) and relative luminance (Y).",
   "desc.node.lab": "An attempted *perceptually uniform* color space, defined by perceived luminance (L\\*) and color axes for green, red, blue, and yellow.",
   "desc.node.lchab": "A variant of L\\*a\\*b\\* that uses hue (h) and colorfulness (C\\*) to define colors, somewhat similar to HSV.",
   "desc.node.lchuv": "A variant of L\\*u\\*v\\* that uses hue (h) and colorfulness (C\\*) to define colors, somewhat similar to HSV.",
   "desc.node.rec709": "RGB space with the same gamut as sRGB, but a different gamma correction function. Commonly used in videos.",
+  
   "desc.node.splitVector": "Accesses the individual components of a vector or color.",
   "desc.node.contrastRatio": "Compares the relative luminance between two colors.",
+
   "desc.node.gradient": "Generates a range of numbers.",
   "desc.node.imageFile": "Reads RGB data from a local image file.",
   "desc.node.sample": "Samples data from a single point in an image.",
 
   "desc.node.cssOutput": "CSS formats for an RGB color.",
 
-  "desc.socket.illuminant": "The chromaticity of the color “white”, or the color of the light that illuminates an environment. Human eyes will adjust under different viewing circumstances, so different chromaticities and hues could be considered “white” (chromatic adaptation).<sup>[1]</sup><br /><br /><small>[1] https://yuhaozhu.com/blog/chromatic-adaptation.html ([archived](https://web.archive.org/web/20240226042830/https://yuhaozhu.com/blog/chromatic-adaptation.html))</small>",
+  "desc.socket.illuminant": `The chromaticity of the color “white”, or often the color of the light that illuminates an environment. Human eyes will adjust under different viewing circumstances, so different chromaticities and hues could be considered “white” (chromatic adaptation / white balance).<sup>[1]</sup><br /><br />${cite(1, "https://yuhaozhu.com/blog/chromatic-adaptation.html", "https://web.archive.org/web/20240226042830/https://yuhaozhu.com/blog/chromatic-adaptation.html")}`,
 
   "desc.field.rgb.r": "**R**: Red light.",
   "desc.field.rgb.g": "**G**: Green light.",
@@ -115,7 +120,7 @@ const strings = {
   "desc.socketType.float.in": "A single number.",
   "label.socketType.vector": "Vector",
   "desc.socketType.vector.out": "A list of (usually 3) numbers with no color space data attached to it.",
-  "desc.socketType.vector.in": "A list of (usually 3) numbers. This socket also accepts colors, but the associated color space will not affect the result of this node.",
+  "desc.socketType.vector.in": "A list of (usually 3) numbers. This socket also accepts colors, but the associated color space and white point will not affect the result of this node.",
   "label.socketType.vectorOrColor": "Vector or color",
   "desc.socketType.vectorOrColor.out": "A list of (usually 3) numbers which may or may not already be associated with a color space.",
   "desc.socketType.vectorOrColor.in": "A list of (usually 3) numbers which may or may not already be associated with a color space (values will be handled differently depending on this).",
