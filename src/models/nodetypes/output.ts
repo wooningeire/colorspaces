@@ -82,6 +82,7 @@ export namespace output {
   export class ImagePlotNode extends Node {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "imagePlot";
+    static readonly outputDisplayType = OutputDisplayType.Custom;
 
     readonly normalizeCoordsSocket: InSocket<St.Bool>;
     readonly widthSocket: InSocket<St.Float>;

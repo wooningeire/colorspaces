@@ -7,6 +7,7 @@ import NodeOutputCssRgbVec from "./NodeOutputCssRgbVec.vue";
 import NodeOutputCssColor from "./NodeOutputCssColor.vue";
 
 import {InSocket, Node, NodeWithOverloads, OutputDisplayType} from "@/models/Node";
+import {output} from "@/models/nodetypes";
 import {Col} from "@/models/colormanagement";
 import { Vec3 } from "@/util";
 import { tree } from "../store";
@@ -24,7 +25,7 @@ watch(tree.links, setHasConstantOutput)
 
 const type = computed(() => (props.node.constructor as typeof Node).outputDisplayType);
 
-const output = computed(() => props.node.display());
+const display = computed(() => props.node.display());
 
 const nDecimals = 4;
 
@@ -46,9 +47,9 @@ defineExpose({
       v-if="type !== OutputDisplayType.None">
 
     <template v-if="type === OutputDisplayType.Color">
-      <NodeOutputColorValues :values="output.values"
-          :labels="output.labels"
-          :flags="output.flags"
+      <NodeOutputColorValues :values="display.values"
+          :labels="display.labels"
+          :flags="display.flags"
           v-if="hasConstantOutput" />
       <NodeOutputColorDisplay :node="node"
           ref="colorDisplayVue" />
@@ -56,23 +57,33 @@ defineExpose({
 
     <template v-else-if="type === OutputDisplayType.Float">
       <div class="output-values"
-          v-if="hasConstantOutput">{{output.values[0].toFixed(nDecimals)}}</div>
+          v-if="hasConstantOutput">{{display.values[0].toFixed(nDecimals)}}</div>
     </template>
 
     <template v-else-if="type === OutputDisplayType.Vec">
-      <NodeOutputColorValues :values="output.values"
-          :labels="output.labels"
-          :flags="output.flags"
+      <NodeOutputColorValues :values="display.values"
+          :labels="display.labels"
+          :flags="display.flags"
           v-if="hasConstantOutput" />
     </template>
 
     <template v-else-if="type === OutputDisplayType.Css && node instanceof NodeWithOverloads">
       <template v-if="hasConstantOutput">
-        <NodeOutputCssRgbVec :rgbVec="output.values as Vec3"
+        <NodeOutputCssRgbVec :rgbVec="display.values as Vec3"
             v-if="node.overloadManager.mode === node.overloadManager.dropdown.data.options?.[0].value" />
-        <NodeOutputCssColor :color="output.values as Col"
+        <NodeOutputCssColor :color="display.values as Col"
             v-else />
       </template>
+    </template>
+
+    <template v-else-if="node instanceof output.ImagePlotNode">
+      <NodeOutputColorDisplay :node="node"
+          :width="Math.max(1, node.widthSocket.inValue())"
+          :height="Math.max(1, node.heightSocket.inValue())"
+          :webglViewportWidth="node.normalizeCoordsSocket.inValue() ? 1 : node.widthSocket.inValue()"
+          :webglViewportHeight="node.normalizeCoordsSocket.inValue() ? 1 : node.heightSocket.inValue()"
+          
+          ref="colorDisplayVue" />
     </template>
   </div>
 </template>

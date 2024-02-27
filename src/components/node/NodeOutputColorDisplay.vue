@@ -12,12 +12,14 @@ const props = withDefaults(defineProps<{
   height?: number,
   webglViewportWidth?: number,
   webglViewportHeight?: number,
+  useSizeAsCanvasDimensions?: boolean,
 }>(),{
   socket: null,
   width: 42,
   height: 42,
   webglViewportWidth: 1,
   webglViewportHeight: 1,
+  useSizeAsCanvasDimensions: false,
 });
 
 const canvas = ref(null as HTMLCanvasElement | null);
@@ -132,9 +134,19 @@ const rerender = async (setUniforms: boolean, editedSocket: Node | InSocket | nu
 
   const gl = glLast.value!;
 
+  let width: number;
+  let height: number;
   const axes = props.node.getDependencyAxes();
-  const width = canvas.value.width = axes.has(0) ? canvas.value.offsetWidth * devicePixelRatio : 1;
-  const height = canvas.value.height = axes.has(1) ? canvas.value.offsetHeight * devicePixelRatio : 1;
+  if (props.useSizeAsCanvasDimensions) {
+    width = axes.has(0) ? props.width : 1;
+    height = axes.has(1) ? props.height : 1;
+  } else {
+    const axes = props.node.getDependencyAxes();
+    width = axes.has(0) ? canvas.value.offsetWidth * devicePixelRatio : 1;
+    height = axes.has(1) ? canvas.value.offsetHeight * devicePixelRatio : 1;
+  }
+  canvas.value.width = width;
+  canvas.value.height = height;
   gl.viewport(0, 0, width, height);
 
   if (setUniforms) {

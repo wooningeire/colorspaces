@@ -35,15 +35,6 @@ defineExpose({
 
   <ChromaticityEntry v-else-if="node instanceof output.ChromaticityPlotNode"
       :node="node" />
-
-  <NodeOutputColorDisplay v-else-if="node instanceof output.ImagePlotNode"
-      :node="node"
-      :width="Math.max(1, node.widthSocket.inValue())"
-      :height="Math.max(1, node.heightSocket.inValue())"
-      :webglViewportWidth="node.normalizeCoordsSocket.inValue() ? 1 : node.widthSocket.inValue()"
-      :webglViewportHeight="node.normalizeCoordsSocket.inValue() ? 1 : node.heightSocket.inValue()"
-      
-      ref="colorDisplayVue" />
 </template>
 
 <style lang="scss" scoped>
