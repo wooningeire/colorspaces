@@ -191,7 +191,7 @@ void main() {
   vec3 xyy = vec3(v_xy / ${diagramScale.toFixed(6)}, LUM);
 
   vec3 xyz = xyyToXyz(xyy);
-  vec3 linearSrgb = xyzToLinearSrgb(xyz,illuminant2_D65);
+  vec3 linearSrgb = xyzToLinearSrgb(xyz,illuminant2_E);
   vec3 gammaSrgb = linearToGammaSrgb(linearSrgb);
 
   bool outOfGamut = 0. > gammaSrgb.r
@@ -392,8 +392,8 @@ watch(settings, rerenderCanvas);
     .point {
       --color: #fff;
 
-      transition: cx 0.125s cubic-bezier(0, 0.74, 0.36, 1),
-          cy 0.125s cubic-bezier(0, 0.74, 0.36, 1);
+      // transition: cx 0.125s cubic-bezier(0, 0.74, 0.36, 1),
+      //     cy 0.125s cubic-bezier(0, 0.74, 0.36, 1);
 
       fill: var(--color);
     }

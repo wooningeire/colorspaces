@@ -40,8 +40,8 @@ defineExpose({
       :node="node"
       :width="Math.max(1, node.widthSocket.inValue())"
       :height="Math.max(1, node.heightSocket.inValue())"
-      :imageWidth="node.normalizeCoordsSocket.inValue() ? 1 : node.widthSocket.inValue()"
-      :imageHeight="node.normalizeCoordsSocket.inValue() ? 1 : node.heightSocket.inValue()"
+      :webglViewportWidth="node.normalizeCoordsSocket.inValue() ? 1 : node.widthSocket.inValue()"
+      :webglViewportHeight="node.normalizeCoordsSocket.inValue() ? 1 : node.heightSocket.inValue()"
       
       ref="colorDisplayVue" />
 </template>

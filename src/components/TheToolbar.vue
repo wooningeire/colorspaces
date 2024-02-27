@@ -4,7 +4,15 @@ import {tree, selectedNodes} from "./store";
 import {downloadNodeTree, importNodeTree} from "@/file-management/node-tree-io";
 import { ref } from "vue";
 
+const emit = defineEmits<{
+  (event: "delete-node"): void,
+}>();
+
 const deleteSelectedNodes = () => {
+  if (selectedNodes.size > 0) { 
+    emit("delete-node");
+  }
+
   selectedNodes.forEach(node => {
     if (!node.canMove) return;
     tree.deleteNode(node as Node);

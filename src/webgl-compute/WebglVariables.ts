@@ -392,8 +392,8 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
   static transpileNodeOutput(node: Node) {
     const {segments, uniforms} = this.getTranspiledNodeOutputSegments(node);
 
-    console.log(segments.map(segment => segment.template)
-        .join("\n\n"));
+    // console.log(segments.map(segment => segment.template)
+    //     .join("\n\n"));
     // console.log(segments.map(segment => segment.preludeTemplate)
     //     .join("\n"));
     // console.log(uniforms);

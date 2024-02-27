@@ -162,6 +162,7 @@ const onWheel = (event: WheelEvent) => {
 
 defineExpose({
   selectNode,
+  reloadOutputs,
 });
 </script>
 

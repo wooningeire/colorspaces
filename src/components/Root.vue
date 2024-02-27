@@ -15,7 +15,7 @@ import ObjectTooltip from "./ObjectTooltip.vue";
 import ErrorPopup from "./ErrorPopup.vue";
 
 
-const treeVue = ref(null as InstanceType<typeof TheNodeTree> | null);
+const treeVue = ref<InstanceType<typeof TheNodeTree>>();
 const nodeTreeCentererEl = ref<HTMLDivElement | null>(null);
 
 
@@ -47,7 +47,7 @@ const addNode = <T extends Node>(
       ref="nodeTreeCentererEl"></div>
   <TheNodeTray @add-node="addNode" />
 
-  <TheToolbar />
+  <TheToolbar @delete-node="$nextTick(() => treeVue?.reloadOutputs(true, null))" />
 
   <div class="tooltips">
     <ObjectTooltip :text="tooltipController.text"

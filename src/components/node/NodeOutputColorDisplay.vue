@@ -10,14 +10,14 @@ const props = withDefaults(defineProps<{
   socket?: Socket | null,
   width?: number,
   height?: number,
-  imageWidth?: number,
-  imageHeight?: number,
+  webglViewportWidth?: number,
+  webglViewportHeight?: number,
 }>(),{
   socket: null,
   width: 42,
   height: 42,
-  imageWidth: 1,
-  imageHeight: 1,
+  webglViewportWidth: 1,
+  webglViewportHeight: 1,
 });
 
 const canvas = ref(null as HTMLCanvasElement | null);
@@ -128,11 +128,13 @@ let setNonSocketUniforms: () => void;
 const rerender = async (setUniforms: boolean, editedSocket: Node | InSocket | null=null) => {
   await nextTick();
 
+  if (!canvas.value) return;
+
   const gl = glLast.value!;
 
   const axes = props.node.getDependencyAxes();
-  const width = canvas.value!.width = axes.has(0) ? canvas.value!.offsetWidth * devicePixelRatio : 1;
-  const height = canvas.value!.height = axes.has(1) ? canvas.value!.offsetHeight * devicePixelRatio : 1;
+  const width = canvas.value.width = axes.has(0) ? canvas.value.offsetWidth * devicePixelRatio : 1;
+  const height = canvas.value.height = axes.has(1) ? canvas.value.offsetHeight * devicePixelRatio : 1;
   gl.viewport(0, 0, width, height);
 
   if (setUniforms) {
