@@ -1,13 +1,13 @@
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
-import { InSocket, Node, NodeEvalContext, OutSocket, Socket, SocketType as St, Tree, WebglSocketValue } from "./Node";
+import { InSocket, Node, NodeDisplay, NodeEvalContext, OutSocket, Socket, SocketType, SocketType as St, Tree, WebglSocketValue } from "./Node";
 
 /** A collection of input/output sockets, as well as a function to compute outputs from the inputs' values */
 export class Overload<OutputType, NodeType extends Node=any, InSockets extends InSocket[]=any, OutSockets extends OutSocket[]=any> {
   constructor(
     readonly label: string,
     readonly ins: (node: NodeType) => [...InSockets],
-    readonly outs: (node: NodeType) => [...OutSockets],
-    readonly evaluate: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => OutputType,
+    readonly outs: (node: NodeType, ins: InSockets) => [...OutSockets],
+    readonly nodeDisplay: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => NodeDisplay=() => { throw new Error("not implemented") },
     readonly webglGetBaseVariables: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => WebglVariables=() => { throw new Error("not implemented"); },
     readonly webglGetMapping: <T extends St>(inSocket: InSocket<T>, ins: InSockets, node: NodeType) => WebglSocketValue<T> | null=() => { throw new Error("not implemented"); },
     private readonly maintainExistingLinks = false,
@@ -52,7 +52,7 @@ export class OverloadManager<Mode extends string> {
 
     const overload = overloadGroup.getOverload(defaultMode);
     this.ins = overload.ins(node);
-    this.outs = overload.outs(node);
+    this.outs = overload.outs(node, this.ins);
   }
 
   setSockets() {
@@ -61,8 +61,8 @@ export class OverloadManager<Mode extends string> {
     this.node.outs.push(...this.outs);
   }
 
-  evaluate(context: NodeEvalContext) {
-    return this.overload.evaluate(this.ins, this.outs, context, this.node);
+  nodeDisplay(context: NodeEvalContext) {
+    return this.overload.nodeDisplay(this.ins, this.outs, context, this.node);
   }
 
   webglGetBaseVariables(context: NodeEvalContext) {
@@ -97,7 +97,7 @@ export class OverloadManager<Mode extends string> {
     }
 
     this.ins = this.overload.ins(this.node);
-    this.outs = this.overload.outs(this.node);
+    this.outs = this.overload.outs(this.node, this.ins);
     this.node.ins.push(...this.ins);
     this.node.outs.push(...this.outs);
   }
@@ -108,5 +108,29 @@ export class OverloadManager<Mode extends string> {
 
   get overload() {
     return this.overloadGroup.getOverload(this.mode);
+  }
+}
+
+export abstract class NodeWithOverloads<Mode extends string> extends Node {
+  static readonly overloadGroup: OverloadGroup<any>;
+
+  readonly overloadManager: OverloadManager<Mode>;
+
+  constructor(defaultMode: Mode) {
+    super();
+    this.overloadManager = new OverloadManager(this, defaultMode, new.target.overloadGroup);
+    this.overloadManager.setSockets();
+  }
+
+  display(context: NodeEvalContext): NodeDisplay {
+    return this.overloadManager.nodeDisplay(context);
+  }
+
+  webglGetBaseVariables(context: NodeEvalContext={}) {
+    return this.overloadManager.webglGetBaseVariables(context);
+  }
+
+  webglGetMapping<St extends SocketType>(inSocket: InSocket<St>) {
+    return this.overloadManager.webglGetMapping(inSocket) as WebglSocketValue<St>;
   }
 }

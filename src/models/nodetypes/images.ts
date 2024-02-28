@@ -1,6 +1,6 @@
 import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, OutSocket, Tree, WebglSocketValue} from "../Node";
 
-import {Vec2, lerp} from "@/util";
+import {Vec2, Vec3, lerp} from "@/util";
 import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
 
@@ -44,19 +44,17 @@ export namespace images {
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Float, "Values"),
+        new OutSocket(this, Socket.Type.Float, "Values", context => {
+          const fac = context.coords?.[this.whichDimension] ?? 0;
+          const value0 = this.boundsSockets[0].inValue(context);
+          const value1 = this.boundsSockets[1].inValue(context);
+          return lerp(value0, value1, fac);
+        }),
       );
     }
 
     get whichDimension() {
       return Number(this.axisSocket.inValue());
-    }
-
-    output(context: NodeEvalContext): number {
-      const fac = context.coords?.[this.whichDimension] ?? 0;
-      const value0 = this.boundsSockets[0].inValue(context);
-      const value1 = this.boundsSockets[1].inValue(context);
-      return lerp(value0, value1, fac);
     }
 
     webglGetBaseVariables(context: NodeEvalContext={}): WebglVariables {
@@ -101,47 +99,31 @@ export namespace images {
       );
 
       this.outs.push(
-        new OutSocket(this, St.Vector, "RGB"),
-        new OutSocket(this, St.Float, "Width"),
-        new OutSocket(this, St.Float, "Height"),
-      );
-    }
+        new OutSocket(this, St.Vector, "RGB", context => {
+          const imageData = this.imageSocket.inValue(context);
+          if (!imageData) return [0, 0, 0] as Vec3;
+
+          const [x, y] = this.normalizeCoordinatesSocket.inValue(context)
+              ? [
+                Math.round((context.coords?.[0] ?? 0) * imageData.width),
+                Math.round((context.coords?.[1] ?? 0) * imageData.height),
+              ]
+              : [
+                Math.round(context.coords?.[0] ?? 0),
+                Math.round(context.coords?.[1] ?? 0),
+              ];
   
-    output(context: NodeEvalContext) {
-      const imageData = this.imageSocket.inValue(context);
-      if (imageData) {
-        if (context.socket === this.outs[1]) {
-          return imageData.width;
-        }
-        if (context.socket === this.outs[2]) {
-          return imageData.height;
-        }
-
-
-        const [x, y] = this.normalizeCoordinatesSocket.inValue(context)
-            ? [
-              Math.round((context.coords?.[0] ?? 0) * imageData.width),
-              Math.round((context.coords?.[1] ?? 0) * imageData.height),
-            ]
-            : [
-              Math.round(context.coords?.[0] ?? 0),
-              Math.round(context.coords?.[1] ?? 0),
-            ];
-
-        const index = (x + y * imageData.width) * 4;
-        const colorData = [...imageData.data.slice(index, index + 3)]
-            .map(comp => comp / 255);
-
-        if (colorData.length === 0) return [0, 0, 0];
-
-        return colorData;
-      }
-      switch (context.socket) {
-        default:
-        case this.outs[0]: return [0, 0, 0];
-        case this.outs[1]: return 0;
-        case this.outs[2]: return 0;
-      }
+          const index = (x + y * imageData.width) * 4;
+          const colorData = [...imageData.data.slice(index, index + 3)]
+              .map(comp => comp / 255);
+  
+          if (colorData.length === 0) return [0, 0, 0] as Vec3;
+  
+          return colorData as Vec3;
+        }),
+        new OutSocket(this, St.Float, "Width", context => this.imageSocket.inValue(context)?.width ?? 0),
+        new OutSocket(this, St.Float, "Height", context => this.imageSocket.inValue(context)?.height ?? 0),
+      );
     }
     
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
@@ -221,18 +203,13 @@ uniform float {3:height};`,
       );
 
       this.outs.push(
-        new OutSocket(this, St.Any, "Output", true, volatileOutSocketOptions(this.ins, this.outs)),
+        new OutSocket(this, St.Any, "Output", context => {
+          return this.ins[0].inValue({
+            coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
+          });
+        },true, volatileOutSocketOptions(this.ins, this.outs)),
       );
     }
-
-    output(context: NodeEvalContext) {
-      const output = this.ins[0].inValue({
-        coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
-      });
-
-      return output;
-    }
-
     getDependencyAxes() {
       const axes = new Set<number>();
 

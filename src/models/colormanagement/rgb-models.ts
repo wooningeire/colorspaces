@@ -1,9 +1,9 @@
 import {Vec3, clamp, mod} from "@/util";
 
-export const cmyToRgb = (vec: Vec3) => vec.map(comp => 1 - comp);
+export const cmyToRgb = (vec: Vec3): Vec3 => vec.map(comp => 1 - comp) as Vec3;
 export const rgbToCmy = cmyToRgb;
 
-export const hslToRgb = ([hue, sat, lightness]: Vec3) => {
+export const hslToRgb = ([hue, sat, lightness]: Vec3): Vec3 => {
   if (sat === 0) return [lightness, lightness, lightness];
 
   const rgbCompDistribFromHue = (p: number, q: number, hue: number) => {
@@ -27,7 +27,7 @@ export const hslToRgb = ([hue, sat, lightness]: Vec3) => {
   ];
 };
 
-export const rgbToHsl = ([red, green, blue]: Vec3) => {
+export const rgbToHsl = ([red, green, blue]: Vec3): Vec3 => {
   // red = clamp(red, 0, 1);
   // green = clamp(green, 0, 1);
   // blue = clamp(blue, 0, 1);
@@ -58,7 +58,7 @@ export const rgbToHsl = ([red, green, blue]: Vec3) => {
   ];
 };
 
-export const hsvToRgb = ([hue, sat, value]: Vec3) => {
+export const hsvToRgb = ([hue, sat, value]: Vec3): Vec3 => {
   hue = mod(hue, 1) * 6;
   const segmentStart = Math.floor(hue);
 
@@ -75,7 +75,7 @@ export const hsvToRgb = ([hue, sat, value]: Vec3) => {
   else              return [plateau, valley,  falling];
 };
 
-export const rgbToHsv = ([red, green, blue]: Vec3) => {
+export const rgbToHsv = ([red, green, blue]: Vec3): Vec3 => {
   // red = clamp(red, 0, 1);
   // green = clamp(green, 0, 1);
   // blue = clamp(blue, 0, 1);
@@ -104,7 +104,7 @@ export const rgbToHsv = ([red, green, blue]: Vec3) => {
   ];
 };
 
-export const hwbToRgb = ([hue, whiteness, blackness]: Vec3) => {
+export const hwbToRgb = ([hue, whiteness, blackness]: Vec3): Vec3 => {
   const scaledWhiteness = whiteness / Math.max(1, whiteness + blackness);
   const scaledBlackness = blackness / Math.max(1, whiteness + blackness);
 
@@ -115,7 +115,7 @@ export const hwbToRgb = ([hue, whiteness, blackness]: Vec3) => {
   ]);
 };
 
-export const rgbToHwb = ([red, green, blue]: Vec3) => {
+export const rgbToHwb = ([red, green, blue]: Vec3): Vec3 => {
   // red = clamp(red, 0, 1);
   // green = clamp(green, 0, 1);
   // blue = clamp(blue, 0, 1);

@@ -20,7 +20,7 @@ export namespace externals {
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Unknown, "Color data"),
+        new OutSocket(this, Socket.Type.Unknown, "Color data", context => {}),
       );
 
       this.canMove = false;
@@ -73,7 +73,7 @@ export namespace externals {
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Unknown, "Screen image"),
+        new OutSocket(this, Socket.Type.Unknown, "Screen image", context => {}),
       );
 
       this.canMove = false;

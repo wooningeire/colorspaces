@@ -6,7 +6,8 @@ import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 import NodeOutputCssRgbVec from "./NodeOutputCssRgbVec.vue";
 import NodeOutputCssColor from "./NodeOutputCssColor.vue";
 
-import {InSocket, Node, NodeWithOverloads, OutputDisplayType} from "@/models/Node";
+import {InSocket, Node, OutputDisplayType} from "@/models/Node";
+import { NodeWithOverloads } from "@/models/Overload";
 import {output} from "@/models/nodetypes";
 import {Col} from "@/models/colormanagement";
 import { Vec3 } from "@/util";

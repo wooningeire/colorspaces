@@ -17,14 +17,10 @@ export namespace organization {
       );
 
       this.outs.push(
-        new OutSocket(this, St.Any, "", true, volatileOutSocketOptions(this.ins, this.outs)),
+        new OutSocket(this, St.Any, "", context => this.ins[0].inValue(context), true, volatileOutSocketOptions(this.ins, this.outs)),
       );
 
       this.width = 15;
-    }
-
-    output(context: NodeEvalContext) {
-      return this.ins[0].inValue(context);
     }
     
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {

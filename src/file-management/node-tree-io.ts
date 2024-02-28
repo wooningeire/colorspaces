@@ -1,5 +1,6 @@
 import { errorPopupController } from "@/components/store";
-import { Tree, Node, SocketValue, Socket, NodeWithOverloads } from "@/models/Node";
+import { Tree, Node, SocketValue, Socket } from "@/models/Node";
+import { NodeWithOverloads } from "@/models/Overload";
 import * as nodeTypes from "@/models/nodetypes";
 import getString from "@/strings";
 

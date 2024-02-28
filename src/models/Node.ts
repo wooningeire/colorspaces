@@ -1,7 +1,8 @@
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
-import {StringKey, NO_DESC} from "../strings";
-import {Color, Vec2} from "../util";
+import { StringKey } from "../strings";
+import { Vec2, Vec3 } from "../util";
 import { OverloadGroup, OverloadManager } from "./Overload";
+import { Col } from "./colormanagement";
 
 export class Tree {
   readonly links = new Set<Link>();
@@ -127,8 +128,6 @@ export abstract class Node {
     readonly label: StringKey | string=new.target.LABEL,
   ) {}
 
-  abstract output(context: NodeEvalContext): any;
-
   /** Constructs a `WebglVariables` object, where slots that can be filled by its socket field values have been filled
    * 
   */
@@ -159,14 +158,24 @@ export abstract class Node {
    * depending on which input socket `inSocket` we are inspecting
    */
   abstract webglGetMapping<St extends SocketType>(inSocket: InSocket<St>): WebglSocketValue<St> | null;
-  
-  display(context: NodeEvalContext={}): NodeDisplay {
+
+  display(context: NodeEvalContext): NodeDisplay {
     return {
-      values: this.output(context),
+      values: [],
+      labels: [],
+      flags: [],
+    }
+  }
+  
+  /**display(context: NodeEvalContext={}): NodeDisplay {
+    return {
+      values: this.displayValues(context),
       labels: this.displayLabels,
       flags: this.displayFlags,
     };
   }
+
+  abstract displayValues(context: NodeEvalContext): any;
 
   get displayLabels(): string[] {
     return [];
@@ -174,7 +183,7 @@ export abstract class Node {
 
   get displayFlags(): SocketFlag[] {
     return [];
-  }
+  }*/
 
   /**
    * Called when a new link is added to any socket on this node, but not if the link is immediately replaced
@@ -309,37 +318,12 @@ export abstract class Node {
   }
 }
 
-export abstract class NodeWithOverloads<Mode extends string> extends Node {
-  static readonly overloadGroup: OverloadGroup<any>;
-
-  readonly overloadManager: OverloadManager<Mode>;
-
-  constructor(defaultMode: Mode) {
-    super();
-    this.overloadManager = new OverloadManager(this, defaultMode, new.target.overloadGroup);
-    this.overloadManager.setSockets();
-  }
-
-  output(context: NodeEvalContext): number {
-    return this.overloadManager.evaluate(context);
-  }
-
-  webglGetBaseVariables(context: NodeEvalContext={}) {
-    return this.overloadManager.webglGetBaseVariables(context);
-  }
-
-  webglGetMapping<St extends SocketType>(inSocket: InSocket<St>) {
-    return this.overloadManager.webglGetMapping(inSocket) as WebglSocketValue<St>;
-  }
-}
-
 export interface AxisNode extends Node {
   readonly axes: number[];
 }
 
 export interface NodeEvalContext {
   readonly coords?: Vec2;
-  readonly socket?: Socket | null;
 }
 
 export type NodeOutputTarget = OutSocket | null;
@@ -362,12 +346,13 @@ const St = SocketType;
 export type SocketValue<St extends SocketType=any> =
     St extends SocketType.Float ? number :
     St extends SocketType.Integer ? number :
-    St extends SocketType.Vector ? Color :
-    St extends SocketType.ColorCoords ? Color :
-    St extends SocketType.VectorOrColor ? Color :
+    St extends SocketType.Vector ? Vec3 :
+    St extends SocketType.ColorCoords ? Col :
+    St extends SocketType.VectorOrColor ? Vec3 :
     St extends SocketType.Dropdown ? string :
     St extends SocketType.Image ? ImageData :
     St extends SocketType.Bool ? boolean :
+    St extends SocketType.Any ? any :
     never;
 
 export type WebglSocketValue<St extends SocketType=any> = (
@@ -607,10 +592,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
 
   webglVariables(context: NodeEvalContext={}): WebglVariables {
     return !this.usesFieldValue
-        ? this.link.srcNode.webglOutput({
-          ...context,
-          socket: this.link.src,
-        })
+        ? this.link.srcNode.webglOutput(context)
         : this.webglFieldVariables(context);
   }
 
@@ -736,6 +718,8 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
 
     public label: string="",
 
+    readonly outValue: (context: NodeEvalContext) => SocketValue<St>,
+
     readonly showSocket: boolean=true,
 
     options=<SocketOptions<St>>{},
@@ -744,14 +728,14 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
   }
 
   /** Evaluates the value of this output socket */
-  outValue(context: NodeEvalContext={}): SocketValue<St> {
+  /* outValue(context: NodeEvalContext={}): SocketValue<St> {
     const newContext = {
       ...context,
       socket: this,
     };
 
     return this.node.output(newContext);
-  }
+  } */
 }
 
 export class Link {

@@ -1,6 +1,6 @@
 import { Vec3 } from "@/util";
-import { Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, NodeWithOverloads, SocketOptions, InSocket, OutSocket, WebglSocketValue, NodeOutputTarget } from "../Node";
-import { Overload, OverloadGroup } from "../Overload";
+import { Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, SocketOptions, InSocket, OutSocket, WebglSocketValue, NodeOutputTarget } from "../Node";
+import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 import { StringKey } from "@/strings";
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
@@ -100,19 +100,14 @@ export namespace spaces {
           return sockets;
         },
         node => [
-          new OutSocket(node, St.ColorCoords, "Color"),
-          ...node.componentLabels.map(label => new OutSocket(node, St.Float, label)),
+          new OutSocket(node, St.ColorCoords, "Color", context => node.computeColor(context, true)),
+          ...node.componentLabels.map((label, i) => new OutSocket(node, St.Float, label, context => node.computeColor(context, true)[i])),
         ],
-        (ins, outs, context, node) => {
-          const col = node.computeColor(context, true);
-          switch (context.socket) {
-            default:
-            case outs[0]: return col;
-            case outs[1]: return col[0];
-            case outs[2]: return col[1];
-            case outs[3]: return col[2];
-          };
-        },
+        (ins, outs, context, node) => ({
+          values: node.computeColor(context, true),
+          labels: node.componentLabels,
+          flags: node.displayFlags,
+        }),
         (ins, outs, context, node) => {
           const outVariables = new Map<NodeOutputTarget, Record<string, string>>([
             [null, {
@@ -213,9 +208,13 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
           return sockets;
         },
         node => [
-          new OutSocket(node, Socket.Type.ColorCoords, "Color"),
+          new OutSocket(node, Socket.Type.ColorCoords, "Color", context => node.computeColor(context, false)),
         ],
-        (ins, outs, context, node) => node.computeColor(context, false),
+        (ins, outs, context, node) => ({
+          values: node.computeColor(context, false),
+          labels: node.componentLabels,
+          flags: node.displayFlags,
+        }),
         (ins, outs, context, node) => {
           return new WebglVariables(
             `vec3 {2:val} = vec3({x}, {y}, {z});
@@ -262,12 +261,13 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
     // Override functions
 
     /** The color class to use for conversions */
-    get ColClass() {
-      return cm.Col;
+    abstract get ColClass(): typeof cm.Col;
+    abstract get componentLabels(): string[];
+    
+    get displayFlags(): SocketFlag[] {
+      return [];
     }
-    get componentLabels() {
-      return ["", "", ""];
-    }
+
     constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
       return new InSocket(this, Socket.Type.VectorOrColor, "Vector or color");
     }

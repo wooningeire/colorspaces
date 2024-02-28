@@ -1,6 +1,6 @@
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, NodeWithOverloads, InSocket, WebglSocketValue} from "../Node";
-import { Overload, OverloadGroup } from "../Overload";
+import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, WebglSocketValue} from "../Node";
+import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 
 import {Color, Vec2, Vec3, pipe} from "@/util";
@@ -27,7 +27,11 @@ export namespace output {
           new InSocket(node, Socket.Type.Vector, "RGB").flag(SocketFlag.Rgb),
         ],
         node => [],
-        (ins, outs, context) => ins[0].inValue(context),
+        (ins, outs, context) => ({
+          values: ins[0].inValue(context),
+          labels: [],
+          flags: [],
+        }),
       )],
       [CssOutputMode.Color, new Overload(
         "Color",
@@ -35,7 +39,11 @@ export namespace output {
           new InSocket(node, Socket.Type.ColorCoords, "Color"),
         ],
         node => [],
-        (ins, outs, context) => ins[0].inValue(context),
+        (ins, outs, context) => ({
+          values: ins[0].inValue(context),
+          labels: [],
+          flags: [],
+        }),
       )],
     ]));
 
@@ -55,7 +63,6 @@ export namespace output {
           new InSocket(node, Socket.Type.ColorCoords, "Colors"),
         ],
         node => [],
-        () => {},
       )],
 
       [ChromaticityPlotMode.Xy, new Overload(
@@ -69,7 +76,6 @@ export namespace output {
           }),
         ],
         node => [],
-        () => {},
       )],
     ]));
 
@@ -112,8 +118,12 @@ export namespace output {
       );
     }
 
-    output(context: NodeEvalContext) {
-      return (context.socket ?? this.ins[1]).inValue(context);
+    display(context: NodeEvalContext) {
+      return {
+        values: this.ins[1].inValue(context),
+        labels: [],
+        flags: [],
+      };
     }
 
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {

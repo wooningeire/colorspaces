@@ -1,11 +1,11 @@
 import seedrandom from "seedrandom";
 
 import { labSliderProps } from "./spaces";
-import { Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, NodeWithOverloads, OutSocket, InSocket, WebglSocketValue } from "../Node";
+import { Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, OutSocket, InSocket, WebglSocketValue } from "../Node";
 import * as cm from "../colormanagement";
 
 import { Color, Vec3, lerp } from "@/util";
-import { Overload, OverloadGroup } from "../Overload";
+import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
 import { randFloat, randFloatVec3Seed } from "../colormanagement/random";
 
@@ -43,13 +43,17 @@ export namespace math {
           new InSocket(node, Socket.Type.Vector, "Start"),
           new InSocket(node, Socket.Type.Vector, "End"),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Vector, "Vector"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Vector, "Vector", context => {
+            const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+            return col0.map((_, i) => lerp(col0[i], col1[i], fac)) as Vec3;
+          }),
         ],
-        (ins: InSocket[], outs, context) => {
-          const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
-          return col0.map((_, i) => lerp(col0[i], col1[i], fac)) as Vec3;
-        },
+        (ins, outs, context) => ({
+          values: outs[0].outValue(context),
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -67,13 +71,17 @@ export namespace math {
           new InSocket(node, Socket.Type.Vector, "Addend"),
           new InSocket(node, Socket.Type.Vector, "Addend"),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Vector, "Sum"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Vector, "Sum", context => {
+            const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+            return col0.map((_, i) => col0[i] + col1[i] * fac) as Vec3;
+          }),
         ],
-        (ins, outs, context) => {
-          const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
-          return col0.map((_, i) => col0[i] + col1[i] * fac) as Vec3;
-        },
+        (ins, outs, context) => ({
+          values: outs[0].outValue(context),
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -91,13 +99,17 @@ export namespace math {
           new InSocket(node, Socket.Type.Vector, "Factor"),
           new InSocket(node, Socket.Type.Vector, "Factor"),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Vector, "Product"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Vector, "Product", context => {
+            const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+            return col0.map((_, i) => col0[i] * ((1 - fac) + col1[i] * fac)) as Vec3;
+          }),
         ],
-        (ins, outs, context) => {
-          const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
-          return col0.map((_, i) => col0[i] * ((1 - fac) + col1[i] * fac)) as Vec3;
-        },
+        (ins, outs, context) => ({
+          values: outs[0].outValue(context),
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -115,13 +127,17 @@ export namespace math {
           new InSocket(node, Socket.Type.Vector, "Minuend"),
           new InSocket(node, Socket.Type.Vector, "Subtrahend"),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Vector, "Difference"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Vector, "Difference", context => {
+            const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+            return col0.map((_, i) => col0[i] - col1[i] * fac) as Vec3;
+          }),
         ],
-        (ins, outs, context) => {
-          const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
-          return col0.map((_, i) => col0[i] - col1[i] * fac) as Vec3;
-        },
+        (ins, outs, context) => ({
+          values: outs[0].outValue(context),
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -139,13 +155,17 @@ export namespace math {
           new InSocket(node, Socket.Type.Vector, "Dividend"),
           new InSocket(node, Socket.Type.Vector, "Divisor"),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Vector, "Quotient"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Vector, "Quotient", context => {
+            const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+            return col0.map((_, i) => col0[i] / ((1 - fac) + col1[i] * fac)) as Vec3;
+          }),
         ],
-        (ins, outs, context) => {
-          const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
-          return col0.map((_, i) => col0[i] / ((1 - fac) + col1[i] * fac)) as Vec3;
-        },
+        (ins, outs, context) => ({
+          values: outs[0].outValue(context),
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -163,13 +183,17 @@ export namespace math {
           new InSocket(node, Socket.Type.Vector, "Factor"),
           new InSocket(node, Socket.Type.Vector, "Factor"),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Vector, "Product"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Vector, "Product", context => {
+            const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
+            return col0.map((_, i) => 1 - (1 - col0[i]) * (1 - col1[i] * fac)) as Vec3;
+          }),
         ],
-        (ins, outs, context) => {
-          const [fac, col0, col1] = ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3];
-          return col0.map((_, i) => 1 - (1 - col0[i]) * (1 - col1[i] * fac)) as Vec3;
-        },
+        (ins, outs, context) => ({
+          values: outs[0].outValue(context),
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -186,13 +210,17 @@ export namespace math {
           new InSocket(node, Socket.Type.Vector, "Vector"),
           new InSocket(node, Socket.Type.Vector, "Vector"),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Float, "Distance"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Distance", context => {
+            const [col0, col1] = ins.map(socket => socket.inValue(context)) as [Vec3, Vec3];
+            return Math.hypot(...col0.map((_, i) => col0[i] - col1[i]));
+          }),
         ],
-        (ins, outs, context) => {
-          const [col0, col1] = ins.map(socket => socket.inValue(context)) as [Vec3, Vec3];
-          return Math.hypot(...col0.map((_, i) => col0[i] - col1[i]));
-        },
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -215,13 +243,17 @@ export namespace math {
           new InSocket(node, Socket.Type.Vector, "Vector"),
           new InSocket(node, Socket.Type.Float, "Scalar"),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Vector, "Vector"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Vector, "Vector", context => {
+            const [col, scalar] = ins.map(socket => socket.inValue(context)) as [Vec3, number];
+            return col.map((_, i) => col[i] * scalar) as Vec3;
+          }),
         ],
-        (ins, outs, context) => {
-          const [col, scalar] = ins.map(socket => socket.inValue(context)) as [Vec3, number];
-          return col.map((_, i) => col[i] * scalar) as Vec3;
-        },
+        (ins, outs, context) => ({
+          values: outs[0].outValue(context),
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -239,20 +271,10 @@ export namespace math {
       )],
     ]));
 
+    width = 200;
+
     constructor() {
       super(VectorArithmeticMode.Lerp);
-      this.width = 200;
-    }
-
-    display(context: NodeEvalContext) {
-      const output = this.output(context);
-      return {
-        labels: [],
-        values: typeof output === "number"
-            ? [output]
-            : output as Vec3,
-        flags: [],
-      };
     }
   }
 
@@ -288,11 +310,15 @@ export namespace math {
           new InSocket(node, Socket.Type.Float, "Addend", true, {sliderProps: {hasBounds: false}}),
           new InSocket(node, Socket.Type.Float, "Addend", true, {sliderProps: {hasBounds: false}}),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Float, "Sum"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Sum", context => ins[0].inValue(context) + ins[1].inValue(context)),
         ],
-        (ins, outs, context, node) => ins[0].inValue(context) + ins[1].inValue(context),
-        (ins, outs, context, node) => new WebglVariables(
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
+        (ins, outs, context) => new WebglVariables(
           "",
           new Map([
             [null, {"val": "{val0} + {val1}"}],
@@ -308,10 +334,14 @@ export namespace math {
           new InSocket(node, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
           new InSocket(node, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Float, "Product"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Product", context => ins[0].inValue(context) * ins[1].inValue(context)),
         ],
-        (ins, outs, context) => ins[0].inValue(context) * ins[1].inValue(context),
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -328,10 +358,14 @@ export namespace math {
           new InSocket(node, Socket.Type.Float, "Minuend", true, {sliderProps: {hasBounds: false}}),
           new InSocket(node, Socket.Type.Float, "Subtrahend", true, {sliderProps: {hasBounds: false}}),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Float, "Difference"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Difference", context => ins[0].inValue(context) - ins[1].inValue(context)),
         ],
-        (ins, outs, context) => ins[0].inValue(context) - ins[1].inValue(context),
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -348,11 +382,15 @@ export namespace math {
           new InSocket(node, Socket.Type.Float, "Dividend", true, {sliderProps: {hasBounds: false}}),
           new InSocket(node, Socket.Type.Float, "Divisor", true, {sliderProps: {hasBounds: false}}),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Float, "Quotient"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Quotient", context => ins[0].inValue(context) / ins[1].inValue(context)),
         ],
-        (ins, outs, context) => ins[0].inValue(context) / ins[1].inValue(context),
-        (ins, outs, context, node) => new WebglVariables(
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
+        (ins, outs, context) => new WebglVariables(
           "",
           new Map([
             [null, {"val": "{val0} / {val1}"}],
@@ -368,10 +406,14 @@ export namespace math {
           new InSocket(node, Socket.Type.Float, "Base", true, {sliderProps: {hasBounds: false}}),
           new InSocket(node, Socket.Type.Float, "Exponent", true, {sliderProps: {hasBounds: false}}),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Float, "Power"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Power", context => ins[0].inValue(context) ** ins[1].inValue(context)),
         ],
-        (ins, outs, context) => ins[0].inValue(context) ** ins[1].inValue(context),
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -388,11 +430,15 @@ export namespace math {
           new InSocket(node, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
           new InSocket(node, Socket.Type.Float, "Factor", true, {sliderProps: {hasBounds: false}}),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Float, "Product"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Product", context => 1 - (1 - ins[0].inValue(context)) * (1 - ins[1].inValue(context))),
         ],
-        (ins, outs, context) => 1 - (1 - ins[0].inValue(context)) * (1 - ins[1].inValue(context)),
-        (ins, outs, context, node) => new WebglVariables(
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
+        (ins, outs, context) => new WebglVariables(
           "",
           new Map([
             [null, {"val": "1. - (1. - {val0}) * (1. - {val1})"}],
@@ -409,10 +455,14 @@ export namespace math {
           new InSocket(node, Socket.Type.Float, "Max", true, {sliderProps: {hasBounds: false}}),
           new InSocket(node, Socket.Type.Float, "Amount"),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Float, "Value"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Value", context => lerp(ins[0].inValue(context), ins[1].inValue(context), ins[2].inValue(context))),
         ],
-        (ins, outs, context) => lerp(ins[0].inValue(context), ins[1].inValue(context), ins[2].inValue(context)),
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -439,10 +489,16 @@ export namespace math {
           new InSocket(node, Socket.Type.Float, "Target min", true, {sliderProps: {hasBounds: false}}),
           new InSocket(node, Socket.Type.Float, "Target max", true, {sliderProps: {hasBounds: false}}),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Float, "Target value"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Target value", context => {
+            return lerp(ins[3].inValue(context), ins[4].inValue(context), ins[0].inValue(context) / (ins[2].inValue(context) - ins[1].inValue(context)));
+          }),
         ],
-        (ins, outs, context) => lerp(ins[3].inValue(context), ins[4].inValue(context), ins[0].inValue(context) / (ins[2].inValue(context) - ins[1].inValue(context))),
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
@@ -465,14 +521,6 @@ export namespace math {
 
     constructor() {
       super(ArithmeticMode.Add);
-    }
-
-    display(context: NodeEvalContext) {
-      return {
-        labels: [],
-        values: [this.output(context)],
-        flags: [],
-      };
     }
   }
 
@@ -502,12 +550,8 @@ export namespace math {
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Vector, "Vector"),
+        new OutSocket(this, Socket.Type.Vector, "Vector", context => this.ins.map(socket => socket.inValue(context)) as Vec3),
       );
-    }
-
-    output(context: NodeEvalContext): Color {
-      return this.ins.map(socket => socket.inValue(context)) as Color;
     }
 
     webglGetBaseVariables(): WebglVariables {
@@ -542,15 +586,10 @@ export namespace math {
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Float, "1"),
-        new OutSocket(this, Socket.Type.Float, "2"),
-        new OutSocket(this, Socket.Type.Float, "3"),
+        new OutSocket(this, Socket.Type.Float, "1", context => this.inSocket.inValue(context)[0]),
+        new OutSocket(this, Socket.Type.Float, "2", context => this.inSocket.inValue(context)[1]),
+        new OutSocket(this, Socket.Type.Float, "3", context => this.inSocket.inValue(context)[2]),
       );
-    }
-
-    output(context: NodeEvalContext): number {
-      const value = this.inSocket.inValue(context);
-      return value[this.outs.indexOf(context.socket! as OutSocket)];
     }
 
     webglGetBaseVariables(): WebglVariables {
@@ -591,15 +630,19 @@ export namespace math {
             sliderProps: labSliderProps,
           }),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Float, "Difference"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Difference", context => {
+            const col0 = ins[0].inValue(context);
+            const col1 = ins[1].inValue(context);
+  
+            return cm.difference.deltaE1976(col0, col1);
+          }),
         ],
-        (ins: InSocket<St.VectorOrColor>[], outs, context) => {
-          const col0 = ins[0].inValue(context);
-          const col1 = ins[1].inValue(context);
-
-          return cm.difference.deltaE1976(col0, col1);
-        },
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context) => {
           const illuminant0 = ins[0].effectiveType() === St.Vector
               ? "illuminant2_E"
@@ -658,15 +701,19 @@ export namespace math {
             sliderProps: labSliderProps,
           }),
         ],
-        node => [
-          new OutSocket(node, Socket.Type.Float, "Difference"),
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Difference", context => {
+            const col0 = ins[0].inValue(context);
+            const col1 = ins[1].inValue(context);
+  
+            return cm.difference.deltaE2000(col0, col1);
+          }),
         ],
-        (ins: InSocket<St.VectorOrColor>[], outs, context) => {
-          const col0 = ins[0].inValue(context);
-          const col1 = ins[1].inValue(context);
-
-          return cm.difference.deltaE2000(col0, col1);
-        },
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context) => {
           const illuminant0 = ins[0].effectiveType() === St.Vector
               ? "illuminant2_E"
@@ -719,14 +766,6 @@ export namespace math {
     constructor() {
       super(ColorDifferenceMode.DeltaE2000);
     }
-    
-    display(context: NodeEvalContext) {
-      return {
-        labels: [],
-        values: [this.output(context)],
-        flags: [],
-      };
-    }
   }
 
   export class ContrastRatioNode extends Node {
@@ -747,21 +786,19 @@ export namespace math {
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Float, "Ratio"),
+        new OutSocket(this, Socket.Type.Float, "Ratio", context => {
+          const col0 = this.colorSockets[0].inValue(context);
+          const col1 = this.colorSockets[1].inValue(context);
+
+          return cm.difference.contrastRatio(col0, col1);
+        }),
       );
     }
 
-    output(context: NodeEvalContext): number {
-      const col0 = this.colorSockets[0].inValue(context);
-      const col1 = this.colorSockets[1].inValue(context);
-
-      return cm.difference.contrastRatio(col0, col1);
-    }
-    
     display(context: NodeEvalContext) {
       return {
+        values: [this.outs[0].outValue(context)],
         labels: [],
-        values: [this.output(context)],
         flags: [],
       };
     }
@@ -834,19 +871,23 @@ export namespace math {
           new InSocket(node, St.Float, "Min", true, {sliderProps: {hasBounds: false}}),
           new InSocket(node, St.Float, "Max", true, {sliderProps: {hasBounds: false}, defaultValue: 1}),
         ],
-        node => [
-          new OutSocket(node, St.Float, "Value"),
+        (node, ins) => [
+          new OutSocket(node, St.Float, "Value", context => {
+            const useFloor = ins[0].inValue(context)
+            const min = ins[2].inValue(context) as number;
+            const max = ins[3].inValue(context) as number;
+      
+            // const rng = seedrandom(this.ins[1].inValue(context).toString())
+      
+            const float = randFloat(ins[1].inValue(context)) * (max - min + (useFloor ? 1 : 0)) + min;
+            return useFloor ? Math.floor(float) : float;
+          }),
         ],
-        (ins, outs, context, node) => {
-          const useFloor = ins[0].inValue(context)
-          const min = ins[2].inValue(context) as number;
-          const max = ins[3].inValue(context) as number;
-    
-          // const rng = seedrandom(this.ins[1].inValue(context).toString())
-    
-          const float = randFloat(ins[1].inValue(context)) * (max - min + (useFloor ? 1 : 0)) + min;
-          return useFloor ? Math.floor(float) : float;
-        },
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context) => new WebglVariables(
           `float {0:float} = random({seed}) * ({max} - {min} + ({useFloor} ? 1. : 0.)) + {min};
   float {1:val} = {useFloor} ? floor({0:float}) : {0:float};`,
@@ -878,17 +919,21 @@ export namespace math {
           new InSocket(node, St.Float, "Min", true, {sliderProps: {hasBounds: false}}),
           new InSocket(node, St.Float, "Max", true, {sliderProps: {hasBounds: false}, defaultValue: 1}),
         ],
-        node => [
-          new OutSocket(node, St.Float, "Value"),
+        (node, ins) => [
+          new OutSocket(node, St.Float, "Value", context => {
+            const useFloor = ins[0].inValue(context)
+            const min = ins[2].inValue(context) as number;
+            const max = ins[3].inValue(context) as number;
+          
+            const float = randFloatVec3Seed(ins[1].inValue(context)) * (max - min + (useFloor ? 1 : 0)) + min;
+            return useFloor ? Math.floor(float) : float;
+          }),
         ],
-        (ins, outs, context, node) => {
-          const useFloor = ins[0].inValue(context)
-          const min = ins[2].inValue(context) as number;
-          const max = ins[3].inValue(context) as number;
-        
-          const float = randFloatVec3Seed(ins[1].inValue(context)) * (max - min + (useFloor ? 1 : 0)) + min;
-          return useFloor ? Math.floor(float) : float;
-        },
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
         (ins, outs, context) => new WebglVariables(
           `float {0:float} = random({seed}) * ({max} - {min} + ({useFloor} ? 1. : 0.)) + {min};
   float {1:val} = {useFloor} ? floor({0:float}) : {0:float};`,
@@ -912,14 +957,6 @@ export namespace math {
 
     constructor() {
       super(RandomFloatMode.FloatSeed);
-    }
-    
-    display(context: NodeEvalContext) {
-      return {
-        labels: [],
-        values: [this.output(context)],
-        flags: [],
-      };
     }
   }
 }
