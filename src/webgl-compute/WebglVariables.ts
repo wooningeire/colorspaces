@@ -23,6 +23,11 @@ struct Color {
   vec3 xyz;
 };
 
+struct AlphaColor {
+  Color color;
+  float alpha;
+};
+
 in vec2 v_uv;
 out vec4 fragColor;
 
@@ -32,17 +37,17 @@ ${webglDeclarations}
 
 {afterPrelude}
 
-Color sampleColor(vec2 coords) {
+AlphaColor sampleColor(vec2 coords) {
   {main}
   
-  return Color({val}, {illuminant}, {xyz});
+  return AlphaColor(Color({val}, {illuminant}, {xyz}), {alpha});
 }
 
 void main() {
-  Color outColor = sampleColor(v_uv);
-  vec3 outRgb = xyzToGammaSrgb(outColor.xyz, outColor.illuminant);
+  AlphaColor outColor = sampleColor(v_uv);
+  vec3 outRgb = xyzToGammaSrgb(outColor.color.xyz, outColor.color.illuminant);
 
-  float alpha = 1.;
+  float alpha = outColor.alpha;
 
   if (outOfGamutAlpha != 1.) {
     bool outOfGamut = -0.0001 > outRgb.r || outRgb.r > 1.0001
@@ -407,6 +412,7 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
         "illuminant": segments.at(-1)!.outVariables.get(null)!["illuminant"],
         "afterPrelude": segments.map(segment => segment.preludeTemplate)
             .join("\n"),
+        "alpha": segments.at(-1)!.outVariables.get(null)!["alpha"] ?? "1.",
       },
       "",
       uniforms,

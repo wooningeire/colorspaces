@@ -91,6 +91,7 @@ export namespace output {
     static readonly outputDisplayType = OutputDisplayType.Custom;
 
     readonly normalizeCoordsSocket: InSocket<St.Bool>;
+    readonly alphaSocket: InSocket<St.Float>;
     readonly widthSocket: InSocket<St.Float>;
     readonly heightSocket: InSocket<St.Float>;
 
@@ -103,6 +104,9 @@ export namespace output {
           defaultValue: true,
         })),
         new InSocket(this, St.ColorCoords, "Colors"),
+        (this.alphaSocket = new InSocket(this, St.Float, "Alpha", true, {
+          defaultValue: 1,
+        })),
         (this.widthSocket = new InSocket(this, St.Float, "Width", true, {
           defaultValue: 42,
           sliderProps: {
@@ -134,6 +138,7 @@ export namespace output {
             "xyz": "{xyz}",
             "illuminant": "{illuminant}",
             "val": "{val}",
+            "alpha": "{alpha}",
           }],
         ])
       ).nameVariableSlots(1);
@@ -146,8 +151,11 @@ export namespace output {
           "illuminant": "illuminant",
           "val": "val",
         }; 
-        case this.ins[2]: return <WebglSocketValue<T>>{}; 
+        case this.ins[2]: return <WebglSocketValue<T>>{
+          "val": "alpha",
+        };
         case this.ins[3]: return <WebglSocketValue<T>>{}; 
+        case this.ins[4]: return <WebglSocketValue<T>>{}; 
         default: return null;
       }
     }

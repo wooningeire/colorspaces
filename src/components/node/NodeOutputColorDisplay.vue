@@ -259,6 +259,7 @@ defineExpose({
 
   width: calc(var(--width) * 1px);
   aspect-ratio: var(--width) / var(--height);
+  max-width: 100%;
   // height: calc(var(--height) * 1px);
 
   &.out-of-gamut {

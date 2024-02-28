@@ -298,10 +298,6 @@ defineExpose({
     align-items: center;
 
     width: 100%;
-
-    :deep(.color-display-box) {
-      height: 3em;
-    } 
   }
 
   > .node-border {

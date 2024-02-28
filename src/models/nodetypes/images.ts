@@ -103,16 +103,7 @@ export namespace images {
           const imageData = this.imageSocket.inValue(context);
           if (!imageData) return [0, 0, 0] as Vec3;
 
-          const [x, y] = this.normalizeCoordinatesSocket.inValue(context)
-              ? [
-                Math.round((context.coords?.[0] ?? 0) * imageData.width),
-                Math.round((context.coords?.[1] ?? 0) * imageData.height),
-              ]
-              : [
-                Math.round(context.coords?.[0] ?? 0),
-                Math.round(context.coords?.[1] ?? 0),
-              ];
-  
+          const [x, y] = this.getImageDataCoords(imageData, context);
           const index = (x + y * imageData.width) * 4;
           const colorData = [...imageData.data.slice(index, index + 3)]
               .map(comp => comp / 255);
@@ -121,22 +112,47 @@ export namespace images {
   
           return colorData as Vec3;
         }),
+        new OutSocket(this, St.Float, "Alpha", context => {
+          const imageData = this.imageSocket.inValue(context);
+          if (!imageData) return 0;
+
+          const [x, y] = this.getImageDataCoords(imageData, context);
+          const index = (x + y * imageData.width) * 4;
+          return index + 3 < imageData.data.length
+              ? imageData.data[index + 3] / 255
+              : 0;
+        }),
         new OutSocket(this, St.Float, "Width", context => this.imageSocket.inValue(context)?.width ?? 0),
         new OutSocket(this, St.Float, "Height", context => this.imageSocket.inValue(context)?.height ?? 0),
       );
     }
+
+    private getImageDataCoords(imageData: ImageData, context: NodeEvalContext) {
+      return this.normalizeCoordinatesSocket.inValue(context)
+          ? [
+            Math.round((context.coords?.[0] ?? 0) * imageData.width),
+            Math.round((context.coords?.[1] ?? 0) * imageData.height),
+          ]
+          : [
+            Math.round(context.coords?.[0] ?? 0),
+            Math.round(context.coords?.[1] ?? 0),
+          ];
+    }
     
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
       return new WebglVariables(
-        `vec3 {0:val} = texture({1:texture}, coords).rgb;`,
+        `vec4 {0:val} = texture({1:texture}, coords);`,
         new Map([
           [this.outs[0], {
-            "val": "{0:val}",
+            "val": "{0:val}.rgb",
           }],
           [this.outs[1], {
-            "val": "{2:width}",
+            "val": "{0:val}.a",
           }],
           [this.outs[2], {
+            "val": "{2:width}",
+          }],
+          [this.outs[3], {
             "val": "{3:height}",
           }],
         ]),

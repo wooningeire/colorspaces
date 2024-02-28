@@ -26,7 +26,7 @@ watch(tree.links, setHasConstantOutput)
 
 const type = computed(() => (props.node.constructor as typeof Node).outputDisplayType);
 
-const display = computed(() => props.node.display());
+const display = computed(() => props.node.display({}));
 
 const nDecimals = 4;
 
