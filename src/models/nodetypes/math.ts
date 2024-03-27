@@ -4,7 +4,7 @@ import { labSliderProps } from "./spaces";
 import { Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, OutSocket, InSocket, WebglSocketValue } from "../Node";
 import * as cm from "../colormanagement";
 
-import { Color, Vec3, lerp } from "@/util";
+import { Color, Vec3, lerp, mod } from "@/util";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
 import { randFloat, randFloatVec3Seed } from "../colormanagement/random";
@@ -288,6 +288,7 @@ export namespace math {
     Screen = "screen",
     Lerp = "lerp",
     MapRange = "mapRange",
+    Quantize = "quantize",
   }
   export class ArithmeticNode extends NodeWithOverloads<ArithmeticMode> {
     static readonly TYPE = Symbol(this.name);
@@ -513,6 +514,39 @@ export namespace math {
             case ins[2]: return <WebglSocketValue<T>>{"val": "sourceMax"};
             case ins[3]: return <WebglSocketValue<T>>{"val": "targetMin"};
             case ins[4]: return <WebglSocketValue<T>>{"val": "targetMax"};
+            default: return null;
+          }
+        },
+      )],
+      
+      [ArithmeticMode.Quantize, new Overload(
+        "Quantize",
+        node => [
+          new InSocket(node, Socket.Type.Float, "Value", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, Socket.Type.Float, "# segments", true, {sliderProps: {hasBounds: false, step: 1}, defaultValue: 4}),
+        ],
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Value", context => {
+            const nSegments = ins[1].inValue(context);
+            return Math.floor(ins[0].inValue(context) * nSegments) / nSegments;
+          }),
+        ],
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [null, {"val": "floor({val} * {nSegments}) / ({nSegments} - 1.)"}],
+            [outs[0], {"val": "floor({val} * {nSegments}) / ({nSegments} - 1.)"}],
+          ]),
+        ),
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<T>>{"val": "val"};
+            case ins[1]: return <WebglSocketValue<T>>{"val": "nSegments"};
             default: return null;
           }
         },
