@@ -122,8 +122,12 @@ export namespace images {
               ? imageData.data[index + 3] / 255
               : 0;
         }),
-        new OutSocket(this, St.Float, "Width", context => this.imageSocket.inValue(context)?.width ?? 0),
-        new OutSocket(this, St.Float, "Height", context => this.imageSocket.inValue(context)?.height ?? 0),
+        new OutSocket(this, St.Float, "Width", context => this.imageSocket.inValue(context)?.width ?? 0, true, {
+          constant: true,
+        }),
+        new OutSocket(this, St.Float, "Height", context => this.imageSocket.inValue(context)?.height ?? 0, true, {
+          constant: true,
+        }),
       );
     }
 
@@ -211,7 +215,7 @@ uniform float {3:height};`,
       super();
 
       this.ins.push(
-        new InSocket(this, St.Any, "Source", true, volatileInSocketOptions(this.ins, this.outs)),
+        new InSocket(this, St.Any, "Source", true, Object.assign({constant: true}, volatileInSocketOptions(this.ins, this.outs))),
         ...(this.coordsSockets = [
           new InSocket(this, St.Float, "X"),
           new InSocket(this, St.Float, "Y"),
@@ -223,22 +227,8 @@ uniform float {3:height};`,
           return this.ins[0].inValue({
             coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
           });
-        },true, volatileOutSocketOptions(this.ins, this.outs)),
+        }, true, Object.assign({constant: true}, volatileOutSocketOptions(this.ins, this.outs))),
       );
-    }
-    getDependencyAxes() {
-      const axes = new Set<number>();
-
-      for (const socket of this.ins.slice(1)) {
-        for (const link of socket.links) {
-          if (link.causesCircularDependency) continue;
-          for (const axis of link.srcNode.getDependencyAxes()) {
-            axes.add(axis);
-          }
-        }
-      }
-
-      return axes;
     }
     
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {

@@ -109,14 +109,20 @@ export namespace output {
         })),
         (this.widthSocket = new InSocket(this, St.Float, "Width", true, {
           defaultValue: 42,
+          constant: true,
           sliderProps: {
             hasBounds: false,
+            step: 1,
+            min: 1,
           },
         })),
         (this.heightSocket = new InSocket(this, St.Float, "Height", true, {
           defaultValue: 42,
+          constant: true,
           sliderProps: {
             hasBounds: false,
+            step: 1,
+            min: 1,
           },
         })),
       );

@@ -117,7 +117,7 @@ const showTooltip = () => {
 
   const socketTypeName = socketTypeNames.get(props.socket.type);
 
-  let tooltipString = `${getString(props.socket.data.socketDesc ?? NO_DESC)}`;
+  let tooltipString = `${getString(props.socket.socketDesc ?? NO_DESC)}`;
   
   if (props.socket.showSocket) {
     tooltipString += `<br />
@@ -182,6 +182,7 @@ Object.defineProperties(socketVue, {
         }">
       <div class="socket-display"
           :class="{
+            constant: socket.constant,
 						excited: Boolean(draggedSocket) && canLinkDraggedSocket,
             accepting: isDraggedOver && canLinkDraggedSocket,
           }"
@@ -240,8 +241,6 @@ Object.defineProperties(socketVue, {
     > .socket-display {
       width: var(--socket-size);
       height: var(--socket-size);
-
-      border-radius: 50%;
       background: var(--socket-color);
       box-shadow: 0 0 0 #fff, var(--main-border-box-shadow);
       
@@ -251,6 +250,10 @@ Object.defineProperties(socketVue, {
 
       --socket-color: currentcolor;
       --main-border-box-shadow: 0 0 0 4px #2f3432;
+
+      &:not(.constant) {
+        border-radius: 50%;
+      }
 
 			&.excited {
 				--socket-size: 16px;

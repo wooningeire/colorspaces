@@ -111,7 +111,7 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
             undefined
           "
           :sliderProps="(socket as VectorSocket).data.sliderProps"
-          :descs="socket.data.fieldText" />
+          :descs="socket.fieldText" />
     </template>
 
     <template v-else-if="socket.type === St.Dropdown">

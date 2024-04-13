@@ -82,8 +82,8 @@ defineExpose({
 
     <template v-else-if="node instanceof output.ImagePlotNode">
       <NodeOutputColorDisplay :node="node"
-          :width="Math.max(1, node.widthSocket.inValue())"
-          :height="Math.max(1, node.heightSocket.inValue())"
+          :width="Math.max(1, node.widthSocket.inValue({coords: [0, 0]}))"
+          :height="Math.max(1, node.heightSocket.inValue({coords: [0, 0]}))"
           :webglViewportWidth="node.normalizeCoordsSocket.inValue() ? 1 : node.widthSocket.inValue()"
           :webglViewportHeight="node.normalizeCoordsSocket.inValue() ? 1 : node.heightSocket.inValue()"
           

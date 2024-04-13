@@ -1,5 +1,5 @@
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
-import { StringKey } from "../strings";
+import { NO_DESC, StringKey } from "../strings";
 import { Vec2, Vec3 } from "../util";
 import { OverloadGroup, OverloadManager } from "./Overload";
 import { Col } from "./colormanagement";
@@ -304,12 +304,17 @@ export abstract class Node {
       this.axes.forEach(axis => axes.add(axis));
     }
 
-    this.forEachInLink(link => {
-      if (link.causesCircularDependency) return;
-      for (const axis of link.srcNode.getDependencyAxes()) {
-        axes.add(axis);
+    for (const socket of this.ins) {
+      if (socket.constant) continue;
+
+      for (const link of socket.links) {
+        if (link.causesCircularDependency) continue;
+        
+        for (const axis of link.srcNode.getDependencyAxes()) {
+          axes.add(axis);
+        }
       }
-    });
+    }
     return axes;
   }
 
@@ -395,11 +400,7 @@ export type SliderProps = {
 
 /** Properties specific to the socket type */
 type SocketData<St extends SocketType=any> =
-    {
-      socketDesc?: StringKey,
-      fieldText?: StringKey[],
-    } &
-    (St extends SocketType.Dropdown ? {
+    St extends SocketType.Dropdown ? {
       options?: {
         value: string,
         text: string,
@@ -414,15 +415,18 @@ type SocketData<St extends SocketType=any> =
     St extends SocketType.VectorOrColor ? {
       sliderProps?: SliderProps[],
     } :
-    {});
+    {};
 
 
 export type SocketOptions<St extends SocketType=any> =
     {
+      socketDesc?: StringKey,
+      fieldText?: StringKey[],
       defaultValue?: SocketValue<St>,
       hasVolatileType?: boolean,
       showFieldIfAvailable?: boolean,
       valueChangeRequiresShaderReload?: boolean,
+      constant?: boolean,
       onValueChange?: (this: Socket<St>, tree: Tree) => void,
       onLink?: (this: Socket<St>, link: Link, tree: Tree) => void,
       onUnlink?: (this: Socket<St>, link: Link, tree: Tree) => void,
@@ -469,6 +473,9 @@ export abstract class Socket<St extends SocketType=any> {
 
   readonly links: Link[] = [];
 
+  readonly socketDesc: StringKey;
+  readonly fieldText: StringKey[];
+
   /** The value of the entry field input for this socket */
   fieldValue: SocketValue<St>;
   readonly showFieldIfAvailable: boolean;
@@ -476,6 +483,8 @@ export abstract class Socket<St extends SocketType=any> {
    * sockets to determine whether they should mock this socket's type to prevent cyclical dependencies) */
   readonly hasVolatileType: boolean;
   readonly valueChangeRequiresShaderReload: boolean;
+  /** Whether the socket requests a constant value */
+  readonly constant: boolean;
   flags: SocketFlag;
 
   readonly data: SocketData<St>;
@@ -494,10 +503,13 @@ export abstract class Socket<St extends SocketType=any> {
     options=<SocketOptions<St>>{},
   ) {
     const {
+      socketDesc,
+      fieldText,
       defaultValue,
       showFieldIfAvailable,
       hasVolatileType,
       valueChangeRequiresShaderReload,
+      constant,
       onValueChange,
       onLink,
       onUnlink,
@@ -506,10 +518,13 @@ export abstract class Socket<St extends SocketType=any> {
       ...data
     } = options;
 
+    this.socketDesc = socketDesc ?? NO_DESC;
+    this.fieldText = fieldText ?? [];
     this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
     this.showFieldIfAvailable = showFieldIfAvailable ?? true;
     this.hasVolatileType = hasVolatileType ?? false;
     this.valueChangeRequiresShaderReload = valueChangeRequiresShaderReload ?? false;
+    this.constant = constant ?? false;
     this.data = data as any as SocketData<St>;
 
     this.flags = SocketFlag.None;

@@ -127,6 +127,9 @@ defineExpose({
   grid-template-columns: repeat(var(--n-cols), 1fr);
   grid-template-rows: repeat(var(--n-rows), 1fr);
 
+  border-radius: 0.5rem;
+  overflow: hidden;
+
   > div {
     --x: 1;
     --y: 1;
