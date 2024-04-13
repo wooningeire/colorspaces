@@ -68,6 +68,8 @@ const addNode = <T extends Node>(
   --col-invalid-input: #f57;
 
   --font-mono: Ubunto Mono, monospace;
+
+  --socket-text-padding: 8px;
 }
 
 body {

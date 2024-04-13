@@ -57,6 +57,7 @@ const strings = {
   "label.node.cssOutput": "CSS output",
   "label.node.chromaticityPlot": "Chromaticity plot",
   "label.node.imagePlot": "Image plot",
+  "label.node.sampleHexCodes": "Sample hex codes",
 
   "label.node.reroute": "Reroute",
 

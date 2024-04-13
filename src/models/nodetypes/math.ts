@@ -288,6 +288,7 @@ export namespace math {
     Screen = "screen",
     Lerp = "lerp",
     MapRange = "mapRange",
+    Floor = "floor",
     Quantize = "quantize",
   }
   export class ArithmeticNode extends NodeWithOverloads<ArithmeticMode> {
@@ -514,6 +515,36 @@ export namespace math {
             case ins[2]: return <WebglSocketValue<T>>{"val": "sourceMax"};
             case ins[3]: return <WebglSocketValue<T>>{"val": "targetMin"};
             case ins[4]: return <WebglSocketValue<T>>{"val": "targetMax"};
+            default: return null;
+          }
+        },
+      )],
+      
+      [ArithmeticMode.Floor, new Overload(
+        "Floor",
+        node => [
+          new InSocket(node, Socket.Type.Float, "Value", true, {sliderProps: {hasBounds: false}}),
+        ],
+        (node, ins) => [
+          new OutSocket(node, Socket.Type.Float, "Value", context => {
+            return Math.floor(ins[0].inValue(context));
+          }),
+        ],
+        (ins, outs, context) => ({
+          values: [outs[0].outValue(context)],
+          labels: [],
+          flags: [],
+        }),
+        (ins, outs, context, node) => new WebglVariables(
+          "",
+          new Map([
+            [null, {"val": "floor({val})"}],
+            [outs[0], {"val": "floor({val})"}],
+          ]),
+        ),
+        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
+          switch (inSocket) {
+            case ins[0]: return <WebglSocketValue<T>>{"val": "val"};
             default: return null;
           }
         },

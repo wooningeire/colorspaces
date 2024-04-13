@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import {PropType, computed} from 'vue';
 
+import ReadonlyInput from "./ReadonlyInput.vue";
+
 import {settings} from "../store";
 
 import {Col} from "@/models/colormanagement";
@@ -27,12 +29,10 @@ const props = withDefaults(defineProps<{
                 {{values[index]}}
       </div>
 
-      <input class="data"
-          :value="values[index]"
-          readonly
-          @pointerdown="(event) => (event.currentTarget as HTMLInputElement).select()"
-          @pointerup="(event) => (event.currentTarget as HTMLInputElement).select()"
-          v-else />
+      <ReadonlyInput
+        :value="values[index]"
+        v-else
+      />
     </template>
   </div>
 </template>
@@ -49,18 +49,6 @@ const props = withDefaults(defineProps<{
   
   > .header {
     font-weight: 700;
-  }
-
-  > input {
-    margin: 0.25em;
-    width: 30ch;
-    border: none;
-
-    font-size: 1em;
-    text-align: inherit;
-    background: #424545;
-    border-radius: 0.25em;
-    color: inherit;
   }
 }
 </style>

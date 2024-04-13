@@ -1,16 +1,13 @@
 <script lang="ts" setup>
 import { PropType, computed } from 'vue';
 import NodeOutputTable from './NodeOutputTable.vue';
-import { Color, Vec3, clamp } from '@/util';
+import { Vec3, clamp, to255, toHex, toHex3 } from '@/util';
 import * as cm from '@/models/colormanagement';
 
 const props = defineProps<{
   color?: cm.Col,
 }>();
 
-const to255 = (channel: number) => Math.round(clamp(channel, 0, 1) * 255);
-const toHex = (channel: number) => to255(channel).toString(16).padStart(2, "0");
-const toHex3 = (channel: number) => Math.round(clamp(channel, 0, 1) * 15).toString(16);
 
 const hueStrings = (color: cm.Col, fn: (rgb: Vec3) => number[]) => {
   const hxx = fn([...cm.Srgb.from(color)] as Vec3);

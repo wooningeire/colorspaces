@@ -209,8 +209,6 @@ Object.defineProperties(socketVue, {
 
   min-height: 1.5em;
 
-  --socket-text-padding: 8px;
-
   > .socket {
     --socket-box-size: 20px;
     --socket-size: 12px;

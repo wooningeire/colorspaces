@@ -1,6 +1,5 @@
 export type Vec2 = [number, number];
 export type Vec3 = [number, number, number];
-export type Color = Vec3;
 
 enum ColorType {
   Rgb,
@@ -68,7 +67,7 @@ export const pipe = (...fns: Function[]) =>
     (...args: any[]) =>
         fns.reduce((currentValue: any, fn: Function) => [fn(...currentValue)], args);
 
-class Option<T> {
+export class Option<T> {
   static readonly None = new Option(null) as Option<any>;
   
   static Some<T>(value: T) {

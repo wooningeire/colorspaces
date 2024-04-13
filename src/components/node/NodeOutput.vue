@@ -5,6 +5,7 @@ import NodeOutputColorValues from "./NodeOutputColorValues.vue";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 import NodeOutputCssRgbVec from "./NodeOutputCssRgbVec.vue";
 import NodeOutputCssColor from "./NodeOutputCssColor.vue";
+import NodeOutputQuantized from "./NodeOutputQuantized.vue";
 
 import {InSocket, Node, OutputDisplayType} from "@/models/Node";
 import { NodeWithOverloads } from "@/models/Overload";
@@ -36,9 +37,11 @@ watch(() => props.node.getDependencyAxes().size, () => {
 
 
 const colorDisplayVue = ref<InstanceType<typeof NodeOutputColorDisplay>>();
+const quantizedDisplayVue = ref<InstanceType<typeof NodeOutputQuantized>>();
 defineExpose({
   reload: (requiresShaderReload: boolean, editedSocket: Node | InSocket | null) => {
     colorDisplayVue.value?.reload(requiresShaderReload, editedSocket);
+    quantizedDisplayVue.value?.reload(requiresShaderReload, editedSocket);
   },
 });
 </script>
@@ -85,6 +88,11 @@ defineExpose({
           :webglViewportHeight="node.normalizeCoordsSocket.inValue() ? 1 : node.heightSocket.inValue()"
           
           ref="colorDisplayVue" />
+    </template>
+
+    <template v-else-if="node instanceof output.SampleHexCodesNode">
+      <NodeOutputQuantized :node="node"
+          ref="quantizedDisplayVue" />
     </template>
   </div>
 </template>

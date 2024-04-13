@@ -153,11 +153,15 @@ export abstract class Node {
   }
 
   /** A `WebglVariables` object that provides a template to fill, output variables, and uniforms */
-  abstract webglGetBaseVariables(): WebglVariables;
+  webglGetBaseVariables(): WebglVariables {
+    throw new Error("not implmeneted");
+  }
   /** Provides a mapping from output names from a source socket to input slot names in `webglGetBaseVariables`
    * depending on which input socket `inSocket` we are inspecting
    */
-  abstract webglGetMapping<St extends SocketType>(inSocket: InSocket<St>): WebglSocketValue<St> | null;
+  webglGetMapping<St extends SocketType>(inSocket: InSocket<St>): WebglSocketValue<St> | null {
+    throw new Error("not implmeneted");
+  }
 
   display(context: NodeEvalContext): NodeDisplay {
     return {

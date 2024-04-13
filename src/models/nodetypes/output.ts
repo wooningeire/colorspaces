@@ -160,4 +160,21 @@ export namespace output {
       }
     }
   }
+
+  export class SampleHexCodesNode extends Node {
+    static readonly TYPE = Symbol(this.name);
+    static readonly id = "sampleHexCodes";
+    static readonly outputDisplayType = OutputDisplayType.Custom;
+
+    readonly colorsSocket: InSocket<St.ColorCoords>;
+
+    width = 600;
+
+    constructor() {
+      super();
+      this.ins.push(
+        (this.colorsSocket = new InSocket(this, St.ColorCoords, "Colors")),
+      );
+    }
+  }
 }
