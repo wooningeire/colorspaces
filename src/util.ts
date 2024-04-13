@@ -84,6 +84,11 @@ export class Option<T> {
     if (this === Option.None) return;
     consumer(this.value);
   }
+  
+  unwrap() {
+    if (this === Option.None) throw new TypeError("attempted to unwrap Option.None");
+    return this.value;
+  }
 }
 
 

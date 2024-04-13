@@ -9,7 +9,7 @@ import { WebglVariables } from "@/webgl-compute/WebglVariables";
 
 export const labSliderProps = [
   {
-    max: 100,
+    softMax: 100,
   },
   {
     hasBounds: false,
@@ -23,7 +23,7 @@ export const labSliderProps = [
 
 export const oklabSliderProps = [
   {
-    max: 1,
+    softMax: 1,
   },
   {
     hasBounds: false,
@@ -488,7 +488,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
         defaultValue: [50, 0, 0],
         sliderProps: [
           {
-            max: 100,
+            softMax: 100,
           },
           {
             hasBounds: false,
@@ -564,7 +564,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
         defaultValue: [50, 0, 0],
         sliderProps: [
           {
-            max: 100,
+            softMax: 100,
           },
           {
             hasBounds: false,
@@ -644,7 +644,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
         defaultValue: [0.5, 0, 0],
         sliderProps: [
           {
-            max: 1,
+            softMax: 1,
           },
           {
             hasBounds: false,

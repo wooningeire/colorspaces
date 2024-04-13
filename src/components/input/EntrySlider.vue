@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {computed, nextTick, PropType, ref, watch} from "vue";
+import {computed, nextTick, onBeforeMount, onMounted, PropType, ref, watch} from "vue";
 
 import {acceptAlways, identity} from "./base-functions";
 import {modifierKeys, tooltipController} from "../store";
@@ -8,59 +8,35 @@ import makeDragListener from "../draggable";
 import getString, {NO_DESC, StringKey} from "@/strings";
 import { clearTextSelection } from "@/util";
 
-const props = defineProps({
-  modelValue: {
-    type: Number,
-    required: true,
-  },
-
-  validate: {
-    type: Function as PropType<(proposedValue: any) => boolean>,
-    default: acceptAlways,
-  },
-
-  convertIn: {
-    type: Function as PropType<(value: any) => any>,
-    default: identity,
-  },
-
-  convertOut: {
-    type: Function as PropType<(value: any) => any>,
-    default: identity,
-  },
-
-  hasBounds: {
-    type: Boolean,
-    default: true,
-  },
-
-  min: {
-    type: Number,
-    default: 0,
-  },
-  
-  max: {
-    type: Number,
-    default: 1,
-  },
-
-  step: {
-    type: Number,
-    default: 1e-3,
-  },
-
-  unboundedChangePerPixel: {
-    type: Number,
-    default: 0.03125,
-  },
-
-  desc: {
-    type: String as PropType<StringKey>,
-  },
+const props = withDefaults(defineProps<{
+  modelValue: number,
+  validate?: (proposedValue: number) => boolean,
+  convertIn?: (value: number) => number,
+  convertOut?: (value: number) => number,
+  hasBounds?: boolean,
+  min?: number,
+  max?: number,
+  softMin?: number,
+  softMax?: number,
+  step?: number,
+  unboundedChangePerPixel?: number,
+  desc?: StringKey,
+}>(), {
+  validate: acceptAlways,
+  convertIn: identity,
+  convertOut: identity,
+  hasBounds: true,
+  min: -Infinity,
+  max: Infinity,
+  softMin: 0,
+  softMax: 1,
+  step: 1e-3,
+  unboundedChangePerPixel: 0.03125,
+  desc: NO_DESC,
 });
 
-const internalMin = computed(() => props.convertIn(props.min));
-const internalMax = computed(() => props.convertIn(props.max));
+const internalMin = computed(() => props.convertIn(props.softMin));
+const internalMax = computed(() => props.convertIn(props.softMax));
 
 
 const progress = computed(
@@ -107,7 +83,9 @@ const onInput = () => {
   entryActive.value = true;
   const proposedValue = props.convertIn(Number(tempValue.value));
 
-  proposedValueIsValid.value = props.validate(proposedValue);
+  proposedValueIsValid.value = props.validate(proposedValue)
+    && proposedValue >= props.convertIn(props.min)
+    && proposedValue <= props.convertIn(props.max);
   if (proposedValueIsValid.value) {
     emit("update:modelValue", proposedValue);
   }

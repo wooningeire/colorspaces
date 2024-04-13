@@ -385,6 +385,8 @@ export enum SocketFlag {
 
 export type SliderProps = {
   hasBounds?: boolean,
+  softMin?: number,
+  softMax?: number,
   min?: number,
   max?: number,
   step?: number,

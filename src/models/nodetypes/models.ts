@@ -452,8 +452,8 @@ export namespace models {
       this.ins.push(
         (this.inSocket = new InSocket(this, Socket.Type.Float, "Wavelength (nm)", true, {
           sliderProps: {
-            min: 360,
-            max: 830,
+            softMin: 360,
+            softMax: 830,
             step: 1,
           },
           defaultValue: 510,

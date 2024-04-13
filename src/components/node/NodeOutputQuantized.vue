@@ -61,6 +61,8 @@ defineExpose({
       <EntrySlider
         v-model="nSegmentsX"
         :hasBounds="false"
+        :min="1"
+        :max="25"
         :step="1"
       />
 
@@ -68,6 +70,8 @@ defineExpose({
       <EntrySlider
         v-model="nSegmentsY"
         :hasBounds="false"
+        :min="1"
+        :max="25"
         :step="1"
       />
     </div>
