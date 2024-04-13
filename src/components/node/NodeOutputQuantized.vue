@@ -32,6 +32,21 @@ const hexString = (x: number, y: number): Option<string> => {
   return Option.Some(`#${color.map(toHex).join("")}`);
 };
 
+const copyAll = async () => {
+  const rows: string[] = [];
+  for (let y = 0; y < nSegmentsY.value; y++) {
+    const row: string[] = [];
+    for (let x = 0; x < nSegmentsX.value; x++) {
+      hexString(x, y).map(value => row.push(value));
+    }
+    rows.push(row.join(","));
+  }
+
+  try {
+    await navigator.clipboard.writeText(rows.join("\n"));
+  } catch (error) {}
+};
+
 defineExpose({
   reload: (requiresShaderReload: boolean, editedSocket: Node | InSocket | null) => {
     proxy.$forceUpdate();
@@ -65,12 +80,12 @@ defineExpose({
       }"
     >
       <template
-        v-for="_, x of new Array(nSegmentsX)"
-        :key="x"
+        v-for="_, y of new Array(nSegmentsY)"
+        :key="y"
       >
         <div
-          v-for="_, y of new Array(nSegmentsY)"
-          :key="y"
+          v-for="_, x of new Array(nSegmentsX)"
+          :key="x"
           :style="{
             '--x': x + 1,
             '--y': nSegmentsY - y,
@@ -84,6 +99,8 @@ defineExpose({
         </div>
       </template>
     </div>
+
+    <button @click="copyAll">Copy all</button>
   </div>
 </template>
 
@@ -91,6 +108,7 @@ defineExpose({
 .container {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
 }
 
 .fields {

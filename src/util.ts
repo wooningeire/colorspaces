@@ -79,6 +79,11 @@ export class Option<T> {
   getElse(alt: T): T {
     return this === Option.None ? alt : this.value;
   }
+
+  map(consumer: (value: T) => void) {
+    if (this === Option.None) return;
+    consumer(this.value);
+  }
 }
 
 
