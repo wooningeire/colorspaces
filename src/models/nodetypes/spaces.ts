@@ -109,13 +109,7 @@ export namespace spaces {
           flags: node.displayFlags,
         }),
         (ins, outs, context, node) => {
-          const outVariables = new Map<NodeOutputTarget, Record<string, string>>([
-            [null, {
-              "val": "{0:color}.val",
-              "illuminant": "{0:color}.illuminant",
-              "xyz": "{0:color}.xyz",
-            }],
-
+          const outVariables = new Map<OutSocket, Record<string, string>>([
             [outs[0], {
               "val": "{0:color}.val",
               "illuminant": "{0:color}.illuminant",
@@ -135,10 +129,17 @@ export namespace spaces {
             }],
           ]);
 
+          const nodeOutputVariables = {
+            "val": "{0:color}.val",
+            "illuminant": "{0:color}.illuminant",
+            "xyz": "{0:color}.xyz",
+          };
+
           if (node.colorInputSocket.effectiveType() === St.ColorCoords) {
             return new WebglVariables(
               `Color {0:color} = Color(${node.webglFromXyz}, {1:newIlluminant}, adaptXyz({xyz}, {originalIlluminant}, {1:newIlluminant}));`,
               outVariables,
+              nodeOutputVariables,
               `uniform vec2 {1:newIlluminant};`,
               {
                 "{1:newIlluminant}": {
@@ -155,6 +156,7 @@ export namespace spaces {
               `vec3 {2:val} = {val};
 Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
               outVariables,
+              nodeOutputVariables,
               `uniform vec2 {1:newIlluminant};`,
               {
                 "{1:newIlluminant}": {
@@ -222,18 +224,17 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
             `vec3 {2:val} = vec3({x}, {y}, {z});
 Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
             new Map([
-              [null, {
-                "val": "{0:color}.val",
-                "illuminant": "{0:color}.illuminant",
-                "xyz": "{0:color}.xyz",
-              }],
-
               [outs[0], {
                 "val": "{0:color}.val",
                 "illuminant": "{0:color}.illuminant",
                 "xyz": "{0:color}.xyz",
               }],
             ]),
+            {
+              "val": "{0:color}.val",
+              "illuminant": "{0:color}.illuminant",
+              "xyz": "{0:color}.xyz",
+            },
             `uniform vec2 {1:newIlluminant};`,
             {
               "{1:newIlluminant}": {
@@ -437,7 +438,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
       return "xyyToXyz({2:val})";
     }
     get webglFromXyz() {
-      return "xyzToXyy(adaptXyz({xyz}, {originalIlluminant}, {1:newIlluminant})";
+      return "xyzToXyy(adaptXyz({xyz}, {originalIlluminant}, {1:newIlluminant}))";
     }
   }
 

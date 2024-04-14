@@ -77,9 +77,9 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "hslToRgb({hue}, {saturation}, {lightness})"}],
             [outs[0], {"val": "hslToRgb({hue}, {saturation}, {lightness})"}],
           ]),
+          {"val": "hslToRgb({hue}, {saturation}, {lightness})"},
         ),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
           switch (inSocket) {
@@ -109,11 +109,11 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "vec3 {0:hsl} = rgbToHsl({rgb});",
           new Map([
-            [null, {"val": "{0:hsl}"}],
             [outs[0], {"val": "{0:hsl}.x"}],
             [outs[1], {"val": "{0:hsl}.y"}],
             [outs[2], {"val": "{0:hsl}.z"}],
           ]),
+          {"val": "{0:hsl}"},
         ).nameVariableSlots(1),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
           switch (inSocket) {
@@ -153,9 +153,9 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "hsvToRgb({hue}, {saturation}, {value})"}],
             [outs[0], {"val": "hsvToRgb({hue}, {saturation}, {value})"}],
           ]),
+          {"val": "hsvToRgb({hue}, {saturation}, {value})"},
         ),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
           switch (inSocket) {
@@ -185,11 +185,11 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "vec3 {0:hsv} = rgbToHsv({rgb});",
           new Map([
-            [null, {"val": "{0:hsv}"}],
             [outs[0], {"val": "{0:hsv}.x"}],
             [outs[1], {"val": "{0:hsv}.y"}],
             [outs[2], {"val": "{0:hsv}.z"}],
           ]),
+          {"val": "{0:hsv}"},
         ).nameVariableSlots(1),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HsvNode) => {
           switch (inSocket) {
@@ -229,9 +229,9 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "hsvToRgb({hue}, {whiteness}, {blackness})"}],
             [outs[0], {"val": "hsvToRgb({hue}, {whiteness}, {blackness})"}],
           ]),
+          {"val": "hsvToRgb({hue}, {whiteness}, {blackness})"},
         ),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
           switch (inSocket) {
@@ -261,11 +261,11 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "vec3 {0:hwb} = rgbToHsl({rgb});",
           new Map([
-            [null, {"val": "{0:hwb}"}],
             [outs[0], {"val": "{0:hwb}.x"}],
             [outs[1], {"val": "{0:hwb}.y"}],
             [outs[2], {"val": "{0:hwb}.z"}],
           ]),
+          {"val": "{0:hwb}"},
         ).nameVariableSlots(1),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HwbNode) => {
           switch (inSocket) {
@@ -305,9 +305,9 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "cmyToRgb({cyan}, {magenta}, {yellow})"}],
             [outs[0], {"val": "cmyToRgb({cyan}, {magenta}, {yellow})"}],
           ]),
+          {"val": "cmyToRgb({cyan}, {magenta}, {yellow})"},
         ),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
           switch (inSocket) {
@@ -337,11 +337,11 @@ export namespace models {
         (ins, outs, context) => new WebglVariables(
           "vec3 {0:cmy} = rgbToCmy({rgb});",
           new Map([
-            [null, {"val": "{0:cmy}"}],
             [outs[0], {"val": "{0:cmy}.x"}],
             [outs[1], {"val": "{0:cmy}.y"}],
             [outs[2], {"val": "{0:cmy}.z"}],
           ]),
+          {"val": "{0:cmy}"},
         ).nameVariableSlots(1),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: CmyNode) => {
           switch (inSocket) {
@@ -421,6 +421,7 @@ export namespace models {
             "xyz": "{0:unif}",
           }],
         ]),
+        {},
         "uniform vec3 {0:unif};",
         {
           "{0:unif}": {
@@ -614,6 +615,7 @@ export namespace models {
             "xyz": "{0:xyz}",
           }],
         ]),
+        {},
         `uniform vec3 {0:xyz};
 uniform vec3 {1:xyy};`,
         {

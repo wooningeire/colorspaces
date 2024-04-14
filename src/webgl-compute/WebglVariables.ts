@@ -61,9 +61,8 @@ void main() {
 
   fragColor = vec4(outRgb, alpha);
 }`,
-    new Map([
-      [null, {}],
-    ]),
+    new Map(),
+    {},
   );
 
   static readonly auxiliaryFunctionTemplate = new WebglVariables(`{outputType} {functionName}(vec2 coords) {
@@ -71,9 +70,8 @@ void main() {
   
   return {output};
 }`,
-    new Map([
-      [null, {}],
-    ]),
+    new Map(),
+    {},
   );
 
   constructor(
@@ -84,7 +82,8 @@ void main() {
      * result from the template's code.
      */
     readonly template: string,
-    private readonly outVariables: Map<NodeOutputTarget, Record<string, string>>,
+    private readonly outVariables: Map<OutSocket, Record<string, string>>,
+    private readonly nodeOutVariables: Record<string, string>={},
     /** A secondary template that declares variables in the prelude, inserted after the main body has been produced. */
     private readonly preludeTemplate: string="",
     /** The names of uniforms (which can be variable slots), mapped to functions to initialize those uniforms. */
@@ -105,6 +104,7 @@ void main() {
    */
   fillSlots(mappings: Record<string, string>, sourcePreludeTemplate: string="", sourceUniforms: WebglVariables["uniforms"]={}) {
     const outVariables: WebglVariables["outVariables"] = new Map(this.outVariables.entries());
+    const nodeOutVariables: WebglVariables["nodeOutVariables"] = {...this.nodeOutVariables};
     const uniforms: WebglVariables["uniforms"] = {...sourceUniforms, ...this.uniforms};
     const functionDependencies: WebglVariables["functionDependencies"] = {...this.functionDependencies};
 
@@ -130,6 +130,10 @@ ${this.preludeTemplate}`
       }
       outVariables.set(socket, newOuts);
     }
+    for (const [name, value] of Object.entries(nodeOutVariables)) {
+      delete nodeOutVariables[name];
+      nodeOutVariables[name] = value.replaceAll(slotRegex, mapMatchToValue);
+    }
     for (const [name, value] of Object.entries(uniforms)) {
       delete uniforms[name];
       uniforms[name.replaceAll(slotRegex, mapMatchToValue)] = value;
@@ -139,13 +143,13 @@ ${this.preludeTemplate}`
       functionDependencies[name.replaceAll(slotRegex, mapMatchToValue)] = value;
     }
 
-    return new WebglVariables(template, outVariables, preludeTemplate, uniforms, functionDependencies);
+    return new WebglVariables(template, outVariables, nodeOutVariables, preludeTemplate, uniforms, functionDependencies);
   }
 
   /**
    * 
    * @param source 
-   * @param socket 
+   * @param target 
    * @param sourceVariableSlotMapping 
    * @param keepSourcePrelude 
    * @param includeUnmappedVariables Whether slot names that are not included in `sourceVariableSlotMapping` will use
@@ -154,15 +158,15 @@ ${this.preludeTemplate}`
    */
   fillWith(
     source: WebglVariables,
-    socket: NodeOutputTarget,
+    target: NodeOutputTarget,
     sourceVariableSlotMapping: Record<string, string>,
     keepSourcePrelude: boolean=false,
     includeUnmappedVariables: boolean=false,
   ) {
     const outVariables: Record<string, string> = {};
-    const remainderOutVariables = includeUnmappedVariables ? {...source.outVariables.get(socket)!} : {};
+    const remainderOutVariables = includeUnmappedVariables ? {...source.outVariablesFor(target)} : {};
     for (const [oldName, newName] of Object.entries(sourceVariableSlotMapping)) {
-      outVariables[newName] = source.outVariables.get(socket)![oldName];
+      outVariables[newName] = source.outVariablesFor(target)[oldName];
       delete remainderOutVariables[oldName];
     }
 
@@ -175,6 +179,7 @@ ${this.preludeTemplate}`
     return new WebglVariables(
       this.template,
       this.outVariables,
+      this.nodeOutVariables,
       `${prelude}\n\n${this.preludeTemplate}`,
       this.uniforms,
       this.functionDependencies,
@@ -185,6 +190,7 @@ ${this.preludeTemplate}`
     return new WebglVariables(
       this.template,
       this.outVariables,
+      this.nodeOutVariables,
       this.preludeTemplate,
       {...uniforms, ...this.uniforms},
       this.functionDependencies,
@@ -383,18 +389,18 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
     switch (socket.type) {
       case SocketType.ColorCoords:
         outputType = "Color";
-        outputVariables = new WebglVariables("Color({val}, {illuminant}, {xyz})", new Map([]));
+        outputVariables = new WebglVariables("Color({val}, {illuminant}, {xyz})", new Map(), {});
         break;
 
       case SocketType.Vector:
       case SocketType.VectorOrColor:
         outputType = "vec3";
-        outputVariables = new WebglVariables("{val}", new Map([]));
+        outputVariables = new WebglVariables("{val}", new Map(), {});
         break;
 
       case SocketType.Float:
         outputType = "float";
-        outputVariables = new WebglVariables("{val}", new Map([]));
+        outputVariables = new WebglVariables("{val}", new Map(), {});
         break;
       
       default:
@@ -408,7 +414,7 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
         "main": relevantSegments.map(segment => segment.template)
             .join("\n\n"),
         // no prelude/uniforms because uniforms will be shared with the primary function
-        "output": outputVariables.fillWith(segments[nodeIndex], socket, {}, false, true).template,
+        "output": outputVariables.fillWith(segments[nodeIndex], NodeOutputTarget.OutSocket(socket), {}, false, true).template,
         "outputType": outputType,
         "functionName": functionName,
       },
@@ -428,16 +434,23 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
       {
         "main": segments.map(segment => segment.template)
             .join("\n\n"),
-        "val": segments.at(-1)!.outVariables.get(null)!["val"],
-        "xyz": segments.at(-1)!.outVariables.get(null)!["xyz"],
-        "illuminant": segments.at(-1)!.outVariables.get(null)!["illuminant"],
+        "val": segments.at(-1)!.nodeOutVariables["val"],
+        "xyz": segments.at(-1)!.nodeOutVariables["xyz"],
+        "illuminant": segments.at(-1)!.nodeOutVariables["illuminant"],
         "afterPrelude": segments.map(segment => segment.preludeTemplate)
             .join("\n"),
-        "alpha": segments.at(-1)!.outVariables.get(null)!["alpha"] ?? "1.",
+        "alpha": segments.at(-1)!.nodeOutVariables["alpha"] ?? "1.",
       },
       "",
       uniforms,
     );
+  }
+
+  private outVariablesFor(target: NodeOutputTarget) {
+    return target.socket.mapElse(
+      socket => this.outVariables.get(socket)!,
+      () => this.nodeOutVariables,
+    )
   }
 }
 

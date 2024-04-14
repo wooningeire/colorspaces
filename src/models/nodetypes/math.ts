@@ -4,7 +4,7 @@ import { labSliderProps } from "./spaces";
 import { Node, Socket, SocketType as St, NodeEvalContext, OutputDisplayType, OutSocket, InSocket, WebglSocketValue } from "../Node";
 import * as cm from "../colormanagement";
 
-import { Color, Vec3, lerp, mod } from "@/util";
+import { Vec3, lerp, mod } from "@/util";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
 import { randFloat, randFloatVec3Seed } from "../colormanagement/random";
@@ -57,9 +57,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "mix({val0}, {val1}, {fac})"}],
             [outs[0], {"val": "mix({val0}, {val1}, {fac})"}],
           ]),
+          {"val": "mix({val0}, {val1}, {fac})"},
         ),
         this.threeValueMapping,
       )],
@@ -85,9 +85,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "{val0} + {val1} * {fac}"}],
             [outs[0], {"val": "{val0} + {val1} * {fac}"}],
           ]),
+          {"val": "{val0} + {val1} * {fac}"},
         ),
         this.threeValueMapping,
       )],
@@ -113,9 +113,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "{val0} * ((1. - {fac}) + {val1} * {fac})"}],
             [outs[0], {"val": "{val0} * ((1. - {fac}) + {val1} * {fac})"}],
           ]),
+          {"val": "{val0} * ((1. - {fac}) + {val1} * {fac})"}
         ),
         this.threeValueMapping,
       )],
@@ -141,9 +141,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "{val0} - {val1} * {fac}"}],
             [outs[0], {"val": "{val0} - {val1} * {fac}"}],
           ]),
+          {"val": "{val0} - {val1} * {fac}"},
         ),
         this.threeValueMapping,
       )],
@@ -169,9 +169,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "{val0} / ((1. - {fac}) + {val1} * {fac})"}],
             [outs[0], {"val": "{val0} / ((1. - {fac}) + {val1} * {fac})"}],
           ]),
+          {"val": "{val0} / ((1. - {fac}) + {val1} * {fac})"},
         ),
         this.threeValueMapping,
       )],
@@ -197,9 +197,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, { "val": "1. - (1. - {val0}) * (1. - {val1} * {fac})"}],
             [outs[0], { "val": "1. - (1. - {val0}) * (1. - {val1} * {fac})"}],
           ]),
+          { "val": "1. - (1. - {val0}) * (1. - {val1} * {fac})"},
         ),
         this.threeValueMapping,
       )],
@@ -224,9 +224,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "length({val0} - {val1})"}],
             [outs[0], {"val": "length({val0} - {val1})"}],
           ]),
+          {"val": "length({val0} - {val1})"},
         ),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
           switch (inSocket) {
@@ -257,9 +257,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "{vector} * {scalar}"}],
             [outs[0], {"val": "{vector} * {scalar}"}],
           ]),
+          {"val": "{vector} * {scalar}"},
         ),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
           switch (inSocket) {
@@ -323,9 +323,9 @@ export namespace math {
         (ins, outs, context) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "{val0} + {val1}"}],
             [outs[0], {"val": "{val0} + {val1}"}],
           ]),
+          {"val": "{val0} + {val1}"},
         ),
         this.twoValueMapping,
       )],
@@ -347,9 +347,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "{val0} * {val1}"}],
             [outs[0], {"val": "{val0} * {val1}"}],
           ]),
+          {"val": "{val0} * {val1}"},
         ),
         this.twoValueMapping,
       )],
@@ -371,9 +371,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "{val0} - {val1}"}],
             [outs[0], {"val": "{val0} - {val1}"}],
           ]),
+          {"val": "{val0} - {val1}"},
         ),
         this.twoValueMapping,
       )],
@@ -395,9 +395,9 @@ export namespace math {
         (ins, outs, context) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "{val0} / {val1}"}],
             [outs[0], {"val": "{val0} / {val1}"}],
           ]),
+          {"val": "{val0} / {val1}"},
         ),
         this.twoValueMapping,
       )],
@@ -419,9 +419,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "pow({val0}, {val1})"}],
             [outs[0], {"val": "pow({val0}, {val1})"}],
           ]),
+          {"val": "pow({val0}, {val1})"},
         ),
         this.twoValueMapping,
       )],
@@ -443,9 +443,9 @@ export namespace math {
         (ins, outs, context) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "1. - (1. - {val0}) * (1. - {val1})"}],
             [outs[0], {"val": "1. - (1. - {val0}) * (1. - {val1})"}],
           ]),
+          {"val": "1. - (1. - {val0}) * (1. - {val1})"},
         ),
         this.twoValueMapping,
       )],
@@ -468,9 +468,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "mix({min}, {max}, {fac})"}],
             [outs[0], {"val": "mix({min}, {max}, {fac})"}],
           ]),
+          {"val": "mix({min}, {max}, {fac})"},
         ),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
           switch (inSocket) {
@@ -504,9 +504,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "mix({targetMin}, {targetMax}, {source} / ({sourceMax} - {sourceMin}))"}],
             [outs[0], {"val": "mix({targetMin}, {targetMax}, {source} / ({sourceMax} - {sourceMin}))"}],
           ]),
+          {"val": "mix({targetMin}, {targetMax}, {source} / ({sourceMax} - {sourceMin}))"},
         ),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
           switch (inSocket) {
@@ -538,9 +538,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "floor({val})"}],
             [outs[0], {"val": "floor({val})"}],
           ]),
+          {"val": "floor({val})"},
         ),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
           switch (inSocket) {
@@ -570,9 +570,9 @@ export namespace math {
         (ins, outs, context, node) => new WebglVariables(
           "",
           new Map([
-            [null, {"val": "floor({val} * {nSegments}) / ({nSegments} - 1.)"}],
             [outs[0], {"val": "floor({val} * {nSegments}) / ({nSegments} - 1.)"}],
           ]),
+          {"val": "floor({val} * {nSegments}) / ({nSegments} - 1.)"},
         ),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: VectorArithmeticNode) => {
           switch (inSocket) {
@@ -684,7 +684,7 @@ export namespace math {
     static readonly id = "colorDifference";
     static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
 
-    static readonly overloadGroup = new OverloadGroup(new Map<ColorDifferenceMode, Overload<Color | number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<ColorDifferenceMode, Overload<Vec3 | number>>([
       [ColorDifferenceMode.DeltaE1976, new Overload(
         "ΔE* 1976",
         node => [
@@ -719,9 +719,9 @@ export namespace math {
           return new WebglVariables(
             `float {0:difference} = deltaE1976({xyz0}, ${illuminant0}, {xyz1}, ${illuminant1});`,
             new Map([
-              [null, {"val": "{0:difference}"}],
               [outs[0], {"val": "{0:difference}"}],
             ]),
+            {"val": "{0:difference}"},
           ).nameVariableSlots(1);
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: ColorDifferenceNode) => {
@@ -790,9 +790,9 @@ export namespace math {
           return new WebglVariables(
             `float {0:difference} = deltaE2000({xyz0}, ${illuminant0}, {xyz1}, ${illuminant1});`,
             new Map([
-              [null, {"val": "{0:difference}"}],
               [outs[0], {"val": "{0:difference}"}],
             ]),
+            {"val": "{0:difference}"},
           ).nameVariableSlots(1);
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: ColorDifferenceNode) => {
@@ -879,9 +879,9 @@ export namespace math {
       return new WebglVariables(
         `float {0:contrastRatio} = contrastRatio({xyz0}, ${illuminant0}, {xyz1}, ${illuminant1});`,
         new Map([
-          [null, {"val": "{0:contrastRatio}"}],
           [this.outs[0], {"val": "{0:contrastRatio}"}],
         ]),
+        {"val": "{0:contrastRatio}"},
       ).nameVariableSlots(1);
     }
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
@@ -957,9 +957,9 @@ export namespace math {
           `float {0:float} = random({seed}) * ({max} - {min} + ({useFloor} ? 1. : 0.)) + {min};
   float {1:val} = {useFloor} ? floor({0:float}) : {0:float};`,
           new Map([
-            [null, {"val": "{1:val}"}],
             [outs[0], {"val": "{1:val}"}],
           ]),
+          {"val": "{1:val}"},
         ).nameVariableSlots(2),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: RandomFloatNode) => {
           switch (inSocket) {
@@ -1003,9 +1003,9 @@ export namespace math {
           `float {0:float} = random({seed}) * ({max} - {min} + ({useFloor} ? 1. : 0.)) + {min};
   float {1:val} = {useFloor} ? floor({0:float}) : {0:float};`,
           new Map([
-            [null, {"val": "{1:val}"}],
             [outs[0], {"val": "{1:val}"}],
           ]),
+          {"val": "{1:val}"},
         ).nameVariableSlots(2),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: RandomFloatNode) => {
           switch (inSocket) {

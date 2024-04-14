@@ -49,7 +49,7 @@ const onValueChange = (requiresShaderReload=false) => {
 const isOutputNode = props.socket.node instanceof externals.DeviceTransformNode;
 
 
-const isFloat = props.socket.type === St.Float;
+const isFloat = props.socket.isType(St.Float);
 const isVector = [St.Vector, St.VectorOrColor].includes(props.socket.type) && !isOutputNode;
 
 const isEntry = isFloat || isVector;

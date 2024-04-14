@@ -32,7 +32,7 @@ const emit = defineEmits<{
   (event: "potential-socket-position-change"): void,
   (event: "tree-update"): void,
   (event: "node-selected", targetNode: Node, clearSelectionFirst: boolean): void,
-  (event: "field-value-change", requiresShaderReload: boolean, source: NodeUpdateSource): void,
+  (event: "field-value-change", requiresShaderReload: boolean, updateSource: NodeUpdateSource): void,
 }>();
 
 const nodeVue = getCurrentInstance()!.proxy as InstanceType<typeof NodeVue>;

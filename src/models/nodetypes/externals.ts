@@ -1,8 +1,6 @@
 import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, OutSocket} from "../Node";
 import * as cm from "../colormanagement";
 
-import {Color, Vec2, Vec3, pipe} from "@/util";
-
 export namespace externals {
   export class DeviceTransformNode extends Node {
     static readonly TYPE = Symbol(this.name);

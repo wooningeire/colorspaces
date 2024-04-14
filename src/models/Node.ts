@@ -139,7 +139,7 @@ export abstract class Node {
       const mapping = this.webglGetMapping(inSocket);
       if (mapping === null) continue;
 
-      variables = variables.fillWith(inSocket.webglVariables(), null, mapping, true);
+      variables = variables.fillWith(inSocket.webglVariables(), NodeOutputTarget.NodeDisplay(this), mapping, true);
     }
     return variables;
   }
@@ -149,7 +149,7 @@ export abstract class Node {
   webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket): WebglVariables {
     const mapping = this.webglGetMapping(inSocket);
     if (mapping === null) throw new Error("the implementation of webglGetMapping for this node does not support this socket");
-    return target.fillWith(source, inSocket?.link.src, mapping);
+    return target.fillWith(source, NodeOutputTarget.OutSocket(inSocket.link.src), mapping);
   }
 
   /** A `WebglVariables` object that provides a template to fill, output variables, and uniforms */
@@ -351,8 +351,6 @@ export interface AxisNode extends Node {
 export interface NodeEvalContext {
   readonly coords?: Vec2;
 }
-
-export type NodeOutputTarget = OutSocket | null;
 
 
 export enum SocketType {
@@ -589,6 +587,11 @@ export abstract class Socket<St extends SocketType=any> {
     }
   }
 
+  isType<T extends SocketType>(type: T): this is Socket<T> {
+    //@ts-ignore
+    return this.type === type;
+  }
+
   removeAllLinks(tree: Tree) {
     for (const link of this.links) {
       tree.unlink(link);
@@ -639,13 +642,12 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
       case St.ColorCoords:
         return new WebglVariables(
           "",
-          new Map([
-            [null, {
-              "val": "{0:unif}",
-              "illuminant": "illuminant2_D65",
-              "xyz": "vec3(0., 0., 0.)",
-            }]
-          ]),
+          new Map(),
+          {
+            "val": "{0:unif}",
+            "illuminant": "illuminant2_D65",
+            "xyz": "vec3(0., 0., 0.)",
+          },
           `uniform vec3 {0:unif};`,
           {
             "{0:unif}": {
@@ -665,11 +667,10 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
       case St.Vector:
         return new WebglVariables(
           "",
-          new Map([
-            [null, {
-              "val": `{0:unif}`,
-            }],
-          ]),
+          new Map(),
+          {
+            "val": `{0:unif}`,
+          },
           `uniform vec3 {0:unif};`,
           {
             "{0:unif}": {
@@ -685,11 +686,10 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
       case St.Float:
         return new WebglVariables(
           "",
-          new Map([
-            [null, {
-              "val": "{0:unif}",
-            }],
-          ]),
+          new Map(),
+          {
+            "val": "{0:unif}",
+          },
           `uniform float {0:unif};`,
           {
             "{0:unif}": {
@@ -705,11 +705,10 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
         case St.Bool:
           return new WebglVariables(
             "",
-            new Map([
-              [null, {
-                "val": "{0:unif}",
-              }],
-            ]),
+            new Map(),
+            {
+              "val": "{0:unif}",
+            },
             `uniform bool {0:unif};`,
             {
               "{0:unif}": {
@@ -819,13 +818,13 @@ export class Field {
 
 enum NodeUpdateSourceType {
   TreeChange,
-  NodeSpecialInput,
   InSocket,
+  NodeSpecialInput,
 }
 type NodeUpdateSourceValue<T extends NodeUpdateSourceType> =
     T extends NodeUpdateSourceType.TreeChange ? null :
-    T extends NodeUpdateSourceType.NodeSpecialInput ? Node :
     T extends NodeUpdateSourceType.InSocket ? InSocket :
+    T extends NodeUpdateSourceType.NodeSpecialInput ? Node :
     never;
 
 export class NodeUpdateSource<T extends NodeUpdateSourceType=any> {
@@ -848,28 +847,67 @@ export class NodeUpdateSource<T extends NodeUpdateSourceType=any> {
     return this.type === NodeUpdateSourceType.TreeChange;
   }
 
-  hasNode(): this is NodeUpdateSource<NodeUpdateSourceType.NodeSpecialInput> {
-    return this.type === NodeUpdateSourceType.NodeSpecialInput;
-  }
-
-  hasSocket(): this is NodeUpdateSource<NodeUpdateSourceType.InSocket> {
+  isSocket(): this is NodeUpdateSource<NodeUpdateSourceType.InSocket> {
     return this.type === NodeUpdateSourceType.InSocket;
   }
 
-  get node(): Option<Node> {
-    return this.hasNode() ? Option.Some(this.source) : Option.None;
+  isNode(): this is NodeUpdateSource<NodeUpdateSourceType.NodeSpecialInput> {
+    return this.type === NodeUpdateSourceType.NodeSpecialInput;
   }
 
   get socket(): Option<InSocket> {
-    return this.hasSocket() ? Option.Some(this.source) : Option.None;
+    return this.isSocket() ? Option.Some(this.source) : Option.None;
+  }
+
+  get node(): Option<Node> {
+    return this.isNode() ? Option.Some(this.source) : Option.None;
   }
 
   srcNode(): Option<Node> {
-    if (this.hasNode()) {
+    if (this.isNode()) {
       return Option.Some(this.source);
-    } else if (this.hasSocket()) {
+    } else if (this.isSocket()) {
       return Option.Some(this.source.node);
     }
     return Option.None;
+  }
+}
+enum NodeOutputTargetType {
+  OutSocket,
+  NodeDisplay,
+}
+type NodeOutputTargetValue<T extends NodeOutputTargetType> =
+    T extends NodeOutputTargetType.OutSocket ? OutSocket :
+    T extends NodeOutputTargetType.NodeDisplay ? Node :
+    never;
+
+export class NodeOutputTarget<T extends NodeOutputTargetType=any> {
+  private constructor(
+    private type: T,
+    public target: NodeOutputTargetValue<T>,
+  ) {}
+
+  static OutSocket(socket: OutSocket) {
+    return new NodeOutputTarget(NodeOutputTargetType.OutSocket, socket);
+  }
+
+  static NodeDisplay(node: Node) {
+    return new NodeOutputTarget(NodeOutputTargetType.NodeDisplay, node);
+  }
+
+  isSocket(): this is NodeOutputTarget<NodeOutputTargetType.OutSocket> {
+    return this.type === NodeOutputTargetType.OutSocket;
+  }
+
+  isNode(): this is NodeOutputTarget<NodeOutputTargetType.NodeDisplay> {
+    return this.type === NodeOutputTargetType.NodeDisplay;
+  }
+
+  get socket(): Option<OutSocket> {
+    return this.isSocket() ? Option.Some(this.target) : Option.None;
+  }
+
+  get node(): Option<Node> {
+    return this.isNode() ? Option.Some(this.target) : Option.None;
   }
 }

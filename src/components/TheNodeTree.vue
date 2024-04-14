@@ -85,16 +85,16 @@ const rerenderLinks = () => {
 onMounted(rerenderLinks);
 
 
-const reloadOutputs = (requiresShaderReload: boolean, source: NodeUpdateSource) => {
-  source.srcNode().useElse(
+const reloadOutputs = (requiresShaderReload: boolean, updateSource: NodeUpdateSource) => {
+  updateSource.srcNode().useElse(
     srcNode => {
       for (const node of srcNode.dependentNodes()) {
-        nodeVues.get(node)?.reload(requiresShaderReload, source);
+        nodeVues.get(node)?.reload(requiresShaderReload, updateSource);
       }
     },
     () => {
       for (const nodeVue of nodeVues.values()) {
-        nodeVue.reload(requiresShaderReload, source);
+        nodeVue.reload(requiresShaderReload, updateSource);
       }
     },
   )
@@ -202,7 +202,7 @@ defineExpose({
 
         @potential-socket-position-change="rerenderLinks"
         
-        @field-value-change="(requiresShaderReload, source) => reloadOutputs(requiresShaderReload, source)"
+        @field-value-change="(requiresShaderReload, updateSource) => reloadOutputs(requiresShaderReload, updateSource)"
         @tree-update="reloadOutputs(true, NodeUpdateSource.TreeReload)"
       />
     </div>

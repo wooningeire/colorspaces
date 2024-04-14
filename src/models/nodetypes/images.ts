@@ -160,6 +160,7 @@ export namespace images {
             "val": "{3:height}",
           }],
         ]),
+        {},
         `uniform sampler2D {1:texture};
 uniform float {2:width};
 uniform float {3:height};`,
@@ -246,6 +247,7 @@ uniform float {3:height};`,
                 "xyz": "{0:color}.xyz",
               }],
             ]),
+            {},
             "",
             {},
             {
@@ -262,6 +264,7 @@ uniform float {3:height};`,
                   "val": "{0:val}",
                 }],
               ]),
+              {},
               "",
               {},
               {
@@ -277,6 +280,7 @@ uniform float {3:height};`,
                   "val": "{0:val}",
                 }],
               ]),
+              {},
               "",
               {},
               {

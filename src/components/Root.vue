@@ -6,7 +6,7 @@ import TheNodeTray from "./TheNodeTray.vue";
 import TheToolbar from "./TheToolbar.vue";
 import TheSettingsPanel from "./TheSettingsPanel.vue";
 
-import {Node} from "@/models/Node";
+import {Node, NodeUpdateSource} from "@/models/Node";
 
 import {Vec2} from "@/util";
 
@@ -41,13 +41,17 @@ const addNode = <T extends Node>(
 </script>
 
 <template>
-  <TheNodeTree ref="treeVue"
-      @add-node="addNode" />
-  <div class="node-tree-centerer"
-      ref="nodeTreeCentererEl"></div>
+  <TheNodeTree
+    ref="treeVue"
+    @add-node="addNode"
+  />
+  <div
+    class="node-tree-centerer"
+    ref="nodeTreeCentererEl"
+  ></div>
   <TheNodeTray @add-node="addNode" />
 
-  <TheToolbar @delete-node="$nextTick(() => treeVue?.reloadOutputs(true, null))" />
+  <TheToolbar @delete-node="$nextTick(() => treeVue?.reloadOutputs(true, NodeUpdateSource.TreeReload))" />
 
   <div class="tooltips">
     <ObjectTooltip :text="tooltipController.text"

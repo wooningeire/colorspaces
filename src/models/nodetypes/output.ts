@@ -3,8 +3,6 @@ import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDispl
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 
-import {Color, Vec2, Vec3, pipe} from "@/util";
-
 
 export enum ChromaticityPlotMode {
   Color = "from color",
@@ -139,14 +137,13 @@ export namespace output {
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
       return new WebglVariables(
         ``,
-        new Map([
-          [null, {
-            "xyz": "{xyz}",
-            "illuminant": "{illuminant}",
-            "val": "{val}",
-            "alpha": "{alpha}",
-          }],
-        ])
+        new Map(),
+        {
+          "xyz": "{xyz}",
+          "illuminant": "{illuminant}",
+          "val": "{val}",
+          "alpha": "{alpha}",
+        },
       ).nameVariableSlots(1);
     }
 
