@@ -7,7 +7,7 @@ import TheNodeTreeLinks from "./TheNodeTreeLinks.vue";
 import NodeLink from "./node/NodeLink.vue";
 
 import {Vec2, Listen, clearTextSelection} from "@/util";
-import {Socket, Node, Link, InSocket} from "@/models/Node";
+import {Socket, Node, Link, InSocket, NodeUpdateSource} from "@/models/Node";
 
 import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";
 
@@ -22,6 +22,8 @@ provide("tree", tree);
 
 const socketVues = new WeakMap<Socket, InstanceType<typeof NodeSocket>>();
 provide("socketVues", socketVues);
+const nodeVues = new Map<Node, InstanceType<typeof NodeVue>>();
+provide("nodeVues", nodeVues);
 const linkVues = new WeakMap<Link, InstanceType<typeof NodeLink>>();
 provide("linkVues", linkVues);
 
@@ -83,11 +85,19 @@ const rerenderLinks = () => {
 onMounted(rerenderLinks);
 
 
-const nodeVues = ref<InstanceType<typeof NodeVue>[]>([]);
-const reloadOutputs = (requiresShaderReload: boolean, editedSocket: Node | InSocket | null) => {
-  for (const nodeVue of nodeVues.value) {
-    nodeVue.reloadOutput(requiresShaderReload, editedSocket);
-  }
+const reloadOutputs = (requiresShaderReload: boolean, source: NodeUpdateSource) => {
+  source.srcNode().useElse(
+    srcNode => {
+      for (const node of srcNode.dependentNodes()) {
+        nodeVues.get(node)?.reload(requiresShaderReload, source);
+      }
+    },
+    () => {
+      for (const nodeVue of nodeVues.values()) {
+        nodeVue.reload(requiresShaderReload, source);
+      }
+    },
+  )
 };
 
 
@@ -182,19 +192,19 @@ defineExpose({
         '--scale': `${viewportScale}`,
       } as any">
     <div class="nodes">
-      <NodeVue v-for="node of tree.nodes"
-          :key="node.id"
-          :node="(node as Node)"
-          @drag-socket="onDragSocket"
-          @link-to-socket="onLinkToSocket"
-          @node-selected="selectNode"
+      <NodeVue
+        v-for="node of tree.nodes"
+        :key="node.id"
+        :node="(node as Node)"
+        @drag-socket="onDragSocket"
+        @link-to-socket="onLinkToSocket"
+        @node-selected="selectNode"
 
-          @potential-socket-position-change="rerenderLinks"
-          
-          @field-value-change="(requiresShaderReload, editedSocket) => reloadOutputs(requiresShaderReload, editedSocket)"
-          @tree-update="reloadOutputs(true, null)"
-          
-          ref="nodeVues" />
+        @potential-socket-position-change="rerenderLinks"
+        
+        @field-value-change="(requiresShaderReload, source) => reloadOutputs(requiresShaderReload, source)"
+        @tree-update="reloadOutputs(true, NodeUpdateSource.TreeReload)"
+      />
     </div>
 
     <svg class="links"

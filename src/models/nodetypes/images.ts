@@ -181,6 +181,7 @@ uniform float {3:height};`,
               return true;
             },
             dependencySockets: [this.imageSocket],
+            dependencyNodes: [],
           },
 
           "{2:width}": {
@@ -188,6 +189,7 @@ uniform float {3:height};`,
               gl.uniform1i(unif, this.imageSocket.fieldValue?.width ?? 0);
             },
             dependencySockets: [this.imageSocket],
+            dependencyNodes: [],
           },
 
           "{3:height}": {
@@ -195,6 +197,7 @@ uniform float {3:height};`,
               gl.uniform1i(unif, this.imageSocket.fieldValue?.height ?? 0);
             },
             dependencySockets: [this.imageSocket],
+            dependencyNodes: [],
           },
         },
       ).nameVariableSlots(4);

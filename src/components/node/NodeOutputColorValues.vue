@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import {PropType, computed} from 'vue';
+import {PropType, computed, getCurrentInstance, ref, toValue} from 'vue';
 
 import {settings} from "../store";
 
 import {Col} from "@/models/colormanagement";
-import {SocketFlag} from '@/models/Node';
+import {InSocket, SocketFlag} from '@/models/Node';
 import NodeOutputTable from './NodeOutputTable.vue';
 
 const props = defineProps<{
@@ -25,10 +25,11 @@ const newValues = computed(() => props.values.map((value, i) => {
       : props.values[i]
   ).toFixed(nDecimals);
 }));
-
 </script>
 
 <template>
-  <NodeOutputTable :labels="labels"
-      :values="newValues" />
+  <NodeOutputTable
+    :labels="labels"
+    :values="newValues"
+  />
 </template>

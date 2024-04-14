@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch, nextTick} from "vue";
 
-import {Node, Socket, NodeEvalContext, InSocket} from "@/models/Node";
+import {Node, Socket, NodeEvalContext, InSocket, NodeUpdateSource} from "@/models/Node";
 import {tree, settings} from "../store";
 import { UniformReloadData, WebglVariables } from "@/webgl-compute/WebglVariables";
 
@@ -127,7 +127,7 @@ void main() {
   rerender(true);
 };
 let setNonSocketUniforms: () => void;
-const rerender = async (setUniforms: boolean, editedSocket: Node | InSocket | null=null) => {
+const rerender = async (setUniforms: boolean, updateSource: NodeUpdateSource=NodeUpdateSource.TreeReload) => {
   await nextTick();
 
   if (!canvas.value) return;
@@ -150,10 +150,10 @@ const rerender = async (setUniforms: boolean, editedSocket: Node | InSocket | nu
   gl.viewport(0, 0, width, height);
 
   if (setUniforms) {
-    if (editedSocket === null) {
+    if (updateSource.isTreeReload()) {
       uniformReloadData = lastTranspilation.initializeUniforms(gl, glProgramLast);
     } else {
-      lastTranspilation.refreshUniforms(gl, glProgramLast, editedSocket, uniformReloadData);
+      lastTranspilation.refreshUniforms(gl, glProgramLast, updateSource, uniformReloadData);
     }
   }
 
@@ -217,11 +217,11 @@ watch(settings, () => {
 
 
 defineExpose({
-  reload: (requiresShaderReload: boolean, editedSocket: Node | InSocket | null) => {
+  reload: (requiresShaderReload: boolean, updateSource: NodeUpdateSource) => {
     if (requiresShaderReload) {
       reinitializeShader();
     } else {
-      rerender(true, editedSocket);
+      rerender(true, updateSource);
     }
   },
 });

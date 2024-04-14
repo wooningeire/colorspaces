@@ -1,4 +1,4 @@
-import { InSocket, Node, NodeOutputTarget, OutSocket, SocketType } from "@/models/Node";
+import { InSocket, Node, NodeOutputTarget, NodeUpdateSource, OutSocket, SocketType } from "@/models/Node";
 import { webglDeclarations } from "@/models/colormanagement";
 
 export class WebglModule {
@@ -90,8 +90,9 @@ void main() {
     /** The names of uniforms (which can be variable slots), mapped to functions to initialize those uniforms. */
     private readonly uniforms: Record<string, {
       set(gl: WebGL2RenderingContext, unif: WebGLUniformLocation | null, nUsedTextures: number): boolean | void,
-      /** Can be a `Node` if the dependency is a `NodeSpecialInput` */
-      dependencySockets: (Node | InSocket)[],
+      dependencySockets: InSocket[],
+      /** For when a dependency is a `NodeSpecialInput` */
+      dependencyNodes: Node[],
     }>={},
     /** The names of functions (which can be variable slots), mapped to sockets whose outputs will be converted to the
      * bodies of those functions rather than included in the template.
@@ -237,10 +238,11 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
 
   initializeUniforms(gl: WebGL2RenderingContext, program: WebGLProgram): UniformReloadData {
     const textureIdMap = new Map<WebGLUniformLocation, number>();
-    const socketDependents = new Map<Node | InSocket, string[]>();
+    const socketDependents = new Map<InSocket, string[]>();
+    const nodeDependents = new Map<Node, string[]>();
 
     let nUsedTextures = 0;
-    for (const [unifName, {set: initializeUnif, dependencySockets}] of Object.entries(this.uniforms)) {
+    for (const [unifName, {set: initializeUnif, dependencySockets, dependencyNodes}] of Object.entries(this.uniforms)) {
       const unif = gl.getUniformLocation(program, unifName)!;
 
       const usedTexture = initializeUnif(gl, unif, nUsedTextures);
@@ -257,21 +259,40 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
           socketDependents.set(socket, [unifName]);
         }
       }
+
+      for (const node of dependencyNodes) {
+        if (nodeDependents.has(node)) {
+          nodeDependents.get(node)!.push(unifName);
+        } else {
+          nodeDependents.set(node, [unifName]);
+        }
+      }
     }
 
     return {
       textureIdMap,
       socketDependents,
+      nodeDependents,
     };
   }
 
   refreshUniforms(
     gl: WebGL2RenderingContext,
     program: WebGLProgram,
-    socket: Node | InSocket,
+    updateSource: NodeUpdateSource,
     uniformData: UniformReloadData,
   ) {
-    const dependents = uniformData.socketDependents.get(socket) ?? [];
+
+    const dependents = 
+        updateSource.socket.mapElse(
+          socket => uniformData.socketDependents.get(socket) ?? [],
+          () => updateSource.node.mapElse(
+            node => uniformData.nodeDependents.get(node) ?? [],
+            () => {
+              throw new TypeError();
+            },
+          ),
+        );
 
     for (const unifName of dependents) {
       const {set: initializeUnif} = this.uniforms[unifName];
@@ -426,5 +447,6 @@ class WebglTranspilation {
 
 export interface UniformReloadData {
   textureIdMap: Map<WebGLUniformLocation, number>,
-  socketDependents: Map<Node | InSocket, string[]>,
+  socketDependents: Map<InSocket, string[]>,
+  nodeDependents: Map<Node, string[]>,
 }

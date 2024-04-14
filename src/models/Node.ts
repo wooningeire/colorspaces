@@ -1,6 +1,6 @@
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
 import { NO_DESC, StringKey } from "../strings";
-import { Vec2, Vec3 } from "../util";
+import { Vec2, Vec3, Option } from "../util";
 import { OverloadGroup, OverloadManager } from "./Overload";
 import { Col } from "./colormanagement";
 
@@ -325,6 +325,23 @@ export abstract class Node {
       }
     }
   }
+
+  dependentNodes(): Generator<Node, void, void> {
+    return this.dfsDependentNodes(new Set());
+  }
+  private * dfsDependentNodes(visitedNodes: Set<Node>): Generator<Node, void, void> {
+    yield this;
+
+    for (const out of this.outs) {
+      for (const link of out.links) {
+        if (link.causesCircularDependency) continue;
+
+        if (visitedNodes.has(link.dstNode)) continue;
+        visitedNodes.add(link.dstNode);
+        yield* link.dstNode.dfsDependentNodes(visitedNodes);
+      }
+    }
+  }
 }
 
 export interface AxisNode extends Node {
@@ -640,6 +657,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
                 }
               },
               dependencySockets: [this],
+              dependencyNodes: [],
             },
           },
         ).nameVariableSlots(1);
@@ -659,6 +677,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
                 gl.uniform3fv(unif, this.fieldValue as number[]);
               },
               dependencySockets: [this],
+              dependencyNodes: [],
             },
           },
         ).nameVariableSlots(1);
@@ -678,6 +697,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
                 gl.uniform1f(unif, this.fieldValue as number);
               },
               dependencySockets: [this],
+              dependencyNodes: [],
             },
           },
         ).nameVariableSlots(1);
@@ -697,6 +717,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
                   gl.uniform1i(unif, this.fieldValue as number);
                 },
                 dependencySockets: [this],
+                dependencyNodes: [],
               },
             },
           ).nameVariableSlots(1);
@@ -794,4 +815,61 @@ export class Field {
   constructor(
     public label: string="",
   ) {}
+}
+
+enum NodeUpdateSourceType {
+  TreeChange,
+  NodeSpecialInput,
+  InSocket,
+}
+type NodeUpdateSourceValue<T extends NodeUpdateSourceType> =
+    T extends NodeUpdateSourceType.TreeChange ? null :
+    T extends NodeUpdateSourceType.NodeSpecialInput ? Node :
+    T extends NodeUpdateSourceType.InSocket ? InSocket :
+    never;
+
+export class NodeUpdateSource<T extends NodeUpdateSourceType=any> {
+  private constructor(
+    private type: T,
+    public source: NodeUpdateSourceValue<T>,
+  ) {}
+
+  static readonly TreeReload = new NodeUpdateSource(NodeUpdateSourceType.TreeChange, null);
+
+  static NodeSpecialInput(node: Node) {
+    return new NodeUpdateSource(NodeUpdateSourceType.NodeSpecialInput, node);
+  }
+
+  static InSocket(socket: InSocket) {
+    return new NodeUpdateSource(NodeUpdateSourceType.InSocket, socket);
+  }
+
+  isTreeReload(): this is NodeUpdateSource<NodeUpdateSourceType.TreeChange> {
+    return this.type === NodeUpdateSourceType.TreeChange;
+  }
+
+  hasNode(): this is NodeUpdateSource<NodeUpdateSourceType.NodeSpecialInput> {
+    return this.type === NodeUpdateSourceType.NodeSpecialInput;
+  }
+
+  hasSocket(): this is NodeUpdateSource<NodeUpdateSourceType.InSocket> {
+    return this.type === NodeUpdateSourceType.InSocket;
+  }
+
+  get node(): Option<Node> {
+    return this.hasNode() ? Option.Some(this.source) : Option.None;
+  }
+
+  get socket(): Option<InSocket> {
+    return this.hasSocket() ? Option.Some(this.source) : Option.None;
+  }
+
+  srcNode(): Option<Node> {
+    if (this.hasNode()) {
+      return Option.Some(this.source);
+    } else if (this.hasSocket()) {
+      return Option.Some(this.source.node);
+    }
+    return Option.None;
+  }
 }

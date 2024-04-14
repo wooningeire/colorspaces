@@ -48,7 +48,7 @@ const copyAll = async () => {
 };
 
 defineExpose({
-  reload: (requiresShaderReload: boolean, editedSocket: Node | InSocket | null) => {
+  reload: () => {
     proxy.$forceUpdate();
   },
 });

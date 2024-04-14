@@ -1,12 +1,5 @@
 <script lang="ts" setup>
-import {PropType, computed} from 'vue';
-
 import ReadonlyInput from "./ReadonlyInput.vue";
-
-import {settings} from "../store";
-
-import {Col} from "@/models/colormanagement";
-import {SocketFlag} from '@/models/Node';
 
 const props = withDefaults(defineProps<{
   values: string[],
@@ -15,7 +8,6 @@ const props = withDefaults(defineProps<{
 }>(), {
   useInputs: false,
 });
-
 </script>
 
 <template>
@@ -24,9 +16,11 @@ const props = withDefaults(defineProps<{
       <div class="header">
         {{index < labels.length ? labels[index] : ''}}
       </div>
-      <div class="data"
-          v-if="!useInputs">
-                {{values[index]}}
+      <div
+        class="data"
+        v-if="!useInputs"
+      >
+        {{values[index]}}
       </div>
 
       <ReadonlyInput

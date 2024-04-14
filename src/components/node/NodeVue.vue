@@ -1,14 +1,15 @@
 <script lang="ts" setup>
-import {inject, computed, Ref, watch, ref, getCurrentInstance, onMounted} from "vue";
+import {inject, computed, Ref, watch, ref, getCurrentInstance, onMounted, onUnmounted} from "vue";
 import * as marked from "marked";
 
+import NodeVue from "./NodeVue.vue";
 import NodeSocket from "./NodeSocket.vue";
 import NodeField from "./NodeField.vue";
 import NodeSpecialInput from "./NodeSpecialInput.vue";
 import NodeOutput from "./NodeOutput.vue";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 
-import {InSocket, Node} from "@/models/Node";
+import {InSocket, Node, NodeUpdateSource} from "@/models/Node";
 import {models, spaces, math, images, externals, organization, output} from "@/models/nodetypes";
 
 import {Listen, clearTextSelection, Vec2} from "@/util";
@@ -31,8 +32,10 @@ const emit = defineEmits<{
   (event: "potential-socket-position-change"): void,
   (event: "tree-update"): void,
   (event: "node-selected", targetNode: Node, clearSelectionFirst: boolean): void,
-  (event: "field-value-change", requiresShaderReload: boolean, editedSocket: Node | InSocket): void,
+  (event: "field-value-change", requiresShaderReload: boolean, source: NodeUpdateSource): void,
 }>();
+
+const nodeVue = getCurrentInstance()!.proxy as InstanceType<typeof NodeVue>;
 
 
 onMounted(() => {
@@ -118,14 +121,28 @@ watch(props.node, () => { // update please :(
 });
 
 
+const nodeVues = inject("nodeVues") as Map<Node, InstanceType<typeof NodeVue>>;
+onMounted(() => {
+  nodeVues.set(props.node, nodeVue);
+});
+onUnmounted(() => {
+  nodeVues.delete(props.node);
+});
+
+
 const outputVue = ref<InstanceType<typeof NodeOutput>>();
 const inputVue = ref<InstanceType<typeof NodeSpecialInput>>();
+const reload = (requiresShaderReload: boolean, updateSource:  NodeUpdateSource) => {
+  outputVue.value?.reload(requiresShaderReload, updateSource);
+  inputVue.value?.reload(requiresShaderReload, updateSource);
+};
 defineExpose({
-  reloadOutput: (requiresShaderReload: boolean, editedSocket:  Node |InSocket | null) => {
-    outputVue.value?.reload(requiresShaderReload, editedSocket);
-    inputVue.value?.reload(requiresShaderReload, editedSocket);
-  },
+  reload,
 });
+
+Object.assign(nodeVue, {
+  reload,
+})
 
 </script>
 
@@ -152,10 +169,12 @@ defineExpose({
         v-html="getString(node.label)">
     </div>
 
-    <NodeSpecialInput :node="node"
-        ref="inputVue"
-        
-        @value-change="(requiresShaderReload, editedSocket) => $emit('field-value-change', requiresShaderReload, editedSocket)" />
+    <NodeSpecialInput
+      :node="node"
+      ref="inputVue"
+      
+      @value-change="(requiresShaderReload, editedSocket) => $emit('field-value-change', requiresShaderReload, NodeUpdateSource.NodeSpecialInput(editedSocket))"
+    />
 
     <!-- <div class="node-content">
       <div class="fields">
@@ -168,23 +187,27 @@ defineExpose({
     <div class="in-sockets">
       <template v-for="(socket, index) of node.ins"
           :key="socket.id">
-        <NodeOutputColorDisplay v-if="node instanceof externals.DeviceTransformNode
-                && socket.hasLinks"
-            :node="node"
-            :socket="socket" />
+        <NodeOutputColorDisplay
+          v-if="node instanceof externals.DeviceTransformNode
+              && socket.hasLinks"
+          :node="node"
+          :socket="socket"
+        />
 
-        <NodeSocket :socket="socket"
-            @drag-socket="(socketVue: InstanceType<typeof NodeSocket>) => $emit('drag-socket', socketVue)"
-            @link-to-socket="(socketVue: InstanceType<typeof NodeSocket>) => (
-              $emit('link-to-socket', socketVue),
-              $emit('tree-update'),
-              $emit('potential-socket-position-change'))"
+        <NodeSocket
+          :socket="socket"
+          @drag-socket="(socketVue: InstanceType<typeof NodeSocket>) => $emit('drag-socket', socketVue)"
+          @link-to-socket="(socketVue: InstanceType<typeof NodeSocket>) => (
+            $emit('link-to-socket', socketVue),
+            $emit('tree-update'),
+            $emit('potential-socket-position-change'))"
 
-            @unlink="
-              $emit('tree-update'),
-              $emit('potential-socket-position-change')"
-          
-            @field-value-change="(requiresShaderReload: boolean, editedSocket: InSocket) => $emit('field-value-change', requiresShaderReload, editedSocket)" />
+          @unlink="
+            $emit('tree-update'),
+            $emit('potential-socket-position-change')"
+        
+          @field-value-change="(requiresShaderReload: boolean, editedSocket: InSocket) => $emit('field-value-change', requiresShaderReload, NodeUpdateSource.InSocket(editedSocket))"
+        />
       </template>
     </div>
 

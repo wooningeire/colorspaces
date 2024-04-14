@@ -79,15 +79,35 @@ export class Option<T> {
   getElse(alt: T): T {
     return this === Option.None ? alt : this.value;
   }
-
-  map(consumer: (value: T) => void) {
-    if (this === Option.None) return;
-    consumer(this.value);
-  }
   
-  unwrap() {
+  get() {
     if (this === Option.None) throw new TypeError("attempted to unwrap Option.None");
     return this.value;
+  }
+
+  map<U>(fn: (value: T) => U): Option<U> {
+    if (this === Option.None) return Option.None;
+    return Option.Some(fn(this.value));
+  }
+
+  mapElse<U>(fn: (value: T) => U, otherwise: () => U): U {
+    if (this === Option.None) {
+      return otherwise();
+    }
+    return fn(this.value);
+  }
+
+  use(fn: (value: T) => void) {
+    if (this === Option.None) return;
+    fn(this.value);
+  }
+
+  useElse(fn: (value: T) => void, otherwise: () => void) {
+    if (this === Option.None) {
+      otherwise();
+    } else {
+      fn(this.value);
+    }
   }
 }
 

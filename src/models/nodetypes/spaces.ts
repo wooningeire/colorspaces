@@ -146,6 +146,7 @@ export namespace spaces {
                     gl.uniform2fv(unif, node.getIlluminant(context));
                   },
                   dependencySockets: [node.illuminantSocket!],
+                  dependencyNodes: [],
                 },
               },
             ).nameVariableSlots(2);
@@ -161,6 +162,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
                     gl.uniform2fv(unif, node.getIlluminant(context));
                   },
                   dependencySockets: [node.illuminantSocket!],
+                  dependencyNodes: [],
                 },
               },
             ).nameVariableSlots(3);
@@ -239,6 +241,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
                   gl.uniform2fv(unif, node.getIlluminant(context));
                 },
                 dependencySockets: [node.illuminantSocket!],
+                dependencyNodes: [],
               },
             },
           ).nameVariableSlots(3);

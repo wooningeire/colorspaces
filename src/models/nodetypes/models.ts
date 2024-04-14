@@ -2,7 +2,7 @@ import { Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisp
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 
-import { Color, Vec3, pipe } from "@/util";
+import { Vec3, pipe } from "@/util";
 import { illuminantE } from "../colormanagement/spaces/col-xyz-xyy-illuminants";
 import { getIlluminant, whitePointSocketOptions } from "./spaces";
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
@@ -27,7 +27,7 @@ export namespace models {
       );
     }
 
-    displayValues(context: NodeEvalContext): Color {
+    displayValues(context: NodeEvalContext): Vec3 {
       return this.ins.map(socket => socket.inValue(context)) as Vec3;
     }
 
@@ -134,7 +134,7 @@ export namespace models {
     static readonly id = "hsv";
     static readonly outputDisplayType = OutputDisplayType.Vec;
 
-    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Vec3 | number>>([
       [RgbMode.ToRgb, new Overload(
         "To RGB",
         node => [
@@ -210,7 +210,7 @@ export namespace models {
     static readonly id = "hwb";
     static readonly outputDisplayType = OutputDisplayType.Vec;
 
-    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Vec3 | number>>([
       [RgbMode.ToRgb, new Overload(
         "To RGB",
         node => [
@@ -286,7 +286,7 @@ export namespace models {
     static readonly id = "cmy";
     static readonly outputDisplayType = OutputDisplayType.Vec;
 
-    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Color | number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Vec3 | number>>([
       [RgbMode.ToRgb, new Overload(
         "To RGB",
         node => [
@@ -428,7 +428,8 @@ export namespace models {
               // we can bake this value from the CPU for now. If sockets are introduced, this must be GPU-computed
               gl.uniform3fv(unif, this.computeXyz());
             },
-            dependencySockets: [this],
+            dependencySockets: [],
+            dependencyNodes: [this],
           },
         },
       ).nameVariableSlots(1);
@@ -622,6 +623,7 @@ uniform vec3 {1:xyy};`,
               gl.uniform3fv(unif, cm.Xyz.from(illuminant));
             },
             dependencySockets: [this.whitePointSocket],
+            dependencyNodes: [],
           },
           "{1:xyy}": {
             set: (gl, unif) => {
@@ -629,6 +631,7 @@ uniform vec3 {1:xyy};`,
               gl.uniform3fv(unif, cm.Xyy.from(illuminant));
             },
             dependencySockets: [this.whitePointSocket],
+            dependencyNodes: [],
           },
         }
       ).nameVariableSlots(2);

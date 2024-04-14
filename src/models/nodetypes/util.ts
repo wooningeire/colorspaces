@@ -71,4 +71,4 @@ export const volatileOutSocketOptions = (ins: InSocket[], outs: OutSocket[]) => 
     ins[0].changeType(newType, tree);
     outs[0].changeType(newType, tree);
   },
-})
+});
