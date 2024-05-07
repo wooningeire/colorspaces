@@ -90,6 +90,8 @@ export class WebglTemplate<InputSlots extends SlotMap=any, OutputSlots extends S
         currentSegments = [segment];
         currentSegmentsRaw = [segmentRaw];
         currentSlots = [];
+        
+        templates.push(item);
       } else if (typeof item === "string") {
         currentSegments[currentSegments.length - 1] += `${item}${segment}`;
         currentSegmentsRaw[currentSegmentsRaw.length - 1] += `${item}${segmentRaw}`;
