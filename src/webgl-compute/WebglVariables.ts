@@ -69,6 +69,42 @@ export class WebglTemplate<InputSlots extends SlotMap=any, OutputSlots extends S
     return new WebglTemplate(segments, inputSlots, outputSlots, slots);
   }
 
+  static concat(segments: TemplateStringsArray, ...items: (WebglSlot | WebglTemplate | string)[]): WebglTemplate {
+    const templates: WebglTemplate[] = [];
+
+    let currentSegments: string[] = [segments[0]];
+    let currentSegmentsRaw: string[] = [segments.raw[0]];
+    let currentSlots: WebglSlot[] = [];
+
+    const pushCode = () => {
+      templates.push(WebglTemplate.code(Object.assign(currentSegments, {raw: currentSegmentsRaw}), ...currentSlots));
+    };
+
+    for (let i = 1; i < segments.length; i++) {
+      const segment = segments[i];
+      const segmentRaw = segments.raw[i];
+      const item = items[i - 1];
+
+      if (item instanceof WebglTemplate) {
+        pushCode();
+        currentSegments = [segment];
+        currentSegmentsRaw = [segmentRaw];
+        currentSlots = [];
+      } else if (typeof item === "string") {
+        currentSegments[currentSegments.length - 1] += `${item}${segment}`;
+        currentSegmentsRaw[currentSegmentsRaw.length - 1] += `${item}${segmentRaw}`;
+      } else {
+        currentSlots.push(item);
+        currentSegments.push(segment);
+        currentSegmentsRaw.push(segmentRaw);
+      }
+    }
+
+    pushCode();
+
+    return WebglTemplate.merge(...templates);
+  }
+
   /** Creates a template consisting of just a slot. */
   static slot(slot: WebglSlot): WebglTemplate {
     return WebglTemplate.code`${slot}`;
@@ -87,14 +123,16 @@ export class WebglTemplate<InputSlots extends SlotMap=any, OutputSlots extends S
     const newSegmentsRaw: string[] = [];
     for (const [templateIndex, template] of templates.entries()) {
       for (const [segmentIndex, segment] of template.segments.entries()) {
+        const segmentRaw = template.segments.raw[segmentIndex];
+        
         if (segmentIndex === 0 && templateIndex > 0) {
-          newSegments[newSegments.length - 1] = `${newSegments.at(-1)}${segment}`;
-          newSegmentsRaw[newSegmentsRaw.length - 1] = `${newSegmentsRaw.at(-1)}${template.segments.raw[segmentIndex]}`;
+          newSegments[newSegments.length - 1] += segment;
+          newSegmentsRaw[newSegmentsRaw.length - 1] += segmentRaw;
           continue;
         }
 
         newSegments.push(segment);
-        newSegmentsRaw.push(template.segments.raw[segmentIndex]);
+        newSegmentsRaw.push(segmentRaw);
       }
     }
 
@@ -175,8 +213,7 @@ export class WebglVariables {
     (
       {prelude, main, val, illuminant, xyz, alpha},
       {},
-    ) => WebglTemplate.merge(
-      WebglTemplate.string(`#version 300 es
+    ) => WebglTemplate.concat`#version 300 es
 
 #define PI 3.1415926538
 #define REV 6.2831853071
@@ -200,8 +237,7 @@ out vec4 fragColor;
 uniform float outOfGamutAlpha;
 
 ${webglDeclarations}
-`),
-      WebglTemplate.code`
+
 ${prelude}
 
 AlphaColor sampleColor(vec2 coords) {
@@ -228,7 +264,6 @@ void main() {
 
   fragColor = vec4(outRgb, alpha);
 }`,
-    ),
   );
 
   static readonly auxiliaryFunctionTemplate = WebglTemplate.withSlots(
@@ -526,6 +561,10 @@ void main() {
 
   static template(strings: TemplateStringsArray, ...slots: WebglSlot[]) {
     return this.fromTemplate(WebglTemplate.code(strings, ...slots));
+  }
+
+  static templateConcat(strings: TemplateStringsArray, ...items: (WebglSlot | WebglTemplate | string)[]) {
+    return this.fromTemplate(WebglTemplate.concat(strings, ...items));
   }
 
   static fromTemplate(template: WebglTemplate) {

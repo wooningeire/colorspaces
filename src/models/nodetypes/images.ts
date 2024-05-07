@@ -65,7 +65,9 @@ export namespace images {
     webglGetBaseVariables(context: NodeEvalContext={}): WebglVariables {
       const val = WebglSlot.out("val");
 
-      return WebglVariables.template`float ${val} = mix(${GradientNode.inputSlots.from}, ${GradientNode.inputSlots.to}, coords.${this.whichDimension === 0 ? "x" : "y * -1."});`({
+      const {from, to} = GradientNode.inputSlots;
+
+      return WebglVariables.templateConcat`float ${val} = mix(${from}, ${to}, coords.${this.whichDimension === 0 ? "x" : "y * -1."});`({
         socketOutVariables: new Map([
           [this.outs[0], {
             "val": WebglTemplate.code`${val}`,
@@ -75,9 +77,11 @@ export namespace images {
     }
 
     webglGetMapping<T extends St>(inSocket: InSocket<any>) {
+      const {from, to} = GradientNode.inputSlots;
+
       switch (inSocket) {
-        case this.boundsSockets[0]: return <WebglSocketValue<T>>{"val": GradientNode.inputSlots.from};
-        case this.boundsSockets[1]: return <WebglSocketValue<T>>{"val": GradientNode.inputSlots.to};
+        case this.boundsSockets[0]: return <WebglSocketValue<T>>{"val": from};
+        case this.boundsSockets[1]: return <WebglSocketValue<T>>{"val": to};
         default: return null;
       }
     }
