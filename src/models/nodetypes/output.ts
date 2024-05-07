@@ -144,7 +144,7 @@ export namespace output {
           "val": "{val}",
           "alpha": "{alpha}",
         },
-      ).nameVariableSlots(1);
+      ).nameOutputSlots(1);
     }
 
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {

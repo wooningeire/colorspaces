@@ -2,7 +2,7 @@ import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, Out
 
 import {Vec2, Vec3, lerp} from "@/util";
 import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
-import { WebglVariables } from "@/webgl-compute/WebglVariables";
+import { WebglTemplate, WebglSlot, WebglVariables } from "@/webgl-compute/WebglVariables";
 
 export namespace images {
   export class GradientNode extends Node implements AxisNode {
@@ -57,21 +57,27 @@ export namespace images {
       return Number(this.axisSocket.inValue());
     }
 
+    private static inputSlots = {
+      from: WebglSlot.in("from"),
+      to: WebglSlot.in("to"),
+    };
+
     webglGetBaseVariables(context: NodeEvalContext={}): WebglVariables {
-      return new WebglVariables(
-        `float {0:val} = mix({from}, {to}, coords.${this.whichDimension === 0 ? "x" : "y * -1."});`,
-        new Map([
+      const val = WebglSlot.out("val");
+
+      return WebglVariables.template`float ${val} = mix(${GradientNode.inputSlots.from}, ${GradientNode.inputSlots.to}, coords.${this.whichDimension === 0 ? "x" : "y * -1."});`({
+        socketOutVariables: new Map([
           [this.outs[0], {
-            "val": "{0:val}",
+            "val": WebglTemplate.code`${val}`,
           }]
         ]),
-      ).nameVariableSlots(3);
+      });
     }
 
     webglGetMapping<T extends St>(inSocket: InSocket<any>) {
       switch (inSocket) {
-        case this.boundsSockets[0]: return <WebglSocketValue<T>>{"val": "from"};
-        case this.boundsSockets[1]: return <WebglSocketValue<T>>{"val": "to"};
+        case this.boundsSockets[0]: return <WebglSocketValue<T>>{"val": GradientNode.inputSlots.from};
+        case this.boundsSockets[1]: return <WebglSocketValue<T>>{"val": GradientNode.inputSlots.to};
         default: return null;
       }
     }
@@ -201,7 +207,7 @@ uniform float {3:height};`,
             dependencyNodes: [],
           },
         },
-      ).nameVariableSlots(4);
+      ).nameOutputSlots(4);
     }
 
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
@@ -236,57 +242,59 @@ uniform float {3:height};`,
     }
     
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
+      const x = WebglSlot.in();
+      const y = WebglSlot.in();
+
+      const evaluateInput = WebglSlot.out();
+
       switch (this.outs[0].type) {
-        case St.ColorCoords:
-          return new WebglVariables(
-            `Color {0:color} = {1:inputFunction}(vec2({x}, {y}));`,
-            new Map([
+        case St.ColorCoords: {
+          const color = WebglSlot.out();
+
+          return WebglVariables.template`Color ${color} = ${evaluateInput}(vec2(${x}, ${y}))`({
+            socketOutVariables: new Map([
               [this.outs[0], {
-                "val": "{0:color}.val",
-                "illuminant": "{0:color}.illuminant",
-                "xyz": "{0:color}.xyz",
+                "val": WebglTemplate.code`${color}.val`,
+                "illuminant": WebglTemplate.code`${color}.illuminant`,
+                "xyz": WebglTemplate.code`${color}.xyz`,
               }],
             ]),
-            {},
-            "",
-            {},
-            {
-              "{1:inputFunction}": this.ins[0].link.src,
-            },
-          ).nameVariableSlots(2);
+            functionInputDependencies: new Map([
+              [WebglTemplate.code`${evaluateInput}`, this.ins[0].link.src],
+            ]),
+          });
+        }
 
-          case St.Vector:
-          case St.VectorOrColor:
-            return new WebglVariables(
-              `vec3 {0:val} = {1:inputFunction}(vec2({x}, {y}));`,
-              new Map([
-                [this.outs[0], {
-                  "val": "{0:val}",
-                }],
-              ]),
-              {},
-              "",
-              {},
-              {
-                "{1:inputFunction}": this.ins[0].link.src,
-              },
-            ).nameVariableSlots(2);
+        case St.Vector:
+        case St.VectorOrColor: {
+          const val = WebglSlot.out();
 
-          case St.Float:
-            return new WebglVariables(
-              `float {0:val} = {1:inputFunction}(vec2({x}, {y}));`,
-              new Map([
-                [this.outs[0], {
-                  "val": "{0:val}",
-                }],
-              ]),
-              {},
-              "",
-              {},
-              {
-                "{1:inputFunction}": this.ins[0].link.src,
-              },
-            ).nameVariableSlots(2);
+          return WebglVariables.template`vec3 ${val} = ${evaluateInput}(vec2(${x}, ${y}))`({
+            socketOutVariables: new Map([
+              [this.outs[0], {
+                "val": WebglTemplate.code`${val}`,
+              }],
+            ]),
+            functionInputDependencies: new Map([
+              [WebglTemplate.code`${evaluateInput}`, this.ins[0].link.src],
+            ]),
+          });
+        }
+
+        case St.Float: {
+          const val = WebglSlot.out();
+
+          return WebglVariables.template`float ${val} = ${evaluateInput}(vec2(${x}, ${y}))`({
+            socketOutVariables: new Map([
+              [this.outs[0], {
+                "val": WebglTemplate.code`${val}`,
+              }],
+            ]),
+            functionInputDependencies: new Map([
+              [WebglTemplate.code`${evaluateInput}`, this.ins[0].link.src],
+            ]),
+          });
+        }
 
         default:
           throw new Error("type not acceptable");

@@ -150,7 +150,7 @@ export namespace spaces {
                   dependencyNodes: [],
                 },
               },
-            ).nameVariableSlots(2);
+            ).nameOutputSlots(2);
           } else {
             return new WebglVariables(
               `vec3 {2:val} = {val};
@@ -167,7 +167,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
                   dependencyNodes: [],
                 },
               },
-            ).nameVariableSlots(3);
+            ).nameOutputSlots(3);
           }
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: TripletSpaceNode) => {
@@ -245,7 +245,7 @@ Color {0:color} = Color({2:val}, {1:newIlluminant}, ${node.webglToXyz});`,
                 dependencyNodes: [],
               },
             },
-          ).nameVariableSlots(3);
+          ).nameOutputSlots(3);
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: TripletSpaceNode) => {
           switch (inSocket) {

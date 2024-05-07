@@ -129,3 +129,8 @@ export const assert = (value: boolean) => {
     throw new Error("assertion failed");
   }
 };
+
+
+/** An `N`-element tuple of `T`.
+ */
+export type Multiple<N extends number, T> = T[] & {length: N};

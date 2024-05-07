@@ -722,7 +722,7 @@ export namespace math {
               [outs[0], {"val": "{0:difference}"}],
             ]),
             {"val": "{0:difference}"},
-          ).nameVariableSlots(1);
+          ).nameOutputSlots(1);
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: ColorDifferenceNode) => {
           switch (inSocket) {
@@ -793,7 +793,7 @@ export namespace math {
               [outs[0], {"val": "{0:difference}"}],
             ]),
             {"val": "{0:difference}"},
-          ).nameVariableSlots(1);
+          ).nameOutputSlots(1);
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: ColorDifferenceNode) => {
           switch (inSocket) {
@@ -882,7 +882,7 @@ export namespace math {
           [this.outs[0], {"val": "{0:contrastRatio}"}],
         ]),
         {"val": "{0:contrastRatio}"},
-      ).nameVariableSlots(1);
+      ).nameOutputSlots(1);
     }
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
       switch (inSocket) {
@@ -960,7 +960,7 @@ export namespace math {
             [outs[0], {"val": "{1:val}"}],
           ]),
           {"val": "{1:val}"},
-        ).nameVariableSlots(2),
+        ).nameOutputSlots(2),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: RandomFloatNode) => {
           switch (inSocket) {
             case ins[0]: return <WebglSocketValue<T>>{"val": "useFloor"};
@@ -1006,7 +1006,7 @@ export namespace math {
             [outs[0], {"val": "{1:val}"}],
           ]),
           {"val": "{1:val}"},
-        ).nameVariableSlots(2),
+        ).nameOutputSlots(2),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: RandomFloatNode) => {
           switch (inSocket) {
             case ins[0]: return <WebglSocketValue<T>>{"val": "useFloor"};

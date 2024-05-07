@@ -8,9 +8,153 @@ export class WebglModule {
   ) {}
 }
 
+export class WebglSlot {
+  private constructor(
+    /** Determines whether this slot will receive a value to be filled later (input) or will provide a value that
+     * results from a template's code (output).
+     */
+    readonly isInput: boolean,
+    readonly identifier: string,
+  ) {}
+
+  static in(identifier: string) {
+    return new WebglSlot(true, identifier);
+  }
+
+  static out(identifier: string) {
+    return new WebglSlot(false, identifier);
+  }
+    
+  static ins<S extends readonly string[]>(...identifiers: S): SlotMap<S> {
+    return identifiers.reduce((acc, identifier) => Object.assign(acc, {[identifier]: new WebglSlot(true, identifier)}), {}) as SlotMap<S>;
+  }
+    
+  static outs<S extends readonly string[]>(...identifiers: S): SlotMap<S>  {
+    return identifiers.reduce((acc, identifier) => Object.assign(acc, {[identifier]: new WebglSlot(false, identifier)}), {}) as SlotMap<S>;
+  }
+
+  get isOutput(): boolean {
+    return !this.isInput;
+  }
+
+  randomVariableName() {
+    return `v_${this.identifier.replaceAll(/ |[^a-zA-Z0-9]/g, "_")}_${crypto.randomUUID().replaceAll("-", "_")}`;
+  }
+}
+
+type SlotMap<S extends readonly string[]=any> = Record<S[number], WebglSlot>;
+
+/** Stores chunks of WebGL code, between them macro-like variable slots to insert values into, as well as the values
+ * which the slots have been assigned. */
+export class WebglTemplate<InputSlots extends SlotMap=any, OutputSlots extends SlotMap=any> {
+  private constructor(
+    private readonly segments: TemplateStringsArray,
+    private readonly inputSlots: InputSlots,
+    private readonly outputSlots: OutputSlots,
+    private readonly slots: WebglSlot[],
+    private readonly substitutions: Map<WebglSlot, string>=new Map(),
+  ) {}
+
+  static code(segments: TemplateStringsArray, ...slots: WebglSlot[]): WebglTemplate {
+    const inputSlots: SlotMap = {};
+    const outputSlots: SlotMap = {};
+    for (const slot of slots) {
+      if (slot.isInput) {
+        inputSlots[slot.identifier] = slot;
+      } else {
+        outputSlots[slot.identifier] = slot;
+      }
+    }
+
+    return new WebglTemplate(segments, inputSlots, outputSlots, slots);
+  }
+
+  static string(string: string) {
+    return new WebglTemplate(Object.assign([string], {raw: [string]}), {}, {}, []);
+  }
+
+  static empty() {
+    return WebglTemplate.string("");
+  }
+
+  static merge(...templates: WebglTemplate[]) {
+    return new WebglTemplate(
+      Object.assign(
+        templates.flatMap(template => template.segments),
+        {raw: templates.flatMap(template => template.segments.raw)},
+      ),
+      templates.reduce((acc, template) => Object.assign(acc, template.inputSlots), {}),
+      templates.reduce((acc, template) => Object.assign(acc, template.outputSlots), {}),
+      templates.flatMap(template => template.slots),
+      new Map(templates.flatMap(template => [...template.substitutions])),
+    );
+  }
+
+  substitute(substitutions: Map<WebglSlot, string>) {
+    return new WebglTemplate(
+      this.segments,
+      this.inputSlots,
+      this.outputSlots,
+      this.slots,
+      new Map([...this.substitutions, ...substitutions]),
+    );
+  }
+
+  substituteInputs(getSubstitutions: (inputSlots: InputSlots) => Map<WebglSlot, string>) {
+    return this.substitute(getSubstitutions(this.inputSlots));
+  }
+
+  toString() {
+    if (!this.allInputsAreFilled()) {
+      throw new Error("Not all input slots are filled");
+    }
+
+    return `${this.segments[0]}${this.slots.map((slot, i) => `${this.substitutions.get(slot)}${this.segments[i + 1]}`).join("")}`;
+  }
+
+  private allInputsAreFilled() {
+    return Object.values(this.inputSlots).every(slot => this.substitutions.has(slot));
+  }
+
+  static withSlots<IIdentifiers extends readonly string[], OIdentifiers extends readonly string[]>(
+    inputSlotIdentifiers: IIdentifiers,
+    outputSlotIdentifiers: OIdentifiers,
+    build: (
+      inputSlots: SlotMap<IIdentifiers>,
+      outputSlots: SlotMap<OIdentifiers>,
+    ) => WebglTemplate<SlotMap<IIdentifiers>, SlotMap<OIdentifiers>>,
+  ): WebglTemplate<SlotMap<IIdentifiers>, SlotMap<OIdentifiers>> {
+    return build(WebglSlot.ins(...inputSlotIdentifiers), WebglSlot.outs(...outputSlotIdentifiers));
+  }
+
+  mapOutputSlots<T>(fn: (...args: Parameters<Parameters<Array<WebglSlot>["map"]>[0]>) => T) {
+    return Object.values(this.outputSlots).map(fn);
+  }
+
+  getInputSlot(identifier: string): WebglSlot {
+    return this.inputSlots[identifier];
+  }
+}
+
+
+type UniformInitializer = {
+  set(gl: WebGL2RenderingContext, unif: WebGLUniformLocation | null, nUsedTextures: number): boolean | void,
+  dependencySockets: InSocket[],
+  /** For when a dependency is a `NodeSpecialInput` */
+  dependencyNodes: Node[],
+};
+
+
 /** Stores a chunk of GLSL code with macro-like slots for variables. */
 export class WebglVariables {
-  static readonly fragmentShaderTemplate = new WebglVariables(`#version 300 es
+  static readonly fragmentShaderTemplate = WebglTemplate.withSlots(
+    ["prelude", "main", "val", "illuminant", "xyz", "alpha"],
+    [],
+    (
+      {prelude, main, val, illuminant, xyz, alpha},
+      {},
+    ) => WebglTemplate.merge(
+      WebglTemplate.string(`#version 300 es
 
 #define PI 3.1415926538
 #define REV 6.2831853071
@@ -34,13 +178,14 @@ out vec4 fragColor;
 uniform float outOfGamutAlpha;
 
 ${webglDeclarations}
-
-{afterPrelude}
+`),
+      WebglTemplate.code`
+${prelude}
 
 AlphaColor sampleColor(vec2 coords) {
-  {main}
+  ${main}
   
-  return AlphaColor(Color({val}, {illuminant}, {xyz}), {alpha});
+  return AlphaColor(Color(${val}, ${illuminant}, ${xyz}), ${alpha});
 }
 
 void main() {
@@ -61,86 +206,81 @@ void main() {
 
   fragColor = vec4(outRgb, alpha);
 }`,
-    new Map(),
-    {},
+    ),
   );
 
-  static readonly auxiliaryFunctionTemplate = new WebglVariables(`{outputType} {functionName}(vec2 coords) {
-  {main}
+  static readonly auxiliaryFunctionTemplate = WebglTemplate.withSlots(
+    ["outputType", "functionName", "main", "functionOutput"],
+    [],
+    (
+      {outputType, functionName, main, functionOutput},
+      {},
+    ) => WebglTemplate.code`${outputType} ${functionName}(vec2 coords) {
+  ${main}
   
-  return {output};
+  return ${functionOutput};
 }`,
-    new Map(),
-    {},
   );
 
   constructor(
-    /** The GLSL code that takes in GLSL variables and computes new ones. Templates may include "slots" for GLSL code
-     * or variables to be inserted.
-     * 
-     * A slot is of the form `{name}` or `{name:descriptor}`. Names that are only numbers belong to new variables that
-     * result from the template's code.
+    /** The GLSL code that takes in GLSL variables and computes new ones. Templates may include "slots" for other GLSL
+     * code or GLSL variables to be inserted.
      */
-    readonly template: string,
-    private readonly outVariables: Map<OutSocket, Record<string, string>>,
-    private readonly nodeOutVariables: Record<string, string>={},
-    /** A secondary template that declares variables in the prelude, inserted after the main body has been produced. */
-    private readonly preludeTemplate: string="",
-    /** The names of uniforms (which can be variable slots), mapped to functions to initialize those uniforms. */
-    private readonly uniforms: Record<string, {
-      set(gl: WebGL2RenderingContext, unif: WebGLUniformLocation | null, nUsedTextures: number): boolean | void,
-      dependencySockets: InSocket[],
-      /** For when a dependency is a `NodeSpecialInput` */
-      dependencyNodes: Node[],
-    }>={},
-    /** The names of functions (which can be variable slots), mapped to sockets whose outputs will be converted to the
-     * bodies of those functions rather than included in the template.
+    readonly template: WebglTemplate,
+    /** Groups of values/slots which becomes available after evaluating the template, which are associated with
+     * specific output sockets.
      */
-    private readonly functionDependencies: Record<string, OutSocket>={},
+    private readonly socketOutVariables: Map<OutSocket, Record<string, WebglTemplate>>,
+    /** A group of values/slots which becomes available after evaluating the template, which is associated with a
+     * node's special output (its display rather than an output socket).
+     */
+    private readonly nodeOutVariables: Record<string, WebglTemplate>={},
+    /** A template that declares variables in the prelude, which is inserted after the main body has been produced.
+     * Usually used for declaring new uniforms.
+     */
+    private readonly preludeTemplate: WebglTemplate=WebglTemplate.empty(),
+    /** The names of uniforms, mapped to functions to initialize those uniforms. */
+    private readonly uniforms: Map<WebglTemplate, UniformInitializer>=new Map(),
+    /** The names of functions, mapped to sockets whose incoming data will be accessible by those functions rather than
+     * from a separate variable defined inside the template. One use case is the Sample node, which needs to be able to
+     * evaluate the input socket be evaluated at multiple different coordinates.
+     */
+    private readonly functionInputDependencies: Map<WebglTemplate, OutSocket>=new Map(),
   ) {}
 
-  /** Fills in the given slots with values or true GLSL variables.
-   * @param mappings Of the form {name: substitution}.
-   */
-  fillSlots(mappings: Record<string, string>, sourcePreludeTemplate: string="", sourceUniforms: WebglVariables["uniforms"]={}) {
-    const outVariables: WebglVariables["outVariables"] = new Map(this.outVariables.entries());
+  /** Fills in the given slots with values or true GLSL variables. */
+  substitute(
+    substitutions: Map<WebglSlot, string>,
+    sourcePreludeTemplate: WebglTemplate=WebglTemplate.empty(),
+    sourceUniforms: WebglVariables["uniforms"]=new Map(),
+  ) {
+    const outVariables: WebglVariables["socketOutVariables"] = new Map(this.socketOutVariables);
     const nodeOutVariables: WebglVariables["nodeOutVariables"] = {...this.nodeOutVariables};
-    const uniforms: WebglVariables["uniforms"] = {...sourceUniforms, ...this.uniforms};
-    const functionDependencies: WebglVariables["functionDependencies"] = {...this.functionDependencies};
+    const uniforms: WebglVariables["uniforms"] = new Map([...sourceUniforms, ...this.uniforms]);
+    const functionDependencies: WebglVariables["functionInputDependencies"] = new Map(this.functionInputDependencies);
 
-    const slotRegex = /\{(\w+)(?::(\w+))?\}/g;
-    const mapMatchToValue = (match: string, keyName: string, descName: string) => mappings.hasOwnProperty(keyName)
-        ? mappings[keyName]
-        : match;
+    const template = this.template.substitute(substitutions);
 
-    const template = this.template.replaceAll(slotRegex, mapMatchToValue);
-
-    let preludeTemplate = sourcePreludeTemplate
-        ? `${sourcePreludeTemplate}
-${this.preludeTemplate}`
-        : this.preludeTemplate;
-
-    preludeTemplate = preludeTemplate.replaceAll(slotRegex, mapMatchToValue);
+    let preludeTemplate = WebglTemplate.merge(sourcePreludeTemplate, this.preludeTemplate).substitute(substitutions);
 
     // Also look for slots in the `outVariables` substitution strings
     for (const [socket, variables] of outVariables) {
-      const newOuts: Record<string, string> = {};
+      const newOuts: Record<string, WebglTemplate> = {};
       for (const [name, value] of Object.entries(variables)) {
-        newOuts[name] = value.replaceAll(slotRegex, mapMatchToValue);
+        newOuts[name] = value.substitute(substitutions);
       }
       outVariables.set(socket, newOuts);
     }
     for (const [name, value] of Object.entries(nodeOutVariables)) {
-      delete nodeOutVariables[name];
-      nodeOutVariables[name] = value.replaceAll(slotRegex, mapMatchToValue);
+      nodeOutVariables[name] = value.substitute(substitutions);
     }
-    for (const [name, value] of Object.entries(uniforms)) {
-      delete uniforms[name];
-      uniforms[name.replaceAll(slotRegex, mapMatchToValue)] = value;
+    for (const [uniformNameTemplate, value] of uniforms) {
+      uniforms.delete(uniformNameTemplate);
+      uniforms.set(uniformNameTemplate.substitute(substitutions), value);
     }
-    for (const [name, value] of Object.entries(functionDependencies)) {
-      delete functionDependencies[name];
-      functionDependencies[name.replaceAll(slotRegex, mapMatchToValue)] = value;
+    for (const [functionNameTemplate, value] of functionDependencies) {
+      functionDependencies.delete(functionNameTemplate);
+      functionDependencies.set(functionNameTemplate.substitute(substitutions), value);
     }
 
     return new WebglVariables(template, outVariables, nodeOutVariables, preludeTemplate, uniforms, functionDependencies);
@@ -149,98 +289,240 @@ ${this.preludeTemplate}`
   /**
    * 
    * @param source 
-   * @param target 
-   * @param sourceVariableSlotMapping 
+   * @param outputTarget 
+   * @param sourceVariableSlotMapping Map that tells into which input slots in `this` to route the value of each output
+   * slot in the `source`
    * @param keepSourcePrelude 
    * @param includeUnmappedVariables Whether slot names that are not included in `sourceVariableSlotMapping` will use
-   * the names from `source`'s `outVariables` list
+   * their original names from `source`'s `outVariables` list. If `false`, unmapped variables will not be included in
+   * the new `WebglVariables` object
    * @returns 
    */
-  fillWith(
+  substituteUsingOutputsFrom(
     source: WebglVariables,
-    target: NodeOutputTarget,
-    sourceVariableSlotMapping: Record<string, string>,
+    outputTarget: NodeOutputTarget,
+    sourceVariableSlotMapping: Map<string, WebglSlot>,
     keepSourcePrelude: boolean=false,
     includeUnmappedVariables: boolean=false,
   ) {
-    const outVariables: Record<string, string> = {};
-    const remainderOutVariables = includeUnmappedVariables ? {...source.outVariablesFor(target)} : {};
-    for (const [oldName, newName] of Object.entries(sourceVariableSlotMapping)) {
-      outVariables[newName] = source.outVariablesFor(target)[oldName];
-      delete remainderOutVariables[oldName];
+    const substitutions = new Map<WebglSlot, string>();
+    const remainingSubstitutions = new Map<WebglSlot, string>(
+      includeUnmappedVariables
+          ? Object.keys(source.outVariablesFor(outputTarget))
+              .map(identifier => [this.template.getInputSlot(identifier), identifier])
+          : []
+    );
+    for (const [varName, slot] of sourceVariableSlotMapping) {
+      substitutions.set(slot, source.outVariablesFor(outputTarget)[varName].toString());
+      remainingSubstitutions.delete(slot);
     }
 
     return keepSourcePrelude
-        ? this.fillSlots({...remainderOutVariables, ...outVariables}, source.preludeTemplate, source.uniforms)
-        : this.fillSlots({...remainderOutVariables, ...outVariables});
+        ? this.substitute(substitutions, source.preludeTemplate, source.uniforms)
+        : this.substitute(substitutions);
   }
 
-  joinPrelude(prelude: string) {
+  joinPrelude(prelude: WebglTemplate) {
     return new WebglVariables(
       this.template,
-      this.outVariables,
+      this.socketOutVariables,
       this.nodeOutVariables,
-      `${prelude}\n\n${this.preludeTemplate}`,
+      WebglTemplate.merge(prelude, this.preludeTemplate),
       this.uniforms,
-      this.functionDependencies,
+      this.functionInputDependencies,
     );
   }
 
   joinUniforms(uniforms: WebglVariables["uniforms"]) {
     return new WebglVariables(
       this.template,
-      this.outVariables,
+      this.socketOutVariables,
       this.nodeOutVariables,
       this.preludeTemplate,
       {...uniforms, ...this.uniforms},
-      this.functionDependencies,
+      this.functionInputDependencies,
     );
   }
-
-  /**
-   * Inserts this object's template in front of another `WebglVariables`'s template, while substituting in
-   * variables from the other object into this object
-   * @param source The `WebglVariables` object to insert the variable source from
-   * @param sourceVariableSlotMapping Mappings of variable names in `source` to variable slots in this object's
-   * template
-   * @returns 
-   */
-  /* follow(source: WebglVariables, sourceVariableSlotMapping: Record<string, string>) {
-    const outVariables: Record<string, string> = {};
-    const remainderOutVariables = {...this.outVariables};
-    for (const [oldName, newName] of Object.entries(sourceVariableSlotMapping)) {
-      outVariables[newName] = source.outVariables[oldName];
-      delete remainderOutVariables[oldName];
-    }
-
-    const variables = this.fillSlots({...remainderOutVariables, ...outVariables});
-    return new WebglVariables(source.template ? `${source.template}
-
-${variables.template}` : variables.template,
-      {...remainderOutVariables, ...outVariables},
-      source.preludeTemplate ? `${source.preludeTemplate}
-      
-${variables.preludeTemplate}` : variables.preludeTemplate,
-      {...source.uniforms, ...variables.uniforms},
-    )
-  }
-
-  pipe(target: WebglVariables, variableSlotMapping: Record<string, string>) {
-    return target.follow(this, variableSlotMapping);
-  } */
 
   /**
    * Assigns random GLSL variable names to slots named with a number up to `nSlots`
    * @param nSlots 
    * @returns 
    */
-  nameVariableSlots(nSlots: number) {
-    return this.fillSlots(Object.fromEntries(
-      Array(nSlots).fill(0).map((_, i) => {
-        return [i.toString(), `a${Math.random().toFixed(16).substring(2)}`];
-      })
-    ));
+  nameOutputSlots() {
+    return this.substitute(
+      new Map(this.template.mapOutputSlots(slot => [slot, slot.randomVariableName()])),
+    );
   }
+
+  /**
+   * Iterates through the nodes which the given node `node` depends on, generating code segment templates for each
+   * node. Each node's code segment has its slots filled by the outputs of the nodes before it in the dependency
+   * tree.
+   * @param node 
+   * @returns 
+   */
+  private static getTranspiledNodeDependencies(node: Node) {
+    const dependencyIndices = new Map<Node, number>();
+    const segments: WebglVariables[] = [];
+
+    let i = 0;
+    for (const dependencyNode of node.toposortedDependencies()) {
+      let variables = node.webglOutput();
+
+      const functionDependencySockets = new Set<OutSocket>();
+
+      for (const [functionName, srcSocket] of variables.functionInputDependencies) {
+        functionDependencySockets.add(srcSocket);
+
+        const preludeFunction = this.getTranspiledAuxiliaryFunction(srcSocket, functionName.toString(), segments, dependencyIndices.get(srcSocket.node)!);
+        variables = variables.joinPrelude(preludeFunction);
+      }
+
+      for (const socket of node.ins) {
+        if (socket.usesFieldValue) continue;
+        if (functionDependencySockets.has(socket.link.src)) continue;
+
+        const srcNode = socket.link.srcNode;
+        const srcIndex = dependencyIndices.get(srcNode)!;
+        variables = node.webglVariablesFill(segments[srcIndex], variables, socket);
+      }
+
+      segments[i] = variables;
+      dependencyIndices.set(dependencyNode, i);
+
+      i++;
+    }
+
+    const uniforms: Record<string, UniformInitializer> = {};
+    for (const segment of segments) {
+      for (const [uniformName, initializer] of segment.uniforms) {
+        uniforms[uniformName.toString()] = initializer;
+      }
+    }
+
+    return {
+      segments,
+      uniforms,
+    };
+  }
+
+  /**
+   * Using precomputed segments from `getTranspiledNodeDepencies`, generates a `WebglTemplate` that provides an
+   * auxiliary function for the node specified by `nodeIndex`
+   * @param socket 
+   * @param functionNameValue 
+   * @param segments 
+   * @param nodeIndex 
+   * @returns 
+   */
+  private static getTranspiledAuxiliaryFunction(socket: OutSocket, functionNameValue: string, segments: WebglVariables[], nodeIndex: number): WebglTemplate {
+    let outputTypeValue: string;
+    let outputVariables: WebglVariables;
+    switch (socket.type) {
+      case SocketType.ColorCoords:
+        outputTypeValue = "Color";
+        outputVariables = WebglVariables.template`Color(${WebglSlot.in("val")}, ${WebglSlot.in("illuminant")}, ${WebglSlot.in("xyz")})`();
+        break;
+
+      case SocketType.Vector:
+      case SocketType.VectorOrColor:
+        outputTypeValue = "vec3";
+        outputVariables = WebglVariables.template`${WebglSlot.in("val")}`();
+        break;
+
+      case SocketType.Float:
+        outputTypeValue = "float";
+        outputVariables = WebglVariables.template`${WebglSlot.in("val")}`();
+        break;
+      
+      default:
+        throw new Error("unsupported type");
+    }
+
+    const relevantSegments = segments.slice(0, nodeIndex + 1);
+
+    return WebglVariables.auxiliaryFunctionTemplate.substituteInputs(
+      ({main, outputType, functionName, functionOutput}) => new Map([
+        [main, relevantSegments.map(segment => segment.template.toString())
+            .join("\n\n")],
+        // no prelude/uniforms because uniforms will be shared with the primary function
+        [functionOutput, outputVariables.substituteUsingOutputsFrom(segments[nodeIndex], NodeOutputTarget.OutSocket(socket), new Map(), false, true).template.toString()],
+        [outputType, outputTypeValue],
+        [functionName, functionNameValue],
+      ]),
+    );
+  }
+
+  /**
+   * Generates WebGL source code that computes the output of node `node`.
+   * @param node 
+   * @returns 
+   */
+  static transpileNodeOutput(node: Node) {
+    const {segments, uniforms} = this.getTranspiledNodeDependencies(node);
+
+    // console.log(segments.map(segment => segment.template)
+    //     .join("\n\n"));
+    // console.log(segments.map(segment => segment.preludeTemplate)
+    //     .join("\n"));
+    // console.log(uniforms);
+
+    return new WebglTranspilation(
+      WebglVariables.fragmentShaderTemplate.substituteInputs(
+        ({main, val, xyz, illuminant, prelude, alpha}) => new Map([
+          [main, segments.map(segment => segment.template.toString())
+              .join("\n\n")],
+          [val, segments.at(-1)!.nodeOutVariables["val"].toString()],
+          [xyz, segments.at(-1)!.nodeOutVariables["xyz"].toString()],
+          [illuminant, segments.at(-1)!.nodeOutVariables["illuminant"].toString()],
+          [prelude, segments.map(segment => segment.preludeTemplate.toString())
+              .join("\n")],
+          [alpha, segments.at(-1)!.nodeOutVariables["alpha"].toString() ?? "1."],
+        ]),
+      ).toString(),
+      uniforms,
+    );
+  }
+
+  private outVariablesFor(target: NodeOutputTarget) {
+    return target.match({
+      onSocket: socket => this.socketOutVariables.get(socket)!,
+      onNode: () => this.nodeOutVariables,
+    });
+  }
+
+  static template(strings: TemplateStringsArray, ...slots: WebglSlot[]) {
+    return ({
+      socketOutVariables=new Map(),
+      nodeOutVariables={},
+      preludeTemplate=WebglTemplate.empty(),
+      uniforms=new Map(),
+      functionInputDependencies=new Map(),
+    }: {
+      socketOutVariables?: WebglVariables["socketOutVariables"],
+      nodeOutVariables?: WebglVariables["nodeOutVariables"],
+      preludeTemplate?: WebglVariables["preludeTemplate"],
+      uniforms?: WebglVariables["uniforms"],
+      functionInputDependencies?: WebglVariables["functionInputDependencies"],
+    }={}) => {
+      return new WebglVariables(
+        WebglTemplate.code(strings, ...slots),
+        socketOutVariables,
+        nodeOutVariables,
+        preludeTemplate,
+        uniforms,
+        functionInputDependencies,
+      ).nameOutputSlots();
+    };
+  }
+}
+
+export class WebglTranspilation {
+  constructor(
+    readonly programSource: string,
+    private readonly uniforms: Record<string, UniformInitializer>,
+  ) {}
 
   initializeUniforms(gl: WebGL2RenderingContext, program: WebGLProgram): UniformReloadData {
     const textureIdMap = new Map<WebGLUniformLocation, number>();
@@ -312,154 +594,10 @@ ${variables.preludeTemplate}` : variables.preludeTemplate,
       }
     }
   }
-
-  private static toposortDependencies(node: Node) {
-    const topoOrder: Node[] = [];
-    const visited = new Set<Node>();
-
-    const dfs = (node: Node) => {
-      visited.add(node);
-
-      for (const socket of node.ins) {
-        if (socket.usesFieldValue) continue;
-
-        const srcNode = socket.link.srcNode;
-        if (visited.has(srcNode)) continue;
-        
-        dfs(srcNode);
-      }
-
-      topoOrder.push(node);
-    };
-    dfs(node);
-
-    return topoOrder;
-  }
-
-  private static getTranspiledNodeOutputSegments(node: Node) {
-    const dependencies = this.toposortDependencies(node);
-    const dependencyIndices = new Map([...dependencies.entries()].map(([i, node]) => [node, i]));
-
-    const segments: WebglVariables[] = [];
-
-    dependencies.forEach((node, i) => {
-      let variables = node.webglOutput();
-
-      // for (const socket of node.outs) {
-      //   if (socket.usesFieldValues) continue;
-      //   variables = variables.join(node.webglOutput({socket}));
-      // }
-
-      const functionDependencySockets = new Set<OutSocket>();
-
-      for (const [functionName, srcSocket] of Object.entries(variables.functionDependencies)) {
-        functionDependencySockets.add(srcSocket);
-
-        const preludeFunction = this.getTranspiledNodeOutputFunction(srcSocket, functionName, segments, dependencyIndices.get(srcSocket.node)!);
-        variables = variables.joinPrelude(preludeFunction.template);
-      }
-
-      for (const socket of node.ins) {
-        if (socket.usesFieldValue) continue;
-        if (functionDependencySockets.has(socket.link.src)) continue;
-
-        const srcNode = socket.link.srcNode;
-        const srcIndex = dependencyIndices.get(srcNode)!;
-
-        variables = node.webglVariablesFill(segments[srcIndex], variables, socket);
-      }
-
-      segments[i] = variables;
-    });
-
-    const uniforms: WebglVariables["uniforms"] = {};
-    for (const segment of segments) {
-      Object.assign(uniforms, segment.uniforms);
-    }
-
-    return {
-      segments,
-      uniforms,
-    };
-  }
-
-  private static getTranspiledNodeOutputFunction(socket: OutSocket, functionName: string, segments: WebglVariables[], nodeIndex: number) {
-    let outputType: string;
-    let outputVariables: WebglVariables;
-    switch (socket.type) {
-      case SocketType.ColorCoords:
-        outputType = "Color";
-        outputVariables = new WebglVariables("Color({val}, {illuminant}, {xyz})", new Map(), {});
-        break;
-
-      case SocketType.Vector:
-      case SocketType.VectorOrColor:
-        outputType = "vec3";
-        outputVariables = new WebglVariables("{val}", new Map(), {});
-        break;
-
-      case SocketType.Float:
-        outputType = "float";
-        outputVariables = new WebglVariables("{val}", new Map(), {});
-        break;
-      
-      default:
-        throw new Error("unsupported type");
-    }
-
-    const relevantSegments = segments.slice(0, nodeIndex + 1);
-
-    return WebglVariables.auxiliaryFunctionTemplate.fillSlots(
-      {
-        "main": relevantSegments.map(segment => segment.template)
-            .join("\n\n"),
-        // no prelude/uniforms because uniforms will be shared with the primary function
-        "output": outputVariables.fillWith(segments[nodeIndex], NodeOutputTarget.OutSocket(socket), {}, false, true).template,
-        "outputType": outputType,
-        "functionName": functionName,
-      },
-    );
-  }
-
-  static transpileNodeOutput(node: Node) {
-    const {segments, uniforms} = this.getTranspiledNodeOutputSegments(node);
-
-    // console.log(segments.map(segment => segment.template)
-    //     .join("\n\n"));
-    // console.log(segments.map(segment => segment.preludeTemplate)
-    //     .join("\n"));
-    // console.log(uniforms);
-
-    return WebglVariables.fragmentShaderTemplate.fillSlots(
-      {
-        "main": segments.map(segment => segment.template)
-            .join("\n\n"),
-        "val": segments.at(-1)!.nodeOutVariables["val"],
-        "xyz": segments.at(-1)!.nodeOutVariables["xyz"],
-        "illuminant": segments.at(-1)!.nodeOutVariables["illuminant"],
-        "afterPrelude": segments.map(segment => segment.preludeTemplate)
-            .join("\n"),
-        "alpha": segments.at(-1)!.nodeOutVariables["alpha"] ?? "1.",
-      },
-      "",
-      uniforms,
-    );
-  }
-
-  private outVariablesFor(target: NodeOutputTarget) {
-    return target.socket.mapElse(
-      socket => this.outVariables.get(socket)!,
-      () => this.nodeOutVariables,
-    )
-  }
 }
 
-class WebglTranspilation {
-
-}
-
-export interface UniformReloadData {
+export type UniformReloadData = {
   textureIdMap: Map<WebGLUniformLocation, number>,
   socketDependents: Map<InSocket, string[]>,
   nodeDependents: Map<Node, string[]>,
-}
+};

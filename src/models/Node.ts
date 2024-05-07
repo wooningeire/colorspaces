@@ -1,4 +1,4 @@
-import { WebglVariables } from "@/webgl-compute/WebglVariables";
+import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 import { NO_DESC, StringKey } from "../strings";
 import { Vec2, Vec3, Option } from "../util";
 import { OverloadGroup, OverloadManager } from "./Overload";
@@ -139,7 +139,7 @@ export abstract class Node {
       const mapping = this.webglGetMapping(inSocket);
       if (mapping === null) continue;
 
-      variables = variables.fillWith(inSocket.webglVariables(), NodeOutputTarget.NodeDisplay(this), mapping, true);
+      variables = variables.substituteUsingOutputsFrom(inSocket.webglVariables(), NodeOutputTarget.NodeDisplay(this), mapping, true);
     }
     return variables;
   }
@@ -149,7 +149,7 @@ export abstract class Node {
   webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket): WebglVariables {
     const mapping = this.webglGetMapping(inSocket);
     if (mapping === null) throw new Error("the implementation of webglGetMapping for this node does not support this socket");
-    return target.fillWith(source, NodeOutputTarget.OutSocket(inSocket.link.src), mapping);
+    return target.substituteUsingOutputsFrom(source, NodeOutputTarget.OutSocket(inSocket.link.src), mapping);
   }
 
   /** A `WebglVariables` object that provides a template to fill, output variables, and uniforms */
@@ -342,6 +342,27 @@ export abstract class Node {
       }
     }
   }
+
+  /** Generates the list of nodes which this node depends on, in topological order. */
+  toposortedDependencies() {
+    return this.dfsDependencies(new Set());
+  }
+
+  /** Performs a depth-first search of this node's dependencies. */
+  private * dfsDependencies(visited: Set<Node>) {
+    visited.add(this);
+
+    for (const socket of this.ins) {
+      if (socket.usesFieldValue) continue;
+
+      const srcNode = socket.link.srcNode;
+      if (visited.has(srcNode)) continue;
+      
+      srcNode.dfsDependencies(visited);
+    }
+
+    yield this;
+  }
 }
 
 export interface AxisNode extends Node {
@@ -381,14 +402,14 @@ export type SocketValue<St extends SocketType=any> =
 
 export type WebglSocketValue<St extends SocketType=any> = (
   St extends SocketType.Float ? {
-    "val": string,
+    "val": WebglSlot,
   } :
   St extends SocketType.Integer ? WebglSocketValue<SocketType.Float> :
   St extends SocketType.Vector ? WebglSocketValue<SocketType.Float> :
   St extends SocketType.ColorCoords ? {
-    "val": string,
-    "illuminant": string,
-    "xyz": string,
+    "val": WebglSlot,
+    "illuminant": WebglSlot,
+    "xyz": WebglSlot,
   } :
   St extends SocketType.VectorOrColor ? WebglSocketValue<SocketType.ColorCoords> | WebglSocketValue<SocketType.Vector> :
   St extends SocketType.Dropdown ? never :
@@ -662,7 +683,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
               dependencyNodes: [],
             },
           },
-        ).nameVariableSlots(1);
+        ).nameOutputSlots(1);
 
       case St.Vector:
         return new WebglVariables(
@@ -681,7 +702,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
               dependencyNodes: [],
             },
           },
-        ).nameVariableSlots(1);
+        ).nameOutputSlots(1);
 
       case St.Float:
         return new WebglVariables(
@@ -700,7 +721,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
               dependencyNodes: [],
             },
           },
-        ).nameVariableSlots(1);
+        ).nameOutputSlots(1);
 
         case St.Bool:
           return new WebglVariables(
@@ -719,7 +740,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
                 dependencyNodes: [],
               },
             },
-          ).nameVariableSlots(1);
+          ).nameOutputSlots(1);
 
       default:
         throw new Error("not implemented");
@@ -884,7 +905,7 @@ type NodeOutputTargetValue<T extends NodeOutputTargetType> =
 export class NodeOutputTarget<T extends NodeOutputTargetType=any> {
   private constructor(
     private type: T,
-    public target: NodeOutputTargetValue<T>,
+    readonly target: NodeOutputTargetValue<T>,
   ) {}
 
   static OutSocket(socket: OutSocket) {
@@ -909,5 +930,18 @@ export class NodeOutputTarget<T extends NodeOutputTargetType=any> {
 
   get node(): Option<Node> {
     return this.isNode() ? Option.Some(this.target) : Option.None;
+  }
+
+  match<T>({onSocket, onNode}: {onSocket: (socket: OutSocket) => T, onNode: (node: Node) => T}) {
+    switch (this.type) {
+      case NodeOutputTargetType.OutSocket:
+        return onSocket((this as NodeOutputTarget<NodeOutputTargetType.OutSocket>).target);
+
+      case NodeOutputTargetType.NodeDisplay:
+        return onNode((this as NodeOutputTarget<NodeOutputTargetType.NodeDisplay>).target);
+
+      default:
+        throw new Error("unknown type");
+    }
   }
 }

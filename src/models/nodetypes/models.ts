@@ -114,7 +114,7 @@ export namespace models {
             [outs[2], {"val": "{0:hsl}.z"}],
           ]),
           {"val": "{0:hsl}"},
-        ).nameVariableSlots(1),
+        ).nameOutputSlots(1),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
           switch (inSocket) {
             case ins[0]: return <WebglSocketValue<T>>{"val": "rgb"};
@@ -190,7 +190,7 @@ export namespace models {
             [outs[2], {"val": "{0:hsv}.z"}],
           ]),
           {"val": "{0:hsv}"},
-        ).nameVariableSlots(1),
+        ).nameOutputSlots(1),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HsvNode) => {
           switch (inSocket) {
             case ins[0]: return <WebglSocketValue<T>>{"val": "rgb"};
@@ -266,7 +266,7 @@ export namespace models {
             [outs[2], {"val": "{0:hwb}.z"}],
           ]),
           {"val": "{0:hwb}"},
-        ).nameVariableSlots(1),
+        ).nameOutputSlots(1),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HwbNode) => {
           switch (inSocket) {
             case ins[0]: return <WebglSocketValue<T>>{"val": "rgb"};
@@ -342,7 +342,7 @@ export namespace models {
             [outs[2], {"val": "{0:cmy}.z"}],
           ]),
           {"val": "{0:cmy}"},
-        ).nameVariableSlots(1),
+        ).nameOutputSlots(1),
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: CmyNode) => {
           switch (inSocket) {
             case ins[0]: return <WebglSocketValue<T>>{"val": "rgb"};
@@ -433,7 +433,7 @@ export namespace models {
             dependencyNodes: [this],
           },
         },
-      ).nameVariableSlots(1);
+      ).nameOutputSlots(1);
     }
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
       return null;
@@ -504,7 +504,7 @@ export namespace models {
             "xyz": "{0:xyz}",
           }],
         ]),
-      ).nameVariableSlots(1);
+      ).nameOutputSlots(1);
     }
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
       switch (inSocket) {
@@ -569,7 +569,7 @@ export namespace models {
             "xyz": "{0:xyz}",
           }],
         ]),
-      ).nameVariableSlots(1);
+      ).nameOutputSlots(1);
     }
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
       switch (inSocket) {
@@ -636,7 +636,7 @@ uniform vec3 {1:xyy};`,
             dependencyNodes: [],
           },
         }
-      ).nameVariableSlots(2);
+      ).nameOutputSlots(2);
     }
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
       return null;
