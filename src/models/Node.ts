@@ -652,26 +652,37 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     return this.links[0];
   }
 
+  /**
+   * Obtains a `WebglVariables` object that provides the data which this socket gives to its node, whether through a
+   * link from another node or this socket's field.
+   * @param context 
+   * @returns 
+   */
   webglVariables(context: NodeEvalContext={}): WebglVariables {
     return !this.usesFieldValue
         ? this.link.srcNode.webglOutput(context)
         : this.webglFieldVariables(context);
   }
 
+  /**
+   * Provides a `WebglVariables` object that declares a uniform storing the value of this socket's field.
+   * @param context 
+   * @returns 
+   */
   private webglFieldVariables(context: NodeEvalContext={}) {
+    const unif = WebglSlot.out("unif");
+
     switch (this.effectiveType()) {
       case St.ColorCoords:
-        return new WebglVariables(
-          "",
-          new Map(),
-          {
-            "val": "{0:unif}",
-            "illuminant": "illuminant2_D65",
-            "xyz": "vec3(0., 0., 0.)",
+        return WebglVariables.template``({
+          nodeOutVariables: {
+            "val": WebglTemplate.slot(unif),
+            "illuminant": WebglTemplate.string("illuminant2_D65"),
+            "xyz": WebglTemplate.string("vec3(0., 0., 0.)"),
           },
-          `uniform vec3 {0:unif};`,
-          {
-            "{0:unif}": {
+          preludeTemplate: WebglTemplate.code`uniform vec3 ${unif};`,
+          uniforms: new Map([
+            [WebglTemplate.slot(unif), {
               set: (gl, unif) => {
                 if (!this.usesFieldValue) {
                   gl.uniform3fv(unif, this.inValue(context) as number[]);
@@ -681,66 +692,60 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
               },
               dependencySockets: [this],
               dependencyNodes: [],
-            },
-          },
-        ).nameOutputSlots(1);
+            }],
+          ]),
+        });
 
       case St.Vector:
-        return new WebglVariables(
-          "",
-          new Map(),
-          {
-            "val": `{0:unif}`,
+        return WebglVariables.template``({
+          nodeOutVariables: {
+            "val": WebglTemplate.slot(unif),
           },
-          `uniform vec3 {0:unif};`,
-          {
-            "{0:unif}": {
+          preludeTemplate: WebglTemplate.code`uniform vec3 ${unif};`,
+          uniforms: new Map([
+            [WebglTemplate.slot(unif), {
               set: (gl, unif) => {
                 gl.uniform3fv(unif, this.fieldValue as number[]);
               },
               dependencySockets: [this],
               dependencyNodes: [],
-            },
-          },
-        ).nameOutputSlots(1);
+            }],
+          ]),
+        });
 
       case St.Float:
-        return new WebglVariables(
-          "",
-          new Map(),
-          {
-            "val": "{0:unif}",
+        return WebglVariables.template``({
+          nodeOutVariables: {
+            "val": WebglTemplate.slot(unif),
           },
-          `uniform float {0:unif};`,
-          {
-            "{0:unif}": {
+          preludeTemplate: WebglTemplate.code`uniform float ${unif};`,
+          uniforms: new Map([
+            [WebglTemplate.slot(unif), {
               set: (gl, unif) => {
                 gl.uniform1f(unif, this.fieldValue as number);
               },
               dependencySockets: [this],
               dependencyNodes: [],
-            },
-          },
-        ).nameOutputSlots(1);
+            }],
+          ]),
+        });
 
         case St.Bool:
-          return new WebglVariables(
-            "",
-            new Map(),
-            {
-              "val": "{0:unif}",
+          return WebglVariables.template``({
+            nodeOutVariables: {
+              "val": WebglTemplate.slot(unif),
             },
-            `uniform bool {0:unif};`,
-            {
-              "{0:unif}": {
+            preludeTemplate: WebglTemplate.code`uniform bool ${unif};`,
+            uniforms: new Map([
+              [WebglTemplate.slot(unif), {
                 set: (gl, unif) => {
                   gl.uniform1i(unif, this.fieldValue as number);
                 },
                 dependencySockets: [this],
                 dependencyNodes: [],
-              },
-            },
-          ).nameOutputSlots(1);
+              }],
+            ]),
+          });
 
       default:
         throw new Error("not implemented");

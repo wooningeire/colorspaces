@@ -3,7 +3,7 @@ import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch,
 
 import {Node, Socket, NodeEvalContext, InSocket, NodeUpdateSource} from "@/models/Node";
 import {tree, settings} from "../store";
-import { UniformReloadData, WebglVariables } from "@/webgl-compute/WebglVariables";
+import { UniformReloadData, WebglTranspilation, WebglVariables } from "@/webgl-compute/WebglVariables";
 
 const props = withDefaults(defineProps<{
   node: Node,
@@ -31,14 +31,13 @@ let nVertsLast = 0;
 
 const imageIsOutOfGamut = ref(false);
 
-let lastTranspilation: WebglVariables;
+let lastTranspilation: WebglTranspilation;
 let uniformReloadData: UniformReloadData;
 const reinitializeShader = async () => {
   // canvas.value!.width = canvas.value!.offsetWidth * devicePixelRatio;
   // canvas.value!.height = canvas.value!.offsetWidth * devicePixelRatio;
 
   lastTranspilation = WebglVariables.transpileNodeOutput(props.node);
-  // console.log(transpilation);
 
   const vertexShaderSource = `#version 300 es
 in vec4 a_pos;
@@ -52,8 +51,8 @@ void main() {
   v_uv = (a_pos.xy + 1.) / 2. * vec2(1., -1.);
 }`;
 
-  const fragmentShaderSource = lastTranspilation.template;
-  // console.log(fragmentShaderSource);
+  const fragmentShaderSource = lastTranspilation.shaderSource;
+  console.log(fragmentShaderSource);
   
 
   //#region Shader setup

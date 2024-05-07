@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { InSocket, Node, OutSocket, SocketType, Tree } from "./Node";
 
-export class DummyNode extends Node {
+class ConstantNode extends Node {
   constructor() {
     super();
 
@@ -20,8 +20,8 @@ describe(Node.name, () => {
     it("detects cyclical links", () => {
       const tree = new Tree();
   
-      const a = new DummyNode();
-      const b = new DummyNode();
+      const a = new ConstantNode();
+      const b = new ConstantNode();
   
       tree.nodes.add(a);
       tree.nodes.add(b);
