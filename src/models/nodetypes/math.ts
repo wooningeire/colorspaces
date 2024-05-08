@@ -10,9 +10,15 @@ import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglV
 import { randFloat, randFloatVec3Seed } from "../colormanagement/random";
 
 export namespace math {
-  const singleDisplayValue: ConstructorParameters<typeof Overload>[3] =
+  const singleDisplayValueVec: ConstructorParameters<typeof Overload>[3] =
       (ins, outs, context) => ({
         values: outs[0].outValue(context),
+        labels: [],
+        flags: [],
+      });
+  const singleDisplayValueFloat: ConstructorParameters<typeof Overload>[3] =
+      (ins, outs, context) => ({
+        values: [outs[0].outValue(context)],
         labels: [],
         flags: [],
       });
@@ -35,7 +41,7 @@ export namespace math {
     private static readonly inputSlots = WebglSlot.ins("fac", "val0", "val1", "vector", "scalar");
 
     private static singleOutVariable =
-        (getTemplate: (inputSlots: typeof VectorArithmeticNode["inputSlots"]) => WebglTemplate): ConstructorParameters<typeof Overload<VectorArithmeticMode>>[4] =>
+        (getTemplate: (inputSlots: typeof VectorArithmeticNode["inputSlots"]) => WebglTemplate): ConstructorParameters<typeof Overload>[4] =>
             (ins, outs, context, node) => {
               const template = getTemplate(this.inputSlots);
       
@@ -72,9 +78,9 @@ export namespace math {
           (node, ins) => [
             new OutSocket(node, SocketType.Vector, outputLabel, context => calculate(...ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3])),
           ],
-          singleDisplayValue,
+          singleDisplayValueVec,
           this.singleOutVariable(getTemplate),
-          (<St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: VectorArithmeticMode) => {
+          (<St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: VectorArithmeticNode) => {
             const {fac, val0, val1} = this.inputSlots;
   
             switch (inSocket) {
@@ -83,7 +89,7 @@ export namespace math {
               case ins[2]: return <WebglSocketValue<St>>{[webglOuts.val]: val1};
               default: return null;
             }
-          }) as ConstructorParameters<typeof Overload<VectorArithmeticMode>>[5],
+          }) as ConstructorParameters<typeof Overload>[5],
         );
 
     static readonly overloadGroup = new OverloadGroup(new Map<VectorArithmeticMode, Overload<Vec3 | number>>([
@@ -147,7 +153,7 @@ export namespace math {
             return Math.hypot(...val0.map((_, i) => val0[i] - val1[i]));
           }),
         ],
-        singleDisplayValue,
+        singleDisplayValueVec,
         this.singleOutVariable(({val0, val1}) => WebglTemplate.source`length(${val0} - ${val1})`),
         <St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: VectorArithmeticNode) => {
           const {val0, val1} = VectorArithmeticNode.inputSlots;
@@ -172,7 +178,7 @@ export namespace math {
             return col.map((_, i) => col[i] * scalar) as Vec3;
           }),
         ],
-        singleDisplayValue,
+        singleDisplayValueVec,
         this.singleOutVariable(({vector, scalar}) => WebglTemplate.source`${vector} * ${scalar}`),
         <St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: VectorArithmeticNode) => {
           const {vector, scalar} = VectorArithmeticNode.inputSlots;
@@ -246,7 +252,7 @@ export namespace math {
       (node, ins) => [
         new OutSocket(node, SocketType.Float, outputLabel, context => calculate(...ins.map(socket => socket.inValue(context)) as {[I in keyof InSockets]: ReturnType<InSockets[I]["inValue"]>})),
       ],
-      singleDisplayValue,
+      singleDisplayValueFloat,
       this.singleOutVariable(getTemplate),
       getMapper(this.inputSlots),
     );
@@ -279,7 +285,7 @@ export namespace math {
               case ins[1]: return <WebglSocketValue<St>>{[webglOuts.val]: val1};
               default: return null;
             }
-          }) as ConstructorParameters<typeof Overload<VectorArithmeticMode>>[5],
+          }) as ConstructorParameters<typeof Overload>[5],
     });
 
     static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticMode, Overload<number>>([
@@ -341,14 +347,14 @@ export namespace math {
         calculate: lerp,
         getTemplate: ({min, max, fac}) => WebglTemplate.source`mix(${min}, ${max}, ${fac})`,
         getMapper: ({min, max, fac}) =>
-            <St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: Node) => {
+            (<St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: ArithmeticNode) => {
               switch (inSocket) {
                 case ins[0]: return <WebglSocketValue<St>>{[webglOuts.val]: min};
                 case ins[1]: return <WebglSocketValue<St>>{[webglOuts.val]: max};
                 case ins[2]: return <WebglSocketValue<St>>{[webglOuts.val]: fac};
                 default: return null;
               }
-            },
+            }) as ConstructorParameters<typeof Overload>[5],
           })],
           
       [ArithmeticMode.MapRange, this.singleOutputOverload({
@@ -363,7 +369,7 @@ export namespace math {
         calculate: (value, srcMin, srcMax, dstMin, dstMax) => lerp(dstMin, dstMax, value / (srcMax - srcMin)),
         getTemplate: ({source, sourceMin, sourceMax, targetMin, targetMax}) => WebglTemplate.source`mix(${targetMin}, ${targetMax}, ${source} / (${sourceMax} - ${sourceMin}))`,
         getMapper: ({source, sourceMin, sourceMax, targetMin, targetMax}) =>
-            <St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: Node) => {
+            (<St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: ArithmeticNode) => {
               switch (inSocket) {
                 case ins[0]: return <WebglSocketValue<St>>{[webglOuts.val]: source};
                 case ins[1]: return <WebglSocketValue<St>>{[webglOuts.val]: sourceMin};
@@ -372,7 +378,7 @@ export namespace math {
                 case ins[4]: return <WebglSocketValue<St>>{[webglOuts.val]: targetMax};
                 default: return null;
               }
-            },
+            }) as ConstructorParameters<typeof Overload>[5],
       })],
       
       [ArithmeticMode.Floor, this.singleOutputOverload({
@@ -383,12 +389,12 @@ export namespace math {
         calculate: Math.floor,
         getTemplate: ({val}) => WebglTemplate.source`floor(${val})`,
         getMapper: ({val}) =>
-            <St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: Node) => {
+            (<St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: ArithmeticNode) => {
               switch (inSocket) {
                 case ins[0]: return <WebglSocketValue<St>>{[webglOuts.val]: val};
                 default: return null;
               }
-            },
+            }) as ConstructorParameters<typeof Overload>[5],
       })],
       
       [ArithmeticMode.Quantize, this.singleOutputOverload({
@@ -400,13 +406,13 @@ export namespace math {
         calculate: (value, nSegments) => Math.floor(value * nSegments) / nSegments,
         getTemplate: ({val, nSegments}) => WebglTemplate.source`floor(${val} * ${nSegments}) / (${nSegments} - 1.)`,
         getMapper: ({val, nSegments}) =>
-            <St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: Node) => {
+            (<St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: ArithmeticNode) => {
               switch (inSocket) {
                 case ins[0]: return <WebglSocketValue<St>>{[webglOuts.val]: val};
                 case ins[1]: return <WebglSocketValue<St>>{[webglOuts.val]: nSegments};
                 default: return null;
               }
-            },
+            }) as ConstructorParameters<typeof Overload>[5],
       })],
     ]));
 
