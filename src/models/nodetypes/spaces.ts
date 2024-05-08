@@ -98,7 +98,7 @@ export namespace spaces {
       z: WebglSlot.in("z"),
     };
 
-    static readonly overloadGroup = new OverloadGroup(new Map<SpaceMode, Overload<cm.Col, TripletSpaceNode>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<SpaceMode, Overload>([
       [SpaceMode.FromVec, new Overload(
         "From vector",
         node => {

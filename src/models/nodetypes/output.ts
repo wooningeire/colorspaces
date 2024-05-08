@@ -18,7 +18,7 @@ export namespace output {
     static readonly id = "cssOutput";
     static readonly outputDisplayType = OutputDisplayType.Css;
 
-    static readonly overloadGroup = new OverloadGroup(new Map<CssOutputMode, Overload<void>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<CssOutputMode, Overload>([
       [CssOutputMode.RgbVector, new Overload(
         "RGB vector",
         node => [
@@ -54,7 +54,7 @@ export namespace output {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "chromaticityPlot";
 
-    static readonly overloadGroup = new OverloadGroup(new Map<ChromaticityPlotMode, Overload<void>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<ChromaticityPlotMode, Overload>([
       [ChromaticityPlotMode.Color, new Overload(
         "From colors",
         node => [

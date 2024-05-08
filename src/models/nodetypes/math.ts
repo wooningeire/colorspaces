@@ -90,7 +90,7 @@ export namespace math {
           }) as ConstructorParameters<typeof Overload>[5],
         );
 
-    static readonly overloadGroup = new OverloadGroup(new Map<VectorArithmeticMode, Overload<Vec3 | number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<VectorArithmeticMode, Overload>([
       [VectorArithmeticMode.Lerp, this.threeValueOverload({
         label: "Lerp",
         operandLabels: ["Start", "End"],
@@ -286,7 +286,7 @@ export namespace math {
           }) as ConstructorParameters<typeof Overload>[5],
     });
 
-    static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticMode, Overload<number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticMode, Overload>([
       [ArithmeticMode.Add, this.singleOutputTwoInputsOverload({
         label: "Add",
         operandLabels: ["Addend", "Addend"],
@@ -526,7 +526,7 @@ export namespace math {
 
     private static readonly inputSlots = WebglSlot.ins("xyz0", "xyz1", "illuminant0", "illuminant1");
 
-    static readonly overloadGroup = new OverloadGroup(new Map<ColorDifferenceMode, Overload<Vec3 | number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<ColorDifferenceMode, Overload>([
       [ColorDifferenceMode.DeltaE1976, new Overload(
         "ΔE* 1976",
         node => [
@@ -783,7 +783,7 @@ export namespace math {
 
     private static readonly inputSlots = WebglSlot.ins("useFloor", "seed", "min", "max");
 
-    static readonly overloadGroup = new OverloadGroup(new Map<RandomFloatMode, Overload<number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<RandomFloatMode, Overload>([
       [RandomFloatMode.FloatSeed, new Overload(
         "Float seed",
         node => [

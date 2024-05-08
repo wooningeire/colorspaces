@@ -65,7 +65,7 @@ export namespace models {
 
     private static readonly inputSlots = WebglSlot.ins("hue", "saturation", "lightness", "rgb");
 
-    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Vec3 | number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
       [RgbMode.ToRgb, new Overload(
         "To RGB",
         node => [
@@ -155,7 +155,7 @@ export namespace models {
 
     private static readonly inputSlots = WebglSlot.ins("hue", "saturation", "value", "rgb");
 
-    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Vec3 | number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
       [RgbMode.ToRgb, new Overload(
         "To RGB",
         node => [
@@ -243,7 +243,7 @@ export namespace models {
 
     private static readonly inputSlots = WebglSlot.ins("hue", "whiteness", "blackness", "rgb");
 
-    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Vec3 | number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
       [RgbMode.ToRgb, new Overload(
         "To RGB",
         node => [
@@ -333,7 +333,7 @@ export namespace models {
 
     private static readonly inputSlots = WebglSlot.ins("cyan", "yellow", "magenta", "rgb");
 
-    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload<Vec3 | number>>([
+    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
       [RgbMode.ToRgb, new Overload(
         "To RGB",
         node => [
