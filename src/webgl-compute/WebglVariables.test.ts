@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { WebglSlot, WebglTemplate, WebglVariables } from "./WebglVariables";
-import { Node, NodeOutputTarget } from "@/models/Node";
+import { Node, NodeOutputTarget, webglOuts } from "@/models/Node";
 
 class WebglConstantNode extends Node {
   webglGetBaseVariables(): WebglVariables {
@@ -55,13 +55,15 @@ describe(WebglVariables.name, () => {
   describe(WebglVariables.prototype.substituteUsingOutputsFrom.name, () => {
     it("fills in slots using another `WebglVariables` object correctly", () => {
       const dummyNode = new WebglConstantNode();
+
+      const outputKey = Symbol("myOutput");
   
       const output = WebglSlot.out("outVector");
       const input = WebglSlot.in("inVector");
   
       const src = WebglVariables.template`vec3 ${output} = vec3(1.5, 2.9, 4.7);`({
         nodeOutVariables: {
-          "myOutput": WebglTemplate.source`${output}`,
+          [outputKey]: WebglTemplate.source`${output}`,
         },
       });
   
@@ -71,8 +73,8 @@ describe(WebglVariables.name, () => {
         src,
         NodeOutputTarget.NodeDisplay(dummyNode),
         {
-          "myOutput": input,
-        }
+          [outputKey]: input,
+        },
       );
   
       expect(newVariables.template.toString()).toMatch(/^vec3 anotherVector = 2. \+ (?:\w|\d|_)+;$/);

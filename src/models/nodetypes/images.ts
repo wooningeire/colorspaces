@@ -248,6 +248,7 @@ uniform float ${height};`,
     private static readonly inputSlots = WebglSlot.ins("x", "y");
     
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
+
       const {x, y} = SampleNode.inputSlots;
 
       const evaluateInput = WebglSlot.out("evaluateOutput");
@@ -256,49 +257,70 @@ uniform float ${height};`,
         case St.ColorCoords: {
           const color = WebglSlot.out("color");
 
-          return WebglVariables.template`Color ${color} = ${evaluateInput}(vec2(${x}, ${y}))`({
-            socketOutVariables: new Map([
-              [this.outs[0], {
-                [webglOuts.val]: WebglTemplate.source`${color}.val`,
-                [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
-                [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
-              }],
-            ]),
-            functionInputDependencies: new Map([
-              [WebglTemplate.source`${evaluateInput}`, this.ins[0].link.src],
-            ]),
-          });
+          const socketOutVariables = new Map([
+            [this.outs[0], {
+              [webglOuts.val]: WebglTemplate.source`${color}.val`,
+              [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
+              [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
+            }],
+          ]);
+
+          return this.ins[0].hasLinks
+              ? WebglVariables.template`Color ${color} = ${evaluateInput}(vec2(${x}, ${y}));`({
+                socketOutVariables,
+                functionInputDependencies: new Map([
+                  [WebglTemplate.slot(evaluateInput), this.ins[0].link.src],
+                ]),
+              })
+
+              : WebglVariables.template`Color ${color} = Color(vec3(0., 0., 0.), illuminant2_D65, vec3(0., 0., 0.));`({
+                socketOutVariables,
+              });
         }
 
         case St.Vector:
         case St.VectorOrColor: {
           const val = WebglSlot.out("val");
 
-          return WebglVariables.template`vec3 ${val} = ${evaluateInput}(vec2(${x}, ${y}))`({
-            socketOutVariables: new Map([
-              [this.outs[0], {
-                [webglOuts.val]: WebglTemplate.source`${val}`,
-              }],
-            ]),
-            functionInputDependencies: new Map([
-              [WebglTemplate.source`${evaluateInput}`, this.ins[0].link.src],
-            ]),
-          });
+          const socketOutVariables = new Map([
+            [this.outs[0], {
+              [webglOuts.val]: WebglTemplate.slot(val),
+            }],
+          ]);
+
+          return this.ins[0].hasLinks
+              ? WebglVariables.template`vec3 ${val} = ${evaluateInput}(vec2(${x}, ${y}));`({
+                socketOutVariables,
+                functionInputDependencies: new Map([
+                  [WebglTemplate.slot(evaluateInput), this.ins[0].link.src],
+                ]),
+              })
+
+              : WebglVariables.template`vec3 ${val} = vec3(0., 0., 0.);`({
+                socketOutVariables,
+              });
         }
 
         case St.Float: {
           const val = WebglSlot.out("val");
 
-          return WebglVariables.template`float ${val} = ${evaluateInput}(vec2(${x}, ${y}))`({
-            socketOutVariables: new Map([
-              [this.outs[0], {
-                [webglOuts.val]: WebglTemplate.source`${val}`,
-              }],
-            ]),
-            functionInputDependencies: new Map([
-              [WebglTemplate.source`${evaluateInput}`, this.ins[0].link.src],
-            ]),
-          });
+          const socketOutVariables = new Map([
+            [this.outs[0], {
+              [webglOuts.val]: WebglTemplate.slot(val),
+            }],
+          ]);
+
+          return this.ins[0].hasLinks
+              ? WebglVariables.template`float ${val} = ${evaluateInput}(vec2(${x}, ${y}));`({
+                socketOutVariables,
+                functionInputDependencies: new Map([
+                  [WebglTemplate.slot(evaluateInput), this.ins[0].link.src],
+                ]),
+              })
+
+              : WebglVariables.template`float ${val} = 0.;`({
+                socketOutVariables,
+              });
         }
 
         default:

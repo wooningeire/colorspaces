@@ -1,4 +1,4 @@
-import { InSocket, Node, NodeOutputTarget, NodeUpdateSource, OutSocket, SocketType, webglOuts } from "@/models/Node";
+import { InSocket, Node, NodeOutputTarget, NodeUpdateSource, OutSocket, Socket, SocketType, webglOuts } from "@/models/Node";
 import { webglDeclarations } from "@/models/colormanagement";
 import { objectSymbolEntries, objectSymbolValues } from "@/util";
 
@@ -207,8 +207,8 @@ type UniformInitializer = {
   dependencyNodes: Node[],
 };
 
-type Outputs = Partial<Record<typeof webglOuts[keyof typeof webglOuts], WebglTemplate>>;
-type OutputMapping = Partial<Record<typeof webglOuts[keyof typeof webglOuts], WebglSlot>>;
+type Outputs = Partial<Record<symbol, WebglTemplate>>;
+type OutputMapping = Partial<Record<symbol, WebglSlot>>;
 
 /** Stores a chunk of GLSL code with macro-like slots for variables. */
 export class WebglVariables {
@@ -354,9 +354,6 @@ void main() {
    * @param sourceVariableSlotMapping Map that tells into which input slots in `this` to route the value of each output
    * slot in the `source`
    * @param keepSourcePrelude 
-   * @param includeUnmappedVariables Whether slot names that are not included in `sourceVariableSlotMapping` will use
-   * their original names from `source`'s `outVariables` list. If `false`, unmapped variables will not be included in
-   * the new `WebglVariables` object
    * @returns 
    */
   substituteUsingOutputsFrom(
@@ -364,30 +361,30 @@ void main() {
     outputTarget: NodeOutputTarget,
     sourceVariableSlotMapping: OutputMapping,
     keepSourcePrelude: boolean=false,
-    includeUnmappedVariables: boolean=false,
   ) {
-    const substitutions = new Map<WebglSlot, string>();
-    const remainingSubstitutions = new Map<WebglSlot, string>(
-      includeUnmappedVariables
-          ? Object.keys(source.outVariablesFor(outputTarget))
-              .map(identifier => [this.template.getInputSlot(identifier), identifier])
-          : []
-    );
-    for (const [key, slot] of objectSymbolEntries(sourceVariableSlotMapping)) {
-      const template = source.outVariablesFor(outputTarget)[key];
-      if (!template) {
-        throw new TypeError(`Attempted to map an output variable "${key.description}", which does not exist on the source's outputs`);
-      }
-
-      substitutions.set(slot as WebglSlot, template.toString());
-      remainingSubstitutions.delete(slot as WebglSlot);
-    }
+    const substitutions = WebglVariables.substitutionsFromOutVariables(source.outVariablesFor(outputTarget), sourceVariableSlotMapping);
 
     return keepSourcePrelude
         ? this.prependPrelude(source.preludeTemplate)
             .prependUniforms(source.uniforms)
             .substitute(substitutions)
         : this.substitute(substitutions);
+  }
+
+  private static substitutionsFromOutVariables(
+    sourceOutVariables: Outputs,
+    sourceVariableSlotMapping: OutputMapping,
+  ) {
+    const substitutions = new Map<WebglSlot, string>();
+    for (const [key, slot] of objectSymbolEntries(sourceVariableSlotMapping)) {
+      const template = sourceOutVariables[key];
+      if (!template) {
+        throw new TypeError(`Attempted to map an output variable "${key.description}", which does not exist on the source's outputs`);
+      }
+
+      substitutions.set(slot as WebglSlot, template.toString());
+    }
+    return substitutions;
   }
 
   prependPrelude(prelude: WebglTemplate) {
@@ -426,8 +423,8 @@ void main() {
   private outputSlots() {
     return new Set<WebglSlot>([
       ...this.template.getOutputSlots(),
-      ...[...this.socketOutVariables.values()].flatMap(record => [...objectSymbolValues(record)].flatMap(template => template.getOutputSlots())),
-      ...[...objectSymbolValues(this.nodeOutVariables)].flatMap(template => template.getOutputSlots()),
+      ...[...this.socketOutVariables.values()].flatMap(record => [...objectSymbolValues(record)].flatMap(template => template!.getOutputSlots())),
+      ...[...objectSymbolValues(this.nodeOutVariables)].flatMap(template => template!.getOutputSlots()),
       ...[...this.uniforms.keys()].flatMap(template => template.getOutputSlots()),
       ...[...this.functionInputDependencies.keys()].flatMap(template => template.getOutputSlots()),
     ]);
@@ -452,8 +449,8 @@ void main() {
 
       for (const [functionName, srcSocket] of variables.functionInputDependencies) {
         functionDependencySockets.add(srcSocket);
+        const preludeFunction = this.getAuxiliaryFunction(srcSocket, functionName.toString(), segments, dependencyIndices.get(srcSocket.node)!);
 
-        const preludeFunction = this.getTranspiledAuxiliaryFunction(srcSocket, functionName.toString(), segments, dependencyIndices.get(srcSocket.node)!);
         variables = variables.prependPrelude(preludeFunction);
       }
 
@@ -485,6 +482,56 @@ void main() {
     };
   }
 
+  private static getAuxiliaryFunctionTemplates(socket: Socket): {
+    outputTypeValue: string,
+    outputVariables: WebglVariables,
+    mapping: OutputMapping,
+  } {
+    switch (socket.type) {
+      case SocketType.ColorCoords: {
+        const {val, illuminant, xyz} = WebglSlot.ins("val", "illuminant", "xyz");
+
+        return {
+          outputTypeValue: "Color",
+          outputVariables: WebglVariables.template`Color(${val}, ${illuminant}, ${xyz})`(),
+          mapping: {
+            [webglOuts.val]: val,
+            [webglOuts.illuminant]: illuminant,
+            [webglOuts.xyz]: xyz,
+          },
+        };
+      }
+
+      case SocketType.Vector:
+      case SocketType.VectorOrColor: {
+        const val = WebglSlot.in("val");
+
+        return {
+          outputTypeValue: "vec3",
+          outputVariables: WebglVariables.template`${val}`(),
+          mapping: {
+            [webglOuts.val]: val,
+          },
+        };
+      }
+
+      case SocketType.Float: {
+        const val = WebglSlot.in("val");
+
+        return {
+          outputTypeValue: "float",
+          outputVariables: WebglVariables.template`${val}`(),
+          mapping: {
+            [webglOuts.val]: val,
+          },
+        };
+      }
+      
+      default:
+        throw new Error("unsupported type");
+    }
+  }
+
   /**
    * Using precomputed segments from `getTranspiledNodeDepencies`, generates a `WebglTemplate` that provides an
    * auxiliary function for the node specified by `nodeIndex`
@@ -494,29 +541,8 @@ void main() {
    * @param nodeIndex 
    * @returns 
    */
-  private static getTranspiledAuxiliaryFunction(socket: OutSocket, functionNameValue: string, segments: WebglVariables[], nodeIndex: number): WebglTemplate {
-    let outputTypeValue: string;
-    let outputVariables: WebglVariables;
-    switch (socket.type) {
-      case SocketType.ColorCoords:
-        outputTypeValue = "Color";
-        outputVariables = WebglVariables.template`Color(${WebglSlot.in("val")}, ${WebglSlot.in("illuminant")}, ${WebglSlot.in("xyz")})`();
-        break;
-
-      case SocketType.Vector:
-      case SocketType.VectorOrColor:
-        outputTypeValue = "vec3";
-        outputVariables = WebglVariables.template`${WebglSlot.in("val")}`();
-        break;
-
-      case SocketType.Float:
-        outputTypeValue = "float";
-        outputVariables = WebglVariables.template`${WebglSlot.in("val")}`();
-        break;
-      
-      default:
-        throw new Error("unsupported type");
-    }
+  private static getAuxiliaryFunction(socket: OutSocket, functionNameValue: string, segments: WebglVariables[], nodeIndex: number): WebglTemplate {
+    const {outputTypeValue, outputVariables, mapping} = this.getAuxiliaryFunctionTemplates(socket);
 
     const relevantSegments = segments.slice(0, nodeIndex + 1);
 
@@ -525,7 +551,12 @@ void main() {
         [main, relevantSegments.map(segment => segment.template.toString())
             .join("\n\n")],
         // no prelude/uniforms because uniforms will be shared with the primary function
-        [functionOutput, outputVariables.substituteUsingOutputsFrom(segments[nodeIndex], NodeOutputTarget.OutSocket(socket), {}, false, true).template.toString()],
+        [functionOutput, outputVariables.substituteUsingOutputsFrom(
+          segments[nodeIndex],
+          NodeOutputTarget.OutSocket(socket),
+          mapping,
+          false,
+        ).template.toString()],
         [outputType, outputTypeValue],
         [functionName, functionNameValue],
       ]),
