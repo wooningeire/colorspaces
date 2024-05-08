@@ -1,9 +1,9 @@
 import { Vec3 } from "@/util";
-import { Socket, SocketFlag, NodeEvalContext, OutputDisplayType, SocketOptions, InSocket, OutSocket, WebglSocketValue, NodeOutputTarget, webglOuts, SocketType } from "../Node";
+import { SocketFlag, NodeEvalContext, OutputDisplayType, SocketOptions, InSocket, OutSocket, WebglSocketOutputMapping, webglOuts, SocketType, InSocketOptions } from "../Node";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 import { StringKey } from "@/strings";
-import { WebglOutputMapping, WebglOutputs, WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
+import { WebglOutputs, WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 
 
 
@@ -98,7 +98,7 @@ export namespace spaces {
       z: WebglSlot.in("z"),
     };
 
-    static readonly overloadGroup = new OverloadGroup(new Map<SpaceMode, Overload>([
+    static readonly overloadGroup = new OverloadGroup(new Map<SpaceMode, Overload<TripletSpaceNode>>([
       [SpaceMode.FromVec, new Overload(
         "From vector",
         node => {
@@ -106,7 +106,29 @@ export namespace spaces {
           if (node.includeWhitePoint) {
             sockets.push(node.illuminantSocket = new InSocket(node, SocketType.Dropdown, "White point", whitePointSocketOptions));
           }
-          node.colorInputSocket = node.constructInSocket(node.inSocketOptions());
+
+          const {val, originalIlluminant, xyz} = TripletSpaceNode.inputSlots;
+          node.colorInputSocket = node.constructInSocket({
+            webglGetOutputMapping: socket => () => {
+              switch (socket.effectiveType()) {
+                case SocketType.ColorCoords:
+                  return {
+                    [webglOuts.val]: val,
+                    [webglOuts.illuminant]: originalIlluminant,
+                    [webglOuts.xyz]: xyz,
+                  };
+                
+                case SocketType.Vector:
+                  return {
+                    [webglOuts.val]: val,
+                  };
+    
+                default:
+                  return null;
+              }
+            },
+            ...node.inSocketOptions(),
+          });
           sockets.push(node.colorInputSocket);
 
           return sockets;
@@ -189,34 +211,19 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
             });
           }
         },
-        <St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: TripletSpaceNode) => {
-          const {val, originalIlluminant, xyz} = TripletSpaceNode.inputSlots;
-
-          switch (inSocket.effectiveType()) {
-            case SocketType.ColorCoords:
-              return <WebglSocketValue<St>>{
-                [webglOuts.val]: val,
-                [webglOuts.illuminant]: originalIlluminant,
-                [webglOuts.xyz]: xyz,
-              };
-            
-            case SocketType.Vector:
-              return <WebglSocketValue<St>>{
-                [webglOuts.val]: val,
-              };
-
-            default:
-              return null;
-          }
-        },
       )],
 
       [SpaceMode.FromValues, new Overload(
         "From values",
         node => {
+          const {x, y, z} = this.inputSlots;
+          const slots = [x, y, z];
+
           const socketOptions = node.inSocketOptions();
-          const individualSocketOptions = [0, 1, 2].map(i =>{
-            const floatSocketOptions: SocketOptions<SocketType.Float> = {};
+          const individualSocketOptions = new Array(3).fill(0).map((_, i) =>{
+            const floatSocketOptions: InSocketOptions<SocketType.Float> = {
+              webglOutputMapping: {[webglOuts.val]: slots[i]}
+            };
             for (const [key, value] of Object.entries(socketOptions)) {
               const newKey = key === "fieldText" ? "socketDesc" : key;
 
@@ -227,13 +234,13 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
 
           const sockets: InSocket[] = [];
           if (node.includeWhitePoint) {
-            sockets.push(node.illuminantSocket = new InSocket(node, Socket.Type.Dropdown, "White point", whitePointSocketOptions));
+            sockets.push(node.illuminantSocket = new InSocket(node, SocketType.Dropdown, "White point", whitePointSocketOptions));
           }
           sockets.push(...(node.valuesSockets = node.componentLabels.map((label, i) => new InSocket(node, SocketType.Float, label, individualSocketOptions[i]))));
           return sockets;
         },
         node => [
-          new OutSocket(node, Socket.Type.ColorCoords, "Color", context => node.computeColor(context, false)),
+          new OutSocket(node, SocketType.ColorCoords, "Color", context => node.computeColor(context, false)),
         ],
         (ins, outs, context, node) => ({
           values: node.computeColor(context, false),
@@ -273,16 +280,6 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
             ])
           });
         },
-        <St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: TripletSpaceNode) => {
-          const {x, y, z} = TripletSpaceNode.inputSlots;
-
-          switch (inSocket) {
-            case node.valuesSockets[0]: return <WebglSocketValue<St>>{[webglOuts.val]: x};
-            case node.valuesSockets[1]: return <WebglSocketValue<St>>{[webglOuts.val]: y};
-            case node.valuesSockets[2]: return <WebglSocketValue<St>>{[webglOuts.val]: z};
-            default: return null;
-          }
-        },
       )],
     ]));
 
@@ -300,8 +297,8 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return [];
     }
 
-    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "Vector or color");
+    constructInSocket(socketOptions: InSocketOptions<SocketType.VectorOrColor>) {
+      return new InSocket(this, SocketType.VectorOrColor, "Vector or color");
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {};
@@ -347,7 +344,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return ["R", "G", "B"];
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "RGB or color", socketOptions).flag(SocketFlag.Rgb);
+      return new InSocket(this, SocketType.VectorOrColor, "RGB or color", socketOptions).flag(SocketFlag.Rgb);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -406,7 +403,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.Xyz;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "XYZ or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "XYZ or color", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -442,11 +439,11 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.Xyy;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "xyY or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "xyY or color", socketOptions);
       // ...(this.primariesSockets = [
-      // 	new InSocket(this, Socket.Type.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
-      // 	new InSocket(this, Socket.Type.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
-      // 	new InSocket(this, Socket.Type.Float, "Y (luminance)", true, {defaultValue: 1}),
+      // 	new InSocket(this, SocketType.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
+      // 	new InSocket(this, SocketType.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
+      // 	new InSocket(this, SocketType.Float, "Y (luminance)", true, {defaultValue: 1}),
       // ]),
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
@@ -482,7 +479,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.Lab;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "L*a*b* or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "L*a*b* or color", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -513,7 +510,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.LchAb;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "L*C*h or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "L*C*h or color", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -558,7 +555,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.Luv;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "L*u*v* or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "L*u*v* or color", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -589,7 +586,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.LchUv;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "L*C*h or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "L*C*h or color", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -634,7 +631,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.Oklab;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "Lab or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "Lab or color", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -669,7 +666,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.OklchAb;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "LCh or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "LCh or color", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {

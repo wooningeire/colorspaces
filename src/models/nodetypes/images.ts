@@ -1,6 +1,6 @@
-import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, OutSocket, Tree, WebglSocketValue, webglOuts} from "../Node";
+import { Node, SocketType, AxisNode, NodeEvalContext, InSocket, OutSocket, webglOuts } from "../Node";
 
-import {Vec2, Vec3, lerp} from "@/util";
+import { Vec3, lerp } from "@/util";
 import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
 import { WebglTemplate, WebglSlot, WebglVariables } from "@/webgl-compute/WebglVariables";
 
@@ -9,18 +9,22 @@ export namespace images {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "gradient";
 
-    private readonly axisSocket: InSocket<St.Dropdown>;
-    private readonly boundsSockets: InSocket<St.Float>[];
+    private readonly axisSocket: InSocket<SocketType.Dropdown>;
+    private readonly boundsSockets: InSocket<SocketType.Float>[];
 
     get axes() {
       return [this.whichDimension];
     }
 
+    private static inputSlots = WebglSlot.ins("from", "to");
+
     constructor() {
       super();
 
+      const {from, to} = GradientNode.inputSlots;
+
       this.ins.push(
-        (this.axisSocket = new InSocket(this, Socket.Type.Dropdown, "Axis", {
+        (this.axisSocket = new InSocket(this, SocketType.Dropdown, "Axis", {
           showSocket: false,
           options: [
             {text: "X", value: "0"},
@@ -30,22 +34,24 @@ export namespace images {
           valueChangeRequiresShaderReload: true,
         })),
         ...(this.boundsSockets = [
-          new InSocket(this, Socket.Type.Float, "From", {
+          new InSocket(this, SocketType.Float, "From", {
             sliderProps: {
               hasBounds: false,
             },
+            webglOutputMapping: {[webglOuts.val]: from},
           }),
-          new InSocket(this, Socket.Type.Float, "To", {
+          new InSocket(this, SocketType.Float, "To", {
             defaultValue: 1,
             sliderProps: {
               hasBounds: false,
             },
+            webglOutputMapping: {[webglOuts.val]: to},
           }),
         ]),
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Float, "Values", context => {
+        new OutSocket(this, SocketType.Float, "Values", context => {
           const fac = context.coords?.[this.whichDimension] ?? 0;
           const value0 = this.boundsSockets[0].inValue(context);
           const value1 = this.boundsSockets[1].inValue(context);
@@ -57,11 +63,6 @@ export namespace images {
     get whichDimension() {
       return Number(this.axisSocket.inValue());
     }
-
-    private static inputSlots = {
-      from: WebglSlot.in("from"),
-      to: WebglSlot.in("to"),
-    };
 
     webglGetBaseVariables(context: NodeEvalContext={}): WebglVariables {
       const val = WebglSlot.out("val");
@@ -77,14 +78,8 @@ export namespace images {
       });
     }
 
-    webglGetMapping<T extends St>(inSocket: InSocket<any>) {
-      const {from, to} = GradientNode.inputSlots;
-
-      switch (inSocket) {
-        case this.boundsSockets[0]: return <WebglSocketValue<T>>{[webglOuts.val]: from};
-        case this.boundsSockets[1]: return <WebglSocketValue<T>>{[webglOuts.val]: to};
-        default: return null;
-      }
+    webglNodeOutputMapping() {
+      return null;
     }
   }
 
@@ -92,8 +87,8 @@ export namespace images {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "imageFile";
 
-    private readonly imageSocket: InSocket<St.Image>;
-    private readonly normalizeCoordinatesSocket: InSocket<St.Bool>
+    private readonly imageSocket: InSocket<SocketType.Image>;
+    private readonly normalizeCoordinatesSocket: InSocket<SocketType.Bool>
 
     get axes() {
       return [0, 1];
@@ -103,15 +98,15 @@ export namespace images {
       super();
 
       this.ins.push(
-        (this.imageSocket = new InSocket(this, St.Image, "File", {showSocket: false})),
-        (this.normalizeCoordinatesSocket = new InSocket(this, St.Bool, "Normalize coordinates", {
+        (this.imageSocket = new InSocket(this, SocketType.Image, "File", {showSocket: false})),
+        (this.normalizeCoordinatesSocket = new InSocket(this, SocketType.Bool, "Normalize coordinates", {
           showSocket: false,
           defaultValue: true,
         })),
       );
 
       this.outs.push(
-        new OutSocket(this, St.Vector, "RGB", context => {
+        new OutSocket(this, SocketType.Vector, "RGB", context => {
           const imageData = this.imageSocket.inValue(context);
           if (!imageData) return [0, 0, 0] as Vec3;
 
@@ -124,7 +119,7 @@ export namespace images {
   
           return colorData as Vec3;
         }),
-        new OutSocket(this, St.Float, "Alpha", context => {
+        new OutSocket(this, SocketType.Float, "Alpha", context => {
           const imageData = this.imageSocket.inValue(context);
           if (!imageData) return 0;
 
@@ -134,10 +129,10 @@ export namespace images {
               ? imageData.data[index + 3] / 255
               : 0;
         }),
-        new OutSocket(this, St.Float, "Width", context => this.imageSocket.inValue(context)?.width ?? 0, {
+        new OutSocket(this, SocketType.Float, "Width", context => this.imageSocket.inValue(context)?.width ?? 0, {
           constant: true,
         }),
-        new OutSocket(this, St.Float, "Height", context => this.imageSocket.inValue(context)?.height ?? 0, {
+        new OutSocket(this, SocketType.Float, "Height", context => this.imageSocket.inValue(context)?.height ?? 0, {
           constant: true,
         }),
       );
@@ -216,7 +211,7 @@ uniform float ${height};`,
       });
     }
 
-    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+    webglNodeOutputMapping() {
       return null;
     }
   }
@@ -225,38 +220,39 @@ uniform float ${height};`,
     static readonly TYPE = Symbol(this.name);
     static readonly id = "sample";
 
-    private readonly coordsSockets: [InSocket<St.Float>, InSocket<St.Float>];
+    private readonly coordsSockets: [InSocket<SocketType.Float>, InSocket<SocketType.Float>];
+
+    private static readonly inputSlots = WebglSlot.ins("x", "y");
 
     constructor() {
       super();
 
+      const {x, y} = SampleNode.inputSlots;
+
       this.ins.push(
-        new InSocket(this, St.Any, "Source", {constant: true, ...volatileInSocketOptions(this.ins, this.outs)}),
+        new InSocket(this, SocketType.Any, "Source", {constant: true, ...volatileInSocketOptions(this.ins, this.outs)}),
         ...(this.coordsSockets = [
-          new InSocket(this, St.Float, "X"),
-          new InSocket(this, St.Float, "Y"),
+          new InSocket(this, SocketType.Float, "X", {webglOutputMapping: {[webglOuts.val]: x}}),
+          new InSocket(this, SocketType.Float, "Y", {webglOutputMapping: {[webglOuts.val]: y}}),
         ])
       );
 
       this.outs.push(
-        new OutSocket(this, St.Any, "Output", context => {
+        new OutSocket(this, SocketType.Any, "Output", context => {
           return this.ins[0].inValue({
             coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
           });
         }, {constant: true, ...volatileOutSocketOptions(this.ins, this.outs)}),
       );
     }
-
-    private static readonly inputSlots = WebglSlot.ins("x", "y");
     
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
-
       const {x, y} = SampleNode.inputSlots;
 
       const evaluateInput = WebglSlot.out("evaluateOutput");
 
       switch (this.outs[0].type) {
-        case St.ColorCoords: {
+        case SocketType.ColorCoords: {
           const color = WebglSlot.out("color");
 
           const socketOutVariables = new Map([
@@ -280,8 +276,8 @@ uniform float ${height};`,
               });
         }
 
-        case St.Vector:
-        case St.VectorOrColor: {
+        case SocketType.Vector:
+        case SocketType.VectorOrColor: {
           const val = WebglSlot.out("val");
 
           const socketOutVariables = new Map([
@@ -303,7 +299,7 @@ uniform float ${height};`,
               });
         }
 
-        case St.Float: {
+        case SocketType.Float: {
           const val = WebglSlot.out("val");
 
           const socketOutVariables = new Map([
@@ -327,16 +323,6 @@ uniform float ${height};`,
 
         default:
           throw new Error("type not acceptable");
-      }
-    }
-
-    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
-      const {x, y} = SampleNode.inputSlots;
-
-      switch (inSocket) {
-        case this.ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: x};
-        case this.ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: y};
-        default: return null;
       }
     }
   }

@@ -1,6 +1,5 @@
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, InSocket, OutSocket, WebglSocketValue, webglOuts} from "../Node";
+import { Node, SocketType, NodeEvalContext, InSocket, OutSocket, WebglSocketOutputMapping, webglOuts } from "../Node";
 
-import {Vec2} from "@/util";
 import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
 import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 
@@ -11,13 +10,38 @@ export namespace organization {
     
     constructor() {
       super();
+      
+      const {val, illuminant, xyz} = RerouteNode.inputSlots;
 
       this.ins.push(
-        new InSocket(this, St.Any, "", volatileInSocketOptions(this.ins, this.outs)),
+        new InSocket(this, SocketType.Any, "", {
+          ...volatileInSocketOptions(this.ins, this.outs),
+          webglGetOutputMapping: socket => () => {
+            switch (socket.effectiveType()) {
+              case SocketType.Float:
+              case SocketType.Integer:
+              case SocketType.Vector:
+              case SocketType.Bool:
+                return {
+                  [webglOuts.val]: val,
+                };
+      
+              case SocketType.ColorCoords:
+                return {
+                  [webglOuts.val]: val,
+                  [webglOuts.illuminant]: illuminant,
+                  [webglOuts.xyz]: xyz,
+                };
+              
+              default:
+                return null;
+            }
+          },
+        }),
       );
 
       this.outs.push(
-        new OutSocket(this, St.Any, "", context => this.ins[0].inValue(context), volatileOutSocketOptions(this.ins, this.outs)),
+        new OutSocket(this, SocketType.Any, "", context => this.ins[0].inValue(context), volatileOutSocketOptions(this.ins, this.outs)),
       );
 
       this.width = 15;
@@ -31,17 +55,17 @@ export namespace organization {
       let outVars: Record<string, WebglTemplate>;
 
       switch (this.outs[0].type) {
-        case St.Float:
-        case St.Integer:
-        case St.Vector:
-        case St.Bool:
+        case SocketType.Float:
+        case SocketType.Integer:
+        case SocketType.Vector:
+        case SocketType.Bool:
           outVars = {
             [webglOuts.val]: WebglTemplate.slot(val),
           };
           break;
 
-        case St.ColorCoords:
-        case St.VectorOrColor:
+        case SocketType.ColorCoords:
+        case SocketType.VectorOrColor:
           outVars = {
             [webglOuts.val]: WebglTemplate.slot(val),
             [webglOuts.illuminant]: WebglTemplate.slot(illuminant),
@@ -58,30 +82,6 @@ export namespace organization {
           [this.outs[0], outVars],
         ]),
       });
-    }
-
-    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
-      const {val, illuminant, xyz} = RerouteNode.inputSlots;
-
-      switch (inSocket.effectiveType()) {
-        case St.Float:
-        case St.Integer:
-        case St.Vector:
-        case St.Bool:
-          return <WebglSocketValue<T>>{
-            [webglOuts.val]: val,
-          };
-
-        case St.ColorCoords:
-          return <WebglSocketValue<T>>{
-            [webglOuts.val]: val,
-            [webglOuts.illuminant]: illuminant,
-            [webglOuts.xyz]: xyz,
-          };
-        
-        default:
-          return null;
-      }
     }
 
     /*
@@ -102,7 +102,7 @@ export namespace organization {
 
       this.outs[0].links.forEach(link => tree.unlink(link));
       this.outs.pop();
-      this.ins[0].type = St.Any;
+      this.ins[0].type = SocketType.Any;
     }
     */
   }

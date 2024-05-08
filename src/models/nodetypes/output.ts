@@ -1,5 +1,5 @@
 import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, WebglSocketValue, webglOuts} from "../Node";
+import { Node, SocketType, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, webglOuts } from "../Node";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 
@@ -22,7 +22,7 @@ export namespace output {
       [CssOutputMode.RgbVector, new Overload(
         "RGB vector",
         node => [
-          new InSocket(node, Socket.Type.Vector, "RGB").flag(SocketFlag.Rgb),
+          new InSocket(node, SocketType.Vector, "RGB").flag(SocketFlag.Rgb),
         ],
         node => [],
         (ins, outs, context) => ({
@@ -34,7 +34,7 @@ export namespace output {
       [CssOutputMode.Color, new Overload(
         "Color",
         node => [
-          new InSocket(node, Socket.Type.ColorCoords, "Color"),
+          new InSocket(node, SocketType.ColorCoords, "Color"),
         ],
         node => [],
         (ins, outs, context) => ({
@@ -58,7 +58,7 @@ export namespace output {
       [ChromaticityPlotMode.Color, new Overload(
         "From colors",
         node => [
-          new InSocket(node, Socket.Type.ColorCoords, "Colors"),
+          new InSocket(node, SocketType.ColorCoords, "Colors"),
         ],
         node => [],
       )],
@@ -66,10 +66,10 @@ export namespace output {
       [ChromaticityPlotMode.Xy, new Overload(
         "From xy",
         node => [
-          new InSocket(node, Socket.Type.Float, "x", {
+          new InSocket(node, SocketType.Float, "x", {
             defaultValue: cm.illuminantsXy["2deg"]["D65"][0],
           }),
-          new InSocket(node, Socket.Type.Float, "y", {
+          new InSocket(node, SocketType.Float, "y", {
             defaultValue: cm.illuminantsXy["2deg"]["D65"][1],
           }),
         ],
@@ -88,25 +88,39 @@ export namespace output {
     static readonly id = "imagePlot";
     static readonly outputDisplayType = OutputDisplayType.Custom;
 
-    readonly normalizeCoordsSocket: InSocket<St.Bool>;
-    readonly alphaSocket: InSocket<St.Float>;
-    readonly widthSocket: InSocket<St.Float>;
-    readonly heightSocket: InSocket<St.Float>;
+    readonly normalizeCoordsSocket: InSocket<SocketType.Bool>;
+    readonly alphaSocket: InSocket<SocketType.Float>;
+    readonly widthSocket: InSocket<SocketType.Float>;
+    readonly heightSocket: InSocket<SocketType.Float>;
 
     width = 240;
 
+    private static readonly inputSlots = WebglSlot.ins("xyz", "illuminant", "val", "alpha");
+
     constructor() {
       super();
+
+      const {xyz, illuminant, val, alpha} = ImagePlotNode.inputSlots;
+
       this.ins.push(
-        (this.normalizeCoordsSocket = new InSocket(this, St.Bool, "Normalize coordinates", {
+        (this.normalizeCoordsSocket = new InSocket(this, SocketType.Bool, "Normalize coordinates", {
           showSocket: false,
           defaultValue: true,
         })),
-        new InSocket(this, St.ColorCoords, "Colors"),
-        (this.alphaSocket = new InSocket(this, St.Float, "Alpha", {
+        new InSocket(this, SocketType.ColorCoords, "Colors", {
+          webglOutputMapping: {
+            [webglOuts.xyz]: xyz,
+            [webglOuts.illuminant]: illuminant,
+            [webglOuts.val]: val,
+          },
+        }),
+        (this.alphaSocket = new InSocket(this, SocketType.Float, "Alpha", {
           defaultValue: 1,
+          webglOutputMapping: {
+            [webglOuts.val]: alpha,
+          },
         })),
-        (this.widthSocket = new InSocket(this, St.Float, "Width", {
+        (this.widthSocket = new InSocket(this, SocketType.Float, "Width", {
           defaultValue: 42,
           constant: true,
           sliderProps: {
@@ -115,7 +129,7 @@ export namespace output {
             min: 1,
           },
         })),
-        (this.heightSocket = new InSocket(this, St.Float, "Height", {
+        (this.heightSocket = new InSocket(this, SocketType.Float, "Height", {
           defaultValue: 42,
           constant: true,
           sliderProps: {
@@ -135,8 +149,6 @@ export namespace output {
       };
     }
 
-    private static readonly inputSlots = WebglSlot.ins("xyz", "illuminant", "val", "alpha");
-
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
       const {xyz, illuminant, val, alpha} = ImagePlotNode.inputSlots;
 
@@ -149,24 +161,6 @@ export namespace output {
         },
       })
     }
-
-    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
-      const {xyz, illuminant, val, alpha} = ImagePlotNode.inputSlots;
-
-      switch (inSocket) {
-        case this.ins[1]: return <WebglSocketValue<T>>{
-          [webglOuts.xyz]: xyz,
-          [webglOuts.illuminant]: illuminant,
-          [webglOuts.val]: val,
-        }; 
-        case this.ins[2]: return <WebglSocketValue<T>>{
-          [webglOuts.val]: alpha,
-        };
-        case this.ins[3]: return <WebglSocketValue<T>>{}; 
-        case this.ins[4]: return <WebglSocketValue<T>>{}; 
-        default: return null;
-      }
-    }
   }
 
   export class SampleHexCodesNode extends Node {
@@ -174,14 +168,14 @@ export namespace output {
     static readonly id = "sampleHexCodes";
     static readonly outputDisplayType = OutputDisplayType.Custom;
 
-    readonly colorsSocket: InSocket<St.ColorCoords>;
+    readonly colorsSocket: InSocket<SocketType.ColorCoords>;
 
     width = 600;
 
     constructor() {
       super();
       this.ins.push(
-        (this.colorsSocket = new InSocket(this, St.ColorCoords, "Colors")),
+        (this.colorsSocket = new InSocket(this, SocketType.ColorCoords, "Colors")),
       );
     }
   }

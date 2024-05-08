@@ -127,18 +127,23 @@ export abstract class Node {
     readonly label: StringKey | string=new.target.LABEL,
   ) {}
 
-  /** Constructs a `WebglVariables` object, where slots that can be filled by its socket field values have been filled
-   * 
+  /** Constructs a `WebglVariables` object whose slots are prefilled with input socket field values if applicable
   */
   webglOutput(context: NodeEvalContext={}): WebglVariables {
     let variables = this.webglGetBaseVariables();
     for (const inSocket of this.ins) {
       if (!inSocket.usesFieldValue) continue;
+      
+      const socketOutputMapping = inSocket.webglGetOutputMapping();
+      if (socketOutputMapping === null) continue;
+      
 
-      const mapping = this.webglGetMapping(inSocket);
-      if (mapping === null) continue;
-
-      variables = variables.substituteUsingOutputsFrom(inSocket.webglVariables(), NodeOutputTarget.NodeDisplay(this), mapping, true);
+      variables = variables.substituteUsingOutputsFrom(
+        inSocket.webglVariables(),
+        NodeOutputTarget.NodeDisplay(this),
+        socketOutputMapping,
+        true,
+      );
     }
     return variables;
   }
@@ -146,20 +151,17 @@ export abstract class Node {
    * are mapped to target slots according to `webglGetMapping(inSocket)`
    */
   webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket): WebglVariables {
-    const mapping = this.webglGetMapping(inSocket);
-    if (mapping === null) throw new Error("the implementation of webglGetMapping for this node does not support this socket");
-    return target.substituteUsingOutputsFrom(source, NodeOutputTarget.OutSocket(inSocket.link.src), mapping);
+    const socketOutputMapping = inSocket.webglGetOutputMapping();
+    if (socketOutputMapping === null) throw new Error("this socket does not have an output mapping");
+    return target.substituteUsingOutputsFrom(source, NodeOutputTarget.OutSocket(inSocket.link.src), socketOutputMapping);
   }
 
   /** A `WebglVariables` object that provides a template to fill, output variables, and uniforms */
   webglGetBaseVariables(): WebglVariables {
     throw new Error("not implmeneted");
   }
-  /** Provides a mapping from output names from a source socket to input slots from `webglGetBaseVariables`,
-   * depending on which input socket `inSocket` we are inspecting
-   */
-  webglGetMapping<St extends SocketType>(inSocket: InSocket<St>): WebglSocketValue<St> | null {
-    throw new Error("not implmeneted");
+  webglNodeOutputMapping(): WebglNodeOutputMapping | null {
+    return null;
   }
 
   display(context: NodeEvalContext): NodeDisplay {
@@ -411,23 +413,30 @@ export const webglOuts = Object.freeze({
   readonly alpha: unique symbol,
 };
 
-export type WebglSocketValue<St extends SocketType=any> = (
+export type WebglNodeOutputMapping = {
+  [webglOuts.val]: WebglSlot,
+  [webglOuts.illuminant]: WebglSlot,
+  [webglOuts.xyz]: WebglSlot,
+  [webglOuts.alpha]: WebglSlot,
+};
+
+export type WebglSocketOutputMapping<St extends SocketType=any> = Partial<
   St extends SocketType.Float ? {
     [webglOuts.val]: WebglSlot,
   } :
-  St extends SocketType.Integer ? WebglSocketValue<SocketType.Float> :
-  St extends SocketType.Vector ? WebglSocketValue<SocketType.Float> :
+  St extends SocketType.Integer ? WebglSocketOutputMapping<SocketType.Float> :
+  St extends SocketType.Vector ? WebglSocketOutputMapping<SocketType.Float> :
   St extends SocketType.ColorCoords ? {
     [webglOuts.val]: WebglSlot,
     [webglOuts.illuminant]: WebglSlot,
     [webglOuts.xyz]: WebglSlot,
   } :
-  St extends SocketType.VectorOrColor ? WebglSocketValue<SocketType.ColorCoords> | WebglSocketValue<SocketType.Vector> :
+  St extends SocketType.VectorOrColor ? WebglSocketOutputMapping<SocketType.ColorCoords> | WebglSocketOutputMapping<SocketType.Vector> :
   St extends SocketType.Dropdown ? never :
   St extends SocketType.Image ? never :
-  St extends SocketType.Bool ? WebglSocketValue<SocketType.Float> :
+  St extends SocketType.Bool ? WebglSocketOutputMapping<SocketType.Float> :
   never
-);
+>;
 
 export enum SocketFlag {
   None = 0,
@@ -465,28 +474,33 @@ type SocketData<St extends SocketType=any> =
     {};
 
 
-export type SocketOptions<St extends SocketType=any> =
-    {
-      showSocket?: boolean,
-      socketDesc?: StringKey,
-      fieldText?: StringKey[],
-      defaultValue?: SocketValue<St>,
-      hasVolatileType?: boolean,
-      showFieldIfAvailable?: boolean,
-      valueChangeRequiresShaderReload?: boolean,
-      constant?: boolean,
-      onValueChange?: (this: Socket<St>, tree: Tree) => void,
-      onLink?: (this: Socket<St>, link: Link, tree: Tree) => void,
-      onUnlink?: (this: Socket<St>, link: Link, tree: Tree) => void,
-      onInputTypeChange?: (this: Socket<St>, type: SocketType, tree: Tree) => void,
-      onOutputTypeChange?: (this: Socket<St>, type: SocketType, tree: Tree) => void,
-    } & SocketData<St>;
+export type SocketOptions<St extends SocketType=any> = {
+  showSocket?: boolean,
+  socketDesc?: StringKey,
+  fieldText?: StringKey[],
+  defaultValue?: SocketValue<St>,
+  hasVolatileType?: boolean,
+  showFieldIfAvailable?: boolean,
+  valueChangeRequiresShaderReload?: boolean,
+  constant?: boolean,
+  onValueChange?: (this: Socket<St>, tree: Tree) => void,
+  onLink?: (this: Socket<St>, link: Link, tree: Tree) => void,
+  onUnlink?: (this: Socket<St>, link: Link, tree: Tree) => void,
+  onInputTypeChange?: (this: Socket<St>, type: SocketType, tree: Tree) => void,
+  onOutputTypeChange?: (this: Socket<St>, type: SocketType, tree: Tree) => void,
+} & SocketData<St>;
+export type InSocketOptions<St extends SocketType=any> = {
+  /** A mapping from output names from an incoming source socket (that is linked to this socket) to input slots in
+   * `webglGetBaseVariables`
+   */
+  webglOutputMapping?: WebglSocketOutputMapping<St> | null,
+  webglGetOutputMapping?: (socket: InSocket<St>) => () => WebglSocketOutputMapping<St> | null,
+} & SocketOptions<St>;
 
 export abstract class Socket<St extends SocketType=any> {
   private static nextId = 0;
   readonly id = Socket.nextId++;
 
-  static readonly Type = SocketType;
   private static readonly defaultValues = new Map<SocketType, SocketValue>([
     [SocketType.Float, 0],
     [SocketType.Vector, [0, 0, 0]],
@@ -650,15 +664,26 @@ export abstract class Socket<St extends SocketType=any> {
 }
 
 export class InSocket<St extends SocketType=any> extends Socket<St> {
+  private readonly webglOutputMapping: WebglSocketOutputMapping<St> | null
+  readonly webglGetOutputMapping: () => WebglSocketOutputMapping<St> | null;
+
   constructor(
     node: Node,
     type: St,
 
     public label: string="",
 
-    options=<SocketOptions<St>>{},
+    options=<InSocketOptions<St>>{},
   ) {
     super(node, true, type, label, options);
+
+    const {
+      webglOutputMapping,
+      webglGetOutputMapping,
+    } = options;
+
+    this.webglOutputMapping = webglOutputMapping ?? null;
+    this.webglGetOutputMapping = webglGetOutputMapping?.(this) ?? (() => this.webglOutputMapping);
   }
 
   get link() {

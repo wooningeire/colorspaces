@@ -1,5 +1,5 @@
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
-import { InSocket, Node, NodeDisplay, NodeEvalContext, OutSocket, Socket, SocketType, SocketType as St, Tree, WebglSocketValue } from "./Node";
+import { InSocket, Node, NodeDisplay, NodeEvalContext, OutSocket, Socket, SocketType, SocketType as St, Tree, WebglNodeOutputMapping, WebglSocketOutputMapping } from "./Node";
 
 /** A collection of input/output sockets, as well as a function to compute outputs from the inputs' values */
 export class Overload<NodeType extends Node=any, InSockets extends InSocket[]=any, OutSockets extends OutSocket[]=any> {
@@ -9,7 +9,6 @@ export class Overload<NodeType extends Node=any, InSockets extends InSocket[]=an
     readonly outs: (node: NodeType, ins: InSockets) => [...OutSockets],
     readonly nodeDisplay: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => NodeDisplay=() => { throw new Error("not implemented") },
     readonly webglGetBaseVariables: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => WebglVariables=() => { throw new Error("not implemented"); },
-    readonly webglGetMapping: <T extends St>(inSocket: InSocket<T>, ins: InSockets, node: NodeType) => WebglSocketValue<T> | null=() => { throw new Error("not implemented"); },
     private readonly maintainExistingLinks = false,
   ) {}
 }
@@ -21,7 +20,7 @@ export class OverloadGroup<Mode extends string, NodeType extends Node=any> {
   ) {}
 
   buildDropdown(node: NodeType, defaultMode: Mode, overloadManager: OverloadManager<Mode>) {
-    return new InSocket(node, Socket.Type.Dropdown, "", {
+    return new InSocket(node, SocketType.Dropdown, "", {
       showSocket: false,
       options: [...this.modes].map(([mode, overload]) => (
         {value: mode, text: overload.label}
@@ -68,10 +67,6 @@ export class OverloadManager<Mode extends string> {
 
   webglGetBaseVariables(context: NodeEvalContext) {
     return this.overload.webglGetBaseVariables(this.ins, this.outs, context, this.node);
-  }
-
-  webglGetMapping(inSocket: InSocket) {
-    return this.overload.webglGetMapping(inSocket, this.ins, this.node);
   }
 
   handleModeChange(tree: Tree) {
@@ -129,9 +124,5 @@ export abstract class NodeWithOverloads<Mode extends string> extends Node {
 
   webglGetBaseVariables(context: NodeEvalContext={}) {
     return this.overloadManager.webglGetBaseVariables(context);
-  }
-
-  webglGetMapping<St extends SocketType>(inSocket: InSocket<St>) {
-    return this.overloadManager.webglGetMapping(inSocket) as WebglSocketValue<St>;
   }
 }

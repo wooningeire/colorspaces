@@ -1,4 +1,4 @@
-import { Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, InSocket, OutSocket, WebglSocketValue, webglOuts } from "../Node";
+import { Node, SocketType, SocketFlag, NodeEvalContext, OutputDisplayType, InSocket, OutSocket, webglOuts } from "../Node";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 
@@ -13,25 +13,27 @@ export namespace models {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "rgb";
 
+    private static readonly inputSlots = WebglSlot.ins("red", "green", "blue");
+
     constructor() {
       super();
 
+      const {red, green, blue} = RgbNode.inputSlots;
+
       this.ins.push(
-        new InSocket(this, Socket.Type.Float, "Red").flag(SocketFlag.Rgb),
-        new InSocket(this, Socket.Type.Float, "Green").flag(SocketFlag.Rgb),
-        new InSocket(this, Socket.Type.Float, "Blue").flag(SocketFlag.Rgb),
+        new InSocket(this, SocketType.Float, "Red", {webglOutputMapping: {[webglOuts.val]: red}}).flag(SocketFlag.Rgb),
+        new InSocket(this, SocketType.Float, "Green", {webglOutputMapping: {[webglOuts.val]: green}}).flag(SocketFlag.Rgb),
+        new InSocket(this, SocketType.Float, "Blue", {webglOutputMapping: {[webglOuts.val]: blue}}).flag(SocketFlag.Rgb),
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Vector, "RGB", context => this.ins.map(socket => socket.inValue(context)) as Vec3),
+        new OutSocket(this, SocketType.Vector, "RGB", context => this.ins.map(socket => socket.inValue(context)) as Vec3),
       );
     }
 
     displayValues(context: NodeEvalContext): Vec3 {
       return this.ins.map(socket => socket.inValue(context)) as Vec3;
     }
-
-    private static readonly inputSlots = WebglSlot.ins("red", "green", "blue");
 
     webglGetBaseVariables(): WebglVariables {
       const {red, green, blue} = RgbNode.inputSlots;
@@ -41,16 +43,6 @@ export namespace models {
           [this.outs[0], {[webglOuts.val]: WebglTemplate.source`vec3(${red}, ${green}, ${blue})`}],
         ])
       });
-    }
-    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
-      const {red, green, blue} = RgbNode.inputSlots;
-
-      switch (inSocket) {
-        case this.ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: red};
-        case this.ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: green};
-        case this.ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: blue};
-        default: return null;
-      }
     }
   }
 
@@ -68,13 +60,17 @@ export namespace models {
     static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
       [RgbMode.ToRgb, new Overload(
         "To RGB",
-        node => [
-          new InSocket(node, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-          new InSocket(node, Socket.Type.Float, "Saturation"),
-          new InSocket(node, Socket.Type.Float, "Lightness"),
-        ],
+        node => {
+          const {hue, saturation, lightness} = HslNode.inputSlots;
+
+          return [
+            new InSocket(node, SocketType.Float, "Hue", {webglOutputMapping: {[webglOuts.val]: hue}}).flag(SocketFlag.Hue),
+            new InSocket(node, SocketType.Float, "Saturation", {webglOutputMapping: {[webglOuts.val]: saturation}}),
+            new InSocket(node, SocketType.Float, "Lightness", {webglOutputMapping: {[webglOuts.val]: lightness}}),
+          ];
+        },
         (node, ins) => [
-          new OutSocket(node, Socket.Type.Vector, "RGB", context => cm.hslToRgb(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3),
+          new OutSocket(node, SocketType.Vector, "RGB", context => cm.hslToRgb(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3),
         ],
         (ins, outs, context) => ({
           values: cm.hslToRgb(ins.map(socket => socket.inValue(context)) as Vec3),
@@ -91,27 +87,20 @@ export namespace models {
             nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`hslToRgb(${hue}, ${saturation}, ${lightness})`},
           });
         },
-        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
-          const {hue, saturation, lightness} = HslNode.inputSlots;
-
-          switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: hue};
-            case ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: saturation};
-            case ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: lightness};
-            default: return null;
-          }
-        },
       )],
 
       [RgbMode.FromRgb, new Overload(
         "From RGB",
-        node => [
-          new InSocket(node, Socket.Type.Vector, "RGB"),
-        ],
+        node => {
+          const {rgb} = HslNode.inputSlots;
+          return [
+            new InSocket(node, SocketType.Vector, "RGB", {webglOutputMapping: {[webglOuts.val]: rgb}}),
+          ];
+        },
         (node, ins) => [
-          new OutSocket(node, Socket.Type.Float, "Hue", context => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Hue),
-          new OutSocket(node, Socket.Type.Float, "Saturation", context => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[1]),
-          new OutSocket(node, Socket.Type.Float, "Lightness", context => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[2]),
+          new OutSocket(node, SocketType.Float, "Hue", context => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Hue),
+          new OutSocket(node, SocketType.Float, "Saturation", context => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[1]),
+          new OutSocket(node, SocketType.Float, "Lightness", context => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[2]),
         ],
         (ins, outs, context) => ({
           values: cm.rgbToHsl(ins[0].inValue(context) as Vec3),
@@ -132,14 +121,6 @@ export namespace models {
             nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(hsl)},
           });
         },
-        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
-          const {rgb} = HslNode.inputSlots;
-
-          switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: rgb};
-            default: return null;
-          }
-        },
       )],
     ]));
 
@@ -158,13 +139,16 @@ export namespace models {
     static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
       [RgbMode.ToRgb, new Overload(
         "To RGB",
-        node => [
-          new InSocket(node, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-          new InSocket(node, Socket.Type.Float, "Saturation"),
-          new InSocket(node, Socket.Type.Float, "Value"),
-        ],
+        node => {
+          const {hue, saturation, value} = HsvNode.inputSlots;
+          return [
+            new InSocket(node, SocketType.Float, "Hue", {webglOutputMapping: {[webglOuts.val]: hue}}).flag(SocketFlag.Hue),
+            new InSocket(node, SocketType.Float, "Saturation", {webglOutputMapping: {[webglOuts.val]: saturation}}),
+            new InSocket(node, SocketType.Float, "Value", {webglOutputMapping: {[webglOuts.val]: value}}),
+          ];
+        },
         (node, ins) => [
-          new OutSocket(node, Socket.Type.Vector, "RGB", context => cm.hsvToRgb(ins.map(socket => socket.inValue(context)) as Vec3)),
+          new OutSocket(node, SocketType.Vector, "RGB", context => cm.hsvToRgb(ins.map(socket => socket.inValue(context)) as Vec3)),
         ],
         (ins, outs, context) => ({
           values: cm.hsvToRgb(ins.map(socket => socket.inValue(context)) as Vec3),
@@ -181,27 +165,20 @@ export namespace models {
             nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`hsvToRgb(${hue}, ${saturation}, ${value})`},
           });
         },
-        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
-          const {hue, saturation, value} = HsvNode.inputSlots;
-
-          switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: hue};
-            case ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: saturation};
-            case ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: value};
-            default: return null;
-          }
-        },
       )],
 
       [RgbMode.FromRgb, new Overload(
         "From RGB",
-        node => [
-          new InSocket(node, Socket.Type.Vector, "RGB"),
-        ],
+        node => {
+          const {rgb} = HsvNode.inputSlots;
+          return [
+            new InSocket(node, SocketType.Vector, "RGB", {webglOutputMapping: {[webglOuts.val]: rgb}}),
+          ];
+        },
         (node, ins) => [
-          new OutSocket(node, Socket.Type.Float, "Hue", context => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Hue),
-          new OutSocket(node, Socket.Type.Float, "Saturation", context => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[1]),
-          new OutSocket(node, Socket.Type.Float, "Value", context => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[2]),
+          new OutSocket(node, SocketType.Float, "Hue", context => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Hue),
+          new OutSocket(node, SocketType.Float, "Saturation", context => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[1]),
+          new OutSocket(node, SocketType.Float, "Value", context => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[2]),
         ],
         (ins, outs, context) => ({
           values: cm.rgbToHsv(ins[0].inValue(context) as Vec3),
@@ -219,14 +196,6 @@ export namespace models {
             ]),
             nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(hsv)},
           });
-        },
-        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HsvNode) => {
-          const {rgb} = HsvNode.inputSlots;
-
-          switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: rgb};
-            default: return null;
-          }
         },
       )],
     ]));
@@ -246,13 +215,16 @@ export namespace models {
     static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
       [RgbMode.ToRgb, new Overload(
         "To RGB",
-        node => [
-          new InSocket(node, Socket.Type.Float, "Hue").flag(SocketFlag.Hue),
-          new InSocket(node, Socket.Type.Float, "Whiteness"),
-          new InSocket(node, Socket.Type.Float, "Blackness"),
-        ],
+        node => {
+          const {hue, whiteness, blackness} = HwbNode.inputSlots;
+          return [
+            new InSocket(node, SocketType.Float, "Hue", {webglOutputMapping: {[webglOuts.val]: hue}}).flag(SocketFlag.Hue),
+            new InSocket(node, SocketType.Float, "Whiteness", {webglOutputMapping: {[webglOuts.val]: whiteness}}),
+            new InSocket(node, SocketType.Float, "Blackness", {webglOutputMapping: {[webglOuts.val]: blackness}}),
+          ];
+        },
         (node, ins) => [
-          new OutSocket(node, Socket.Type.Vector, "RGB", context => cm.hwbToRgb(ins.map(socket => socket.inValue(context)) as Vec3)),
+          new OutSocket(node, SocketType.Vector, "RGB", context => cm.hwbToRgb(ins.map(socket => socket.inValue(context)) as Vec3)),
         ],
         (ins, outs, context) => ({
           values: cm.hwbToRgb(ins.map(socket => socket.inValue(context)) as Vec3),
@@ -269,27 +241,20 @@ export namespace models {
             nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`hsvToRgb(${hue}, ${whiteness}, ${blackness})`},
           });
         },
-        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
-          const {hue, whiteness, blackness} = HwbNode.inputSlots;
-          
-          switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: hue};
-            case ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: whiteness};
-            case ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: blackness};
-            default: return null;
-          }
-        },
       )],
 
       [RgbMode.FromRgb, new Overload(
         "From RGB",
-        node => [
-          new InSocket(node, Socket.Type.Vector, "RGB"),
-        ],
+        node => {
+          const {rgb} = HwbNode.inputSlots;
+          return [
+            new InSocket(node, SocketType.Vector, "RGB", {webglOutputMapping: {[webglOuts.val]: rgb}}),
+          ];
+        },
         (node, ins) => [
-          new OutSocket(node, Socket.Type.Float, "Hue", context => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Hue),
-          new OutSocket(node, Socket.Type.Float, "Whiteness", context => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[1]),
-          new OutSocket(node, Socket.Type.Float, "Blackness", context => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[2]),
+          new OutSocket(node, SocketType.Float, "Hue", context => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Hue),
+          new OutSocket(node, SocketType.Float, "Whiteness", context => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[1]),
+          new OutSocket(node, SocketType.Float, "Blackness", context => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[2]),
         ],
         (ins, outs, context) => ({
           values: cm.rgbToHwb(ins[0].inValue(context) as Vec3),
@@ -310,14 +275,6 @@ export namespace models {
             nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(hwb)},
           });
         },
-        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HwbNode) => {
-          const {rgb} = HwbNode.inputSlots;
-
-          switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: rgb};
-            default: return null;
-          }
-        },
       )],
     ]));
 
@@ -336,13 +293,16 @@ export namespace models {
     static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
       [RgbMode.ToRgb, new Overload(
         "To RGB",
-        node => [
-          new InSocket(node, Socket.Type.Float, "Cyan").flag(SocketFlag.Rgb),
-          new InSocket(node, Socket.Type.Float, "Magenta").flag(SocketFlag.Rgb),
-          new InSocket(node, Socket.Type.Float, "Yellow").flag(SocketFlag.Rgb),
-        ],
+        node => {
+          const {cyan, magenta, yellow} = CmyNode.inputSlots;
+          return [
+            new InSocket(node, SocketType.Float, "Cyan", {webglOutputMapping: {[webglOuts.val]: cyan}}).flag(SocketFlag.Rgb),
+            new InSocket(node, SocketType.Float, "Magenta", {webglOutputMapping: {[webglOuts.val]: magenta}}).flag(SocketFlag.Rgb),
+            new InSocket(node, SocketType.Float, "Yellow", {webglOutputMapping: {[webglOuts.val]: yellow}}).flag(SocketFlag.Rgb),
+          ];
+        },
         (node, ins) => [
-          new OutSocket(node, Socket.Type.Vector, "RGB", context => cm.cmyToRgb(ins.map(socket => socket.inValue(context)) as Vec3)),
+          new OutSocket(node, SocketType.Vector, "RGB", context => cm.cmyToRgb(ins.map(socket => socket.inValue(context)) as Vec3)),
         ],
         (ins, outs, context) => ({
           values: cm.cmyToRgb(ins.map(socket => socket.inValue(context)) as Vec3),
@@ -359,27 +319,20 @@ export namespace models {
             nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`cmyToRgb(${cyan}, ${magenta}, ${yellow})`},
           });
         },
-        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
-          const {cyan, magenta, yellow} = CmyNode.inputSlots;
-
-          switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: cyan};
-            case ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: magenta};
-            case ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: yellow};
-            default: return null;
-          }
-        },
       )],
 
       [RgbMode.FromRgb, new Overload(
         "From RGB",
-        node => [
-          new InSocket(node, Socket.Type.Vector, "RGB"),
-        ],
+        node => {
+          const {rgb} = CmyNode.inputSlots;
+          return [
+            new InSocket(node, SocketType.Vector, "RGB", {webglOutputMapping: {[webglOuts.val]: rgb}}),
+          ];
+        },
         (node, ins) => [
-          new OutSocket(node, Socket.Type.Float, "Cyan", context => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Rgb),
-          new OutSocket(node, Socket.Type.Float, "Magenta", context => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[1]).flag(SocketFlag.Rgb),
-          new OutSocket(node, Socket.Type.Float, "Yellow", context => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[2]).flag(SocketFlag.Rgb),
+          new OutSocket(node, SocketType.Float, "Cyan", context => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Rgb),
+          new OutSocket(node, SocketType.Float, "Magenta", context => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[1]).flag(SocketFlag.Rgb),
+          new OutSocket(node, SocketType.Float, "Yellow", context => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[2]).flag(SocketFlag.Rgb),
         ],
         (ins, outs, context) => ({
           values: cm.rgbToCmy(ins[0].inValue(context) as Vec3),
@@ -400,14 +353,6 @@ export namespace models {
             nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(cmy)},
           });
         },
-        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: CmyNode) => {
-          const {rgb} = CmyNode.inputSlots;
-
-          switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: rgb};
-            default: return null;
-          }
-        },
       )],
     ]));
 
@@ -424,13 +369,13 @@ export namespace models {
       super();
 
       this.ins.push(
-        new InSocket(this, Socket.Type.Float, "X"),
-        new InSocket(this, Socket.Type.Float, "Y"),
-        new InSocket(this, Socket.Type.Float, "Z"),
+        new InSocket(this, SocketType.Float, "X"),
+        new InSocket(this, SocketType.Float, "Y"),
+        new InSocket(this, SocketType.Float, "Z"),
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Vector, "XYZ"),
+        new OutSocket(this, SocketType.Vector, "XYZ"),
       );
     }
 
@@ -453,8 +398,8 @@ export namespace models {
       super();
       
       this.outs.push(
-        new OutSocket(this, St.Vector, "XYZ", context => this.computeXyz()),
-        new OutSocket(this, St.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(), illuminantE)),
+        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz()),
+        new OutSocket(this, SocketType.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(), illuminantE)),
       );
       this.width = 503;
     }
@@ -494,38 +439,39 @@ export namespace models {
         ]),
       });
     }
-    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
-      return null;
-    }
   }
 
   export class WavelengthNode extends Node {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "wavelength";
 
-    private readonly inSocket: InSocket<St.Float>;
-    private readonly powerSocket: InSocket<St.Float>;
-    private readonly datasetSocket: InSocket<St.Dropdown>;
+    private readonly inSocket: InSocket<SocketType.Float>;
+    private readonly powerSocket: InSocket<SocketType.Float>;
+    private readonly datasetSocket: InSocket<SocketType.Dropdown>;
 
     constructor() {
       super();
+      
+      const {wavelength, power} = WavelengthNode.inputSlots;
 
       this.ins.push(
-        (this.inSocket = new InSocket(this, Socket.Type.Float, "Wavelength (nm)", {
+        (this.inSocket = new InSocket(this, SocketType.Float, "Wavelength (nm)", {
           sliderProps: {
             softMin: 360,
             softMax: 830,
             step: 1,
           },
           defaultValue: 510,
+          webglOutputMapping: {[webglOuts.val]: wavelength},
         })),
-        (this.powerSocket = new InSocket(this, Socket.Type.Float, "Relative power", {
+        (this.powerSocket = new InSocket(this, SocketType.Float, "Relative power", {
           sliderProps: {
             hasBounds: false,
           },
           defaultValue: 1,
+          webglOutputMapping: {[webglOuts.val]: power},
         })),
-        (this.datasetSocket = new InSocket(this, Socket.Type.Dropdown, "Dataset", {
+        (this.datasetSocket = new InSocket(this, SocketType.Dropdown, "Dataset", {
           showSocket: false,
           defaultValue: "2deg",
           options: [
@@ -537,8 +483,8 @@ export namespace models {
       );
       
       this.outs.push(
-        new OutSocket(this, St.Vector, "XYZ", context => this.computeXyz(context)),
-        new OutSocket(this, St.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(context), illuminantE)),
+        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz(context)),
+        new OutSocket(this, SocketType.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(context), illuminantE)),
       );
 
       this.width = 200;
@@ -571,36 +517,30 @@ export namespace models {
         ]),
       });
     }
-    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
-      const {wavelength, power} = WavelengthNode.inputSlots;
-
-      switch (inSocket) {
-        case this.ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: wavelength};
-        case this.ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: power};
-        default: return null;
-      }
-    }
   }
 
   export class BlackbodyNode extends Node {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "blackbody";
 
-    private readonly inSocket: InSocket<St.Float>;
-    private readonly datasetSocket: InSocket<St.Dropdown>;
+    private readonly inSocket: InSocket<SocketType.Float>;
+    private readonly datasetSocket: InSocket<SocketType.Dropdown>;
 
     constructor() {
       super();
 
+      const {temperature} = BlackbodyNode.inputSlots;
+
       this.ins.push(
-        (this.inSocket = new InSocket(this, Socket.Type.Float, "Temperature (K)", {
+        (this.inSocket = new InSocket(this, SocketType.Float, "Temperature (K)", {
           sliderProps: {
             hasBounds: false,
             unboundedChangePerPixel: 10,
           },
           defaultValue: 1750,
+          webglOutputMapping: {[webglOuts.val]: temperature},
         })),
-        (this.datasetSocket = new InSocket(this, Socket.Type.Dropdown, "Dataset", {
+        (this.datasetSocket = new InSocket(this, SocketType.Dropdown, "Dataset", {
           showSocket: false,
           defaultValue: "2deg",
           options: [
@@ -611,8 +551,8 @@ export namespace models {
       );
       
       this.outs.push(
-        new OutSocket(this, St.Vector, "XYZ", context => this.computeXyz(context)),
-        new OutSocket(this, St.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(context), illuminantE)),
+        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz(context)),
+        new OutSocket(this, SocketType.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(context), illuminantE)),
       );
 
       this.width = 200;
@@ -643,33 +583,25 @@ export namespace models {
         ]),
       });
     }
-    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
-      const {temperature} = BlackbodyNode.inputSlots;
-
-      switch (inSocket) {
-        case this.ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: temperature};
-        default: return null;
-      }
-    }
   }
 
   export class StandardIlluminantNode extends Node {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "standardIlluminant";
 
-    private readonly whitePointSocket: InSocket<St.Dropdown>;
+    private readonly whitePointSocket: InSocket<SocketType.Dropdown>;
 
     constructor() {
       super();
 
       this.ins.push(
-        (this.whitePointSocket = new InSocket(this, St.Dropdown, "White point", whitePointSocketOptions)),
+        (this.whitePointSocket = new InSocket(this, SocketType.Dropdown, "White point", whitePointSocketOptions)),
       );
 
       this.outs.push(
-        new OutSocket(this, St.Vector, "XYZ", context => [...cm.Xyz.from(this.getIlluminant(context))] as Vec3),
-        new OutSocket(this, St.Vector, "xyY", context => [...cm.Xyy.from(this.getIlluminant(context))] as Vec3),
-        new OutSocket(this, St.ColorCoords, "Color", context => cm.Xyz.from(this.getIlluminant(context))),
+        new OutSocket(this, SocketType.Vector, "XYZ", context => [...cm.Xyz.from(this.getIlluminant(context))] as Vec3),
+        new OutSocket(this, SocketType.Vector, "xyY", context => [...cm.Xyy.from(this.getIlluminant(context))] as Vec3),
+        new OutSocket(this, SocketType.ColorCoords, "Color", context => cm.Xyz.from(this.getIlluminant(context))),
       );
     }
 
@@ -711,9 +643,6 @@ uniform vec3 ${xyy};`,
           }],
         ]),
       });
-    }
-    webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
-      return null;
     }
   }
 }
