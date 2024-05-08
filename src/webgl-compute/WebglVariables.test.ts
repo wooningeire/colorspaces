@@ -8,9 +8,9 @@ class WebglConstantNode extends Node {
 
     return WebglVariables.template`vec3 ${output} = vec3(1., 1., 1.);`({
       nodeOutVariables: {
-        "val": WebglTemplate.slot(output),
-        "illuminant": WebglTemplate.string("illuminant2_E"),
-        "xyz": WebglTemplate.source`linearSrgbToXyz(${output})`,
+        [webglOuts.val]: WebglTemplate.slot(output),
+        [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
+        [webglOuts.xyz]: WebglTemplate.source`linearSrgbToXyz(${output})`,
       },
     });
   }

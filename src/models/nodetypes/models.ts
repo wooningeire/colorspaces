@@ -1,4 +1,4 @@
-import { Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, InSocket, OutSocket, WebglSocketValue } from "../Node";
+import { Node, Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, InSocket, OutSocket, WebglSocketValue, webglOuts } from "../Node";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 
@@ -38,7 +38,7 @@ export namespace models {
 
       return WebglVariables.template``({
         socketOutVariables: new Map([
-          [this.outs[0], {"val": WebglTemplate.source`vec3(${red}, ${green}, ${blue})`}],
+          [this.outs[0], {[webglOuts.val]: WebglTemplate.source`vec3(${red}, ${green}, ${blue})`}],
         ])
       });
     }
@@ -46,9 +46,9 @@ export namespace models {
       const {red, green, blue} = RgbNode.inputSlots;
 
       switch (inSocket) {
-        case this.ins[0]: return <WebglSocketValue<T>>{"val": red};
-        case this.ins[1]: return <WebglSocketValue<T>>{"val": green};
-        case this.ins[2]: return <WebglSocketValue<T>>{"val": blue};
+        case this.ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: red};
+        case this.ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: green};
+        case this.ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: blue};
         default: return null;
       }
     }
@@ -86,18 +86,18 @@ export namespace models {
           
           return WebglVariables.template``({
             socketOutVariables: new Map([
-              [outs[0], {"val": WebglTemplate.source`hslToRgb(${hue}, ${saturation}, ${lightness})`}],
+              [outs[0], {[webglOuts.val]: WebglTemplate.source`hslToRgb(${hue}, ${saturation}, ${lightness})`}],
             ]),
-            nodeOutVariables: {"val": WebglTemplate.source`hslToRgb(${hue}, ${saturation}, ${lightness})`},
+            nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`hslToRgb(${hue}, ${saturation}, ${lightness})`},
           });
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
           const {hue, saturation, lightness} = HslNode.inputSlots;
 
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{"val": hue};
-            case ins[1]: return <WebglSocketValue<T>>{"val": saturation};
-            case ins[2]: return <WebglSocketValue<T>>{"val": lightness};
+            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: hue};
+            case ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: saturation};
+            case ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: lightness};
             default: return null;
           }
         },
@@ -125,18 +125,18 @@ export namespace models {
 
           return WebglVariables.template`vec3 ${hsl} = rgbToHsl(${rgb});`({
             socketOutVariables: new Map([
-              [outs[0], {"val": WebglTemplate.source`${hsl}.x`}],
-              [outs[1], {"val": WebglTemplate.source`${hsl}.y`}],
-              [outs[2], {"val": WebglTemplate.source`${hsl}.z`}],
+              [outs[0], {[webglOuts.val]: WebglTemplate.source`${hsl}.x`}],
+              [outs[1], {[webglOuts.val]: WebglTemplate.source`${hsl}.y`}],
+              [outs[2], {[webglOuts.val]: WebglTemplate.source`${hsl}.z`}],
             ]),
-            nodeOutVariables: {"val": WebglTemplate.slot(hsl)},
+            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(hsl)},
           });
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
           const {rgb} = HslNode.inputSlots;
 
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{"val": rgb};
+            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: rgb};
             default: return null;
           }
         },
@@ -176,18 +176,18 @@ export namespace models {
           
           return WebglVariables.template``({
             socketOutVariables: new Map([
-              [outs[0], {"val": WebglTemplate.source`hsvToRgb(${hue}, ${saturation}, ${value})`}],
+              [outs[0], {[webglOuts.val]: WebglTemplate.source`hsvToRgb(${hue}, ${saturation}, ${value})`}],
             ]),
-            nodeOutVariables: {"val": WebglTemplate.source`hsvToRgb(${hue}, ${saturation}, ${value})`},
+            nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`hsvToRgb(${hue}, ${saturation}, ${value})`},
           });
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
           const {hue, saturation, value} = HsvNode.inputSlots;
 
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{"val": hue};
-            case ins[1]: return <WebglSocketValue<T>>{"val": saturation};
-            case ins[2]: return <WebglSocketValue<T>>{"val": value};
+            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: hue};
+            case ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: saturation};
+            case ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: value};
             default: return null;
           }
         },
@@ -213,18 +213,18 @@ export namespace models {
 
           return WebglVariables.template`vec3 {0:hsv} = rgbToHsv({rgb});`({
             socketOutVariables: new Map([
-              [outs[0], {"val": WebglTemplate.source`${hsv}.x`}],
-              [outs[1], {"val": WebglTemplate.source`${hsv}.y`}],
-              [outs[2], {"val": WebglTemplate.source`${hsv}.z`}],
+              [outs[0], {[webglOuts.val]: WebglTemplate.source`${hsv}.x`}],
+              [outs[1], {[webglOuts.val]: WebglTemplate.source`${hsv}.y`}],
+              [outs[2], {[webglOuts.val]: WebglTemplate.source`${hsv}.z`}],
             ]),
-            nodeOutVariables: {"val": WebglTemplate.slot(hsv)},
+            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(hsv)},
           });
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HsvNode) => {
           const {rgb} = HsvNode.inputSlots;
 
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{"val": rgb};
+            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: rgb};
             default: return null;
           }
         },
@@ -264,18 +264,18 @@ export namespace models {
 
           return WebglVariables.template``({
             socketOutVariables: new Map([
-              [outs[0], {"val": WebglTemplate.source`hsvToRgb(${hue}, ${whiteness}, ${blackness})`}],
+              [outs[0], {[webglOuts.val]: WebglTemplate.source`hsvToRgb(${hue}, ${whiteness}, ${blackness})`}],
             ]),
-            nodeOutVariables: {"val": WebglTemplate.source`hsvToRgb(${hue}, ${whiteness}, ${blackness})`},
+            nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`hsvToRgb(${hue}, ${whiteness}, ${blackness})`},
           });
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
           const {hue, whiteness, blackness} = HwbNode.inputSlots;
           
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{"val": hue};
-            case ins[1]: return <WebglSocketValue<T>>{"val": whiteness};
-            case ins[2]: return <WebglSocketValue<T>>{"val": blackness};
+            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: hue};
+            case ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: whiteness};
+            case ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: blackness};
             default: return null;
           }
         },
@@ -303,18 +303,18 @@ export namespace models {
           
           return WebglVariables.template`vec3 ${hwb} = rgbToHsl(${rgb});`({
             socketOutVariables: new Map([
-              [outs[0], {"val": WebglTemplate.source`${hwb}.x`}],
-              [outs[1], {"val": WebglTemplate.source`${hwb}.y`}],
-              [outs[2], {"val": WebglTemplate.source`${hwb}.z`}],
+              [outs[0], {[webglOuts.val]: WebglTemplate.source`${hwb}.x`}],
+              [outs[1], {[webglOuts.val]: WebglTemplate.source`${hwb}.y`}],
+              [outs[2], {[webglOuts.val]: WebglTemplate.source`${hwb}.z`}],
             ]),
-            nodeOutVariables: {"val": WebglTemplate.slot(hwb)},
+            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(hwb)},
           });
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HwbNode) => {
           const {rgb} = HwbNode.inputSlots;
 
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{"val": rgb};
+            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: rgb};
             default: return null;
           }
         },
@@ -354,18 +354,18 @@ export namespace models {
 
           return WebglVariables.template``({
             socketOutVariables: new Map([
-              [outs[0], {"val": WebglTemplate.source`cmyToRgb(${cyan}, ${magenta}, ${yellow})`}],
+              [outs[0], {[webglOuts.val]: WebglTemplate.source`cmyToRgb(${cyan}, ${magenta}, ${yellow})`}],
             ]),
-            nodeOutVariables: {"val": WebglTemplate.source`cmyToRgb(${cyan}, ${magenta}, ${yellow})`},
+            nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`cmyToRgb(${cyan}, ${magenta}, ${yellow})`},
           });
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: HslNode) => {
           const {cyan, magenta, yellow} = CmyNode.inputSlots;
 
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{"val": cyan};
-            case ins[1]: return <WebglSocketValue<T>>{"val": magenta};
-            case ins[2]: return <WebglSocketValue<T>>{"val": yellow};
+            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: cyan};
+            case ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: magenta};
+            case ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: yellow};
             default: return null;
           }
         },
@@ -393,18 +393,18 @@ export namespace models {
           
           return WebglVariables.template`vec3 ${cmy} = rgbToCmy(${rgb});`({
             socketOutVariables: new Map([
-              [outs[0], {"val": WebglTemplate.source`${cmy}.x`}],
-              [outs[1], {"val": WebglTemplate.source`${cmy}.y`}],
-              [outs[2], {"val": WebglTemplate.source`${cmy}.z`}],
+              [outs[0], {[webglOuts.val]: WebglTemplate.source`${cmy}.x`}],
+              [outs[1], {[webglOuts.val]: WebglTemplate.source`${cmy}.y`}],
+              [outs[2], {[webglOuts.val]: WebglTemplate.source`${cmy}.z`}],
             ]),
-            nodeOutVariables: {"val": WebglTemplate.slot(cmy)},
+            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(cmy)},
           });
         },
         <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: CmyNode) => {
           const {rgb} = CmyNode.inputSlots;
 
           switch (inSocket) {
-            case ins[0]: return <WebglSocketValue<T>>{"val": rgb};
+            case ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: rgb};
             default: return null;
           }
         },
@@ -474,11 +474,11 @@ export namespace models {
 
       return WebglVariables.template``({
         socketOutVariables: new Map([
-          [this.outs[0], {"val": WebglTemplate.slot(unif)}],
+          [this.outs[0], {[webglOuts.val]: WebglTemplate.slot(unif)}],
           [this.outs[1], {
-            "val": WebglTemplate.slot(unif),
-            "illuminant": WebglTemplate.string("illuminant2_E"),
-            "xyz": WebglTemplate.slot(unif),
+            [webglOuts.val]: WebglTemplate.slot(unif),
+            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
+            [webglOuts.xyz]: WebglTemplate.slot(unif),
           }],
         ]),
         preludeTemplate: WebglTemplate.source`uniform vec3 ${unif};`,
@@ -561,11 +561,11 @@ export namespace models {
 
       return WebglVariables.templateConcat`vec3 ${xyz} = ${arrayName}[int(round(${wavelength})) - 360] * ${power};`({
         socketOutVariables: new Map([
-          [this.outs[0], {"val": WebglTemplate.slot(xyz)}],
+          [this.outs[0], {[webglOuts.val]: WebglTemplate.slot(xyz)}],
           [this.outs[1], {
-            "val": WebglTemplate.slot(xyz),
-            "illuminant": WebglTemplate.string("illuminant2_E"),
-            "xyz": WebglTemplate.slot(xyz),
+            [webglOuts.val]: WebglTemplate.slot(xyz),
+            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
+            [webglOuts.xyz]: WebglTemplate.slot(xyz),
           }],
         ]),
       });
@@ -574,8 +574,8 @@ export namespace models {
       const {wavelength, power} = WavelengthNode.inputSlots;
 
       switch (inSocket) {
-        case this.ins[0]: return <WebglSocketValue<T>>{"val": wavelength};
-        case this.ins[1]: return <WebglSocketValue<T>>{"val": power};
+        case this.ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: wavelength};
+        case this.ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: power};
         default: return null;
       }
     }
@@ -632,11 +632,11 @@ export namespace models {
 
       return WebglVariables.templateConcat`vec3 ${xyz} = ${funcName}(${temperature});`({
         socketOutVariables: new Map([
-          [this.outs[0], {"val": WebglTemplate.slot(xyz)}],
+          [this.outs[0], {[webglOuts.val]: WebglTemplate.slot(xyz)}],
           [this.outs[1], {
-            "val": WebglTemplate.slot(xyz),
-            "illuminant": WebglTemplate.string("illuminant2_E"),
-            "xyz": WebglTemplate.slot(xyz),
+            [webglOuts.val]: WebglTemplate.slot(xyz),
+            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
+            [webglOuts.xyz]: WebglTemplate.slot(xyz),
           }],
         ]),
       });
@@ -645,7 +645,7 @@ export namespace models {
       const {temperature} = BlackbodyNode.inputSlots;
 
       switch (inSocket) {
-        case this.ins[0]: return <WebglSocketValue<T>>{"val": temperature};
+        case this.ins[0]: return <WebglSocketValue<T>>{[webglOuts.val]: temperature};
         default: return null;
       }
     }
@@ -680,12 +680,12 @@ export namespace models {
       
       return WebglVariables.template``({
         socketOutVariables: new Map([
-          [this.outs[0], {"val": WebglTemplate.slot(xyz)}],
-          [this.outs[1], {"val": WebglTemplate.slot(xyy)}],
+          [this.outs[0], {[webglOuts.val]: WebglTemplate.slot(xyz)}],
+          [this.outs[1], {[webglOuts.val]: WebglTemplate.slot(xyy)}],
           [this.outs[2], {
-            "val": WebglTemplate.slot(xyz),
-            "illuminant": WebglTemplate.string("illuminant2_E"),
-            "xyz": WebglTemplate.slot(xyz),
+            [webglOuts.val]: WebglTemplate.slot(xyz),
+            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
+            [webglOuts.xyz]: WebglTemplate.slot(xyz),
           }],
         ]),
         preludeTemplate: WebglTemplate.source`uniform vec3 ${xyz};

@@ -130,6 +130,19 @@ export const assert = (value: boolean) => {
   }
 };
 
+export const objectSymbolEntries = function* <T, O extends Record<string | symbol, T>>(object: O): Generator<[keyof O, T], void, void> {
+  for (const symbol of Object.getOwnPropertySymbols(object)) {
+    yield [symbol, object[symbol]];
+  }
+};
+
+
+export const objectSymbolValues = function* <T>(object: Record<string | symbol, T>): Generator<T, void, void> {
+  for (const symbol of Object.getOwnPropertySymbols(object)) {
+    yield object[symbol];
+  }
+};
+
 
 /** An `N`-element tuple of `T`.
  */

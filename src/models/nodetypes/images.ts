@@ -1,4 +1,4 @@
-import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, OutSocket, Tree, WebglSocketValue} from "../Node";
+import {Node, Socket, SocketType as St, AxisNode, NodeEvalContext, InSocket, OutSocket, Tree, WebglSocketValue, webglOuts} from "../Node";
 
 import {Vec2, Vec3, lerp} from "@/util";
 import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
@@ -70,7 +70,7 @@ export namespace images {
       return WebglVariables.templateConcat`float ${val} = mix(${from}, ${to}, coords.${this.whichDimension === 0 ? "x" : "y * -1."});`({
         socketOutVariables: new Map([
           [this.outs[0], {
-            "val": WebglTemplate.source`${val}`,
+            [webglOuts.val]: WebglTemplate.source`${val}`,
           }]
         ]),
       });
@@ -80,8 +80,8 @@ export namespace images {
       const {from, to} = GradientNode.inputSlots;
 
       switch (inSocket) {
-        case this.boundsSockets[0]: return <WebglSocketValue<T>>{"val": from};
-        case this.boundsSockets[1]: return <WebglSocketValue<T>>{"val": to};
+        case this.boundsSockets[0]: return <WebglSocketValue<T>>{[webglOuts.val]: from};
+        case this.boundsSockets[1]: return <WebglSocketValue<T>>{[webglOuts.val]: to};
         default: return null;
       }
     }
@@ -159,16 +159,16 @@ export namespace images {
       return WebglVariables.template`vec4 ${val} = texture(${texture}, coords);`({
         socketOutVariables: new Map([
           [this.outs[0], {
-            "val": WebglTemplate.source`${val}.rgb`,
+            [webglOuts.val]: WebglTemplate.source`${val}.rgb`,
           }],
           [this.outs[1], {
-            "val": WebglTemplate.source`${val}.a`,
+            [webglOuts.val]: WebglTemplate.source`${val}.a`,
           }],
           [this.outs[2], {
-            "val": WebglTemplate.slot(width),
+            [webglOuts.val]: WebglTemplate.slot(width),
           }],
           [this.outs[3], {
-            "val": WebglTemplate.slot(height),
+            [webglOuts.val]: WebglTemplate.slot(height),
           }],
         ]),
         preludeTemplate: WebglTemplate.source`uniform sampler2D ${texture};
@@ -259,9 +259,9 @@ uniform float ${height};`,
           return WebglVariables.template`Color ${color} = ${evaluateInput}(vec2(${x}, ${y}))`({
             socketOutVariables: new Map([
               [this.outs[0], {
-                "val": WebglTemplate.source`${color}.val`,
-                "illuminant": WebglTemplate.source`${color}.illuminant`,
-                "xyz": WebglTemplate.source`${color}.xyz`,
+                [webglOuts.val]: WebglTemplate.source`${color}.val`,
+                [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
+                [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
               }],
             ]),
             functionInputDependencies: new Map([
@@ -277,7 +277,7 @@ uniform float ${height};`,
           return WebglVariables.template`vec3 ${val} = ${evaluateInput}(vec2(${x}, ${y}))`({
             socketOutVariables: new Map([
               [this.outs[0], {
-                "val": WebglTemplate.source`${val}`,
+                [webglOuts.val]: WebglTemplate.source`${val}`,
               }],
             ]),
             functionInputDependencies: new Map([
@@ -292,7 +292,7 @@ uniform float ${height};`,
           return WebglVariables.template`float ${val} = ${evaluateInput}(vec2(${x}, ${y}))`({
             socketOutVariables: new Map([
               [this.outs[0], {
-                "val": WebglTemplate.source`${val}`,
+                [webglOuts.val]: WebglTemplate.source`${val}`,
               }],
             ]),
             functionInputDependencies: new Map([
@@ -310,8 +310,8 @@ uniform float ${height};`,
       const {x, y} = SampleNode.inputSlots;
 
       switch (inSocket) {
-        case this.ins[1]: return <WebglSocketValue<T>>{"val": x};
-        case this.ins[2]: return <WebglSocketValue<T>>{"val": y};
+        case this.ins[1]: return <WebglSocketValue<T>>{[webglOuts.val]: x};
+        case this.ins[2]: return <WebglSocketValue<T>>{[webglOuts.val]: y};
         default: return null;
       }
     }

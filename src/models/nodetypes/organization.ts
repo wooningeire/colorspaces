@@ -1,4 +1,4 @@
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, InSocket, OutSocket, WebglSocketValue} from "../Node";
+import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, InSocket, OutSocket, WebglSocketValue, webglOuts} from "../Node";
 
 import {Vec2} from "@/util";
 import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
@@ -36,16 +36,16 @@ export namespace organization {
         case St.Vector:
         case St.Bool:
           outVars = {
-            "val": WebglTemplate.slot(val),
+            [webglOuts.val]: WebglTemplate.slot(val),
           };
           break;
 
         case St.ColorCoords:
         case St.VectorOrColor:
           outVars = {
-            "val": WebglTemplate.slot(val),
-            "illuminant": WebglTemplate.slot(illuminant),
-            "xyz": WebglTemplate.slot(xyz),
+            [webglOuts.val]: WebglTemplate.slot(val),
+            [webglOuts.illuminant]: WebglTemplate.slot(illuminant),
+            [webglOuts.xyz]: WebglTemplate.slot(xyz),
           };
           break;
         
@@ -69,14 +69,14 @@ export namespace organization {
         case St.Vector:
         case St.Bool:
           return <WebglSocketValue<T>>{
-            "val": val,
+            [webglOuts.val]: val,
           };
 
         case St.ColorCoords:
           return <WebglSocketValue<T>>{
-            "val": val,
-            "illuminant": illuminant,
-            "xyz": xyz,
+            [webglOuts.val]: val,
+            [webglOuts.illuminant]: illuminant,
+            [webglOuts.xyz]: xyz,
           };
         
         default:

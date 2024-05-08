@@ -1,5 +1,6 @@
-import { InSocket, Node, NodeOutputTarget, NodeUpdateSource, OutSocket, SocketType } from "@/models/Node";
+import { InSocket, Node, NodeOutputTarget, NodeUpdateSource, OutSocket, SocketType, webglOuts } from "@/models/Node";
 import { webglDeclarations } from "@/models/colormanagement";
+import { objectSymbolEntries, objectSymbolValues } from "@/util";
 
 export class WebglModule {
   constructor(
@@ -206,6 +207,8 @@ type UniformInitializer = {
   dependencyNodes: Node[],
 };
 
+type Outputs = Partial<Record<typeof webglOuts[keyof typeof webglOuts], WebglTemplate>>;
+type OutputMapping = Partial<Record<typeof webglOuts[keyof typeof webglOuts], WebglSlot>>;
 
 /** Stores a chunk of GLSL code with macro-like slots for variables. */
 export class WebglVariables {
@@ -289,12 +292,12 @@ void main() {
     /** Groups of values/slots which becomes available after evaluating the template, which are associated with
      * specific output sockets. Each output value is associated with a name (the key of the `Record`).
      */
-    private readonly socketOutVariables: Map<OutSocket, Record<string, WebglTemplate>>,
+    private readonly socketOutVariables: Map<OutSocket, Outputs>,
     /** A group of values/slots which becomes available after evaluating the template, which is associated with a
      * node's special output (its display rather than an output socket). Each output value is associated with a name
      * (the key of the `Record`).
      */
-    private readonly nodeOutVariables: Record<string, WebglTemplate>={},
+    private readonly nodeOutVariables: Outputs={},
     /** A template that declares variables in the prelude, which is inserted after the main body has been produced.
      * Usually used for declaring new uniforms.
      */
@@ -321,14 +324,14 @@ void main() {
 
     // Also look for slots in the `outVariables` substitution strings
     for (const [socket, variables] of socketOutVariables) {
-      const newOuts: Record<string, WebglTemplate> = {};
-      for (const [name, value] of Object.entries(variables)) {
-        newOuts[name] = value.substitute(substitutions);
+      const newOuts: Outputs = {};
+      for (const [key, value] of objectSymbolEntries(variables)) {
+        newOuts[key] = (value as WebglTemplate).substitute(substitutions);
       }
       socketOutVariables.set(socket, newOuts);
     }
-    for (const [name, value] of Object.entries(nodeOutVariables)) {
-      nodeOutVariables[name] = value.substitute(substitutions);
+    for (const [key, value] of objectSymbolEntries(nodeOutVariables)) {
+      nodeOutVariables[key] = (value as WebglTemplate).substitute(substitutions);
     }
     const newUniforms = new Map(uniforms);
     for (const [uniformNameTemplate, value] of uniforms) {
@@ -359,7 +362,7 @@ void main() {
   substituteUsingOutputsFrom(
     source: WebglVariables,
     outputTarget: NodeOutputTarget,
-    sourceVariableSlotMapping: Record<string, WebglSlot>,
+    sourceVariableSlotMapping: OutputMapping,
     keepSourcePrelude: boolean=false,
     includeUnmappedVariables: boolean=false,
   ) {
@@ -370,9 +373,14 @@ void main() {
               .map(identifier => [this.template.getInputSlot(identifier), identifier])
           : []
     );
-    for (const [varName, slot] of Object.entries(sourceVariableSlotMapping)) {
-      substitutions.set(slot, source.outVariablesFor(outputTarget)[varName].toString());
-      remainingSubstitutions.delete(slot);
+    for (const [key, slot] of objectSymbolEntries(sourceVariableSlotMapping)) {
+      const template = source.outVariablesFor(outputTarget)[key];
+      if (!template) {
+        throw new TypeError(`Attempted to map an output variable "${key.description}", which does not exist on the source's outputs`);
+      }
+
+      substitutions.set(slot as WebglSlot, template.toString());
+      remainingSubstitutions.delete(slot as WebglSlot);
     }
 
     return keepSourcePrelude
@@ -418,8 +426,8 @@ void main() {
   private outputSlots() {
     return new Set<WebglSlot>([
       ...this.template.getOutputSlots(),
-      ...[...this.socketOutVariables.values()].flatMap(record => Object.values(record).flatMap(template => template.getOutputSlots())),
-      ...Object.values(this.nodeOutVariables).flatMap(template => template.getOutputSlots()),
+      ...[...this.socketOutVariables.values()].flatMap(record => [...objectSymbolValues(record)].flatMap(template => template.getOutputSlots())),
+      ...[...objectSymbolValues(this.nodeOutVariables)].flatMap(template => template.getOutputSlots()),
       ...[...this.uniforms.keys()].flatMap(template => template.getOutputSlots()),
       ...[...this.functionInputDependencies.keys()].flatMap(template => template.getOutputSlots()),
     ]);
@@ -543,10 +551,10 @@ void main() {
         ({main, val, xyz, illuminant, prelude, alpha}) => new Map([
           [main, segments.map(segment => segment.template.toString())
               .join("\n\n")],
-          [val, segments.at(-1)!.nodeOutVariables["val"].toString()],
-          [xyz, segments.at(-1)!.nodeOutVariables["xyz"].toString()],
-          [illuminant, segments.at(-1)!.nodeOutVariables["illuminant"]?.toString() ?? "illuminant2_D65"],
-          [alpha, segments.at(-1)!.nodeOutVariables["alpha"]?.toString() ?? "1."],
+          [val, segments.at(-1)!.nodeOutVariables[webglOuts.val]?.toString() ?? "vec3(0., 0., 0.)"],
+          [xyz, segments.at(-1)!.nodeOutVariables[webglOuts.xyz]?.toString() ?? "vec3(0., 0., 0.)"],
+          [illuminant, segments.at(-1)!.nodeOutVariables[webglOuts.illuminant]?.toString() ?? "illuminant2_D65"],
+          [alpha, segments.at(-1)!.nodeOutVariables[webglOuts.alpha]?.toString() ?? "1."],
           [prelude, segments.map(segment => segment.preludeTemplate.toString())
               .join("\n")],
         ]),

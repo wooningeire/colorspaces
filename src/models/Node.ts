@@ -1,7 +1,6 @@
 import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 import { NO_DESC, StringKey } from "../strings";
 import { Vec2, Vec3, Option } from "../util";
-import { OverloadGroup, OverloadManager } from "./Overload";
 import { Col } from "./colormanagement";
 
 export class Tree {
@@ -400,16 +399,30 @@ export type SocketValue<St extends SocketType=any> =
     St extends SocketType.Any ? any :
     never;
 
+
+
+export const webglOuts = Object.freeze({
+  val: Symbol("val"),
+  illuminant: Symbol("illuminant"),
+  xyz: Symbol("xyz"),
+  alpha: Symbol("alpha"),
+}) as unknown as {
+  readonly val: unique symbol,
+  readonly illuminant: unique symbol,
+  readonly xyz: unique symbol,
+  readonly alpha: unique symbol,
+};
+
 export type WebglSocketValue<St extends SocketType=any> = (
   St extends SocketType.Float ? {
-    "val": WebglSlot,
+    [webglOuts.val]: WebglSlot,
   } :
   St extends SocketType.Integer ? WebglSocketValue<SocketType.Float> :
   St extends SocketType.Vector ? WebglSocketValue<SocketType.Float> :
   St extends SocketType.ColorCoords ? {
-    "val": WebglSlot,
-    "illuminant": WebglSlot,
-    "xyz": WebglSlot,
+    [webglOuts.val]: WebglSlot,
+    [webglOuts.illuminant]: WebglSlot,
+    [webglOuts.xyz]: WebglSlot,
   } :
   St extends SocketType.VectorOrColor ? WebglSocketValue<SocketType.ColorCoords> | WebglSocketValue<SocketType.Vector> :
   St extends SocketType.Dropdown ? never :
@@ -676,9 +689,9 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
       case St.ColorCoords:
         return WebglVariables.template``({
           nodeOutVariables: {
-            "val": WebglTemplate.slot(unif),
-            "illuminant": WebglTemplate.string("illuminant2_D65"),
-            "xyz": WebglTemplate.string("vec3(0., 0., 0.)"),
+            [webglOuts.val]: WebglTemplate.slot(unif),
+            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_D65"),
+            [webglOuts.xyz]: WebglTemplate.string("vec3(0., 0., 0.)"),
           },
           preludeTemplate: WebglTemplate.source`uniform vec3 ${unif};`,
           uniforms: new Map([
@@ -699,7 +712,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
       case St.Vector:
         return WebglVariables.template``({
           nodeOutVariables: {
-            "val": WebglTemplate.slot(unif),
+            [webglOuts.val]: WebglTemplate.slot(unif),
           },
           preludeTemplate: WebglTemplate.source`uniform vec3 ${unif};`,
           uniforms: new Map([
@@ -716,7 +729,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
       case St.Float:
         return WebglVariables.template``({
           nodeOutVariables: {
-            "val": WebglTemplate.slot(unif),
+            [webglOuts.val]: WebglTemplate.slot(unif),
           },
           preludeTemplate: WebglTemplate.source`uniform float ${unif};`,
           uniforms: new Map([
@@ -733,7 +746,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
         case St.Bool:
           return WebglVariables.template``({
             nodeOutVariables: {
-              "val": WebglTemplate.slot(unif),
+              [webglOuts.val]: WebglTemplate.slot(unif),
             },
             preludeTemplate: WebglTemplate.source`uniform bool ${unif};`,
             uniforms: new Map([

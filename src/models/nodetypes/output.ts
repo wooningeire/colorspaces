@@ -1,5 +1,5 @@
 import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, WebglSocketValue} from "../Node";
+import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, WebglSocketValue, webglOuts} from "../Node";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 
@@ -141,10 +141,10 @@ export namespace output {
 
       return WebglVariables.template``({
         nodeOutVariables: {
-          "xyz": WebglTemplate.slot(xyz),
-          "illuminant": WebglTemplate.slot(illuminant),
-          "val": WebglTemplate.slot(val),
-          "alpha": WebglTemplate.slot(alpha),
+          [webglOuts.xyz]: WebglTemplate.slot(xyz),
+          [webglOuts.illuminant]: WebglTemplate.slot(illuminant),
+          [webglOuts.val]: WebglTemplate.slot(val),
+          [webglOuts.alpha]: WebglTemplate.slot(alpha),
         },
       })
     }
@@ -154,12 +154,12 @@ export namespace output {
 
       switch (inSocket) {
         case this.ins[1]: return <WebglSocketValue<T>>{
-          "xyz": xyz,
-          "illuminant": illuminant,
-          "val": val,
+          [webglOuts.xyz]: xyz,
+          [webglOuts.illuminant]: illuminant,
+          [webglOuts.val]: val,
         }; 
         case this.ins[2]: return <WebglSocketValue<T>>{
-          "val": alpha,
+          [webglOuts.val]: alpha,
         };
         case this.ins[3]: return <WebglSocketValue<T>>{}; 
         case this.ins[4]: return <WebglSocketValue<T>>{}; 
