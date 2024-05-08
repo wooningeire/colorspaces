@@ -1,4 +1,4 @@
-import { WebglVariables } from "@/webgl-compute/WebglVariables";
+import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, WebglSocketValue} from "../Node";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
@@ -134,28 +134,32 @@ export namespace output {
       };
     }
 
+    private static readonly inputSlots = WebglSlot.ins("xyz", "illuminant", "val", "alpha");
+
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
-      return new WebglVariables(
-        ``,
-        new Map(),
-        {
-          "xyz": "{xyz}",
-          "illuminant": "{illuminant}",
-          "val": "{val}",
-          "alpha": "{alpha}",
+      const {xyz, illuminant, val, alpha} = ImagePlotNode.inputSlots;
+
+      return WebglVariables.template``({
+        nodeOutVariables: {
+          "xyz": WebglTemplate.slot(xyz),
+          "illuminant": WebglTemplate.slot(illuminant),
+          "val": WebglTemplate.slot(val),
+          "alpha": WebglTemplate.slot(alpha),
         },
-      ).nameOutputSlots(1);
+      })
     }
 
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      const {xyz, illuminant, val, alpha} = ImagePlotNode.inputSlots;
+
       switch (inSocket) {
         case this.ins[1]: return <WebglSocketValue<T>>{
-          "xyz": "xyz",
-          "illuminant": "illuminant",
-          "val": "val",
+          "xyz": xyz,
+          "illuminant": illuminant,
+          "val": val,
         }; 
         case this.ins[2]: return <WebglSocketValue<T>>{
-          "val": "alpha",
+          "val": alpha,
         };
         case this.ins[3]: return <WebglSocketValue<T>>{}; 
         case this.ins[4]: return <WebglSocketValue<T>>{}; 

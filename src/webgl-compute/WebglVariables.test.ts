@@ -10,7 +10,7 @@ class WebglConstantNode extends Node {
       nodeOutVariables: {
         "val": WebglTemplate.slot(output),
         "illuminant": WebglTemplate.string("illuminant2_E"),
-        "xyz": WebglTemplate.code`linearSrgbToXyz(${output})`,
+        "xyz": WebglTemplate.source`linearSrgbToXyz(${output})`,
       },
     });
   }
@@ -21,7 +21,7 @@ describe(WebglTemplate.name, () => {
     it("fills slots properly", () => {
       const input = WebglSlot.in("input");
   
-      const template = WebglTemplate.code`float vector = ${input} + 1.;`;
+      const template = WebglTemplate.source`float vector = ${input} + 1.;`;
       const filledTemplate = template.substitute(new Map([
         [input, "6.28"],
       ]));
@@ -36,9 +36,9 @@ describe(WebglTemplate.name, () => {
       const scalar = WebglSlot.in("scalar");
 
       const template = WebglTemplate.merge(
-        WebglTemplate.code`vec2 v = vec2(${x}, 3.);`,
+        WebglTemplate.source`vec2 v = vec2(${x}, 3.);`,
         WebglTemplate.string("vec2 w = v + 1.;"),
-        WebglTemplate.code`vec2 u = w * ${scalar};`,
+        WebglTemplate.source`vec2 u = w * ${scalar};`,
       );
 
       const filledTemplate = template.substitute(new Map([
@@ -61,7 +61,7 @@ describe(WebglVariables.name, () => {
   
       const src = WebglVariables.template`vec3 ${output} = vec3(1.5, 2.9, 4.7);`({
         nodeOutVariables: {
-          "myOutput": WebglTemplate.code`${output}`,
+          "myOutput": WebglTemplate.source`${output}`,
         },
       });
   

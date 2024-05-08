@@ -156,7 +156,7 @@ export abstract class Node {
   webglGetBaseVariables(): WebglVariables {
     throw new Error("not implmeneted");
   }
-  /** Provides a mapping from output names from a source socket to input slot names in `webglGetBaseVariables`
+  /** Provides a mapping from output names from a source socket to input slots from `webglGetBaseVariables`,
    * depending on which input socket `inSocket` we are inspecting
    */
   webglGetMapping<St extends SocketType>(inSocket: InSocket<St>): WebglSocketValue<St> | null {
@@ -349,7 +349,7 @@ export abstract class Node {
   }
 
   /** Performs a depth-first search of this node's dependencies. */
-  private * dfsDependencies(visited: Set<Node>) {
+  private * dfsDependencies(visited: Set<Node>): Generator<Node, void, void> {
     visited.add(this);
 
     for (const socket of this.ins) {
@@ -358,7 +358,7 @@ export abstract class Node {
       const srcNode = socket.link.srcNode;
       if (visited.has(srcNode)) continue;
       
-      srcNode.dfsDependencies(visited);
+      yield* srcNode.dfsDependencies(visited);
     }
 
     yield this;
@@ -680,7 +680,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
             "illuminant": WebglTemplate.string("illuminant2_D65"),
             "xyz": WebglTemplate.string("vec3(0., 0., 0.)"),
           },
-          preludeTemplate: WebglTemplate.code`uniform vec3 ${unif};`,
+          preludeTemplate: WebglTemplate.source`uniform vec3 ${unif};`,
           uniforms: new Map([
             [WebglTemplate.slot(unif), {
               set: (gl, unif) => {
@@ -701,7 +701,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           nodeOutVariables: {
             "val": WebglTemplate.slot(unif),
           },
-          preludeTemplate: WebglTemplate.code`uniform vec3 ${unif};`,
+          preludeTemplate: WebglTemplate.source`uniform vec3 ${unif};`,
           uniforms: new Map([
             [WebglTemplate.slot(unif), {
               set: (gl, unif) => {
@@ -718,7 +718,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           nodeOutVariables: {
             "val": WebglTemplate.slot(unif),
           },
-          preludeTemplate: WebglTemplate.code`uniform float ${unif};`,
+          preludeTemplate: WebglTemplate.source`uniform float ${unif};`,
           uniforms: new Map([
             [WebglTemplate.slot(unif), {
               set: (gl, unif) => {
@@ -735,7 +735,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
             nodeOutVariables: {
               "val": WebglTemplate.slot(unif),
             },
-            preludeTemplate: WebglTemplate.code`uniform bool ${unif};`,
+            preludeTemplate: WebglTemplate.source`uniform bool ${unif};`,
             uniforms: new Map([
               [WebglTemplate.slot(unif), {
                 set: (gl, unif) => {

@@ -70,7 +70,7 @@ export namespace images {
       return WebglVariables.templateConcat`float ${val} = mix(${from}, ${to}, coords.${this.whichDimension === 0 ? "x" : "y * -1."});`({
         socketOutVariables: new Map([
           [this.outs[0], {
-            "val": WebglTemplate.code`${val}`,
+            "val": WebglTemplate.source`${val}`,
           }]
         ]),
       });
@@ -154,28 +154,28 @@ export namespace images {
     }
     
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
-      return new WebglVariables(
-        `vec4 {0:val} = texture({1:texture}, coords);`,
-        new Map([
+      const {val, texture, width, height} = WebglSlot.outs("val", "texture", "width", "height");
+
+      return WebglVariables.template`vec4 ${val} = texture(${texture}, coords);`({
+        socketOutVariables: new Map([
           [this.outs[0], {
-            "val": "{0:val}.rgb",
+            "val": WebglTemplate.source`${val}.rgb`,
           }],
           [this.outs[1], {
-            "val": "{0:val}.a",
+            "val": WebglTemplate.source`${val}.a`,
           }],
           [this.outs[2], {
-            "val": "{2:width}",
+            "val": WebglTemplate.slot(width),
           }],
           [this.outs[3], {
-            "val": "{3:height}",
+            "val": WebglTemplate.slot(height),
           }],
         ]),
-        {},
-        `uniform sampler2D {1:texture};
-uniform float {2:width};
-uniform float {3:height};`,
-        {
-          "{1:texture}": {
+        preludeTemplate: WebglTemplate.source`uniform sampler2D ${texture};
+uniform float ${width};
+uniform float ${height};`,
+        uniforms: new Map([
+          [WebglTemplate.slot(texture), {
             set: (gl, unif, nUsedTextures) => {
               const texture = gl.createTexture();
               gl.activeTexture(gl.TEXTURE0 + nUsedTextures);
@@ -193,25 +193,25 @@ uniform float {3:height};`,
             },
             dependencySockets: [this.imageSocket],
             dependencyNodes: [],
-          },
+          }],
 
-          "{2:width}": {
+          [WebglTemplate.slot(width), {
             set: (gl, unif) => {
               gl.uniform1i(unif, this.imageSocket.fieldValue?.width ?? 0);
             },
             dependencySockets: [this.imageSocket],
             dependencyNodes: [],
-          },
+          }],
 
-          "{3:height}": {
+          [WebglTemplate.slot(height), {
             set: (gl, unif) => {
               gl.uniform1i(unif, this.imageSocket.fieldValue?.height ?? 0);
             },
             dependencySockets: [this.imageSocket],
             dependencyNodes: [],
-          },
-        },
-      ).nameOutputSlots(4);
+          }],
+        ]),
+      });
     }
 
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
@@ -244,58 +244,59 @@ uniform float {3:height};`,
         }, true, Object.assign({constant: true}, volatileOutSocketOptions(this.ins, this.outs))),
       );
     }
+
+    private static readonly inputSlots = WebglSlot.ins("x", "y");
     
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
-      const x = WebglSlot.in();
-      const y = WebglSlot.in();
+      const {x, y} = SampleNode.inputSlots;
 
-      const evaluateInput = WebglSlot.out();
+      const evaluateInput = WebglSlot.out("evaluateOutput");
 
       switch (this.outs[0].type) {
         case St.ColorCoords: {
-          const color = WebglSlot.out();
+          const color = WebglSlot.out("color");
 
           return WebglVariables.template`Color ${color} = ${evaluateInput}(vec2(${x}, ${y}))`({
             socketOutVariables: new Map([
               [this.outs[0], {
-                "val": WebglTemplate.code`${color}.val`,
-                "illuminant": WebglTemplate.code`${color}.illuminant`,
-                "xyz": WebglTemplate.code`${color}.xyz`,
+                "val": WebglTemplate.source`${color}.val`,
+                "illuminant": WebglTemplate.source`${color}.illuminant`,
+                "xyz": WebglTemplate.source`${color}.xyz`,
               }],
             ]),
             functionInputDependencies: new Map([
-              [WebglTemplate.code`${evaluateInput}`, this.ins[0].link.src],
+              [WebglTemplate.source`${evaluateInput}`, this.ins[0].link.src],
             ]),
           });
         }
 
         case St.Vector:
         case St.VectorOrColor: {
-          const val = WebglSlot.out();
+          const val = WebglSlot.out("val");
 
           return WebglVariables.template`vec3 ${val} = ${evaluateInput}(vec2(${x}, ${y}))`({
             socketOutVariables: new Map([
               [this.outs[0], {
-                "val": WebglTemplate.code`${val}`,
+                "val": WebglTemplate.source`${val}`,
               }],
             ]),
             functionInputDependencies: new Map([
-              [WebglTemplate.code`${evaluateInput}`, this.ins[0].link.src],
+              [WebglTemplate.source`${evaluateInput}`, this.ins[0].link.src],
             ]),
           });
         }
 
         case St.Float: {
-          const val = WebglSlot.out();
+          const val = WebglSlot.out("val");
 
           return WebglVariables.template`float ${val} = ${evaluateInput}(vec2(${x}, ${y}))`({
             socketOutVariables: new Map([
               [this.outs[0], {
-                "val": WebglTemplate.code`${val}`,
+                "val": WebglTemplate.source`${val}`,
               }],
             ]),
             functionInputDependencies: new Map([
-              [WebglTemplate.code`${evaluateInput}`, this.ins[0].link.src],
+              [WebglTemplate.source`${evaluateInput}`, this.ins[0].link.src],
             ]),
           });
         }
@@ -306,9 +307,11 @@ uniform float {3:height};`,
     }
 
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      const {x, y} = SampleNode.inputSlots;
+
       switch (inSocket) {
-        case this.ins[1]: return <WebglSocketValue<T>>{"val": "x"};
-        case this.ins[2]: return <WebglSocketValue<T>>{"val": "y"};
+        case this.ins[1]: return <WebglSocketValue<T>>{"val": x};
+        case this.ins[2]: return <WebglSocketValue<T>>{"val": y};
         default: return null;
       }
     }

@@ -2,7 +2,7 @@ import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, InSocket, O
 
 import {Vec2} from "@/util";
 import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
-import { WebglVariables } from "@/webgl-compute/WebglVariables";
+import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 
 export namespace organization {
   export class RerouteNode extends Node {
@@ -22,9 +22,13 @@ export namespace organization {
 
       this.width = 15;
     }
+
+    private static readonly inputSlots = WebglSlot.ins("val", "illuminant", "xyz");
     
     webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
-      let outVars: WebglSocketValue<(typeof this.outs[0])["type"]>;
+      const {val, illuminant, xyz} = RerouteNode.inputSlots;
+
+      let outVars: Record<string, WebglTemplate>;
 
       switch (this.outs[0].type) {
         case St.Float:
@@ -32,16 +36,16 @@ export namespace organization {
         case St.Vector:
         case St.Bool:
           outVars = {
-            "val": "{val}",
+            "val": WebglTemplate.slot(val),
           };
           break;
 
         case St.ColorCoords:
         case St.VectorOrColor:
           outVars = {
-            "val": "{val}",
-            "illuminant": "{illuminant}",
-            "xyz": "{xyz}",
+            "val": WebglTemplate.slot(val),
+            "illuminant": WebglTemplate.slot(illuminant),
+            "xyz": WebglTemplate.slot(xyz),
           };
           break;
         
@@ -49,29 +53,30 @@ export namespace organization {
           throw new Error("not implemented");
       }
 
-      return new WebglVariables(
-        "",
-        new Map([
+      return WebglVariables.template``({
+        socketOutVariables: new Map([
           [this.outs[0], outVars],
         ]),
-      );
+      });
     }
 
     webglGetMapping<T extends St>(inSocket: InSocket<T>): WebglSocketValue<T> | null {
+      const {val, illuminant, xyz} = RerouteNode.inputSlots;
+
       switch (inSocket.effectiveType()) {
         case St.Float:
         case St.Integer:
         case St.Vector:
         case St.Bool:
           return <WebglSocketValue<T>>{
-            "val": "val",
+            "val": val,
           };
 
         case St.ColorCoords:
           return <WebglSocketValue<T>>{
-            "val": "val",
-            "illuminant": "illuminant",
-            "xyz": "xyz",
+            "val": val,
+            "illuminant": illuminant,
+            "xyz": xyz,
           };
         
         default:

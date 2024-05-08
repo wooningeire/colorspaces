@@ -26,11 +26,11 @@ export class WebglSlot {
   }
     
   static ins<S extends readonly string[]>(...identifiers: S): SlotMap<S> {
-    return identifiers.reduce((acc, identifier) => Object.assign(acc, {[identifier]: new WebglSlot(true, identifier)}), {}) as SlotMap<S>;
+    return Object.fromEntries(identifiers.map(identifier => [identifier, WebglSlot.in(identifier)])) as SlotMap<S>;
   }
     
   static outs<S extends readonly string[]>(...identifiers: S): SlotMap<S>  {
-    return identifiers.reduce((acc, identifier) => Object.assign(acc, {[identifier]: new WebglSlot(false, identifier)}), {}) as SlotMap<S>;
+    return Object.fromEntries(identifiers.map(identifier => [identifier, WebglSlot.out(identifier)])) as SlotMap<S>;
   }
 
   get isOutput(): boolean {
@@ -55,7 +55,7 @@ export class WebglTemplate<InputSlots extends SlotMap=any, OutputSlots extends S
     private readonly substitutions: Map<WebglSlot, string>=new Map(),
   ) {}
 
-  static code(segments: TemplateStringsArray, ...slots: WebglSlot[]): WebglTemplate {
+  static source(segments: TemplateStringsArray, ...slots: WebglSlot[]): WebglTemplate {
     const inputSlots: SlotMap = {};
     const outputSlots: SlotMap = {};
     for (const slot of slots) {
@@ -77,7 +77,7 @@ export class WebglTemplate<InputSlots extends SlotMap=any, OutputSlots extends S
     let currentSlots: WebglSlot[] = [];
 
     const pushCode = () => {
-      templates.push(WebglTemplate.code(Object.assign(currentSegments, {raw: currentSegmentsRaw}), ...currentSlots));
+      templates.push(WebglTemplate.source(Object.assign(currentSegments, {raw: currentSegmentsRaw}), ...currentSlots));
     };
 
     for (let i = 1; i < segments.length; i++) {
@@ -109,7 +109,7 @@ export class WebglTemplate<InputSlots extends SlotMap=any, OutputSlots extends S
 
   /** Creates a template consisting of just a slot. */
   static slot(slot: WebglSlot): WebglTemplate {
-    return WebglTemplate.code`${slot}`;
+    return WebglTemplate.source`${slot}`;
   }
 
   static string(string: string) {
@@ -274,24 +274,25 @@ void main() {
     (
       {outputType, functionName, main, functionOutput},
       {},
-    ) => WebglTemplate.code`${outputType} ${functionName}(vec2 coords) {
+    ) => WebglTemplate.source`${outputType} ${functionName}(vec2 coords) {
   ${main}
   
   return ${functionOutput};
 }`,
   );
 
-  constructor(
+  private constructor(
     /** The GLSL code that takes in GLSL variables and computes new ones. Templates may include "slots" for other GLSL
      * code or GLSL variables to be inserted.
      */
     readonly template: WebglTemplate,
     /** Groups of values/slots which becomes available after evaluating the template, which are associated with
-     * specific output sockets.
+     * specific output sockets. Each output value is associated with a name (the key of the `Record`).
      */
     private readonly socketOutVariables: Map<OutSocket, Record<string, WebglTemplate>>,
     /** A group of values/slots which becomes available after evaluating the template, which is associated with a
-     * node's special output (its display rather than an output socket).
+     * node's special output (its display rather than an output socket). Each output value is associated with a name
+     * (the key of the `Record`).
      */
     private readonly nodeOutVariables: Record<string, WebglTemplate>={},
     /** A template that declares variables in the prelude, which is inserted after the main body has been produced.
@@ -437,7 +438,7 @@ void main() {
 
     let i = 0;
     for (const dependencyNode of node.toposortedDependencies()) {
-      let variables = node.webglOutput();
+      let variables = dependencyNode.webglOutput();
 
       const functionDependencySockets = new Set<OutSocket>();
 
@@ -448,13 +449,13 @@ void main() {
         variables = variables.prependPrelude(preludeFunction);
       }
 
-      for (const socket of node.ins) {
+      for (const socket of dependencyNode.ins) {
         if (socket.usesFieldValue) continue;
         if (functionDependencySockets.has(socket.link.src)) continue;
 
         const srcNode = socket.link.srcNode;
         const srcIndex = dependencyIndices.get(srcNode)!;
-        variables = node.webglVariablesFill(segments[srcIndex], variables, socket);
+        variables = dependencyNode.webglVariablesFill(segments[srcIndex], variables, socket);
       }
 
       segments[i] = variables;
@@ -543,7 +544,7 @@ void main() {
           [main, segments.map(segment => segment.template.toString())
               .join("\n\n")],
           [val, segments.at(-1)!.nodeOutVariables["val"].toString()],
-          [xyz, segments.at(-1)!.nodeOutVariables["xyz"]?.toString()],
+          [xyz, segments.at(-1)!.nodeOutVariables["xyz"].toString()],
           [illuminant, segments.at(-1)!.nodeOutVariables["illuminant"]?.toString() ?? "illuminant2_D65"],
           [alpha, segments.at(-1)!.nodeOutVariables["alpha"]?.toString() ?? "1."],
           [prelude, segments.map(segment => segment.preludeTemplate.toString())
@@ -562,7 +563,7 @@ void main() {
   }
 
   static template(strings: TemplateStringsArray, ...slots: WebglSlot[]) {
-    return this.fromTemplate(WebglTemplate.code(strings, ...slots));
+    return this.fromTemplate(WebglTemplate.source(strings, ...slots));
   }
 
   static templateConcat(strings: TemplateStringsArray, ...items: (WebglSlot | WebglTemplate | string)[]) {

@@ -41,4 +41,23 @@ describe(Node.name, () => {
       }
     });
   });
+
+  describe(Node.prototype.toposortedDependencies.name, () => {
+    it("obtains all dependencies correctly", () => {
+      const tree = new Tree();
+  
+      const a = new ConstantNode();
+      const b = new ConstantNode();
+      const c = new ConstantNode();
+  
+      tree.nodes.add(a);
+      tree.nodes.add(b);
+      tree.nodes.add(c);
+  
+      tree.linkSockets(a.outs[0], b.ins[0]);
+      tree.linkSockets(b.outs[0], c.ins[0]);
+
+      expect([...c.toposortedDependencies()]).toEqual([a, b, c]);
+    });
+  });
 });

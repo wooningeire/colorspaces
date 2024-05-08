@@ -125,28 +125,28 @@ export namespace spaces {
 
           const socketOutVariables = new Map<OutSocket, Record<string, WebglTemplate>>([
             [outs[0], {
-              "val": WebglTemplate.code`${color}.val`,
-              "illuminant": WebglTemplate.code`${color}.illuminant`,
-              "xyz": WebglTemplate.code`${color}.xyz`,
+              "val": WebglTemplate.source`${color}.val`,
+              "illuminant": WebglTemplate.source`${color}.illuminant`,
+              "xyz": WebglTemplate.source`${color}.xyz`,
             }],
 
             [outs[1], {
-              "val": WebglTemplate.code`${color}.val.x`,
+              "val": WebglTemplate.source`${color}.val.x`,
             }],
 
             [outs[2], {
-              "val": WebglTemplate.code`${color}.val.y`,
+              "val": WebglTemplate.source`${color}.val.y`,
             }],
 
             [outs[3], {
-              "val": WebglTemplate.code`${color}.val.z`,
+              "val": WebglTemplate.source`${color}.val.z`,
             }],
           ]);
 
           const nodeOutVariables = {
-            "val": WebglTemplate.code`${color}.val`,
-            "illuminant": WebglTemplate.code`${color}.illuminant`,
-            "xyz": WebglTemplate.code`${color}.xyz`,
+            "val": WebglTemplate.source`${color}.val`,
+            "illuminant": WebglTemplate.source`${color}.illuminant`,
+            "xyz": WebglTemplate.source`${color}.xyz`,
           };
 
           if (node.colorInputSocket.effectiveType() === St.ColorCoords) {
@@ -155,7 +155,7 @@ export namespace spaces {
             return WebglVariables.templateConcat`Color ${color} = Color(${node.webglFromXyz(xyz, originalIlluminant, newIlluminant)}, ${newIlluminant}, adaptXyz(${xyz}, ${originalIlluminant}, ${newIlluminant}));`({
               socketOutVariables,
               nodeOutVariables,
-              preludeTemplate: WebglTemplate.code`uniform vec2 ${newIlluminant};`,
+              preludeTemplate: WebglTemplate.source`uniform vec2 ${newIlluminant};`,
               uniforms: new Map([
                 [WebglTemplate.slot(newIlluminant), {
                   set: (gl, unif) => {
@@ -175,7 +175,7 @@ export namespace spaces {
 Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIlluminant, outVal)});`({
               socketOutVariables,
               nodeOutVariables,
-              preludeTemplate: WebglTemplate.code`uniform vec2 ${newIlluminant};`,
+              preludeTemplate: WebglTemplate.source`uniform vec2 ${newIlluminant};`,
               uniforms: new Map([
                 [WebglTemplate.slot(newIlluminant), {
                   set: (gl, unif) => {
@@ -250,17 +250,17 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
 Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIlluminant, outVal)});`({
             socketOutVariables: new Map([
               [outs[0], {
-                "val": WebglTemplate.code`${color}.val`,
-                "illuminant": WebglTemplate.code`${color}.illuminant`,
-                "xyz": WebglTemplate.code`${color}.xyz`,
+                "val": WebglTemplate.source`${color}.val`,
+                "illuminant": WebglTemplate.source`${color}.illuminant`,
+                "xyz": WebglTemplate.source`${color}.xyz`,
               }],
             ]),
             nodeOutVariables: {
-              "val": WebglTemplate.code`${color}.val`,
-              "illuminant": WebglTemplate.code`${color}.illuminant`,
-              "xyz": WebglTemplate.code`${color}.xyz`,
+              "val": WebglTemplate.source`${color}.val`,
+              "illuminant": WebglTemplate.source`${color}.illuminant`,
+              "xyz": WebglTemplate.source`${color}.xyz`,
             },
-            preludeTemplate: WebglTemplate.code`uniform vec2 ${newIlluminant};`,
+            preludeTemplate: WebglTemplate.source`uniform vec2 ${newIlluminant};`,
             uniforms: new Map([
               [WebglTemplate.slot(newIlluminant), {
                 set: (gl, unif) => {
@@ -371,10 +371,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.LinearSrgb;
     }
     webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
-      return WebglTemplate.code`linearSrgbToXyz(${val}, ${newIlluminant})`;
+      return WebglTemplate.source`linearSrgbToXyz(${val}, ${newIlluminant})`;
     }
     webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
-      return WebglTemplate.code`xyzToLinearSrgb(${xyz}, ${originalIlluminant})`;
+      return WebglTemplate.source`xyzToLinearSrgb(${xyz}, ${originalIlluminant})`;
     }
   }
 
@@ -386,10 +386,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.Srgb;
     }
     webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
-      return WebglTemplate.code`gammaSrgbToXyz(${val}, ${newIlluminant})`;
+      return WebglTemplate.source`gammaSrgbToXyz(${val}, ${newIlluminant})`;
     }
     webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
-      return WebglTemplate.code`xyzToGammaSrgb(${xyz}, ${originalIlluminant})`;
+      return WebglTemplate.source`xyzToGammaSrgb(${xyz}, ${originalIlluminant})`;
     }
   }
 
@@ -423,7 +423,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return WebglTemplate.slot(val);
     }
     webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
-      return WebglTemplate.code`adaptXyz(${xyz}, ${originalIlluminant}, ${newIlluminant})`;
+      return WebglTemplate.source`adaptXyz(${xyz}, ${originalIlluminant}, ${newIlluminant})`;
     }
   }
 
@@ -462,10 +462,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return ["x", "y", "Y"];
     }
     webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
-      return WebglTemplate.code`xyyToXyz(${val})`;
+      return WebglTemplate.source`xyyToXyz(${val})`;
     }
     webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
-      return WebglTemplate.code`xyzToXyy(adaptXyz(${xyz}, ${originalIlluminant}, ${newIlluminant}))`;
+      return WebglTemplate.source`xyzToXyy(adaptXyz(${xyz}, ${originalIlluminant}, ${newIlluminant}))`;
     }
   }
 
@@ -492,11 +492,11 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get componentLabels() {
       return ["L*", "a*", "b*"];
     }
-    get webglToXyz() {
-      return "labToXyz({2:val}, {1:newIlluminant}, {1:newIlluminant})";
+    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
+      return WebglTemplate.source`labToXyz(${val}, ${newIlluminant}, ${newIlluminant})`;
     }
-    get webglFromXyz() {
-      return "xyzToLab({xyz}, {originalIlluminant}, {1:newIlluminant})";
+    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
+      return WebglTemplate.source`xyzToLab(${xyz}, ${originalIlluminant}, ${newIlluminant})`;
     }
   }
 
@@ -537,11 +537,11 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get componentLabels() {
       return ["L*", "C*", "h"];
     }
-    get webglToXyz() {
-      return "labToXyz(lchToLxx({2:val}), {1:newIlluminant}, {1:newIlluminant})";
+    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
+      return WebglTemplate.source`labToXyz(lchToLxx(${val}), ${newIlluminant}, ${newIlluminant})`;
     }
-    get webglFromXyz() {
-      return "lxxToLch(xyzToLab({xyz}, {originalIlluminant}, {1:newIlluminant}))";
+    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
+      return WebglTemplate.source`lxxToLch(xyzToLab(${xyz}, ${originalIlluminant}, ${newIlluminant}))`;
     }
   }
 
@@ -568,11 +568,11 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get componentLabels() {
       return ["L*", "u*", "v*"];
     }
-    get webglToXyz() {
-      return "luvToXyz({2:val}, {1:newIlluminant}, {1:newIlluminant})";
+    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
+      return WebglTemplate.source`luvToXyz(${val}, ${newIlluminant}, ${newIlluminant})`;
     }
-    get webglFromXyz() {
-      return "xyzToLuv({xyz}, {originalIlluminant}, {1:newIlluminant})";
+    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
+      return WebglTemplate.source`xyzToLuv(${xyz}, ${originalIlluminant}, ${newIlluminant})`;
     }
   }
 
@@ -613,11 +613,11 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get componentLabels() {
       return ["L*", "C*", "h"];
     }
-    get webglToXyz() {
-      return "luvToXyz(lchToLxx({2:val}), {1:newIlluminant}, {1:newIlluminant})";
+    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
+      return WebglTemplate.source`luvToXyz(lchToLxx(${val}), ${newIlluminant}, ${newIlluminant})`;
     }
-    get webglFromXyz() {
-      return "lxxToLch(xyzToLuv({xyz}, {originalIlluminant}, {1:newIlluminant}))";
+    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
+      return WebglTemplate.source`lxxToLch(xyzToLuv(${xyz}, ${originalIlluminant}, ${newIlluminant}))`;
     }
   }
 
@@ -648,11 +648,11 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get includeWhitePoint() {
       return false;
     }
-    get webglToXyz() {
-      return "oklabToXyz({2:val}, {1:newIlluminant})";
+    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
+      return WebglTemplate.source`oklabToXyz(${val}, ${newIlluminant})`;
     }
-    get webglFromXyz() {
-      return "xyzToOklab({xyz}, {originalIlluminant})";
+    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
+      return WebglTemplate.source`xyzToOklab(${xyz}, ${originalIlluminant})`;
     }
   }
 
@@ -697,11 +697,11 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get includeWhitePoint() {
       return false;
     }
-    get webglToXyz() {
-      return "oklabToXyz(lchToLxx({2:val}), {1:newIlluminant})";
+    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
+      return WebglTemplate.source`oklabToXyz(lchToLxx(${val}), ${newIlluminant})`;
     }
-    get webglFromXyz() {
-      return "lxxToLch(xyzToOklab({xyz}, {originalIlluminant}))";
+    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
+      return WebglTemplate.source`lxxToLch(xyzToOklab(${xyz}, ${originalIlluminant}))`;
     }
   }
 
@@ -712,11 +712,11 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get ColClass() {
       return cm.LinearAdobeRgb;
     }
-    get webglToXyz() {
-      return "linAdobeRgbToXyz({2:val}, {1:newIlluminant})";
+    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
+      return WebglTemplate.source`linAdobeRgbToXyz(${val}, ${newIlluminant})`;
     }
-    get webglFromXyz() {
-      return "xyzToLinAdobeRgb({xyz}, {originalIlluminant})";
+    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
+      return WebglTemplate.source`xyzToLinAdobeRgb(${xyz}, ${originalIlluminant})`;
     }
   }
 
@@ -727,11 +727,11 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get ColClass() {
       return cm.AdobeRgb;
     }
-    get webglToXyz() {
-      return "linAdobeRgbToXyz(gammaToLinAdobeRgb({2:val}), {1:newIlluminant})";
+    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
+      return WebglTemplate.source`linAdobeRgbToXyz(gammaToLinAdobeRgb(${val}), ${newIlluminant})`;
     }
-    get webglFromXyz() {
-      return "linToGammaAdobeRgb(xyzToLinAdobeRgb({xyz}, {originalIlluminant}))";
+    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
+      return WebglTemplate.source`linToGammaAdobeRgb(xyzToLinAdobeRgb(${xyz}, ${originalIlluminant}))`;
     }
   }
 
@@ -742,11 +742,11 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get ColClass() {
       return cm.Rec709;
     }
-    get webglToXyz() {
-      return "linearSrgbToXyz(rec709ToLinearSrgb({2:val}), {1:newIlluminant})";
+    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
+      return WebglTemplate.source`linearSrgbToXyz(rec709ToLinearSrgb(${val}), ${newIlluminant})`;
     }
-    get webglFromXyz() {
-      return "linearToRec709(xyzToLinearSrgb({xyz}, {originalIlluminant}))";
+    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
+      return WebglTemplate.source`linearToRec709(xyzToLinearSrgb(${xyz}, ${originalIlluminant}))`;
     }
   }
 }
