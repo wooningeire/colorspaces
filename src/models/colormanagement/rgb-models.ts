@@ -139,7 +139,11 @@ export const webglRgbDeclarations = `float rgbCompDistribFromHue(float p, float 
   return p;
 }
 
-vec3 hslToRgb(float hue, float sat, float lightness) {
+vec3 hslToRgb(vec3 hsl) {
+  float hue = hsl.x;
+  float sat = hsl.y;
+  float lightness = hsl.z;
+
   if (sat == 0.) {
     return vec3(lightness, lightness, lightness);
   }
@@ -183,7 +187,11 @@ vec3 rgbToHsl(vec3 rgb) {
   );
 }
 
-vec3 hsvToRgb(float hue, float sat, float value) {
+vec3 hsvToRgb(vec3 hsv) {
+  float hue = hsv.x;
+  float sat = hsv.y;
+  float value = hsv.z;
+
   hue = mod(hue, 1.) * 6.;
   float segmentStart = floor(hue);
 
@@ -225,15 +233,19 @@ vec3 rgbToHsv(vec3 rgb) {
   );
 }
 
-vec3 hwbToRgb(float hue, float whiteness, float blackness) {
+vec3 hwbToRgb(vec3 hwb) {
+  float hue = hwb.x;
+  float whiteness = hwb.y;
+  float blackness = hwb.z;
+
   float scaledWhiteness = whiteness / max(1., whiteness + blackness);
   float scaledBlackness = blackness / max(1., whiteness + blackness);
 
-  return hsvToRgb(
+  return hsvToRgb(vec3(
     hue,
     1. - scaledWhiteness / (1. - scaledBlackness),
     1. - scaledBlackness
-  );
+  ));
 }
 
 vec3 rgbToHwb(vec3 rgb) {

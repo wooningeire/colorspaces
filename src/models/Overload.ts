@@ -5,8 +5,8 @@ import { InSocket, Node, NodeDisplay, NodeEvalContext, OutSocket, Socket, Socket
 export class Overload<NodeType extends Node=any, InSockets extends InSocket[]=any, OutSockets extends OutSocket[]=any> {
   constructor(
     readonly label: string,
-    readonly ins: (node: NodeType) => [...InSockets],
-    readonly outs: (node: NodeType, ins: InSockets) => [...OutSockets],
+    readonly buildInSockets: (node: NodeType) => [...InSockets],
+    readonly buildOutSockets: (node: NodeType, ins: InSockets) => [...OutSockets],
     readonly nodeDisplay: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => NodeDisplay=() => { throw new Error("not implemented") },
     readonly webglGetBaseVariables: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => WebglVariables=() => { throw new Error("not implemented"); },
     private readonly maintainExistingLinks = false,
@@ -51,8 +51,8 @@ export class OverloadManager<Mode extends string> {
     this.dropdown = overloadGroup.buildDropdown(node, defaultMode, this);
 
     const overload = overloadGroup.getOverload(defaultMode);
-    this.ins = overload.ins(node);
-    this.outs = overload.outs(node, this.ins);
+    this.ins = overload.buildInSockets(node);
+    this.outs = overload.buildOutSockets(node, this.ins);
   }
 
   setSockets() {
@@ -92,8 +92,8 @@ export class OverloadManager<Mode extends string> {
       oldSocket?.links.forEach(link => tree.unlink(link));
     }
 
-    this.ins = this.overload.ins(this.node);
-    this.outs = this.overload.outs(this.node, this.ins);
+    this.ins = this.overload.buildInSockets(this.node);
+    this.outs = this.overload.buildOutSockets(this.node, this.ins);
     this.node.ins.push(...this.ins);
     this.node.outs.push(...this.outs);
   }

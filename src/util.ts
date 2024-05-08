@@ -147,3 +147,6 @@ export const objectSymbolValues = function* <T>(object: Record<string | symbol, 
 /** An `N`-element tuple of `T`.
  */
 export type Multiple<N extends number, T> = T[] & {length: N};
+
+/** Alters the return type of input function type `Fn` to be `Return`. */
+export type Returns<Fn extends (...args: Args) => any, Return, Args extends any[]> = (...args: Args) => Return;

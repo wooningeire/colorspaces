@@ -496,6 +496,8 @@ export type InSocketOptions<St extends SocketType=any> = {
   webglOutputMapping?: WebglSocketOutputMapping<St> | null,
   webglGetOutputMapping?: (socket: InSocket<St>) => () => WebglSocketOutputMapping<St> | null,
 } & SocketOptions<St>;
+export type OutSocketOptions<St extends SocketType=any> = {
+} & SocketOptions<St>;
 
 export abstract class Socket<St extends SocketType=any> {
   private static nextId = 0;

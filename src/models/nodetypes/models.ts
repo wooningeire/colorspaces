@@ -1,4 +1,4 @@
-import { Node, SocketType, SocketFlag, NodeEvalContext, OutputDisplayType, InSocket, OutSocket, webglOuts } from "../Node";
+import { Node, SocketType, SocketFlag, NodeEvalContext, OutputDisplayType, InSocket, OutSocket, webglOuts, Socket } from "../Node";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 
@@ -8,7 +8,6 @@ import { getIlluminant, whitePointSocketOptions } from "./spaces";
 import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 
 export namespace models {
-  //TODO code duplication
   export class RgbNode extends Node {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "rgb";
@@ -46,320 +45,174 @@ export namespace models {
     }
   }
 
-  enum RgbMode {
+  enum RgbOverloadMode {
     ToRgb = "to rgb",
     FromRgb = "from rgb",
   }
-  export class HslNode extends NodeWithOverloads<RgbMode> {
-    static readonly TYPE = Symbol(this.name);
-    static readonly id = "hsl";
-    static readonly outputDisplayType = OutputDisplayType.Vec;
 
-    private static readonly inputSlots = WebglSlot.ins("hue", "saturation", "lightness", "rgb");
+  type Conversion = {
+    convert: (rgb: Vec3) => Vec3,
+    webglConversionFunction: string,
+  };
+  
+  const createRgbNodeType = ({
+    name,
+    id,
+    outputDisplayType,
+    
+    socketLabels,
+    nodeDisplayLabels,
+    socketFlags=[SocketFlag.None, SocketFlag.None, SocketFlag.None],
+    toRgb,
+    fromRgb,
+  }: {
+    name: string,
+    id: string,
+    outputDisplayType: OutputDisplayType,
 
-    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
-      [RgbMode.ToRgb, new Overload(
-        "To RGB",
-        node => {
-          const {hue, saturation, lightness} = HslNode.inputSlots;
+    socketLabels: string[],
+    nodeDisplayLabels: string[],
+    socketFlags?: SocketFlag[],
 
-          return [
-            new InSocket(node, SocketType.Float, "Hue", {webglOutputMapping: {[webglOuts.val]: hue}}).flag(SocketFlag.Hue),
-            new InSocket(node, SocketType.Float, "Saturation", {webglOutputMapping: {[webglOuts.val]: saturation}}),
-            new InSocket(node, SocketType.Float, "Lightness", {webglOutputMapping: {[webglOuts.val]: lightness}}),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Vector, "RGB", context => cm.hslToRgb(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3),
-        ],
-        (ins, outs, context) => ({
-          values: cm.hslToRgb(ins.map(socket => socket.inValue(context)) as Vec3),
-          labels: ["R", "G", "B"],
-          flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
-        }),
-        (ins, outs, context) => {
-          const {hue, saturation, lightness} = HslNode.inputSlots;
-          
-          return WebglVariables.template``({
+    toRgb: Conversion,
+    fromRgb: Conversion,
+  }) => {
+    const inputSlots = WebglSlot.ins("x", "y", "z");
+    const {x, y, z} = inputSlots;
+    const toRgbOutputMapping = {[webglOuts.val]: WebglTemplate.concat`${toRgb.webglConversionFunction}(vec3(${x}, ${y}, ${z}))`};
+  
+    const rgb = WebglSlot.in("rgb");
+    const internal = WebglSlot.out("internal");
+
+    return class extends NodeWithOverloads<RgbOverloadMode> {
+      static readonly TYPE = Symbol(name);
+      static readonly id = id;
+      static readonly outputDisplayType = outputDisplayType;
+  
+      static readonly overloadGroup = new OverloadGroup(new Map<RgbOverloadMode, Overload>([
+        [RgbOverloadMode.ToRgb, new Overload(
+          "To RGB",
+          node => Object.values(inputSlots).map(
+            (slot, i) => 
+                new InSocket(node, SocketType.Float, socketLabels[i], {webglOutputMapping: {[webglOuts.val]: slot}}).flag(socketFlags[i]),
+          ),
+          (node, ins) => [
+            new OutSocket(node, SocketType.Vector, "RGB", context => toRgb.convert(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3),
+          ],
+          (ins, outs, context) => ({
+            values: toRgb.convert(ins.map(socket => socket.inValue(context)) as Vec3),
+            labels: ["R", "G", "B"],
+            flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
+          }),
+          (ins, outs, context) => WebglVariables.template``({
             socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.source`hslToRgb(${hue}, ${saturation}, ${lightness})`}],
+              [outs[0], toRgbOutputMapping],
             ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`hslToRgb(${hue}, ${saturation}, ${lightness})`},
-          });
-        },
-      )],
-
-      [RgbMode.FromRgb, new Overload(
-        "From RGB",
-        node => {
-          const {rgb} = HslNode.inputSlots;
-          return [
+            nodeOutVariables: toRgbOutputMapping,
+          }),
+        )],
+  
+        [RgbOverloadMode.FromRgb, new Overload(
+          "From RGB",
+          node => [
             new InSocket(node, SocketType.Vector, "RGB", {webglOutputMapping: {[webglOuts.val]: rgb}}),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Float, "Hue", context => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Hue),
-          new OutSocket(node, SocketType.Float, "Saturation", context => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[1]),
-          new OutSocket(node, SocketType.Float, "Lightness", context => cm.rgbToHsl(ins[0].inValue(context) as Vec3)[2]),
-        ],
-        (ins, outs, context) => ({
-          values: cm.rgbToHsl(ins[0].inValue(context) as Vec3),
-          labels: ["H", "S", "L"],
-          flags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
-        }),
-        (ins, outs, context) => {
-          const {rgb} = HslNode.inputSlots;
-
-          const hsl = WebglSlot.out("hsl");
-
-          return WebglVariables.template`vec3 ${hsl} = rgbToHsl(${rgb});`({
+          ],
+          (node, ins) => Object.values(inputSlots).map(
+            (slot, i) => 
+                new OutSocket(node, SocketType.Float, socketLabels[i], context => fromRgb.convert(ins[0].inValue(context) as Vec3)[i]).flag(socketFlags[i])
+          ),
+          (ins, outs, context) => ({
+            values: fromRgb.convert(ins[0].inValue(context) as Vec3),
+            labels: nodeDisplayLabels,
+            flags: socketFlags,
+          }),
+          (ins, outs, context) => WebglVariables.templateConcat`vec3 ${internal} = ${fromRgb.webglConversionFunction}(${rgb});`({
             socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.source`${hsl}.x`}],
-              [outs[1], {[webglOuts.val]: WebglTemplate.source`${hsl}.y`}],
-              [outs[2], {[webglOuts.val]: WebglTemplate.source`${hsl}.z`}],
+              [outs[0], {[webglOuts.val]: WebglTemplate.source`${internal}.x`}],
+              [outs[1], {[webglOuts.val]: WebglTemplate.source`${internal}.y`}],
+              [outs[2], {[webglOuts.val]: WebglTemplate.source`${internal}.z`}],
             ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(hsl)},
-          });
-        },
-      )],
-    ]));
+            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(internal)},
+          }),
+        )],
+      ]));
 
-    constructor() {
-      super(RgbMode.ToRgb);
+      constructor() {
+        super(RgbOverloadMode.ToRgb);
+      }
     }
-  }
+  };
 
-  export class HsvNode extends NodeWithOverloads<RgbMode> {
-    static readonly TYPE = Symbol(this.name);
-    static readonly id = "hsv";
-    static readonly outputDisplayType = OutputDisplayType.Vec;
+  export const HslNode = createRgbNodeType({
+    name: "HslNode",
+    id: "hsl",
+    outputDisplayType: OutputDisplayType.Vec,
 
-    private static readonly inputSlots = WebglSlot.ins("hue", "saturation", "value", "rgb");
+    socketLabels: ["Hue", "Saturation", "Lightness"],
+    nodeDisplayLabels: ["H", "S", "L"],
+    socketFlags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
+    toRgb: {
+      convert: cm.hslToRgb,
+      webglConversionFunction: "hslToRgb",
+    },
+    fromRgb: {
+      convert: cm.rgbToHsl,
+      webglConversionFunction: "rgbToHsl",
+    },
+  });
 
-    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
-      [RgbMode.ToRgb, new Overload(
-        "To RGB",
-        node => {
-          const {hue, saturation, value} = HsvNode.inputSlots;
-          return [
-            new InSocket(node, SocketType.Float, "Hue", {webglOutputMapping: {[webglOuts.val]: hue}}).flag(SocketFlag.Hue),
-            new InSocket(node, SocketType.Float, "Saturation", {webglOutputMapping: {[webglOuts.val]: saturation}}),
-            new InSocket(node, SocketType.Float, "Value", {webglOutputMapping: {[webglOuts.val]: value}}),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Vector, "RGB", context => cm.hsvToRgb(ins.map(socket => socket.inValue(context)) as Vec3)),
-        ],
-        (ins, outs, context) => ({
-          values: cm.hsvToRgb(ins.map(socket => socket.inValue(context)) as Vec3),
-          labels: ["R", "G", "B"],
-          flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
-        }),
-        (ins, outs, context) => {
-          const {hue, saturation, value} = HsvNode.inputSlots;
-          
-          return WebglVariables.template``({
-            socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.source`hsvToRgb(${hue}, ${saturation}, ${value})`}],
-            ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`hsvToRgb(${hue}, ${saturation}, ${value})`},
-          });
-        },
-      )],
+  export const HsvNode = createRgbNodeType({
+    name: "HsvNode",
+    id: "hsv",
+    outputDisplayType: OutputDisplayType.Vec,
 
-      [RgbMode.FromRgb, new Overload(
-        "From RGB",
-        node => {
-          const {rgb} = HsvNode.inputSlots;
-          return [
-            new InSocket(node, SocketType.Vector, "RGB", {webglOutputMapping: {[webglOuts.val]: rgb}}),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Float, "Hue", context => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Hue),
-          new OutSocket(node, SocketType.Float, "Saturation", context => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[1]),
-          new OutSocket(node, SocketType.Float, "Value", context => cm.rgbToHsv(ins[0].inValue(context) as Vec3)[2]),
-        ],
-        (ins, outs, context) => ({
-          values: cm.rgbToHsv(ins[0].inValue(context) as Vec3),
-          labels: ["H", "S", "V"],
-          flags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
-        }),
-        (ins, outs, context) => {
-          const hsv = WebglSlot.out("hsv");
+    socketLabels: ["Hue", "Saturation", "Value"],
+    nodeDisplayLabels: ["H", "S", "V"],
+    socketFlags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
+    toRgb: {
+      convert: cm.hsvToRgb,
+      webglConversionFunction: "hsvToRgb",
+    },
+    fromRgb: {
+      convert: cm.rgbToHsv,
+      webglConversionFunction: "rgbToHsv",
+    },
+  });
 
-          return WebglVariables.template`vec3 {0:hsv} = rgbToHsv({rgb});`({
-            socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.source`${hsv}.x`}],
-              [outs[1], {[webglOuts.val]: WebglTemplate.source`${hsv}.y`}],
-              [outs[2], {[webglOuts.val]: WebglTemplate.source`${hsv}.z`}],
-            ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(hsv)},
-          });
-        },
-      )],
-    ]));
+  export const HwbNode = createRgbNodeType({
+    name: "HwbNode",
+    id: "hwb",
+    outputDisplayType: OutputDisplayType.Vec,
 
-    constructor() {
-      super(RgbMode.ToRgb);
-    }
-  }
+    socketLabels: ["Hue", "Whiteness", "Blackness"],
+    nodeDisplayLabels: ["H", "W", "B"],
+    socketFlags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
+    toRgb: {
+      convert: cm.hwbToRgb,
+      webglConversionFunction: "hwbToRgb",
+    },
+    fromRgb: {
+      convert: cm.rgbToHwb,
+      webglConversionFunction: "rgbToHwb",
+    },
+  });
 
-  export class HwbNode extends NodeWithOverloads<RgbMode> {
-    static readonly TYPE = Symbol(this.name);
-    static readonly id = "hwb";
-    static readonly outputDisplayType = OutputDisplayType.Vec;
+  export const CmyNode = createRgbNodeType({
+    name: "CmyNode",
+    id: "cmy",
+    outputDisplayType: OutputDisplayType.Vec,
 
-    private static readonly inputSlots = WebglSlot.ins("hue", "whiteness", "blackness", "rgb");
-
-    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
-      [RgbMode.ToRgb, new Overload(
-        "To RGB",
-        node => {
-          const {hue, whiteness, blackness} = HwbNode.inputSlots;
-          return [
-            new InSocket(node, SocketType.Float, "Hue", {webglOutputMapping: {[webglOuts.val]: hue}}).flag(SocketFlag.Hue),
-            new InSocket(node, SocketType.Float, "Whiteness", {webglOutputMapping: {[webglOuts.val]: whiteness}}),
-            new InSocket(node, SocketType.Float, "Blackness", {webglOutputMapping: {[webglOuts.val]: blackness}}),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Vector, "RGB", context => cm.hwbToRgb(ins.map(socket => socket.inValue(context)) as Vec3)),
-        ],
-        (ins, outs, context) => ({
-          values: cm.hwbToRgb(ins.map(socket => socket.inValue(context)) as Vec3),
-          labels: ["R", "G", "B"],
-          flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
-        }),
-        (ins, outs, context) => {
-          const {hue, whiteness, blackness} = HwbNode.inputSlots;
-
-          return WebglVariables.template``({
-            socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.source`hsvToRgb(${hue}, ${whiteness}, ${blackness})`}],
-            ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`hsvToRgb(${hue}, ${whiteness}, ${blackness})`},
-          });
-        },
-      )],
-
-      [RgbMode.FromRgb, new Overload(
-        "From RGB",
-        node => {
-          const {rgb} = HwbNode.inputSlots;
-          return [
-            new InSocket(node, SocketType.Vector, "RGB", {webglOutputMapping: {[webglOuts.val]: rgb}}),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Float, "Hue", context => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Hue),
-          new OutSocket(node, SocketType.Float, "Whiteness", context => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[1]),
-          new OutSocket(node, SocketType.Float, "Blackness", context => cm.rgbToHwb(ins[0].inValue(context) as Vec3)[2]),
-        ],
-        (ins, outs, context) => ({
-          values: cm.rgbToHwb(ins[0].inValue(context) as Vec3),
-          labels: ["H", "W", "B"],
-          flags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
-        }),
-        (ins, outs, context) => {
-          const hwb = WebglSlot.out("hwb");
-
-          const {rgb} = HwbNode.inputSlots;
-          
-          return WebglVariables.template`vec3 ${hwb} = rgbToHsl(${rgb});`({
-            socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.source`${hwb}.x`}],
-              [outs[1], {[webglOuts.val]: WebglTemplate.source`${hwb}.y`}],
-              [outs[2], {[webglOuts.val]: WebglTemplate.source`${hwb}.z`}],
-            ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(hwb)},
-          });
-        },
-      )],
-    ]));
-
-    constructor() {
-      super(RgbMode.ToRgb);
-    }
-  }
-
-  export class CmyNode extends NodeWithOverloads<RgbMode> {
-    static readonly TYPE = Symbol(this.name);
-    static readonly id = "cmy";
-    static readonly outputDisplayType = OutputDisplayType.Vec;
-
-    private static readonly inputSlots = WebglSlot.ins("cyan", "yellow", "magenta", "rgb");
-
-    static readonly overloadGroup = new OverloadGroup(new Map<RgbMode, Overload>([
-      [RgbMode.ToRgb, new Overload(
-        "To RGB",
-        node => {
-          const {cyan, magenta, yellow} = CmyNode.inputSlots;
-          return [
-            new InSocket(node, SocketType.Float, "Cyan", {webglOutputMapping: {[webglOuts.val]: cyan}}).flag(SocketFlag.Rgb),
-            new InSocket(node, SocketType.Float, "Magenta", {webglOutputMapping: {[webglOuts.val]: magenta}}).flag(SocketFlag.Rgb),
-            new InSocket(node, SocketType.Float, "Yellow", {webglOutputMapping: {[webglOuts.val]: yellow}}).flag(SocketFlag.Rgb),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Vector, "RGB", context => cm.cmyToRgb(ins.map(socket => socket.inValue(context)) as Vec3)),
-        ],
-        (ins, outs, context) => ({
-          values: cm.cmyToRgb(ins.map(socket => socket.inValue(context)) as Vec3),
-          labels: ["R", "G", "B"],
-          flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
-        }),
-        (ins, outs, context) => {
-          const {cyan, magenta, yellow} = CmyNode.inputSlots;
-
-          return WebglVariables.template``({
-            socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.source`cmyToRgb(${cyan}, ${magenta}, ${yellow})`}],
-            ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.source`cmyToRgb(${cyan}, ${magenta}, ${yellow})`},
-          });
-        },
-      )],
-
-      [RgbMode.FromRgb, new Overload(
-        "From RGB",
-        node => {
-          const {rgb} = CmyNode.inputSlots;
-          return [
-            new InSocket(node, SocketType.Vector, "RGB", {webglOutputMapping: {[webglOuts.val]: rgb}}),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Float, "Cyan", context => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[0]).flag(SocketFlag.Rgb),
-          new OutSocket(node, SocketType.Float, "Magenta", context => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[1]).flag(SocketFlag.Rgb),
-          new OutSocket(node, SocketType.Float, "Yellow", context => cm.rgbToCmy(ins[0].inValue(context) as Vec3)[2]).flag(SocketFlag.Rgb),
-        ],
-        (ins, outs, context) => ({
-          values: cm.rgbToCmy(ins[0].inValue(context) as Vec3),
-          labels: ["C", "M", "Y"],
-          flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
-        }),
-        (ins, outs, context) => {
-          const {rgb} = CmyNode.inputSlots;
-
-          const cmy = WebglSlot.out("cmy");
-          
-          return WebglVariables.template`vec3 ${cmy} = rgbToCmy(${rgb});`({
-            socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.source`${cmy}.x`}],
-              [outs[1], {[webglOuts.val]: WebglTemplate.source`${cmy}.y`}],
-              [outs[2], {[webglOuts.val]: WebglTemplate.source`${cmy}.z`}],
-            ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(cmy)},
-          });
-        },
-      )],
-    ]));
-
-    constructor() {
-      super(RgbMode.ToRgb);
-    }
-  }
+    socketLabels: ["Cyan", "Magenta", "Yellow"],
+    nodeDisplayLabels: ["C", "M", "Y"],
+    toRgb: {
+      convert: cm.cmyToRgb,
+      webglConversionFunction: "cmyToRgb",
+    },
+    fromRgb: {
+      convert: cm.rgbToCmy,
+      webglConversionFunction: "rgbToCmy",
+    },
+  });
 
   /* export class XyzModelNode extends Node {
     static readonly TYPE = Symbol(this.name);
@@ -388,6 +241,8 @@ export namespace models {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "spectralPowerDistribution";
 
+    width = 503;
+
     distribution: number[] =
       Array(830 - 360 + 1).fill(0)
           .map((_, x) => Math.exp(-(((x - 235) / 90)**2)));
@@ -401,7 +256,6 @@ export namespace models {
         new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz()),
         new OutSocket(this, SocketType.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(), illuminantE)),
       );
-      this.width = 503;
     }
 
     private cachedOutput: Vec3 | null = null;
