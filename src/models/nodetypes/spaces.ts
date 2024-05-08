@@ -1,9 +1,9 @@
 import { Vec3 } from "@/util";
-import { Socket, SocketType as St, SocketFlag, NodeEvalContext, OutputDisplayType, SocketOptions, InSocket, OutSocket, WebglSocketValue, NodeOutputTarget, webglOuts } from "../Node";
+import { Socket, SocketFlag, NodeEvalContext, OutputDisplayType, SocketOptions, InSocket, OutSocket, WebglSocketValue, NodeOutputTarget, webglOuts, SocketType } from "../Node";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 import { StringKey } from "@/strings";
-import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
+import { WebglOutputMapping, WebglOutputs, WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 
 
 
@@ -56,10 +56,11 @@ export const whitePointSocketOptions = {
     {value: "10deg/D75", text: "CIE 10° / D75"},
     {value: "10deg/E", text: "CIE 10° / E"},
   ],
+  showSocket: false,
   defaultValue: "2deg/D65",
   socketDesc: "desc.socket.illuminant" as StringKey,
-};
-export const getIlluminant = (socket: InSocket<St.Dropdown>, context: NodeEvalContext) => {
+} as SocketOptions<SocketType.Dropdown>;
+export const getIlluminant = (socket: InSocket<SocketType.Dropdown>, context: NodeEvalContext) => {
   const illuminantId = socket.inValue(context);
   if (illuminantId !== "custom") {
     const [standard, illuminantName] = illuminantId.split("/"); 
@@ -80,11 +81,11 @@ export namespace spaces {
     // TODO these variables are intialized in NodeWithOverload's constructor, so setting them to a default value causes
     // them to be reset in this constructor
     // @ts-ignore
-    private illuminantSocket: InSocket<St.Dropdown> | null = this.illuminantSocket ?? null;
+    private illuminantSocket: InSocket<SocketType.Dropdown> | null = this.illuminantSocket ?? null;
     // @ts-ignore
-    private colorInputSocket: InSocket<St.VectorOrColor> = this.colorInputSocket ?? null;
+    private colorInputSocket: InSocket<SocketType.VectorOrColor> = this.colorInputSocket ?? null;
     // @ts-ignore
-    private valuesSockets: InSocket<St.Float>[] = this.valuesSockets ?? [];
+    private valuesSockets: InSocket<SocketType.Float>[] = this.valuesSockets ?? [];
 
     
     private static readonly inputSlots = {
@@ -103,7 +104,7 @@ export namespace spaces {
         node => {
           const sockets: InSocket[] = [];
           if (node.includeWhitePoint) {
-            sockets.push(node.illuminantSocket = new InSocket(node, St.Dropdown, "White point", false, whitePointSocketOptions));
+            sockets.push(node.illuminantSocket = new InSocket(node, SocketType.Dropdown, "White point", whitePointSocketOptions));
           }
           node.colorInputSocket = node.constructInSocket(node.inSocketOptions());
           sockets.push(node.colorInputSocket);
@@ -111,8 +112,8 @@ export namespace spaces {
           return sockets;
         },
         node => [
-          new OutSocket(node, St.ColorCoords, "Color", context => node.computeColor(context, true)),
-          ...node.componentLabels.map((label, i) => new OutSocket(node, St.Float, label, context => node.computeColor(context, true)[i])),
+          new OutSocket(node, SocketType.ColorCoords, "Color", context => node.computeColor(context, true)),
+          ...node.componentLabels.map((label, i) => new OutSocket(node, SocketType.Float, label, context => node.computeColor(context, true)[i])),
         ],
         (ins, outs, context, node) => ({
           values: node.computeColor(context, true),
@@ -123,7 +124,7 @@ export namespace spaces {
           const color = WebglSlot.out("color");
           const newIlluminant = WebglSlot.out("newIlluminant");
 
-          const socketOutVariables = new Map<OutSocket, Record<string, WebglTemplate>>([
+          const socketOutVariables = new Map<OutSocket, WebglOutputs>([
             [outs[0], {
               [webglOuts.val]: WebglTemplate.source`${color}.val`,
               [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
@@ -149,7 +150,7 @@ export namespace spaces {
             [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
           };
 
-          if (node.colorInputSocket.effectiveType() === St.ColorCoords) {
+          if (node.colorInputSocket.effectiveType() === SocketType.ColorCoords) {
             const {xyz, originalIlluminant} = TripletSpaceNode.inputSlots;
 
             return WebglVariables.templateConcat`Color ${color} = Color(${node.webglFromXyz(xyz, originalIlluminant, newIlluminant)}, ${newIlluminant}, adaptXyz(${xyz}, ${originalIlluminant}, ${newIlluminant}));`({
@@ -188,19 +189,19 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
             });
           }
         },
-        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: TripletSpaceNode) => {
+        <St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: TripletSpaceNode) => {
           const {val, originalIlluminant, xyz} = TripletSpaceNode.inputSlots;
 
           switch (inSocket.effectiveType()) {
-            case St.ColorCoords:
-              return <WebglSocketValue<T>>{
+            case SocketType.ColorCoords:
+              return <WebglSocketValue<St>>{
                 [webglOuts.val]: val,
                 [webglOuts.illuminant]: originalIlluminant,
                 [webglOuts.xyz]: xyz,
               };
             
-            case St.Vector:
-              return <WebglSocketValue<T>>{
+            case SocketType.Vector:
+              return <WebglSocketValue<St>>{
                 [webglOuts.val]: val,
               };
 
@@ -215,7 +216,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
         node => {
           const socketOptions = node.inSocketOptions();
           const individualSocketOptions = [0, 1, 2].map(i =>{
-            const floatSocketOptions: SocketOptions<St.Float> = {};
+            const floatSocketOptions: SocketOptions<SocketType.Float> = {};
             for (const [key, value] of Object.entries(socketOptions)) {
               const newKey = key === "fieldText" ? "socketDesc" : key;
 
@@ -226,9 +227,9 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
 
           const sockets: InSocket[] = [];
           if (node.includeWhitePoint) {
-            sockets.push(node.illuminantSocket = new InSocket(node, Socket.Type.Dropdown, "White point", false, whitePointSocketOptions));
+            sockets.push(node.illuminantSocket = new InSocket(node, Socket.Type.Dropdown, "White point", whitePointSocketOptions));
           }
-          sockets.push(...(node.valuesSockets = node.componentLabels.map((label, i) => new InSocket(node, St.Float, label, true, individualSocketOptions[i]))));
+          sockets.push(...(node.valuesSockets = node.componentLabels.map((label, i) => new InSocket(node, SocketType.Float, label, individualSocketOptions[i]))));
           return sockets;
         },
         node => [
@@ -272,13 +273,13 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
             ])
           });
         },
-        <T extends St>(inSocket: InSocket<T>, ins: InSocket[], node: TripletSpaceNode) => {
+        <St extends SocketType>(inSocket: InSocket<St>, ins: InSocket[], node: TripletSpaceNode) => {
           const {x, y, z} = TripletSpaceNode.inputSlots;
 
           switch (inSocket) {
-            case node.valuesSockets[0]: return <WebglSocketValue<T>>{[webglOuts.val]: x};
-            case node.valuesSockets[1]: return <WebglSocketValue<T>>{[webglOuts.val]: y};
-            case node.valuesSockets[2]: return <WebglSocketValue<T>>{[webglOuts.val]: z};
+            case node.valuesSockets[0]: return <WebglSocketValue<St>>{[webglOuts.val]: x};
+            case node.valuesSockets[1]: return <WebglSocketValue<St>>{[webglOuts.val]: y};
+            case node.valuesSockets[2]: return <WebglSocketValue<St>>{[webglOuts.val]: z};
             default: return null;
           }
         },
@@ -299,10 +300,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return [];
     }
 
-    constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
+    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
       return new InSocket(this, Socket.Type.VectorOrColor, "Vector or color");
     }
-    inSocketOptions(): SocketOptions<St.VectorOrColor> {
+    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {};
     }
     get includeWhitePoint() {
@@ -345,10 +346,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get componentLabels() {
       return ["R", "G", "B"];
     }
-    constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "RGB or color", true, socketOptions).flag(SocketFlag.Rgb);
+    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
+      return new InSocket(this, Socket.Type.VectorOrColor, "RGB or color", socketOptions).flag(SocketFlag.Rgb);
     }
-    inSocketOptions(): SocketOptions<St.VectorOrColor> {
+    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
         defaultValue: [0.5, 0.5, 0.5],
         fieldText: [
@@ -404,10 +405,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get ColClass() {
       return cm.Xyz;
     }
-    constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "XYZ or color", true, socketOptions);
+    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
+      return new InSocket(this, Socket.Type.VectorOrColor, "XYZ or color", socketOptions);
     }
-    inSocketOptions(): SocketOptions<St.VectorOrColor> {
+    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
         fieldText: [
           "desc.field.xyz.x",
@@ -440,15 +441,15 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get ColClass() {
       return cm.Xyy;
     }
-    constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "xyY or color", true, socketOptions);
+    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
+      return new InSocket(this, Socket.Type.VectorOrColor, "xyY or color", socketOptions);
       // ...(this.primariesSockets = [
       // 	new InSocket(this, Socket.Type.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
       // 	new InSocket(this, Socket.Type.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
       // 	new InSocket(this, Socket.Type.Float, "Y (luminance)", true, {defaultValue: 1}),
       // ]),
     }
-    inSocketOptions(): SocketOptions<St.VectorOrColor> {
+    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
         defaultValue: [d65[0], d65[1], 1],
         fieldText: [
@@ -480,10 +481,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get ColClass() {
       return cm.Lab;
     }
-    constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "L*a*b* or color", true, socketOptions);
+    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
+      return new InSocket(this, Socket.Type.VectorOrColor, "L*a*b* or color", socketOptions);
     }
-    inSocketOptions(): SocketOptions<St.VectorOrColor> {
+    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
         defaultValue: [50, 0, 0],
         sliderProps: labSliderProps,
@@ -511,10 +512,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get ColClass() {
       return cm.LchAb;
     }
-    constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "L*C*h or color", true, socketOptions);
+    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
+      return new InSocket(this, Socket.Type.VectorOrColor, "L*C*h or color", socketOptions);
     }
-    inSocketOptions(): SocketOptions<St.VectorOrColor> {
+    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
         defaultValue: [50, 0, 0],
         sliderProps: [
@@ -556,10 +557,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get ColClass() {
       return cm.Luv;
     }
-    constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "L*u*v* or color", true, socketOptions);
+    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
+      return new InSocket(this, Socket.Type.VectorOrColor, "L*u*v* or color", socketOptions);
     }
-    inSocketOptions(): SocketOptions<St.VectorOrColor> {
+    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
         defaultValue: [50, 0, 0],
         sliderProps: labSliderProps,
@@ -587,10 +588,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get ColClass() {
       return cm.LchUv;
     }
-    constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "L*C*h or color", true, socketOptions);
+    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
+      return new InSocket(this, Socket.Type.VectorOrColor, "L*C*h or color", socketOptions);
     }
-    inSocketOptions(): SocketOptions<St.VectorOrColor> {
+    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
         defaultValue: [50, 0, 0],
         sliderProps: [
@@ -632,10 +633,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get ColClass() {
       return cm.Oklab;
     }
-    constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "Lab or color", true, socketOptions);
+    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
+      return new InSocket(this, Socket.Type.VectorOrColor, "Lab or color", socketOptions);
     }
-    inSocketOptions(): SocketOptions<St.VectorOrColor> {
+    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
         defaultValue: [0.5, 0, 0],
         sliderProps: oklabSliderProps,
@@ -667,10 +668,10 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     get ColClass() {
       return cm.OklchAb;
     }
-    constructInSocket(socketOptions: SocketOptions<St.VectorOrColor>) {
-      return new InSocket(this, Socket.Type.VectorOrColor, "LCh or color", true, socketOptions);
+    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
+      return new InSocket(this, Socket.Type.VectorOrColor, "LCh or color", socketOptions);
     }
-    inSocketOptions(): SocketOptions<St.VectorOrColor> {
+    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
         defaultValue: [0.5, 0, 0],
         sliderProps: [

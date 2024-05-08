@@ -13,11 +13,11 @@ export namespace organization {
       super();
 
       this.ins.push(
-        new InSocket(this, St.Any, "", true, volatileInSocketOptions(this.ins, this.outs)),
+        new InSocket(this, St.Any, "", volatileInSocketOptions(this.ins, this.outs)),
       );
 
       this.outs.push(
-        new OutSocket(this, St.Any, "", context => this.ins[0].inValue(context), true, volatileOutSocketOptions(this.ins, this.outs)),
+        new OutSocket(this, St.Any, "", context => this.ins[0].inValue(context), volatileOutSocketOptions(this.ins, this.outs)),
       );
 
       this.width = 15;

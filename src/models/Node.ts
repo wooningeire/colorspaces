@@ -385,8 +385,6 @@ export enum SocketType {
   Image,
   Bool,
 }
-const St = SocketType;
-
 export type SocketValue<St extends SocketType=any> =
     St extends SocketType.Float ? number :
     St extends SocketType.Integer ? number :
@@ -469,6 +467,7 @@ type SocketData<St extends SocketType=any> =
 
 export type SocketOptions<St extends SocketType=any> =
     {
+      showSocket?: boolean,
       socketDesc?: StringKey,
       fieldText?: StringKey[],
       defaultValue?: SocketValue<St>,
@@ -489,22 +488,22 @@ export abstract class Socket<St extends SocketType=any> {
 
   static readonly Type = SocketType;
   private static readonly defaultValues = new Map<SocketType, SocketValue>([
-    [St.Float, 0],
-    [St.Vector, [0, 0, 0]],
-    [St.VectorOrColor, [0, 0, 0]],
+    [SocketType.Float, 0],
+    [SocketType.Vector, [0, 0, 0]],
+    [SocketType.VectorOrColor, [0, 0, 0]],
   ]);
 
   /** Specifies what destination socket types a source socket type can be linked to, if it cannot be determined
    * automatically */
   private static readonly typeCanBeLinkedTo = new Map<SocketType, SocketType[]>([
-    [St.Vector, [St.Vector, St.VectorOrColor]],
-    [St.ColorCoords, [St.ColorCoords, St.VectorOrColor, St.Vector]],
+    [SocketType.Vector, [SocketType.Vector, SocketType.VectorOrColor]],
+    [SocketType.ColorCoords, [SocketType.ColorCoords, SocketType.VectorOrColor, SocketType.Vector]],
   ]);
 
   /** Checks if a source socket type can be linked to a destination socket type */
   static canLinkTypes(srcType: SocketType, dstType: SocketType) {
-    return dstType === St.Any
-        || srcType === St.Any
+    return dstType === SocketType.Any
+        || srcType === SocketType.Any
         || (this.typeCanBeLinkedTo.get(srcType)?.includes(dstType)
             ?? srcType === dstType);
   }
@@ -521,6 +520,9 @@ export abstract class Socket<St extends SocketType=any> {
 
 
   readonly links: Link[] = [];
+  
+  /** Whether the connection point of the socket should be displayed */
+  readonly showSocket: boolean;
 
   readonly socketDesc: StringKey;
   readonly fieldText: StringKey[];
@@ -528,11 +530,11 @@ export abstract class Socket<St extends SocketType=any> {
   /** The value of the entry field input for this socket */
   fieldValue: SocketValue<St>;
   readonly showFieldIfAvailable: boolean;
-  /** Semantic field that determines whether the socket should not be trusted to maintain its type (used by St.Any
+  /** Semantic field that determines whether the socket should not be trusted to maintain its type (used by SocketType.Any
    * sockets to determine whether they should mock this socket's type to prevent cyclical dependencies) */
   readonly hasVolatileType: boolean;
   readonly valueChangeRequiresShaderReload: boolean;
-  /** Whether the socket requests a constant value */
+  /** Whether the socket requests or produces a constant value */
   readonly constant: boolean;
   flags: SocketFlag;
 
@@ -546,12 +548,11 @@ export abstract class Socket<St extends SocketType=any> {
 
     public label: string="",
 
-    readonly showSocket: boolean=true,
-
     /** Object that specifies SocketType-independent options for this socket as well as SocketType-specific properties/data */
     options=<SocketOptions<St>>{},
   ) {
     const {
+      showSocket,
       socketDesc,
       fieldText,
       defaultValue,
@@ -567,6 +568,7 @@ export abstract class Socket<St extends SocketType=any> {
       ...data
     } = options;
 
+    this.showSocket = showSocket ?? true;
     this.socketDesc = socketDesc ?? NO_DESC;
     this.fieldText = fieldText ?? [];
     this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
@@ -654,11 +656,9 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
 
     public label: string="",
 
-    readonly showSocket: boolean=true,
-
     options=<SocketOptions<St>>{},
   ) {
-    super(node, true, type, label, showSocket, options);
+    super(node, true, type, label, options);
   }
 
   get link() {
@@ -686,7 +686,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     const unif = WebglSlot.out("unif");
 
     switch (this.effectiveType()) {
-      case St.ColorCoords:
+      case SocketType.ColorCoords:
         return WebglVariables.template``({
           nodeOutVariables: {
             [webglOuts.val]: WebglTemplate.slot(unif),
@@ -709,7 +709,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           ]),
         });
 
-      case St.Vector:
+      case SocketType.Vector:
         return WebglVariables.template``({
           nodeOutVariables: {
             [webglOuts.val]: WebglTemplate.slot(unif),
@@ -726,7 +726,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           ]),
         });
 
-      case St.Float:
+      case SocketType.Float:
         return WebglVariables.template``({
           nodeOutVariables: {
             [webglOuts.val]: WebglTemplate.slot(unif),
@@ -743,7 +743,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           ]),
         });
 
-        case St.Bool:
+        case SocketType.Bool:
           return WebglVariables.template``({
             nodeOutVariables: {
               [webglOuts.val]: WebglTemplate.slot(unif),
@@ -765,14 +765,14 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     }
   }
 
-  /** Determines the effective type (specifically to filter out `St.VectorOrColor`) */
+  /** Determines the effective type (specifically to filter out `SocketType.VectorOrColor`) */
   effectiveType() {
-    if (this.type !== St.VectorOrColor) {
+    if (this.type !== SocketType.VectorOrColor) {
       return this.type;
     }
   
-    if (this.usesFieldValue || this.link.src.type === St.VectorOrColor) {
-      return St.Vector;
+    if (this.usesFieldValue || this.link.src.type === SocketType.VectorOrColor) {
+      return SocketType.Vector;
     }
     return this.link.src.type;
   }
@@ -800,11 +800,9 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
 
     readonly outValue: (context: NodeEvalContext) => SocketValue<St>,
 
-    readonly showSocket: boolean=true,
-
     options=<SocketOptions<St>>{},
   ) {
-    super(node, false, type, label, showSocket, options);
+    super(node, false, type, label, options);
   }
 
   /** Evaluates the value of this output socket */

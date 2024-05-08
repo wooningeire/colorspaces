@@ -207,8 +207,8 @@ type UniformInitializer = {
   dependencyNodes: Node[],
 };
 
-type Outputs = Partial<Record<symbol, WebglTemplate>>;
-type OutputMapping = Partial<Record<symbol, WebglSlot>>;
+export type WebglOutputs = Partial<Record<symbol, WebglTemplate>>;
+export type WebglOutputMapping = Partial<Record<symbol, WebglSlot>>;
 
 /** Stores a chunk of GLSL code with macro-like slots for variables. */
 export class WebglVariables {
@@ -292,12 +292,12 @@ void main() {
     /** Groups of values/slots which becomes available after evaluating the template, which are associated with
      * specific output sockets. Each output value is associated with a name (the key of the `Record`).
      */
-    private readonly socketOutVariables: Map<OutSocket, Outputs>,
+    private readonly socketOutVariables: Map<OutSocket, WebglOutputs>,
     /** A group of values/slots which becomes available after evaluating the template, which is associated with a
      * node's special output (its display rather than an output socket). Each output value is associated with a name
      * (the key of the `Record`).
      */
-    private readonly nodeOutVariables: Outputs={},
+    private readonly nodeOutVariables: WebglOutputs={},
     /** A template that declares variables in the prelude, which is inserted after the main body has been produced.
      * Usually used for declaring new uniforms.
      */
@@ -324,7 +324,7 @@ void main() {
 
     // Also look for slots in the `outVariables` substitution strings
     for (const [socket, variables] of socketOutVariables) {
-      const newOuts: Outputs = {};
+      const newOuts: WebglOutputs = {};
       for (const [key, value] of objectSymbolEntries(variables)) {
         newOuts[key] = (value as WebglTemplate).substitute(substitutions);
       }
@@ -359,7 +359,7 @@ void main() {
   substituteUsingOutputsFrom(
     source: WebglVariables,
     outputTarget: NodeOutputTarget,
-    sourceVariableSlotMapping: OutputMapping,
+    sourceVariableSlotMapping: WebglOutputMapping,
     keepSourcePrelude: boolean=false,
   ) {
     const substitutions = WebglVariables.substitutionsFromOutVariables(source.outVariablesFor(outputTarget), sourceVariableSlotMapping);
@@ -372,8 +372,8 @@ void main() {
   }
 
   private static substitutionsFromOutVariables(
-    sourceOutVariables: Outputs,
-    sourceVariableSlotMapping: OutputMapping,
+    sourceOutVariables: WebglOutputs,
+    sourceVariableSlotMapping: WebglOutputMapping,
   ) {
     const substitutions = new Map<WebglSlot, string>();
     for (const [key, slot] of objectSymbolEntries(sourceVariableSlotMapping)) {
@@ -485,7 +485,7 @@ void main() {
   private static getAuxiliaryFunctionTemplates(socket: Socket): {
     outputTypeValue: string,
     outputVariables: WebglVariables,
-    mapping: OutputMapping,
+    mapping: WebglOutputMapping,
   } {
     switch (socket.type) {
       case SocketType.ColorCoords: {

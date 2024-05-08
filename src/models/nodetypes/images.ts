@@ -20,7 +20,8 @@ export namespace images {
       super();
 
       this.ins.push(
-        (this.axisSocket = new InSocket(this, Socket.Type.Dropdown, "Axis", false, {
+        (this.axisSocket = new InSocket(this, Socket.Type.Dropdown, "Axis", {
+          showSocket: false,
           options: [
             {text: "X", value: "0"},
             {text: "Y", value: "1"},
@@ -29,12 +30,12 @@ export namespace images {
           valueChangeRequiresShaderReload: true,
         })),
         ...(this.boundsSockets = [
-          new InSocket(this, Socket.Type.Float, "From", true, {
+          new InSocket(this, Socket.Type.Float, "From", {
             sliderProps: {
               hasBounds: false,
             },
           }),
-          new InSocket(this, Socket.Type.Float, "To", true, {
+          new InSocket(this, Socket.Type.Float, "To", {
             defaultValue: 1,
             sliderProps: {
               hasBounds: false,
@@ -102,8 +103,9 @@ export namespace images {
       super();
 
       this.ins.push(
-        (this.imageSocket = new InSocket(this, St.Image, "File", false)),
-        (this.normalizeCoordinatesSocket = new InSocket(this, St.Bool, "Normalize coordinates", false, {
+        (this.imageSocket = new InSocket(this, St.Image, "File", {showSocket: false})),
+        (this.normalizeCoordinatesSocket = new InSocket(this, St.Bool, "Normalize coordinates", {
+          showSocket: false,
           defaultValue: true,
         })),
       );
@@ -132,10 +134,10 @@ export namespace images {
               ? imageData.data[index + 3] / 255
               : 0;
         }),
-        new OutSocket(this, St.Float, "Width", context => this.imageSocket.inValue(context)?.width ?? 0, true, {
+        new OutSocket(this, St.Float, "Width", context => this.imageSocket.inValue(context)?.width ?? 0, {
           constant: true,
         }),
-        new OutSocket(this, St.Float, "Height", context => this.imageSocket.inValue(context)?.height ?? 0, true, {
+        new OutSocket(this, St.Float, "Height", context => this.imageSocket.inValue(context)?.height ?? 0, {
           constant: true,
         }),
       );
@@ -229,7 +231,7 @@ uniform float ${height};`,
       super();
 
       this.ins.push(
-        new InSocket(this, St.Any, "Source", true, Object.assign({constant: true}, volatileInSocketOptions(this.ins, this.outs))),
+        new InSocket(this, St.Any, "Source", {constant: true, ...volatileInSocketOptions(this.ins, this.outs)}),
         ...(this.coordsSockets = [
           new InSocket(this, St.Float, "X"),
           new InSocket(this, St.Float, "Y"),
@@ -241,7 +243,7 @@ uniform float ${height};`,
           return this.ins[0].inValue({
             coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
           });
-        }, true, Object.assign({constant: true}, volatileOutSocketOptions(this.ins, this.outs))),
+        }, {constant: true, ...volatileOutSocketOptions(this.ins, this.outs)}),
       );
     }
 

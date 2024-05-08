@@ -511,7 +511,7 @@ export namespace models {
       super();
 
       this.ins.push(
-        (this.inSocket = new InSocket(this, Socket.Type.Float, "Wavelength (nm)", true, {
+        (this.inSocket = new InSocket(this, Socket.Type.Float, "Wavelength (nm)", {
           sliderProps: {
             softMin: 360,
             softMax: 830,
@@ -519,13 +519,14 @@ export namespace models {
           },
           defaultValue: 510,
         })),
-        (this.powerSocket = new InSocket(this, Socket.Type.Float, "Relative power", true, {
+        (this.powerSocket = new InSocket(this, Socket.Type.Float, "Relative power", {
           sliderProps: {
             hasBounds: false,
           },
           defaultValue: 1,
         })),
-        (this.datasetSocket = new InSocket(this, Socket.Type.Dropdown, "Dataset", false, {
+        (this.datasetSocket = new InSocket(this, Socket.Type.Dropdown, "Dataset", {
+          showSocket: false,
           defaultValue: "2deg",
           options: [
             {value: "2deg", text: "CIE 2° observer (1931)"},
@@ -592,14 +593,15 @@ export namespace models {
       super();
 
       this.ins.push(
-        (this.inSocket = new InSocket(this, Socket.Type.Float, "Temperature (K)", true, {
+        (this.inSocket = new InSocket(this, Socket.Type.Float, "Temperature (K)", {
           sliderProps: {
             hasBounds: false,
             unboundedChangePerPixel: 10,
           },
           defaultValue: 1750,
         })),
-        (this.datasetSocket = new InSocket(this, Socket.Type.Dropdown, "Dataset", false, {
+        (this.datasetSocket = new InSocket(this, Socket.Type.Dropdown, "Dataset", {
+          showSocket: false,
           defaultValue: "2deg",
           options: [
             {value: "2deg", text: "CIE 2° observer (1931)"},
@@ -661,7 +663,7 @@ export namespace models {
       super();
 
       this.ins.push(
-        (this.whitePointSocket = new InSocket(this, St.Dropdown, "White point", false, whitePointSocketOptions)),
+        (this.whitePointSocket = new InSocket(this, St.Dropdown, "White point", whitePointSocketOptions)),
       );
 
       this.outs.push(

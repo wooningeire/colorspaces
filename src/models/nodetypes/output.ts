@@ -66,10 +66,10 @@ export namespace output {
       [ChromaticityPlotMode.Xy, new Overload(
         "From xy",
         node => [
-          new InSocket(node, Socket.Type.Float, "x", true, {
+          new InSocket(node, Socket.Type.Float, "x", {
             defaultValue: cm.illuminantsXy["2deg"]["D65"][0],
           }),
-          new InSocket(node, Socket.Type.Float, "y", true, {
+          new InSocket(node, Socket.Type.Float, "y", {
             defaultValue: cm.illuminantsXy["2deg"]["D65"][1],
           }),
         ],
@@ -98,14 +98,15 @@ export namespace output {
     constructor() {
       super();
       this.ins.push(
-        (this.normalizeCoordsSocket = new InSocket(this, St.Bool, "Normalize coordinates", false, {
+        (this.normalizeCoordsSocket = new InSocket(this, St.Bool, "Normalize coordinates", {
+          showSocket: false,
           defaultValue: true,
         })),
         new InSocket(this, St.ColorCoords, "Colors"),
-        (this.alphaSocket = new InSocket(this, St.Float, "Alpha", true, {
+        (this.alphaSocket = new InSocket(this, St.Float, "Alpha", {
           defaultValue: 1,
         })),
-        (this.widthSocket = new InSocket(this, St.Float, "Width", true, {
+        (this.widthSocket = new InSocket(this, St.Float, "Width", {
           defaultValue: 42,
           constant: true,
           sliderProps: {
@@ -114,7 +115,7 @@ export namespace output {
             min: 1,
           },
         })),
-        (this.heightSocket = new InSocket(this, St.Float, "Height", true, {
+        (this.heightSocket = new InSocket(this, St.Float, "Height", {
           defaultValue: 42,
           constant: true,
           sliderProps: {

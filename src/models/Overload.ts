@@ -21,7 +21,8 @@ export class OverloadGroup<Mode extends string, NodeType extends Node=any> {
   ) {}
 
   buildDropdown(node: NodeType, defaultMode: Mode, overloadManager: OverloadManager<Mode>) {
-    return new InSocket(node, Socket.Type.Dropdown, "", false, {
+    return new InSocket(node, Socket.Type.Dropdown, "", {
+      showSocket: false,
       options: [...this.modes].map(([mode, overload]) => (
         {value: mode, text: overload.label}
       )),

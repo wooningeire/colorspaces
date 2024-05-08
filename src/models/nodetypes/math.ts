@@ -1,7 +1,5 @@
-import seedrandom from "seedrandom";
-
 import { labSliderProps } from "./spaces";
-import { Node, Socket, SocketType, NodeEvalContext, OutputDisplayType, OutSocket, InSocket, WebglSocketValue, webglOuts as webglOuts } from "../Node";
+import { Node, SocketType, NodeEvalContext, OutputDisplayType, OutSocket, InSocket, WebglSocketValue, webglOuts } from "../Node";
 import * as cm from "../colormanagement";
 
 import { Vec3, lerp, mod } from "@/util";
@@ -71,7 +69,7 @@ export namespace math {
         }) => new Overload(
           label,
           node => [
-            new InSocket(node, SocketType.Float, "Blend amount", true, {defaultValue: defaultBlendAmount}),
+            new InSocket(node, SocketType.Float, "Blend amount", {defaultValue: defaultBlendAmount}),
             new InSocket(node, SocketType.Vector, operandLabels[0]),
             new InSocket(node, SocketType.Vector, operandLabels[1]),
           ],
@@ -272,8 +270,8 @@ export namespace math {
     }) => this.singleOutputOverload({
       label,
       ins: node => [
-        new InSocket(node, SocketType.Float, operandLabels[0], true, {sliderProps: {hasBounds: false}}),
-        new InSocket(node, SocketType.Float, operandLabels[1], true, {sliderProps: {hasBounds: false}}),
+        new InSocket(node, SocketType.Float, operandLabels[0], {sliderProps: {hasBounds: false}}),
+        new InSocket(node, SocketType.Float, operandLabels[1], {sliderProps: {hasBounds: false}}),
       ],
       outputLabel,
       calculate,
@@ -340,8 +338,8 @@ export namespace math {
       [ArithmeticMode.Lerp, this.singleOutputOverload({
         label: "Lerp",
         ins: node => [
-          new InSocket(node, SocketType.Float, "Min", true, {sliderProps: {hasBounds: false}}),
-          new InSocket(node, SocketType.Float, "Max", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "Min", {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "Max", {sliderProps: {hasBounds: false}}),
           new InSocket(node, SocketType.Float, "Amount"),
         ],
         calculate: lerp,
@@ -360,11 +358,11 @@ export namespace math {
       [ArithmeticMode.MapRange, this.singleOutputOverload({
         label: "Map range",
         ins: node => [
-          new InSocket(node, SocketType.Float, "Source value", true, {sliderProps: {hasBounds: false}}),
-          new InSocket(node, SocketType.Float, "Source min", true, {sliderProps: {hasBounds: false}}),
-          new InSocket(node, SocketType.Float, "Source max", true, {sliderProps: {hasBounds: false}}),
-          new InSocket(node, SocketType.Float, "Target min", true, {sliderProps: {hasBounds: false}}),
-          new InSocket(node, SocketType.Float, "Target max", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "Source value", {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "Source min", {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "Source max", {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "Target min", {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "Target max", {sliderProps: {hasBounds: false}}),
         ],
         calculate: (value, srcMin, srcMax, dstMin, dstMax) => lerp(dstMin, dstMax, value / (srcMax - srcMin)),
         getTemplate: ({source, sourceMin, sourceMax, targetMin, targetMax}) => WebglTemplate.source`mix(${targetMin}, ${targetMax}, ${source} / (${sourceMax} - ${sourceMin}))`,
@@ -384,7 +382,7 @@ export namespace math {
       [ArithmeticMode.Floor, this.singleOutputOverload({
         label: "Floor",
         ins: node => [
-          new InSocket(node, SocketType.Float, "Value", true, {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "Value", {sliderProps: {hasBounds: false}}),
         ],
         calculate: Math.floor,
         getTemplate: ({val}) => WebglTemplate.source`floor(${val})`,
@@ -400,8 +398,8 @@ export namespace math {
       [ArithmeticMode.Quantize, this.singleOutputOverload({
         label: "Quantize",
         ins: node => [
-          new InSocket(node, SocketType.Float, "Value", true, {sliderProps: {hasBounds: false}}),
-          new InSocket(node, SocketType.Float, "# segments", true, {sliderProps: {hasBounds: false, step: 1}, defaultValue: 4}),
+          new InSocket(node, SocketType.Float, "Value", {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "# segments", {sliderProps: {hasBounds: false, step: 1}, defaultValue: 4}),
         ],
         calculate: (value, nSegments) => Math.floor(value * nSegments) / nSegments,
         getTemplate: ({val, nSegments}) => WebglTemplate.source`floor(${val} * ${nSegments}) / (${nSegments} - 1.)`,
@@ -429,17 +427,17 @@ export namespace math {
       super();
 
       this.ins.push(
-        new InSocket(this, SocketType.Float, "", true, {
+        new InSocket(this, SocketType.Float, "", {
           sliderProps: {
             hasBounds: false,
           },
         }),
-        new InSocket(this, SocketType.Float, "", true, {
+        new InSocket(this, SocketType.Float, "", {
           sliderProps: {
             hasBounds: false,
           },
         }),
-        new InSocket(this, SocketType.Float, "", true, {
+        new InSocket(this, SocketType.Float, "", {
           sliderProps: {
             hasBounds: false,
           },
@@ -532,10 +530,10 @@ export namespace math {
       [ColorDifferenceMode.DeltaE1976, new Overload(
         "ΔE* 1976",
         node => [
-          new InSocket(node, SocketType.VectorOrColor, "L*a*b* or color", true, {
+          new InSocket(node, SocketType.VectorOrColor, "L*a*b* or color", {
             sliderProps: labSliderProps,
           }),
-          new InSocket(node, SocketType.VectorOrColor, "L*a*b* or color", true, {
+          new InSocket(node, SocketType.VectorOrColor, "L*a*b* or color", {
             sliderProps: labSliderProps,
           }),
         ],
@@ -607,10 +605,10 @@ export namespace math {
       [ColorDifferenceMode.DeltaE2000, new Overload(
         "ΔE* 2000",
         node => [
-          new InSocket(node, SocketType.VectorOrColor, "Sample L*a*b* or color", true, {
+          new InSocket(node, SocketType.VectorOrColor, "Sample L*a*b* or color", {
             sliderProps: labSliderProps,
           }),
-          new InSocket(node, SocketType.VectorOrColor, "Target L*a*b* or color", true, {
+          new InSocket(node, SocketType.VectorOrColor, "Target L*a*b* or color", {
             sliderProps: labSliderProps,
           }),
         ],
@@ -789,10 +787,10 @@ export namespace math {
       [RandomFloatMode.FloatSeed, new Overload(
         "Float seed",
         node => [
-          new InSocket(node, SocketType.Bool, "Integer", false),
-          new InSocket(node, SocketType.Float, "Seed", true, {sliderProps: {hasBounds: false}}),
-          new InSocket(node, SocketType.Float, "Min", true, {sliderProps: {hasBounds: false}}),
-          new InSocket(node, SocketType.Float, "Max", true, {sliderProps: {hasBounds: false}, defaultValue: 1}),
+          new InSocket(node, SocketType.Bool, "Integer", {showSocket: false}),
+          new InSocket(node, SocketType.Float, "Seed", {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "Min", {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "Max", {sliderProps: {hasBounds: false}, defaultValue: 1}),
         ],
         (node, ins) => [
           new OutSocket(node, SocketType.Float, "Value", context => {
@@ -839,14 +837,14 @@ float ${val} = ${useFloor} ? floor(${float}) : ${float};`({
       [RandomFloatMode.VectorSeed, new Overload(
         "Vector seed",
         node => [
-          new InSocket(node, SocketType.Bool, "Integer", false),
-          new InSocket(node, SocketType.Vector, "Seed", true, {sliderProps: [
+          new InSocket(node, SocketType.Bool, "Integer", {showSocket: false}),
+          new InSocket(node, SocketType.Vector, "Seed", {sliderProps: [
             {hasBounds: false},
             {hasBounds: false},
             {hasBounds: false},
           ]}),
-          new InSocket(node, SocketType.Float, "Min", true, {sliderProps: {hasBounds: false}}),
-          new InSocket(node, SocketType.Float, "Max", true, {sliderProps: {hasBounds: false}, defaultValue: 1}),
+          new InSocket(node, SocketType.Float, "Min", {sliderProps: {hasBounds: false}}),
+          new InSocket(node, SocketType.Float, "Max", {sliderProps: {hasBounds: false}, defaultValue: 1}),
         ],
         (node, ins) => [
           new OutSocket(node, SocketType.Float, "Value", context => {
