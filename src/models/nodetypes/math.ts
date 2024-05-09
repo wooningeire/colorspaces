@@ -193,6 +193,7 @@ export namespace math {
 
 
   enum ArithmeticMode {
+    Expression = "expression",
     Add = "add",
     Multiply = "multiply",
     Subtract = "subtract",
@@ -202,6 +203,14 @@ export namespace math {
     Lerp = "lerp",
     MapRange = "mapRange",
     Floor = "floor",
+    Sine = "sine",
+    Cosine = "cosine",
+    Tangent = "tangent",
+    Arcsine = "arcsine",
+    Arccosine = "arccosine",
+    Arctangent = "arctangent",
+    Arctangent2 = "arctangent2",
+    Hypotenuse = "hypotenuse",
     Quantize = "quantize",
   }
   export class ArithmeticNode extends NodeWithOverloads<ArithmeticMode> {
@@ -211,6 +220,8 @@ export namespace math {
 
     private static readonly inputSlots = WebglSlot.ins("val0", "val1", "min", "max", "fac", "source", "sourceMin", "sourceMax", "targetMin", "targetMax", "val", "nSegments");
     
+    width = 200;
+
     private static singleOutputOverload = <InSockets extends InSocket[]>({
       label,
       ins,
@@ -238,6 +249,17 @@ export namespace math {
         outputsWithNoStatements,
         () => outputs,
       );
+    };
+
+    private static singleInSocketBuilder: ConstructorParameters<typeof Overload>[1] = node => {
+      const {val} = this.inputSlots;
+
+      return [
+        new InSocket(node, SocketType.Float, "Value", {
+          sliderProps: {hasBounds: false},
+          webglOutputMapping: {[webglOuts.val]: val},
+        }),
+      ];
     };
 
     private static singleOutputTwoInputsOverload = ({
@@ -268,6 +290,21 @@ export namespace math {
         ];
       },
       outputLabel,
+      calculate,
+      getTemplate,
+    });
+
+    private static singleOutputSingleInputOverload = ({
+      label,
+      calculate,
+      getTemplate,
+    }: {
+      label: string,
+      calculate: (val: number) => number,
+      getTemplate: (inputSlots: typeof ArithmeticNode["inputSlots"]) => WebglTemplate,
+    }) => this.singleOutputOverload({
+      label,
+      ins: this.singleInSocketBuilder,
       calculate,
       getTemplate,
     });
@@ -372,19 +409,62 @@ export namespace math {
         getTemplate: ({source, sourceMin, sourceMax, targetMin, targetMax}) => WebglTemplate.source`mix(${targetMin}, ${targetMax}, ${source} / (${sourceMax} - ${sourceMin}))`,
       })],
       
-      [ArithmeticMode.Floor, this.singleOutputOverload({
+      [ArithmeticMode.Floor, this.singleOutputSingleInputOverload({
         label: "Floor",
-        ins: node => {
-          const {val} = this.inputSlots;
-          return [
-            new InSocket(node, SocketType.Float, "Value", {
-              sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglOuts.val]: val},
-            }),
-          ];
-        },
         calculate: Math.floor,
         getTemplate: ({val}) => WebglTemplate.source`floor(${val})`,
+      })],
+      
+      [ArithmeticMode.Sine, this.singleOutputSingleInputOverload({
+        label: "Sine",
+        calculate: Math.sin,
+        getTemplate: ({val}) => WebglTemplate.source`sin(${val})`,
+      })],
+      
+      [ArithmeticMode.Cosine, this.singleOutputSingleInputOverload({
+        label: "Cosine",
+        calculate: Math.cos,
+        getTemplate: ({val}) => WebglTemplate.source`cos(${val})`,
+      })],
+      
+      [ArithmeticMode.Cosine, this.singleOutputSingleInputOverload({
+        label: "Tangent",
+        calculate: Math.tan,
+        getTemplate: ({val}) => WebglTemplate.source`tan(${val})`,
+      })],
+      
+      [ArithmeticMode.Arcsine, this.singleOutputSingleInputOverload({
+        label: "Arcsine",
+        calculate: Math.asin,
+        getTemplate: ({val}) => WebglTemplate.source`asin(${val})`,
+      })],
+      
+      [ArithmeticMode.Arccosine, this.singleOutputSingleInputOverload({
+        label: "Arccosine",
+        calculate: Math.acos,
+        getTemplate: ({val}) => WebglTemplate.source`acos(${val})`,
+      })],
+      
+      [ArithmeticMode.Arctangent, this.singleOutputSingleInputOverload({
+        label: "Arctangent",
+        calculate: Math.atan,
+        getTemplate: ({val}) => WebglTemplate.source`atan(${val})`,
+      })],
+      
+      [ArithmeticMode.Arctangent2, this.singleOutputTwoInputsOverload({
+        label: "Two-argument arctangent",
+        operandLabels: ["Y", "X"],
+        outputLabel: "Value",
+        calculate: Math.atan2,
+        getTemplate: ({val0, val1}) => WebglTemplate.source`atan(${val1}, ${val0})`,
+      })],
+      
+      [ArithmeticMode.Hypotenuse, this.singleOutputTwoInputsOverload({
+        label: "Hypotenuse",
+        operandLabels: ["Value", "Value"],
+        outputLabel: "Hypotenuse",
+        calculate: Math.hypot,
+        getTemplate: ({val0, val1}) => WebglTemplate.source`sqrt(${val0} * ${val0} + ${val1} * ${val1})`,
       })],
       
       [ArithmeticMode.Quantize, this.singleOutputOverload({

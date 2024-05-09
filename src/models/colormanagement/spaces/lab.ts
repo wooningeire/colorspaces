@@ -1,6 +1,6 @@
-import {Vec3, mod, Color} from "@/util";
+import { Vec3, mod } from "@/util";
 
-import {Col, Xyz, Xy, adaptXyz, xyyToXyzNoAdapt} from "./col-xyz-xyy-illuminants";
+import { Col, Xyz, Xy, adaptXyz, xyyToXyzNoAdapt } from "./col-xyz-xyy-illuminants";
 
 
 //#region Types
