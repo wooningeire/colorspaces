@@ -1,7 +1,7 @@
 import {mod, Vec3} from "@/util";
 
 import {Col, Xyz} from "./spaces/col-xyz-xyy-illuminants";
-import {Lab, LchAb} from "./spaces/lab";
+import {Lab, lxyToLch} from "./spaces/lab";
 
 export const deltaE1976 = (col1: Vec3 | Col, col2: Vec3 | Col) => {
   const lab1 = Lab.from(col1) as Lab;
@@ -18,13 +18,13 @@ export const deltaE2000 = (col1: Vec3 | Col, col2: Vec3 | Col, kL=1, kC=1, kH=1)
   const lab1 = Lab.from(col1) as Lab;
   const lab2 = Lab.from(col2, col1 instanceof Col ? col1.illuminant : undefined) as Lab;
 
-  const lch1 = LchAb.from(lab1) as LchAb;
-  const lch2 = LchAb.from(lab2) as LchAb;
+  const [l1, c1, h1]  = lxyToLch(Lab.from(lab1) as unknown as Vec3);
+  const [l2, c2, h2]  = lxyToLch(Lab.from(lab2) as unknown as Vec3);
 
-  const lAdjDiff = lch2.l - lch1.l;
+  const lAdjDiff = l2 - l1;
 
-  const lAvg = (lch1.l + lch2.l) / 2;
-  const cAvg = (lch1.c + lch2.c) / 2;
+  const lAvg = (l1 + l2) / 2;
+  const cAvg = (c1 + c2) / 2;
 
   const cAvgPow7 = cAvg**7;
   const aAdjustment = Math.sqrt(cAvgPow7 / (cAvgPow7 + 25**7));
@@ -95,8 +95,8 @@ float deltaE2000(vec3 xyz0, vec2 illuminant0, vec3 xyz1, vec2 illuminant1) {
   vec3 lab0 = xyzToLab(xyz0, illuminant0, illuminant0);
   vec3 lab1 = xyzToLab(xyz1, illuminant1, illuminant0);
 
-  vec3 lchab0 = lxxToLch(lab0);
-  vec3 lchab1 = lxxToLch(lab1);
+  vec3 lchab0 = lxyToLch(lab0);
+  vec3 lchab1 = lxyToLch(lab1);
 
   float kL = 1.;
   float kC = 1.;

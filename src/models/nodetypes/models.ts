@@ -51,7 +51,7 @@ export namespace models {
     webglConversionFunction: string,
   };
   
-  const createRgbNodeType = ({
+  const createConverterNodeType = ({
     name,
     id,
     outputDisplayType,
@@ -135,7 +135,7 @@ export namespace models {
     }
   };
 
-  export const HslNode = createRgbNodeType({
+  export const HslNode = createConverterNodeType({
     name: "HslNode",
     id: "hsl",
     outputDisplayType: OutputDisplayType.Vec,
@@ -153,7 +153,7 @@ export namespace models {
     },
   });
 
-  export const HsvNode = createRgbNodeType({
+  export const HsvNode = createConverterNodeType({
     name: "HsvNode",
     id: "hsv",
     outputDisplayType: OutputDisplayType.Vec,
@@ -171,7 +171,7 @@ export namespace models {
     },
   });
 
-  export const HwbNode = createRgbNodeType({
+  export const HwbNode = createConverterNodeType({
     name: "HwbNode",
     id: "hwb",
     outputDisplayType: OutputDisplayType.Vec,
@@ -189,7 +189,7 @@ export namespace models {
     },
   });
 
-  export const CmyNode = createRgbNodeType({
+  export const CmyNode = createConverterNodeType({
     name: "CmyNode",
     id: "cmy",
     outputDisplayType: OutputDisplayType.Vec,
@@ -228,6 +228,110 @@ export namespace models {
       return this.ins.map(socket => socket.inValue(context)) as Color;
     }
   } */
+
+
+  enum LxyOverloadMode {
+    ToLxy = "to lxy",
+    FromLxy = "from lxy",
+  }
+  
+  export class LxyNode extends Node {
+    static readonly TYPE = Symbol(this.name);
+    static readonly id = "lxy";
+
+    private static readonly inputSlots = WebglSlot.ins("lightness", "redGreen", "yellowBlue");
+
+    constructor() {
+      super();
+
+      const {lightness, redGreen, yellowBlue} = LxyNode.inputSlots;
+
+      this.ins.push(
+        new InSocket(this, SocketType.Float, "Lightness", {webglOutputMapping: {[webglOuts.val]: lightness}}),
+        new InSocket(this, SocketType.Float, "Red–green", {webglOutputMapping: {[webglOuts.val]: redGreen}}),
+        new InSocket(this, SocketType.Float, "Yellow–blue", {webglOutputMapping: {[webglOuts.val]: yellowBlue}}),
+      );
+
+      this.outs.push(
+        new OutSocket(this, SocketType.Vector, "Lxy", context => this.ins.map(socket => socket.inValue(context)) as Vec3, {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`vec3(${lightness}, ${redGreen}, ${yellowBlue})`}),
+        }),
+      );
+    }
+
+    displayValues(context: NodeEvalContext): Vec3 {
+      return this.ins.map(socket => socket.inValue(context)) as Vec3;
+    }
+
+    webglBaseVariables(): WebglVariables {
+      return WebglVariables.empty({node: this});
+    }
+  }
+
+  export const LchNode = (() => {
+    const socketLabels = ["Lightness", "Colorfulness", "Hue"];
+
+    const inputSlots = WebglSlot.ins("lightness", "colorfulness", "hue");
+    const {lightness, colorfulness, hue} = inputSlots;
+    const toLxyOutputs = {[webglOuts.val]: WebglTemplate.source`lxyToLch(vec3(${lightness}, ${colorfulness}, ${hue}))`};
+  
+    const lxy = WebglSlot.in("lxy");
+    const internal = WebglSlot.out("internal");
+
+    return class LchNode extends NodeWithOverloads<LxyOverloadMode> {
+      static readonly TYPE = Symbol(this.name);
+      static readonly id = "lch";
+      static readonly outputDisplayType = OutputDisplayType.Vec;
+  
+      static readonly overloadGroup = new OverloadGroup(new Map<LxyOverloadMode, Overload>([
+        [LxyOverloadMode.ToLxy, new Overload(
+          "To Lxy",
+          node => Object.values(inputSlots).map(
+            (slot, i) => 
+                new InSocket(node, SocketType.Float, socketLabels[i], {webglOutputMapping: {[webglOuts.val]: slot}}),
+          ),
+          (node, ins) => [
+            new OutSocket(node, SocketType.Vector, "Lxy", context => cm.lchToLxy(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3, {
+              webglOutputs: socket => () => toLxyOutputs,
+            }),
+          ],
+          (ins, outs, context) => ({
+            values: cm.lchToLxy(ins.map(socket => socket.inValue(context)) as Vec3),
+            labels: ["L", "x", "y"],
+            flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
+          }),
+          (ins, outs, context, node) => WebglVariables.empty({node}),
+          () => toLxyOutputs,
+        )],
+  
+        [LxyOverloadMode.FromLxy, new Overload(
+          "From Lxy",
+          node => [
+            new InSocket(node, SocketType.Vector, "Lxy", {webglOutputMapping: {[webglOuts.val]: lxy}}),
+          ],
+          (node, ins) => Object.values(inputSlots).map(
+            (slot, i) => 
+                new OutSocket(node, SocketType.Float, socketLabels[i], context => cm.lxyToLch(ins[0].inValue(context) as Vec3)[i], {
+                  webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.concat`${internal}.${["x", "y", "z"][i]}`}),
+                })
+          ),
+          (ins, outs, context) => ({
+            values: cm.lxyToLch(ins[0].inValue(context) as Vec3),
+            labels: ["L", "C", "h"],
+            flags: [SocketFlag.None, SocketFlag.None, SocketFlag.Hue],
+          }),
+          (ins, outs, context, node) => WebglVariables.templateConcat`vec3 ${internal} = lxyToLch(${lxy});`({
+            node,
+          }),
+          () => ({[webglOuts.val]: WebglTemplate.slot(internal)}),
+        )],
+      ]));
+
+      constructor() {
+        super(LxyOverloadMode.ToLxy);
+      }
+    };
+  })();
 
   export class SpectralPowerDistributionNode extends Node {
     static readonly TYPE = Symbol(this.name);

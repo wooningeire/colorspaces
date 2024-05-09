@@ -472,7 +472,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.Lab;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "L*a*b* or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "Lxy or color", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -491,51 +491,6 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     }
   }
 
-  export class LchAbNode extends TripletSpaceNode {
-    static readonly TYPE = Symbol(this.name);
-    static readonly id = "lchab";
-
-    get displayLabels() {
-      return ["L*", "C*", "h"];
-    }
-
-    get ColClass() {
-      return cm.LchAb;
-    }
-    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "L*C*h or color", socketOptions);
-    }
-    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
-      return {
-        defaultValue: [50, 0, 0],
-        sliderProps: [
-          {
-            softMax: 100,
-          },
-          {
-            hasBounds: false,
-            unboundedChangePerPixel: 2,
-          },
-          {},
-        ],
-        fieldText: [
-          "desc.field.lchab.l",
-          "desc.field.lchab.c",
-          "desc.field.lchab.h",
-        ],
-      };
-    }
-    get componentLabels() {
-      return ["L*", "C*", "h"];
-    }
-    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
-      return WebglTemplate.source`labToXyz(lchToLxx(${val}), ${newIlluminant}, ${newIlluminant})`;
-    }
-    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
-      return WebglTemplate.source`lxxToLch(xyzToLab(${xyz}, ${originalIlluminant}, ${newIlluminant}))`;
-    }
-  }
-
   export class LuvNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "luv";
@@ -548,7 +503,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.Luv;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "L*u*v* or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "Lxy or color", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -567,51 +522,6 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     }
   }
 
-  export class LchUvNode extends TripletSpaceNode {
-    static readonly TYPE = Symbol(this.name);
-    static readonly id = "lchuv";
-
-    get displayLabels() {
-      return ["L*", "C*", "h"];
-    }
-
-    get ColClass() {
-      return cm.LchUv;
-    }
-    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "L*C*h or color", socketOptions);
-    }
-    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
-      return {
-        defaultValue: [50, 0, 0],
-        sliderProps: [
-          {
-            softMax: 100,
-          },
-          {
-            hasBounds: false,
-            unboundedChangePerPixel: 2,
-          },
-          {},
-        ],
-        fieldText: [
-          "desc.field.lchab.l",
-          "desc.field.lchab.c",
-          "desc.field.lchab.h",
-        ],
-      };
-    }
-    get componentLabels() {
-      return ["L*", "C*", "h"];
-    }
-    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
-      return WebglTemplate.source`luvToXyz(lchToLxx(${val}), ${newIlluminant}, ${newIlluminant})`;
-    }
-    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
-      return WebglTemplate.source`lxxToLch(xyzToLuv(${xyz}, ${originalIlluminant}, ${newIlluminant}))`;
-    }
-  }
-
   export class OklabNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "oklab";
@@ -624,7 +534,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
       return cm.Oklab;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "Lab or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "Lxy or color", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -644,55 +554,6 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     }
     webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
       return WebglTemplate.source`xyzToOklab(${xyz}, ${originalIlluminant})`;
-    }
-  }
-
-  export class OklchAbNode extends TripletSpaceNode {
-    static readonly TYPE = Symbol(this.name);
-    static readonly id = "oklchab";
-
-    get displayLabels() {
-      return ["L", "C", "h"];
-    }
-
-    get ColClass() {
-      return cm.OklchAb;
-    }
-    constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "LCh or color", socketOptions);
-    }
-    inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
-      return {
-        defaultValue: [0.5, 0, 0],
-        sliderProps: [
-          {
-            softMax: 1,
-          },
-          {
-            hasBounds: false,
-            unboundedChangePerPixel: 0.02,
-          },
-          {},
-        ],
-        fieldText: [
-          "desc.field.oklchab.l",
-          "desc.field.oklchab.c",
-          "desc.field.oklchab.h",
-        ],
-      };
-    }
-    get componentLabels() {
-      return ["L", "C", "h"];
-    }
-
-    get includeWhitePoint() {
-      return false;
-    }
-    webglToXyz(newIlluminant: WebglSlot, val: WebglSlot) {
-      return WebglTemplate.source`oklabToXyz(lchToLxx(${val}), ${newIlluminant})`;
-    }
-    webglFromXyz(xyz: WebglSlot, originalIlluminant: WebglSlot, newIlluminant: WebglSlot) {
-      return WebglTemplate.source`lxxToLch(xyzToOklab(${xyz}, ${originalIlluminant}))`;
     }
   }
 

@@ -23,26 +23,6 @@ export class Luv extends Col {
   get u() { return this[1]; }
   get v() { return this[2]; }
 }
-
-export class LchUv extends Col {
-  // static readonly labels = ["L*", "C*", "h"];
-
-  constructor(data: Vec3, newIlluminant: Xy) {
-    super(data, newIlluminant);
-  }
-
-  static fromXyz(xyz: Xyz): LchUv {
-    return luvToLchUv(xyzToLuv(xyz, xyz.illuminant));
-  }
-
-  toXyz(newIlluminant: Xy=this.illuminant): Xyz {
-    return luvToXyz(lchUvToLuv(this), newIlluminant);
-  }
-
-  get l() { return this[0]; }
-  get c() { return this[1]; }
-  get h() { return this[2]; }
-}
 //#endregion
 
 //#region Conversion functions
@@ -96,20 +76,6 @@ const xyzToLuv = (xyz: Xyz, newIlluminant: Xy) => {
     13 * l * (tempV - referenceV),
   ], newIlluminant);
 };
-
-const turn = 2 * Math.PI;
-
-const luvToLchUv = (luv: Luv) => new LchUv([
-  luv.l,
-  Math.hypot(luv.u, luv.v),
-  mod(Math.atan2(luv.v, luv.u) / turn, 1), // radians to [0, 1)
-], luv.illuminant);
-
-const lchUvToLuv = (lch: LchUv) => new Luv([
-  lch.l,
-  Math.cos(lch.h * turn) * lch.c,
-  Math.sin(lch.h * turn) * lch.c,
-], lch.illuminant);
 //#endregion
 
 //#region WebGL conversion functions

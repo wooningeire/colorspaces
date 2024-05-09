@@ -23,26 +23,6 @@ export class Lab extends Col {
   get a() { return this[1]; }
   get b() { return this[2]; }
 }
-
-export class LchAb extends Col {
-  // static readonly labels = ["L*", "C*", "h"];
-
-  constructor(data: Vec3, newIlluminant: Xy) {
-    super(data, newIlluminant);
-  }
-
-  static fromXyz(xyz: Xyz): LchAb {
-    return labToLchAb(xyzToLab(xyz, xyz.illuminant));
-  }
-
-  toXyz(newIlluminant: Xy=this.illuminant): Xyz {
-    return labToXyz(lchAbToLab(this), newIlluminant);
-  }
-
-  get l() { return this[0]; }
-  get c() { return this[1]; }
-  get h() { return this[2]; }
-}
 //#endregion
 
 //#region Conversion functions// https://en.wikipedia.org/wiki/CIELAB_color_space#From_CIELAB_to_CIEXYZ
@@ -89,17 +69,17 @@ const xyzToLab = (xyz: Xyz, newIlluminant: Xy) => {
 
 const turn = 2 * Math.PI;
 
-const labToLchAb = (lab: Lab) => new LchAb([
-  lab.l,
-  Math.hypot(lab.a, lab.b),
-  mod(Math.atan2(lab.b, lab.a) / turn, 1), // radians to [0, 1)
-], lab.illuminant);
+export const lxyToLch = (lxy: Vec3): Vec3 => [
+  lxy[0],
+  Math.hypot(lxy[1], lxy[2]),
+  mod(Math.atan2(lxy[2], lxy[1]) / turn, 1), // radians to [0, 1)
+];
 
-const lchAbToLab = (lch: LchAb) => new Lab([
-  lch.l,
-  Math.cos(lch.h * turn) * lch.c,
-  Math.sin(lch.h * turn) * lch.c,
-], lch.illuminant);
+export const lchToLxy = (lch: Vec3): Vec3 => [
+  lch[0],
+  Math.cos(lch[2] * turn) * lch[1],
+  Math.sin(lch[2] * turn) * lch[1],
+];
 //#endregion
 
 //#region WebGL conversion functions
@@ -145,15 +125,15 @@ vec3 labToXyz(vec3 lab, vec2 originalIlluminant, vec2 newIlluminant) {
     ), originalIlluminant, newIlluminant);
 }
 
-vec3 lxxToLch(vec3 lxx) {
+vec3 lxyToLch(vec3 lxy) {
   return vec3(
-    lxx.x,
-    sqrt(lxx.y * lxx.y + lxx.z * lxx.z),
-    atan(lxx.z, lxx.y) / REV
+    lxy.x,
+    sqrt(lxy.y * lxy.y + lxy.z * lxy.z),
+    atan(lxy.z, lxy.y) / REV
   );
 }
 
-vec3 lchToLxx(vec3 lch) {
+vec3 lchToLxy(vec3 lch) {
   return vec3(
     lch.x,
     cos(lch.z * REV) * lch.y,
