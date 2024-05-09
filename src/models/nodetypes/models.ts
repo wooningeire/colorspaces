@@ -26,7 +26,9 @@ export namespace models {
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "RGB", context => this.ins.map(socket => socket.inValue(context)) as Vec3),
+        new OutSocket(this, SocketType.Vector, "RGB", context => this.ins.map(socket => socket.inValue(context)) as Vec3, {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`vec3(${red}, ${green}, ${blue})`}),
+        }),
       );
     }
 
@@ -34,14 +36,8 @@ export namespace models {
       return this.ins.map(socket => socket.inValue(context)) as Vec3;
     }
 
-    webglGetBaseVariables(): WebglVariables {
-      const {red, green, blue} = RgbNode.inputSlots;
-
-      return WebglVariables.template``({
-        socketOutVariables: new Map([
-          [this.outs[0], {[webglOuts.val]: WebglTemplate.source`vec3(${red}, ${green}, ${blue})`}],
-        ])
-      });
+    webglBaseVariables(): WebglVariables {
+      return WebglVariables.empty({node: this});
     }
   }
 
@@ -79,7 +75,7 @@ export namespace models {
   }) => {
     const inputSlots = WebglSlot.ins("x", "y", "z");
     const {x, y, z} = inputSlots;
-    const toRgbOutputMapping = {[webglOuts.val]: WebglTemplate.concat`${toRgb.webglConversionFunction}(vec3(${x}, ${y}, ${z}))`};
+    const toRgbOutputs = {[webglOuts.val]: WebglTemplate.concat`${toRgb.webglConversionFunction}(vec3(${x}, ${y}, ${z}))`};
   
     const rgb = WebglSlot.in("rgb");
     const internal = WebglSlot.out("internal");
@@ -97,19 +93,17 @@ export namespace models {
                 new InSocket(node, SocketType.Float, socketLabels[i], {webglOutputMapping: {[webglOuts.val]: slot}}).flag(socketFlags[i]),
           ),
           (node, ins) => [
-            new OutSocket(node, SocketType.Vector, "RGB", context => toRgb.convert(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3),
+            new OutSocket(node, SocketType.Vector, "RGB", context => toRgb.convert(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3, {
+              webglOutputs: socket => () => toRgbOutputs,
+            }),
           ],
           (ins, outs, context) => ({
             values: toRgb.convert(ins.map(socket => socket.inValue(context)) as Vec3),
             labels: ["R", "G", "B"],
             flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
           }),
-          (ins, outs, context) => WebglVariables.template``({
-            socketOutVariables: new Map([
-              [outs[0], toRgbOutputMapping],
-            ]),
-            nodeOutVariables: toRgbOutputMapping,
-          }),
+          (ins, outs, context, node) => WebglVariables.empty({node}),
+          () => toRgbOutputs,
         )],
   
         [RgbOverloadMode.FromRgb, new Overload(
@@ -119,21 +113,19 @@ export namespace models {
           ],
           (node, ins) => Object.values(inputSlots).map(
             (slot, i) => 
-                new OutSocket(node, SocketType.Float, socketLabels[i], context => fromRgb.convert(ins[0].inValue(context) as Vec3)[i]).flag(socketFlags[i])
+                new OutSocket(node, SocketType.Float, socketLabels[i], context => fromRgb.convert(ins[0].inValue(context) as Vec3)[i], {
+                  webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.concat`${internal}.${["x", "y", "z"][i]}`}),
+                }).flag(socketFlags[i])
           ),
           (ins, outs, context) => ({
             values: fromRgb.convert(ins[0].inValue(context) as Vec3),
             labels: nodeDisplayLabels,
             flags: socketFlags,
           }),
-          (ins, outs, context) => WebglVariables.templateConcat`vec3 ${internal} = ${fromRgb.webglConversionFunction}(${rgb});`({
-            socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.source`${internal}.x`}],
-              [outs[1], {[webglOuts.val]: WebglTemplate.source`${internal}.y`}],
-              [outs[2], {[webglOuts.val]: WebglTemplate.source`${internal}.z`}],
-            ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(internal)},
+          (ins, outs, context, node) => WebglVariables.templateConcat`vec3 ${internal} = ${fromRgb.webglConversionFunction}(${rgb});`({
+            node,
           }),
+          () => ({[webglOuts.val]: WebglTemplate.slot(internal)}),
         )],
       ]));
 
@@ -249,12 +241,24 @@ export namespace models {
 
     colorMatchingDataset: "2deg" | "10deg" = "2deg";
 
+    private static readonly outputSlots = WebglSlot.outs("unif");
+
     constructor() {
       super();
+
+      const {unif} = SpectralPowerDistributionNode.outputSlots;
       
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz()),
-        new OutSocket(this, SocketType.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(), illuminantE)),
+        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz(), {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(unif)}),
+        }),
+        new OutSocket(this, SocketType.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(), illuminantE), {
+          webglOutputs: socket => () => ({
+            [webglOuts.val]: WebglTemplate.slot(unif),
+            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
+            [webglOuts.xyz]: WebglTemplate.slot(unif),
+          }),
+        }),
       );
     }
 
@@ -268,18 +272,11 @@ export namespace models {
       this.cachedOutput = null;
     }
 
-    webglGetBaseVariables(): WebglVariables {
-      const unif = WebglSlot.out("unif");
+    webglBaseVariables(): WebglVariables {
+      const {unif} = SpectralPowerDistributionNode.outputSlots;
 
-      return WebglVariables.template``({
-        socketOutVariables: new Map([
-          [this.outs[0], {[webglOuts.val]: WebglTemplate.slot(unif)}],
-          [this.outs[1], {
-            [webglOuts.val]: WebglTemplate.slot(unif),
-            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
-            [webglOuts.xyz]: WebglTemplate.slot(unif),
-          }],
-        ]),
+      return WebglVariables.empty({
+        node: this,
         preludeTemplate: WebglTemplate.source`uniform vec3 ${unif};`,
         uniforms: new Map([
           [WebglTemplate.slot(unif), {
@@ -303,10 +300,14 @@ export namespace models {
     private readonly powerSocket: InSocket<SocketType.Float>;
     private readonly datasetSocket: InSocket<SocketType.Dropdown>;
 
+    private static readonly inputSlots = WebglSlot.ins("wavelength", "power");
+    private static readonly outputSlots = WebglSlot.outs("xyz");
+
     constructor() {
       super();
       
       const {wavelength, power} = WavelengthNode.inputSlots;
+      const {xyz} = WavelengthNode.outputSlots;
 
       this.ins.push(
         (this.inSocket = new InSocket(this, SocketType.Float, "Wavelength (nm)", {
@@ -337,8 +338,16 @@ export namespace models {
       );
       
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz(context)),
-        new OutSocket(this, SocketType.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(context), illuminantE)),
+        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz(context), {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(xyz)}),
+        }),
+        new OutSocket(this, SocketType.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(context), illuminantE), {
+          webglOutputs: socket => () => ({
+            [webglOuts.val]: WebglTemplate.slot(xyz),
+            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
+            [webglOuts.xyz]: WebglTemplate.slot(xyz),
+          }),
+        }),
       );
 
       this.width = 200;
@@ -349,26 +358,16 @@ export namespace models {
           .map(comp => comp * this.powerSocket.inValue(context)) as Vec3;
     }
 
-    private static readonly inputSlots = WebglSlot.ins("wavelength", "power");
-
-    webglGetBaseVariables(): WebglVariables {
-      const xyz = WebglSlot.out("xyz");
-
+    webglBaseVariables(): WebglVariables {
       const {wavelength, power} = WavelengthNode.inputSlots;
+      const {xyz} = WavelengthNode.outputSlots;
 
       const arrayName = this.datasetSocket.fieldValue === "2deg"
           ? "cmf2"
           : "cmf10";
 
       return WebglVariables.templateConcat`vec3 ${xyz} = ${arrayName}[int(round(${wavelength})) - 360] * ${power};`({
-        socketOutVariables: new Map([
-          [this.outs[0], {[webglOuts.val]: WebglTemplate.slot(xyz)}],
-          [this.outs[1], {
-            [webglOuts.val]: WebglTemplate.slot(xyz),
-            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
-            [webglOuts.xyz]: WebglTemplate.slot(xyz),
-          }],
-        ]),
+        node: this,
       });
     }
   }
@@ -384,6 +383,7 @@ export namespace models {
       super();
 
       const {temperature} = BlackbodyNode.inputSlots;
+      const {xyz} = BlackbodyNode.outputSlots;
 
       this.ins.push(
         (this.inSocket = new InSocket(this, SocketType.Float, "Temperature (K)", {
@@ -405,8 +405,16 @@ export namespace models {
       );
       
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz(context)),
-        new OutSocket(this, SocketType.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(context), illuminantE)),
+        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz(context), {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(xyz)}),
+        }),
+        new OutSocket(this, SocketType.ColorCoords, "Color", context => new cm.Xyz(this.computeXyz(context), illuminantE), {
+          webglOutputs: socket => () => ({
+            [webglOuts.val]: WebglTemplate.slot(xyz),
+            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
+            [webglOuts.xyz]: WebglTemplate.slot(xyz),
+          })
+        }),
       );
 
       this.width = 200;
@@ -417,24 +425,18 @@ export namespace models {
     }
 
     private static readonly inputSlots = WebglSlot.ins("temperature");
+    private static readonly outputSlots = WebglSlot.outs("xyz");
 
-    webglGetBaseVariables(context: NodeEvalContext={}): WebglVariables {
+    webglBaseVariables(context: NodeEvalContext={}): WebglVariables {
       const {temperature} = BlackbodyNode.inputSlots;
-      const xyz = WebglSlot.out("xyz");
+      const {xyz} = BlackbodyNode.outputSlots;
 
       const funcName = this.datasetSocket.fieldValue === "2deg"
           ? "blackbodyTemp2ToXyz"
           : "blackbodyTemp10ToXyz";
 
       return WebglVariables.templateConcat`vec3 ${xyz} = ${funcName}(${temperature});`({
-        socketOutVariables: new Map([
-          [this.outs[0], {[webglOuts.val]: WebglTemplate.slot(xyz)}],
-          [this.outs[1], {
-            [webglOuts.val]: WebglTemplate.slot(xyz),
-            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
-            [webglOuts.xyz]: WebglTemplate.slot(xyz),
-          }],
-        ]),
+        node: this,
       });
     }
   }
@@ -445,17 +447,31 @@ export namespace models {
 
     private readonly whitePointSocket: InSocket<SocketType.Dropdown>;
 
+    private static readonly outputSlots = WebglSlot.outs("xyz", "xyy");
+
     constructor() {
       super();
+
+      const {xyz, xyy} = StandardIlluminantNode.outputSlots;
 
       this.ins.push(
         (this.whitePointSocket = new InSocket(this, SocketType.Dropdown, "White point", whitePointSocketOptions)),
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "XYZ", context => [...cm.Xyz.from(this.getIlluminant(context))] as Vec3),
-        new OutSocket(this, SocketType.Vector, "xyY", context => [...cm.Xyy.from(this.getIlluminant(context))] as Vec3),
-        new OutSocket(this, SocketType.ColorCoords, "Color", context => cm.Xyz.from(this.getIlluminant(context))),
+        new OutSocket(this, SocketType.Vector, "XYZ", context => [...cm.Xyz.from(this.getIlluminant(context))] as Vec3, {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(xyz)}),
+        }),
+        new OutSocket(this, SocketType.Vector, "xyY", context => [...cm.Xyy.from(this.getIlluminant(context))] as Vec3, {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(xyy)}),
+        }),
+        new OutSocket(this, SocketType.ColorCoords, "Color", context => cm.Xyz.from(this.getIlluminant(context)), {
+          webglOutputs: socket => () => ({
+            [webglOuts.val]: WebglTemplate.slot(xyz),
+            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
+            [webglOuts.xyz]: WebglTemplate.slot(xyz),
+          }),
+        }),
       );
     }
 
@@ -463,19 +479,11 @@ export namespace models {
       return getIlluminant(this.whitePointSocket, context);
     }
 
-    webglGetBaseVariables(context: NodeEvalContext={}): WebglVariables {
-      const {xyz, xyy} = WebglSlot.outs("xyz", "xyy");
+    webglBaseVariables(context: NodeEvalContext={}): WebglVariables {
+      const {xyz, xyy} = StandardIlluminantNode.outputSlots;
       
-      return WebglVariables.template``({
-        socketOutVariables: new Map([
-          [this.outs[0], {[webglOuts.val]: WebglTemplate.slot(xyz)}],
-          [this.outs[1], {[webglOuts.val]: WebglTemplate.slot(xyy)}],
-          [this.outs[2], {
-            [webglOuts.val]: WebglTemplate.slot(xyz),
-            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
-            [webglOuts.xyz]: WebglTemplate.slot(xyz),
-          }],
-        ]),
+      return WebglVariables.empty({
+        node: this,
         preludeTemplate: WebglTemplate.source`uniform vec3 ${xyz};
 uniform vec3 ${xyy};`,
         uniforms: new Map([

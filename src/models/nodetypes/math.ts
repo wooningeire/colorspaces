@@ -20,6 +20,8 @@ export namespace math {
         labels: [],
         flags: [],
       });
+  const outputsWithNoStatements: ConstructorParameters<typeof Overload>[4] =
+      (ins, outs, context, node) => WebglVariables.empty({node});
 
   enum VectorArithmeticMode {
     Lerp = "lerp",
@@ -38,19 +40,6 @@ export namespace math {
 
     private static readonly inputSlots = WebglSlot.ins("fac", "val0", "val1", "vector", "scalar");
 
-    private static singleOutVariable =
-        (getTemplate: (inputSlots: typeof VectorArithmeticNode["inputSlots"]) => WebglTemplate): ConstructorParameters<typeof Overload>[4] =>
-            (ins, outs, context, node) => {
-              const template = getTemplate(this.inputSlots);
-      
-              return WebglVariables.template``({
-                socketOutVariables: new Map([
-                  [outs[0], {[webglOuts.val]: template}],
-                ]),
-                nodeOutVariables: {[webglOuts.val]: template},
-              });
-            };
-
     private static threeValueOverload =
         ({
           label,
@@ -66,25 +55,32 @@ export namespace math {
           defaultBlendAmount?: number,
           calculate: (fac: number, val0: Vec3, val1: Vec3) => Vec3,
           getTemplate: (inputSlots: typeof VectorArithmeticNode["inputSlots"]) => WebglTemplate,
-        }) => new Overload(
-          label,
-          node => {
-            const {fac, val0, val1} = this.inputSlots;
-            return [
-              new InSocket(node, SocketType.Float, "Blend amount", {
-                defaultValue: defaultBlendAmount,
-                webglOutputMapping: {[webglOuts.val]: fac},
+        }) => {
+          const outputs = {[webglOuts.val]: getTemplate(this.inputSlots)};
+          
+          return new Overload(
+            label,
+            node => {
+              const {fac, val0, val1} = this.inputSlots;
+              return [
+                new InSocket(node, SocketType.Float, "Blend amount", {
+                  defaultValue: defaultBlendAmount,
+                  webglOutputMapping: {[webglOuts.val]: fac},
+                }),
+                new InSocket(node, SocketType.Vector, operandLabels[0], {webglOutputMapping: {[webglOuts.val]: val0}}),
+                new InSocket(node, SocketType.Vector, operandLabels[1], {webglOutputMapping: {[webglOuts.val]: val1}}),
+              ];
+            },
+            (node, ins) => [
+              new OutSocket(node, SocketType.Vector, outputLabel, context => calculate(...ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3]), {
+                webglOutputs: socket => () => outputs,
               }),
-              new InSocket(node, SocketType.Vector, operandLabels[0], {webglOutputMapping: {[webglOuts.val]: val0}}),
-              new InSocket(node, SocketType.Vector, operandLabels[1], {webglOutputMapping: {[webglOuts.val]: val1}}),
-            ];
-          },
-          (node, ins) => [
-            new OutSocket(node, SocketType.Vector, outputLabel, context => calculate(...ins.map(socket => socket.inValue(context)) as [number, Vec3, Vec3])),
-          ],
-          singleDisplayValueVec,
-          this.singleOutVariable(getTemplate),
-        );
+            ],
+            singleDisplayValueVec,
+            outputsWithNoStatements,
+            () => outputs,
+          );
+        };
 
     static readonly overloadGroup = new OverloadGroup(new Map<VectorArithmeticMode, Overload>([
       [VectorArithmeticMode.Lerp, this.threeValueOverload({
@@ -135,43 +131,57 @@ export namespace math {
         getTemplate: ({fac, val0, val1}) => WebglTemplate.source`1. - (1. - ${val0}) * (1. - ${val1} * ${fac})`,
       })],
       
-      [VectorArithmeticMode.Distance, new Overload(
-        "Distance",
-        node => {
-          const {val0, val1} = VectorArithmeticNode.inputSlots;
-          return [
-            new InSocket(node, SocketType.Vector, "Vector", {webglOutputMapping: {[webglOuts.val]: val0}}),
-            new InSocket(node, SocketType.Vector, "Vector", {webglOutputMapping: {[webglOuts.val]: val1}}),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Float, "Distance", context => {
-            const [val0, val1] = ins.map(socket => socket.inValue(context)) as [Vec3, Vec3];
-            return Math.hypot(...val0.map((_, i) => val0[i] - val1[i]));
-          }),
-        ],
-        singleDisplayValueVec,
-        this.singleOutVariable(({val0, val1}) => WebglTemplate.source`length(${val0} - ${val1})`),
-      )],
+      [VectorArithmeticMode.Distance, (() => {
+        const {val0, val1} = this.inputSlots;
+        const outputs = ({[webglOuts.val]: WebglTemplate.source`length(${val0} - ${val1})`});
 
-      [VectorArithmeticMode.Scale, new Overload(
-        "Scalar multiply",
-        node => {
-          const {vector, scalar} = VectorArithmeticNode.inputSlots;
-          return [
-            new InSocket(node, SocketType.Vector, "Vector", {webglOutputMapping: {[webglOuts.val]: vector}}),
-            new InSocket(node, SocketType.Float, "Scalar", {webglOutputMapping: {[webglOuts.val]: scalar}}),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Vector, "Vector", context => {
-            const [col, scalar] = ins.map(socket => socket.inValue(context)) as [Vec3, number];
-            return col.map((_, i) => col[i] * scalar) as Vec3;
-          }),
-        ],
-        singleDisplayValueVec,
-        this.singleOutVariable(({vector, scalar}) => WebglTemplate.source`${vector} * ${scalar}`),
-      )],
+        return new Overload(
+          "Distance",
+          node => {
+            return [
+              new InSocket(node, SocketType.Vector, "Vector", {webglOutputMapping: {[webglOuts.val]: val0}}),
+              new InSocket(node, SocketType.Vector, "Vector", {webglOutputMapping: {[webglOuts.val]: val1}}),
+            ];
+          },
+          (node, ins) => [
+            new OutSocket(node, SocketType.Float, "Distance", context => {
+              const [val0, val1] = ins.map(socket => socket.inValue(context)) as [Vec3, Vec3];
+              return Math.hypot(...val0.map((_, i) => val0[i] - val1[i]));
+            }, {
+              webglOutputs: socket => () => outputs,
+            }),
+          ],
+          singleDisplayValueVec,
+          outputsWithNoStatements,
+          () => outputs,
+        );
+      })()],
+
+      [VectorArithmeticMode.Scale, (() => {
+        const {vector, scalar} = this.inputSlots;
+        const outputs = ({[webglOuts.val]: WebglTemplate.source`${vector} * ${scalar}`});
+
+        return new Overload(
+          "Scalar multiply",
+          node => {
+            return [
+              new InSocket(node, SocketType.Vector, "Vector", {webglOutputMapping: {[webglOuts.val]: vector}}),
+              new InSocket(node, SocketType.Float, "Scalar", {webglOutputMapping: {[webglOuts.val]: scalar}}),
+            ];
+          },
+          (node, ins) => [
+            new OutSocket(node, SocketType.Vector, "Vector", context => {
+              const [col, scalar] = ins.map(socket => socket.inValue(context)) as [Vec3, number];
+              return col.map((_, i) => col[i] * scalar) as Vec3;
+            }, {
+              webglOutputs: socket => () => outputs,
+            }),
+          ],
+          singleDisplayValueVec,
+          outputsWithNoStatements,
+          () => outputs,
+        )
+      })()],
     ]));
 
     width = 200;
@@ -200,19 +210,6 @@ export namespace math {
     static readonly outputDisplayType = OutputDisplayType.Float;
 
     private static readonly inputSlots = WebglSlot.ins("val0", "val1", "min", "max", "fac", "source", "sourceMin", "sourceMax", "targetMin", "targetMax", "val", "nSegments");
-
-    private static singleOutVariable =
-        (getTemplate: (inputSlots: typeof ArithmeticNode["inputSlots"]) => WebglTemplate): ConstructorParameters<typeof Overload>[4] =>
-            (ins, outs, context, node) => {
-              const template = getTemplate(this.inputSlots);
-      
-              return WebglVariables.template``({
-                socketOutVariables: new Map([
-                  [outs[0], {[webglOuts.val]: template}],
-                ]),
-                nodeOutVariables: {[webglOuts.val]: template},
-              });
-            };
     
     private static singleOutputOverload = <InSockets extends InSocket[]>({
       label,
@@ -226,15 +223,22 @@ export namespace math {
       outputLabel?: string,
       calculate: (...inputs: {[I in keyof InSockets]: ReturnType<InSockets[I]["inValue"]>}) => number,
       getTemplate: (inputSlots: typeof ArithmeticNode["inputSlots"]) => WebglTemplate,
-    }) => new Overload(
-      label,
-      ins,
-      (node, ins) => [
-        new OutSocket(node, SocketType.Float, outputLabel, context => calculate(...ins.map(socket => socket.inValue(context)) as {[I in keyof InSockets]: ReturnType<InSockets[I]["inValue"]>})),
-      ],
-      singleDisplayValueFloat,
-      this.singleOutVariable(getTemplate),
-    );
+    }) => {
+      const outputs = {[webglOuts.val]: getTemplate(this.inputSlots)};
+
+      return new Overload(
+        label,
+        ins,
+        (node, ins) => [
+          new OutSocket(node, SocketType.Float, outputLabel, context => calculate(...ins.map(socket => socket.inValue(context)) as {[I in keyof InSockets]: ReturnType<InSockets[I]["inValue"]>}), {
+            webglOutputs: socket => () => outputs,
+          }),
+        ],
+        singleDisplayValueFloat,
+        outputsWithNoStatements,
+        () => outputs,
+      );
+    };
 
     private static singleOutputTwoInputsOverload = ({
       label,
@@ -442,17 +446,13 @@ export namespace math {
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "Vector", context => this.ins.map(socket => socket.inValue(context)) as Vec3),
+        new OutSocket(this, SocketType.Vector, "Vector", context => this.ins.map(socket => socket.inValue(context)) as Vec3, {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`vec3(${x}, ${y}, ${z})`}),
+        }),
       );
     }
-    webglGetBaseVariables(): WebglVariables {
-      const {x, y, z} = VectorNode.inputSlots;
-
-      return WebglVariables.template``({
-        socketOutVariables: new Map([
-          [this.outs[0], {[webglOuts.val]: WebglTemplate.source`vec3(${x}, ${y}, ${z})`}],
-        ]),
-      });
+    webglBaseVariables(): WebglVariables {
+      return WebglVariables.empty({node: this});
     }
   }
 
@@ -474,22 +474,20 @@ export namespace math {
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Float, "1", context => this.inSocket.inValue(context)[0]),
-        new OutSocket(this, SocketType.Float, "2", context => this.inSocket.inValue(context)[1]),
-        new OutSocket(this, SocketType.Float, "3", context => this.inSocket.inValue(context)[2]),
+        new OutSocket(this, SocketType.Float, "1", context => this.inSocket.inValue(context)[0], {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`${vec}.x`}),
+        }),
+        new OutSocket(this, SocketType.Float, "2", context => this.inSocket.inValue(context)[1], {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`${vec}.y`}),
+        }),
+        new OutSocket(this, SocketType.Float, "3", context => this.inSocket.inValue(context)[2], {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`${vec}.z`}),
+        }),
       );
     }
 
-    webglGetBaseVariables(): WebglVariables {
-      const {vec} = SplitVectorNode.inputSlots;
-
-      return WebglVariables.template``({
-        socketOutVariables: new Map([
-          [this.outs[0], {[webglOuts.val]: WebglTemplate.source`${vec}.x`}],
-          [this.outs[1], {[webglOuts.val]: WebglTemplate.source`${vec}.y`}],
-          [this.outs[2], {[webglOuts.val]: WebglTemplate.source`${vec}.z`}],
-        ]),
-      });
+    webglBaseVariables(): WebglVariables {
+      return WebglVariables.empty({node: this});
     }
   }
 
@@ -503,79 +501,85 @@ export namespace math {
     static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
 
     private static readonly inputSlots = WebglSlot.ins("xyz0", "xyz1", "illuminant0", "illuminant1");
+    private static readonly outputSlots = WebglSlot.outs("difference");
 
     static readonly overloadGroup = new OverloadGroup(new Map<ColorDifferenceMode, Overload>([
-      [ColorDifferenceMode.DeltaE1976, new Overload(
-        "ΔE* 1976",
-        node => {
-          const {xyz0, xyz1, illuminant0, illuminant1} = ColorDifferenceNode.inputSlots;
-          return [
-            new InSocket(node, SocketType.VectorOrColor, "L*a*b* or color", {
-              sliderProps: labSliderProps,
-              webglGetOutputMapping: socket => () => {
-                if (socket.effectiveType() === SocketType.ColorCoords) {
-                  return {
-                    [webglOuts.xyz]: xyz0,
-                    [webglOuts.illuminant]: illuminant0,
-                  };
-                } else {
-                  return {
-                    [webglOuts.val]: xyz0,
-                  };
-                }
-              },
-            }),
-            new InSocket(node, SocketType.VectorOrColor, "L*a*b* or color", {
-              sliderProps: labSliderProps,
-              webglGetOutputMapping: socket => () => {
-                if (socket.effectiveType() === SocketType.ColorCoords) {
-                  return {
-                    [webglOuts.xyz]: xyz1,
-                    [webglOuts.illuminant]: illuminant1,
-                  };
-                } else {
-                  return {
-                    [webglOuts.val]: xyz1,
-                  };
-                }
-              },
-            }),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Float, "Difference", context => {
-            const val0 = ins[0].inValue(context);
-            const val1 = ins[1].inValue(context);
-  
-            return cm.difference.deltaE1976(val0, val1);
-          }),
-        ],
-        singleDisplayValueFloat,
-        (ins, outs, context) => {
-          const difference = WebglSlot.out("difference");
-          const {xyz0, xyz1, illuminant0, illuminant1} = ColorDifferenceNode.inputSlots;
+      [ColorDifferenceMode.DeltaE1976, (() => {
+        const {difference} = this.outputSlots;
 
-          const illuminant0Template = ins[0].effectiveType() === SocketType.Vector
-              ? WebglTemplate.string("illuminant2_E")
-              : WebglTemplate.slot(illuminant0);
-          const illuminant1Template = ins[1].effectiveType() === SocketType.Vector
-              ? WebglTemplate.string("illuminant2_E")
-              : WebglTemplate.slot(illuminant1);
+        return new Overload(
+          "ΔE* 1976",
+          node => {
+            const {xyz0, xyz1, illuminant0, illuminant1} = ColorDifferenceNode.inputSlots;
+            return [
+              new InSocket(node, SocketType.VectorOrColor, "L*a*b* or color", {
+                sliderProps: labSliderProps,
+                webglGetOutputMapping: socket => () => {
+                  if (socket.effectiveType() === SocketType.ColorCoords) {
+                    return {
+                      [webglOuts.xyz]: xyz0,
+                      [webglOuts.illuminant]: illuminant0,
+                    };
+                  } else {
+                    return {
+                      [webglOuts.val]: xyz0,
+                    };
+                  }
+                },
+              }),
+              new InSocket(node, SocketType.VectorOrColor, "L*a*b* or color", {
+                sliderProps: labSliderProps,
+                webglGetOutputMapping: socket => () => {
+                  if (socket.effectiveType() === SocketType.ColorCoords) {
+                    return {
+                      [webglOuts.xyz]: xyz1,
+                      [webglOuts.illuminant]: illuminant1,
+                    };
+                  } else {
+                    return {
+                      [webglOuts.val]: xyz1,
+                    };
+                  }
+                },
+              }),
+            ];
+          },
+          (node, ins) => [
+            new OutSocket(node, SocketType.Float, "Difference", context => {
+              const val0 = ins[0].inValue(context);
+              const val1 = ins[1].inValue(context);
     
-          return WebglVariables.templateConcat`float ${difference} = deltaE1976(${xyz0}, ${illuminant0Template}, ${xyz1}, ${illuminant1Template});`({
-            socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.slot(difference)}],
-            ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(difference)},
-          });
-        },
-      )],
+              return cm.difference.deltaE1976(val0, val1);
+            }, {
+              webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(difference)}),
+            }),
+          ],
+          singleDisplayValueFloat,
+          (ins, outs, context, node) => {
+            const {xyz0, xyz1, illuminant0, illuminant1} = ColorDifferenceNode.inputSlots;
+
+            const illuminant0Template = ins[0].effectiveType() === SocketType.Vector
+                ? WebglTemplate.string("illuminant2_E")
+                : WebglTemplate.slot(illuminant0);
+            const illuminant1Template = ins[1].effectiveType() === SocketType.Vector
+                ? WebglTemplate.string("illuminant2_E")
+                : WebglTemplate.slot(illuminant1);
       
-      [ColorDifferenceMode.DeltaE2000, new Overload(
-        "ΔE* 2000",
-        node => {
-          const {xyz0, xyz1, illuminant0, illuminant1} = ColorDifferenceNode.inputSlots;
-          return [
+            return WebglVariables.templateConcat`float ${difference} = deltaE1976(${xyz0}, ${illuminant0Template}, ${xyz1}, ${illuminant1Template});`({
+              node,
+            });
+          },
+          () => ({[webglOuts.val]: WebglTemplate.slot(difference)}),
+        );
+      })()],
+      
+      [ColorDifferenceMode.DeltaE2000, (() => {
+        const {xyz0, xyz1, illuminant0, illuminant1} = this.inputSlots;
+        const {difference} = this.outputSlots;
+
+        return new Overload(
+          "ΔE* 2000",
+          node => [
             new InSocket(node, SocketType.VectorOrColor, "Sample L*a*b* or color", {
               sliderProps: labSliderProps,
               webglGetOutputMapping: socket => () => {
@@ -595,7 +599,7 @@ export namespace math {
               sliderProps: labSliderProps,
               webglGetOutputMapping: socket => () => {
                 if (socket.effectiveType() === SocketType.ColorCoords) {
-                  return{
+                  return {
                     [webglOuts.xyz]: xyz1,
                     [webglOuts.illuminant]: illuminant1,
                   };
@@ -606,40 +610,37 @@ export namespace math {
                 }
               },
             }),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Float, "Difference", context => {
-            const val0 = ins[0].inValue(context);
-            const val1 = ins[1].inValue(context);
-  
-            return cm.difference.deltaE2000(val0, val1);
-          }),
-        ],
-        (ins, outs, context) => ({
-          values: [outs[0].outValue(context)],
-          labels: [],
-          flags: [],
-        }),
-        (ins, outs, context) => {
-          const difference = WebglSlot.out("difference");
-          const {xyz0, xyz1, illuminant0, illuminant1} = ColorDifferenceNode.inputSlots;
-
-          const illuminant0Template = ins[0].effectiveType() === SocketType.Vector
-              ? WebglTemplate.string("illuminant2_E")
-              : WebglTemplate.slot(illuminant0);
-          const illuminant1Template = ins[1].effectiveType() === SocketType.Vector
-              ? WebglTemplate.string("illuminant2_E")
-              : WebglTemplate.slot(illuminant1);
+          ],
+          (node, ins) => [
+            new OutSocket(node, SocketType.Float, "Difference", context => {
+              const val0 = ins[0].inValue(context);
+              const val1 = ins[1].inValue(context);
     
-          return WebglVariables.templateConcat`float ${difference} = deltaE2000(${xyz0}, ${illuminant0Template}, ${xyz1}, ${illuminant1Template});`({
-            socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.slot(difference)}],
-            ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(difference)},
-          });
-        },
-      )],
+              return cm.difference.deltaE2000(val0, val1);
+            }, {
+              webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(difference)}),
+            }),
+          ],
+          (ins, outs, context) => ({
+            values: [outs[0].outValue(context)],
+            labels: [],
+            flags: [],
+          }),
+          (ins, outs, context, node) => {  
+            const illuminant0Template = ins[0].effectiveType() === SocketType.Vector
+                ? WebglTemplate.string("illuminant2_E")
+                : WebglTemplate.slot(illuminant0);
+            const illuminant1Template = ins[1].effectiveType() === SocketType.Vector
+                ? WebglTemplate.string("illuminant2_E")
+                : WebglTemplate.slot(illuminant1);
+      
+            return WebglVariables.templateConcat`float ${difference} = deltaE2000(${xyz0}, ${illuminant0Template}, ${xyz1}, ${illuminant1Template});`({
+              node,
+            });
+          },
+          () => ({[webglOuts.val]: WebglTemplate.slot(difference)}),
+        );
+      })()],
     ]));
 
     constructor() {
@@ -655,11 +656,13 @@ export namespace math {
     private readonly colorSockets: InSocket<SocketType.VectorOrColor>[];
 
     private static readonly inputSlots = WebglSlot.ins("xyz0", "xyz1", "illuminant0", "illuminant1");
+    private static readonly outputSlots = WebglSlot.outs("contrastRatio");
 
     constructor() {
       super();
 
       const {xyz0, xyz1, illuminant0, illuminant1} = ContrastRatioNode.inputSlots;
+      const {contrastRatio} = ContrastRatioNode.outputSlots;
 
       this.ins.push(
         ...(this.colorSockets = [
@@ -700,6 +703,8 @@ export namespace math {
           const val1 = this.colorSockets[1].inValue(context);
 
           return cm.difference.contrastRatio(val0, val1);
+        }, {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(contrastRatio)}),
         }),
       );
     }
@@ -712,9 +717,9 @@ export namespace math {
       };
     }
 
-    webglGetBaseVariables(): WebglVariables {
-      const contrastRatio = WebglSlot.out("contrastRatio");
+    webglBaseVariables(): WebglVariables {
       const {xyz0, xyz1, illuminant0, illuminant1} = ContrastRatioNode.inputSlots;
+      const {contrastRatio} = ContrastRatioNode.outputSlots;
 
       const illuminant0Template = this.colorSockets[0].effectiveType() === SocketType.Vector
           ? WebglTemplate.string("illuminant2_E")
@@ -724,11 +729,16 @@ export namespace math {
           : WebglTemplate.slot(illuminant1)
 
       return WebglVariables.templateConcat`float ${contrastRatio} = contrastRatio(${xyz0}, ${illuminant0Template}, ${xyz1}, ${illuminant1Template});`({
-        socketOutVariables: new Map([
-          [this.outs[0], {[webglOuts.val]: WebglTemplate.slot(contrastRatio)}],
-        ]),
-        nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(contrastRatio)},
+        node: this,
       });
+    }
+
+    webglOutputs() {
+      const {contrastRatio} = ContrastRatioNode.outputSlots;
+
+      return {
+        [webglOuts.val]: WebglTemplate.slot(contrastRatio),
+      };
     }
   }
 
@@ -742,13 +752,16 @@ export namespace math {
     static readonly outputDisplayType = OutputDisplayType.Float;
 
     private static readonly inputSlots = WebglSlot.ins("useFloor", "seed", "min", "max");
+    private static readonly outputSlots = WebglSlot.outs("float", "val");
 
     static readonly overloadGroup = new OverloadGroup(new Map<RandomFloatMode, Overload>([
-      [RandomFloatMode.FloatSeed, new Overload(
-        "Float seed",
-        node => {
-          const {useFloor, seed, min, max} = RandomFloatNode.inputSlots;
-          return [
+      [RandomFloatMode.FloatSeed, (() => {
+        const {useFloor, seed, min, max} = this.inputSlots;
+        const {float, val} = this.outputSlots;
+
+        return new Overload(
+          "Float seed",
+          node => [
             new InSocket(node, SocketType.Bool, "Integer", {
               showSocket: false,
               webglOutputMapping: {[webglOuts.val]: useFloor},
@@ -766,45 +779,42 @@ export namespace math {
               defaultValue: 1,
               webglOutputMapping: {[webglOuts.val]: max},
             }),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Float, "Value", context => {
-            const useFloor = ins[0].inValue(context)
-            const min = ins[2].inValue(context) as number;
-            const max = ins[3].inValue(context) as number;
-      
-            // const rng = seedrandom(this.ins[1].inValue(context).toString())
-      
-            const float = randFloat(ins[1].inValue(context)) * (max - min + (useFloor ? 1 : 0)) + min;
-            return useFloor ? Math.floor(float) : float;
+          ],
+          (node, ins) => [
+            new OutSocket(node, SocketType.Float, "Value", context => {
+              const useFloor = ins[0].inValue(context)
+              const min = ins[2].inValue(context) as number;
+              const max = ins[3].inValue(context) as number;
+        
+              // const rng = seedrandom(this.ins[1].inValue(context).toString())
+        
+              const float = randFloat(ins[1].inValue(context)) * (max - min + (useFloor ? 1 : 0)) + min;
+              return useFloor ? Math.floor(float) : float;
+            }, {
+              webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(val)}),
+            }),
+          ],
+          (ins, outs, context) => ({
+            values: [outs[0].outValue(context)],
+            labels: [],
+            flags: [],
           }),
-        ],
-        (ins, outs, context) => ({
-          values: [outs[0].outValue(context)],
-          labels: [],
-          flags: [],
-        }),
-        (ins, outs, context) => {
-          const {float, val} = WebglSlot.outs("float", "val");
-          const {useFloor, seed, min, max} = RandomFloatNode.inputSlots;
-
-          return WebglVariables.template`float ${float} = random(${seed}) * (${max} - ${min} + (${useFloor} ? 1. : 0.)) + ${min};
+          (ins, outs, context, node) =>
+              WebglVariables.template`float ${float} = random(${seed}) * (${max} - ${min} + (${useFloor} ? 1. : 0.)) + ${min};
 float ${val} = ${useFloor} ? floor(${float}) : ${float};`({
-            socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.slot(val)}],
-            ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(val)},
-          })
-        },
-      )],
+                node,
+              }),
+          () => ({[webglOuts.val]: WebglTemplate.slot(val)}),
+        )
+      })()],
       
-      [RandomFloatMode.VectorSeed, new Overload(
-        "Vector seed",
-        node => {
-          const {useFloor, seed, min, max} = RandomFloatNode.inputSlots;
+      [RandomFloatMode.VectorSeed, (() => {
+        const {useFloor, seed, min, max} = this.inputSlots;
+        const {float, val} = this.outputSlots;
 
-          return [
+        return new Overload(
+          "Vector seed",
+          node => [
             new InSocket(node, SocketType.Bool, "Integer", {
               showSocket: false,
               webglOutputMapping: {[webglOuts.val]: useFloor},
@@ -826,36 +836,32 @@ float ${val} = ${useFloor} ? floor(${float}) : ${float};`({
               defaultValue: 1,
               webglOutputMapping: {[webglOuts.val]: max},
             }),
-          ];
-        },
-        (node, ins) => [
-          new OutSocket(node, SocketType.Float, "Value", context => {
-            const useFloor = ins[0].inValue(context)
-            const min = ins[2].inValue(context) as number;
-            const max = ins[3].inValue(context) as number;
-          
-            const float = randFloatVec3Seed(ins[1].inValue(context)) * (max - min + (useFloor ? 1 : 0)) + min;
-            return useFloor ? Math.floor(float) : float;
+          ],
+          (node, ins) => [
+            new OutSocket(node, SocketType.Float, "Value", context => {
+              const useFloor = ins[0].inValue(context)
+              const min = ins[2].inValue(context) as number;
+              const max = ins[3].inValue(context) as number;
+            
+              const float = randFloatVec3Seed(ins[1].inValue(context)) * (max - min + (useFloor ? 1 : 0)) + min;
+              return useFloor ? Math.floor(float) : float;
+            }, {
+              webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(val)}),
+            }),
+          ],
+          (ins, outs, context) => ({
+            values: [outs[0].outValue(context)],
+            labels: [],
+            flags: [],
           }),
-        ],
-        (ins, outs, context) => ({
-          values: [outs[0].outValue(context)],
-          labels: [],
-          flags: [],
-        }),
-        (ins, outs, context) => {
-          const {float, val} = WebglSlot.outs("float", "val");
-          const {useFloor, seed, min, max} = RandomFloatNode.inputSlots;
-
-          return WebglVariables.template`float ${float} = random(${seed}) * (${max} - ${min} + (${useFloor} ? 1. : 0.)) + ${min};
+          (ins, outs, context, node) =>
+              WebglVariables.template`float ${float} = random(${seed}) * (${max} - ${min} + (${useFloor} ? 1. : 0.)) + ${min};
 float ${val} = ${useFloor} ? floor(${float}) : ${float};`({
-            socketOutVariables: new Map([
-              [outs[0], {[webglOuts.val]: WebglTemplate.slot(val)}],
-            ]),
-            nodeOutVariables: {[webglOuts.val]: WebglTemplate.slot(val)},
-          });
-        },
-      )],
+                node,
+              }),
+          () => ({[webglOuts.val]: WebglTemplate.slot(val)}),
+        );
+      })()],
     ]));
 
 

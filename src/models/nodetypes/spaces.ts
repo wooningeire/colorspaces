@@ -88,15 +88,8 @@ export namespace spaces {
     private valuesSockets: InSocket<SocketType.Float>[] = this.valuesSockets ?? [];
 
     
-    private static readonly inputSlots = {
-      xyz: WebglSlot.in("xyz"),
-      originalIlluminant: WebglSlot.in("originalIlluminant"),
-      val: WebglSlot.in("val"),
-
-      x: WebglSlot.in("x"),
-      y: WebglSlot.in("y"),
-      z: WebglSlot.in("z"),
-    };
+    private static readonly inputSlots = WebglSlot.ins("xyz", "originalIlluminant", "val", "x", "y", "z");
+    private static readonly outputSlots = WebglSlot.outs("color", "newIlluminant", "outVal");
 
     static readonly overloadGroup = new OverloadGroup(new Map<SpaceMode, Overload<TripletSpaceNode>>([
       [SpaceMode.FromVec, new Overload(
@@ -133,51 +126,40 @@ export namespace spaces {
 
           return sockets;
         },
-        node => [
-          new OutSocket(node, SocketType.ColorCoords, "Color", context => node.computeColor(context, true)),
-          ...node.componentLabels.map((label, i) => new OutSocket(node, SocketType.Float, label, context => node.computeColor(context, true)[i])),
-        ],
+        node => {
+          const {color} = TripletSpaceNode.outputSlots;
+          
+          return [
+            new OutSocket(node, SocketType.ColorCoords, "Color", context => node.computeColor(context, true), {
+              webglOutputs: socket => () => ({
+                [webglOuts.val]: WebglTemplate.source`${color}.val`,
+                [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
+                [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
+              }),
+            }),
+            ...node.componentLabels.map(
+              (label, i) =>
+                  new OutSocket(node, SocketType.Float, label, context => node.computeColor(context, true)[i], {
+                    webglOutputs: socket => () => ({
+                      [webglOuts.val]: WebglTemplate.concat`${color}.val.${["x", "y", "z"][i]}`,
+                    })
+                  })
+            ),
+          ];
+        },
         (ins, outs, context, node) => ({
           values: node.computeColor(context, true),
           labels: node.componentLabels,
           flags: node.displayFlags,
         }),
         (ins, outs, context, node) => {
-          const color = WebglSlot.out("color");
-          const newIlluminant = WebglSlot.out("newIlluminant");
-
-          const socketOutVariables = new Map<OutSocket, WebglOutputs>([
-            [outs[0], {
-              [webglOuts.val]: WebglTemplate.source`${color}.val`,
-              [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
-              [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
-            }],
-
-            [outs[1], {
-              [webglOuts.val]: WebglTemplate.source`${color}.val.x`,
-            }],
-
-            [outs[2], {
-              [webglOuts.val]: WebglTemplate.source`${color}.val.y`,
-            }],
-
-            [outs[3], {
-              [webglOuts.val]: WebglTemplate.source`${color}.val.z`,
-            }],
-          ]);
-
-          const nodeOutVariables = {
-            [webglOuts.val]: WebglTemplate.source`${color}.val`,
-            [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
-            [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
-          };
+          const {color, newIlluminant, outVal} = TripletSpaceNode.outputSlots;
 
           if (node.colorInputSocket.effectiveType() === SocketType.ColorCoords) {
             const {xyz, originalIlluminant} = TripletSpaceNode.inputSlots;
 
             return WebglVariables.templateConcat`Color ${color} = Color(${node.webglFromXyz(xyz, originalIlluminant, newIlluminant)}, ${newIlluminant}, adaptXyz(${xyz}, ${originalIlluminant}, ${newIlluminant}));`({
-              socketOutVariables,
-              nodeOutVariables,
+              node,
               preludeTemplate: WebglTemplate.source`uniform vec2 ${newIlluminant};`,
               uniforms: new Map([
                 [WebglTemplate.slot(newIlluminant), {
@@ -189,15 +171,12 @@ export namespace spaces {
                 }],
               ]),
             });
-          } else {
-            const outVal = WebglSlot.out("val");
-            
+          } else {            
             const {val} = TripletSpaceNode.inputSlots;
 
             return WebglVariables.templateConcat`vec3 ${outVal} = ${val};
 Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIlluminant, outVal)});`({
-              socketOutVariables,
-              nodeOutVariables,
+              node,
               preludeTemplate: WebglTemplate.source`uniform vec2 ${newIlluminant};`,
               uniforms: new Map([
                 [WebglTemplate.slot(newIlluminant), {
@@ -211,6 +190,15 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
             });
           }
         },
+        () => {
+          const {color} = TripletSpaceNode.outputSlots;
+
+          return {
+            [webglOuts.val]: WebglTemplate.source`${color}.val`,
+            [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
+            [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
+          };
+        }
       )],
 
       [SpaceMode.FromValues, new Overload(
@@ -239,35 +227,31 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
           sockets.push(...(node.valuesSockets = node.componentLabels.map((label, i) => new InSocket(node, SocketType.Float, label, individualSocketOptions[i]))));
           return sockets;
         },
-        node => [
-          new OutSocket(node, SocketType.ColorCoords, "Color", context => node.computeColor(context, false)),
-        ],
+        node => {
+          const {color} = TripletSpaceNode.outputSlots;
+
+          return [
+            new OutSocket(node, SocketType.ColorCoords, "Color", context => node.computeColor(context, false), {
+              webglOutputs: socket => () => ({
+                [webglOuts.val]: WebglTemplate.source`${color}.val`,
+                [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
+                [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
+              })
+            }),
+          ];
+        },
         (ins, outs, context, node) => ({
           values: node.computeColor(context, false),
           labels: node.componentLabels,
           flags: node.displayFlags,
         }),
         (ins, outs, context, node) => {
-          const color = WebglSlot.out("color");
-          const newIlluminant = WebglSlot.out("newIlluminant");
-          const outVal = WebglSlot.out("val");
-
           const {x, y, z} = TripletSpaceNode.inputSlots;
+          const {color, newIlluminant, outVal} = TripletSpaceNode.outputSlots;
 
           return WebglVariables.templateConcat`vec3 ${outVal} = vec3(${x}, ${y}, ${z});
 Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIlluminant, outVal)});`({
-            socketOutVariables: new Map([
-              [outs[0], {
-                [webglOuts.val]: WebglTemplate.source`${color}.val`,
-                [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
-                [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
-              }],
-            ]),
-            nodeOutVariables: {
-              [webglOuts.val]: WebglTemplate.source`${color}.val`,
-              [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
-              [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
-            },
+            node,
             preludeTemplate: WebglTemplate.source`uniform vec2 ${newIlluminant};`,
             uniforms: new Map([
               [WebglTemplate.slot(newIlluminant), {
@@ -280,6 +264,15 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
             ])
           });
         },
+        () => {
+          const {color} = TripletSpaceNode.outputSlots;
+
+          return {
+            [webglOuts.val]: WebglTemplate.source`${color}.val`,
+            [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
+            [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
+          };
+        }
       )],
     ]));
 

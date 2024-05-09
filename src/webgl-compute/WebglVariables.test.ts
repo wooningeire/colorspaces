@@ -2,17 +2,32 @@ import { describe, expect, it } from "vitest";
 import { WebglSlot, WebglTemplate, WebglVariables } from "./WebglVariables";
 import { Node, NodeOutputTarget, webglOuts } from "@/models/Node";
 
+const output = WebglSlot.out("output");
 class WebglConstantNode extends Node {
-  webglGetBaseVariables(): WebglVariables {
-    const output = WebglSlot.out("output");
-
+  webglBaseVariables(): WebglVariables {
     return WebglVariables.template`vec3 ${output} = vec3(1., 1., 1.);`({
-      nodeOutVariables: {
-        [webglOuts.val]: WebglTemplate.slot(output),
-        [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
-        [webglOuts.xyz]: WebglTemplate.source`linearSrgbToXyz(${output})`,
-      },
+      node: this,
     });
+  }
+
+  webglOutputs() {
+    return {
+      [webglOuts.val]: WebglTemplate.slot(output),
+      [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
+      [webglOuts.xyz]: WebglTemplate.source`linearSrgbToXyz(${output})`,
+    };
+  }
+}
+
+
+const outputKey = Symbol("myOutput");
+class OutputTesterNode extends Node {
+  static readonly outVector = WebglSlot.out("outVector");
+
+  webglOutputs() {
+    return {
+      [outputKey]: WebglTemplate.slot(OutputTesterNode.outVector),
+    };
   }
 }
 
@@ -54,24 +69,21 @@ describe(WebglTemplate.name, () => {
 describe(WebglVariables.name, () => {
   describe(WebglVariables.prototype.substituteUsingOutputsFrom.name, () => {
     it("fills in slots using another `WebglVariables` object correctly", () => {
-      const dummyNode = new WebglConstantNode();
-
-      const outputKey = Symbol("myOutput");
+      const srcNode = new OutputTesterNode();
   
-      const output = WebglSlot.out("outVector");
       const input = WebglSlot.in("inVector");
   
-      const src = WebglVariables.template`vec3 ${output} = vec3(1.5, 2.9, 4.7);`({
-        nodeOutVariables: {
-          [outputKey]: WebglTemplate.source`${output}`,
-        },
+      const src = WebglVariables.template`vec3 ${OutputTesterNode.outVector} = vec3(1.5, 2.9, 4.7);`({
+        node: srcNode,
       });
   
-      const dst = WebglVariables.template`vec3 anotherVector = 2. + ${input};`();
+      const dst = WebglVariables.template`vec3 anotherVector = 2. + ${input};`({
+        node: new OutputTesterNode(),
+      });
   
       const newVariables = dst.substituteUsingOutputsFrom(
         src,
-        NodeOutputTarget.NodeDisplay(dummyNode),
+        NodeOutputTarget.NodeDisplay(srcNode),
         {
           [outputKey]: input,
         },

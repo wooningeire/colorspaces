@@ -1,4 +1,4 @@
-import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
+import { WebglOutputs, WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 import { NO_DESC, StringKey } from "../strings";
 import { Vec2, Vec3, Option } from "../util";
 import { Col } from "./colormanagement";
@@ -127,41 +127,19 @@ export abstract class Node {
     readonly label: StringKey | string=new.target.LABEL,
   ) {}
 
-  /** Constructs a `WebglVariables` object whose slots are prefilled with input socket field values if applicable
-  */
-  webglOutput(context: NodeEvalContext={}): WebglVariables {
-    let variables = this.webglGetBaseVariables();
-    for (const inSocket of this.ins) {
-      if (!inSocket.usesFieldValue) continue;
-      
-      const socketOutputMapping = inSocket.webglGetOutputMapping();
-      if (socketOutputMapping === null) continue;
-      
-
-      variables = variables.substituteUsingOutputsFrom(
-        inSocket.webglVariables(),
-        NodeOutputTarget.NodeDisplay(this),
-        socketOutputMapping,
-        true,
-      );
-    }
-    return variables;
-  }
-  /** Fills the slots of a target `WebglVariables` with the output of a source `WebglVariables`, whose output variables
-   * are mapped to target slots according to `webglGetMapping(inSocket)`
-   */
-  webglVariablesFill(source: WebglVariables, target: WebglVariables, inSocket: InSocket): WebglVariables {
-    const socketOutputMapping = inSocket.webglGetOutputMapping();
-    if (socketOutputMapping === null) throw new Error("this socket does not have an output mapping");
-    return target.substituteUsingOutputsFrom(source, NodeOutputTarget.OutSocket(inSocket.link.src), socketOutputMapping);
-  }
-
   /** A `WebglVariables` object that provides a template to fill, output variables, and uniforms */
-  webglGetBaseVariables(): WebglVariables {
+  webglBaseVariables(): WebglVariables {
     throw new Error("not implmeneted");
   }
-  webglNodeOutputMapping(): WebglNodeOutputMapping | null {
-    return null;
+  
+  /**
+   * @returns A group of values/slots which becomes available after evaluating the template given from
+   * `this.webglBaseVariables`. The values from this method in particular are associated with a node's output
+   * display, rather than an output socket. Each output value is associated with a symbol (the key of the `Record`)
+   * which is used to map it to a slot in another template.
+   */
+  webglOutputs(): WebglOutputs {
+    return {};
   }
 
   display(context: NodeEvalContext): NodeDisplay {
@@ -169,7 +147,7 @@ export abstract class Node {
       values: [],
       labels: [],
       flags: [],
-    }
+    };
   }
   
   /**display(context: NodeEvalContext={}): NodeDisplay {
@@ -413,13 +391,6 @@ export const webglOuts = Object.freeze({
   readonly alpha: unique symbol,
 };
 
-export type WebglNodeOutputMapping = {
-  [webglOuts.val]: WebglSlot,
-  [webglOuts.illuminant]: WebglSlot,
-  [webglOuts.xyz]: WebglSlot,
-  [webglOuts.alpha]: WebglSlot,
-};
-
 export type WebglSocketOutputMapping<St extends SocketType=any> = Partial<
   St extends SocketType.Float ? {
     [webglOuts.val]: WebglSlot,
@@ -491,12 +462,13 @@ export type SocketOptions<St extends SocketType=any> = {
 } & SocketData<St>;
 export type InSocketOptions<St extends SocketType=any> = {
   /** A mapping from output names from an incoming source socket (that is linked to this socket) to input slots in
-   * `webglGetBaseVariables`
+   * `webglBaseVariables`
    */
   webglOutputMapping?: WebglSocketOutputMapping<St> | null,
   webglGetOutputMapping?: (socket: InSocket<St>) => () => WebglSocketOutputMapping<St> | null,
 } & SocketOptions<St>;
 export type OutSocketOptions<St extends SocketType=any> = {
+  webglOutputs?: (socket: OutSocket) => () => WebglOutputs,
 } & SocketOptions<St>;
 
 export abstract class Socket<St extends SocketType=any> {
@@ -666,7 +638,7 @@ export abstract class Socket<St extends SocketType=any> {
 }
 
 export class InSocket<St extends SocketType=any> extends Socket<St> {
-  private readonly webglOutputMapping: WebglSocketOutputMapping<St> | null
+  private readonly webglOutputMapping: WebglSocketOutputMapping<St> | null;
   readonly webglGetOutputMapping: () => WebglSocketOutputMapping<St> | null;
 
   constructor(
@@ -693,29 +665,18 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
   }
 
   /**
-   * Obtains a `WebglVariables` object that provides the data which this socket gives to its node, whether through a
-   * link from another node or this socket's field.
-   * @param context 
-   * @returns 
-   */
-  webglVariables(context: NodeEvalContext={}): WebglVariables {
-    return !this.usesFieldValue
-        ? this.link.srcNode.webglOutput(context)
-        : this.webglFieldVariables(context);
-  }
-
-  /**
    * Provides a `WebglVariables` object that declares a uniform storing the value of this socket's field.
    * @param context 
    * @returns 
    */
-  private webglFieldVariables(context: NodeEvalContext={}) {
+  webglFieldVariables(context: NodeEvalContext={}) {
     const unif = WebglSlot.out("unif");
 
     switch (this.effectiveType()) {
       case SocketType.ColorCoords:
-        return WebglVariables.template``({
-          nodeOutVariables: {
+        return WebglVariables.empty({
+          node: null,
+          fieldOutputs: {
             [webglOuts.val]: WebglTemplate.slot(unif),
             [webglOuts.illuminant]: WebglTemplate.string("illuminant2_D65"),
             [webglOuts.xyz]: WebglTemplate.string("vec3(0., 0., 0.)"),
@@ -737,8 +698,9 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
         });
 
       case SocketType.Vector:
-        return WebglVariables.template``({
-          nodeOutVariables: {
+        return WebglVariables.empty({
+          node: null,
+          fieldOutputs: {
             [webglOuts.val]: WebglTemplate.slot(unif),
           },
           preludeTemplate: WebglTemplate.source`uniform vec3 ${unif};`,
@@ -754,8 +716,9 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
         });
 
       case SocketType.Float:
-        return WebglVariables.template``({
-          nodeOutVariables: {
+        return WebglVariables.empty({
+          node: null,
+          fieldOutputs: {
             [webglOuts.val]: WebglTemplate.slot(unif),
           },
           preludeTemplate: WebglTemplate.source`uniform float ${unif};`,
@@ -771,8 +734,9 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
         });
 
         case SocketType.Bool:
-          return WebglVariables.template``({
-            nodeOutVariables: {
+          return WebglVariables.empty({
+            node: null,
+            fieldOutputs: {
               [webglOuts.val]: WebglTemplate.slot(unif),
             },
             preludeTemplate: WebglTemplate.source`uniform bool ${unif};`,
@@ -819,6 +783,14 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
 }
 
 export class OutSocket<St extends SocketType=any> extends Socket<St> {
+  /**
+   * A group of values/slots which becomes available after evaluating the template given from
+   * `this.node.webglBaseVariables`. The values from this method in particular are associated with this output
+   * socket only, rather than a node's output display. Each output value is associated with a symbol (the key of the
+   * `Record`) which is used to map it to a slot in another template.
+   */
+  readonly webglOutputs: () => WebglOutputs;
+
   constructor(
     node: Node,
     type: St,
@@ -827,9 +799,15 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
 
     readonly outValue: (context: NodeEvalContext) => SocketValue<St>,
 
-    options=<SocketOptions<St>>{},
+    options=<OutSocketOptions<St>>{},
   ) {
     super(node, false, type, label, options);
+
+    const {
+      webglOutputs,
+    } = options;
+
+    this.webglOutputs = webglOutputs?.(this) ?? (() => ({}));
   }
 
   /** Evaluates the value of this output socket */
@@ -939,10 +917,12 @@ export class NodeUpdateSource<T extends NodeUpdateSourceType=any> {
 enum NodeOutputTargetType {
   OutSocket,
   NodeDisplay,
+  Field,
 }
 type NodeOutputTargetValue<T extends NodeOutputTargetType> =
     T extends NodeOutputTargetType.OutSocket ? OutSocket :
     T extends NodeOutputTargetType.NodeDisplay ? Node :
+    T extends NodeOutputTargetType.Field ? null :
     never;
 
 export class NodeOutputTarget<T extends NodeOutputTargetType=any> {
@@ -958,6 +938,8 @@ export class NodeOutputTarget<T extends NodeOutputTargetType=any> {
   static NodeDisplay(node: Node) {
     return new NodeOutputTarget(NodeOutputTargetType.NodeDisplay, node);
   }
+
+  static readonly Field = new NodeOutputTarget(NodeOutputTargetType.Field, null);
 
   isSocket(): this is NodeOutputTarget<NodeOutputTargetType.OutSocket> {
     return this.type === NodeOutputTargetType.OutSocket;
@@ -975,13 +957,16 @@ export class NodeOutputTarget<T extends NodeOutputTargetType=any> {
     return this.isNode() ? Option.Some(this.target) : Option.None;
   }
 
-  match<T>({onSocket, onNode}: {onSocket: (socket: OutSocket) => T, onNode: (node: Node) => T}) {
+  match<T>({onSocket, onNode, onField}: {onSocket: (socket: OutSocket) => T, onNode: (node: Node) => T, onField: () => T}) {
     switch (this.type) {
       case NodeOutputTargetType.OutSocket:
         return onSocket((this as NodeOutputTarget<NodeOutputTargetType.OutSocket>).target);
 
       case NodeOutputTargetType.NodeDisplay:
         return onNode((this as NodeOutputTarget<NodeOutputTargetType.NodeDisplay>).target);
+
+      case NodeOutputTargetType.Field:
+        return onField();
 
       default:
         throw new Error("unknown type");

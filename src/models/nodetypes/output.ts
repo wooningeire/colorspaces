@@ -149,17 +149,19 @@ export namespace output {
       };
     }
 
-    webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
+    webglBaseVariables(context?: NodeEvalContext): WebglVariables {
+      return WebglVariables.empty({node: this});
+    }
+
+    webglOutputs() {
       const {xyz, illuminant, val, alpha} = ImagePlotNode.inputSlots;
 
-      return WebglVariables.template``({
-        nodeOutVariables: {
-          [webglOuts.xyz]: WebglTemplate.slot(xyz),
-          [webglOuts.illuminant]: WebglTemplate.slot(illuminant),
-          [webglOuts.val]: WebglTemplate.slot(val),
-          [webglOuts.alpha]: WebglTemplate.slot(alpha),
-        },
-      })
+      return {
+        [webglOuts.xyz]: WebglTemplate.slot(xyz),
+        [webglOuts.illuminant]: WebglTemplate.slot(illuminant),
+        [webglOuts.val]: WebglTemplate.slot(val),
+        [webglOuts.alpha]: WebglTemplate.slot(alpha),
+      };
     }
   }
 

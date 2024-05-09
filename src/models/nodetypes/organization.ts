@@ -7,6 +7,10 @@ export namespace organization {
   export class RerouteNode extends Node {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "reroute";
+
+    width = 15;
+
+    private static readonly inputSlots = WebglSlot.ins("val", "illuminant", "xyz");
     
     constructor() {
       super();
@@ -16,6 +20,7 @@ export namespace organization {
       this.ins.push(
         new InSocket(this, SocketType.Any, "", {
           ...volatileInSocketOptions(this.ins, this.outs),
+          //@ts-ignore
           webglGetOutputMapping: socket => () => {
             switch (socket.effectiveType()) {
               case SocketType.Float:
@@ -41,15 +46,35 @@ export namespace organization {
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Any, "", context => this.ins[0].inValue(context), volatileOutSocketOptions(this.ins, this.outs)),
+        new OutSocket(this, SocketType.Any, "", context => this.ins[0].inValue(context), {
+          ...volatileOutSocketOptions(this.ins, this.outs),
+          webglOutputs: socket => () => {
+            switch (this.outs[0].type) {
+              case SocketType.Float:
+              case SocketType.Integer:
+              case SocketType.Vector:
+              case SocketType.Bool:
+                return {
+                  [webglOuts.val]: WebglTemplate.slot(val),
+                };
+      
+              case SocketType.ColorCoords:
+              case SocketType.VectorOrColor:
+                return {
+                  [webglOuts.val]: WebglTemplate.slot(val),
+                  [webglOuts.illuminant]: WebglTemplate.slot(illuminant),
+                  [webglOuts.xyz]: WebglTemplate.slot(xyz),
+                };
+              
+              default:
+                throw new Error("not implemented");
+            }
+          },
+        }),
       );
-
-      this.width = 15;
     }
-
-    private static readonly inputSlots = WebglSlot.ins("val", "illuminant", "xyz");
     
-    webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
+    webglBaseVariables(context?: NodeEvalContext): WebglVariables {
       const {val, illuminant, xyz} = RerouteNode.inputSlots;
 
       let outVars: Record<string, WebglTemplate>;
@@ -77,11 +102,7 @@ export namespace organization {
           throw new Error("not implemented");
       }
 
-      return WebglVariables.template``({
-        socketOutVariables: new Map([
-          [this.outs[0], outVars],
-        ]),
-      });
+      return WebglVariables.empty({node: this});
     }
 
     /*

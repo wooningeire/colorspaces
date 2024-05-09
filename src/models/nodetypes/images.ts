@@ -17,11 +17,13 @@ export namespace images {
     }
 
     private static inputSlots = WebglSlot.ins("from", "to");
+    private static outputSlots = WebglSlot.outs("val");
 
     constructor() {
       super();
 
       const {from, to} = GradientNode.inputSlots;
+      const {val} = GradientNode.outputSlots;
 
       this.ins.push(
         (this.axisSocket = new InSocket(this, SocketType.Dropdown, "Axis", {
@@ -56,6 +58,10 @@ export namespace images {
           const value0 = this.boundsSockets[0].inValue(context);
           const value1 = this.boundsSockets[1].inValue(context);
           return lerp(value0, value1, fac);
+        }, {
+          webglOutputs: socket => () => ({
+            [webglOuts.val]: WebglTemplate.source`${val}`,
+          }),
         }),
       );
     }
@@ -64,22 +70,13 @@ export namespace images {
       return Number(this.axisSocket.inValue());
     }
 
-    webglGetBaseVariables(context: NodeEvalContext={}): WebglVariables {
-      const val = WebglSlot.out("val");
-
+    webglBaseVariables(context: NodeEvalContext={}): WebglVariables {
       const {from, to} = GradientNode.inputSlots;
+      const {val} = GradientNode.outputSlots;
 
       return WebglVariables.templateConcat`float ${val} = mix(${from}, ${to}, coords.${this.whichDimension === 0 ? "x" : "y * -1."});`({
-        socketOutVariables: new Map([
-          [this.outs[0], {
-            [webglOuts.val]: WebglTemplate.source`${val}`,
-          }]
-        ]),
+        node: this,
       });
-    }
-
-    webglNodeOutputMapping() {
-      return null;
     }
   }
 
@@ -94,6 +91,8 @@ export namespace images {
       return [0, 1];
     }
 
+    private static readonly outputSlots = WebglSlot.outs("val", "texture", "width", "height");
+
     constructor() {
       super();
 
@@ -104,6 +103,8 @@ export namespace images {
           defaultValue: true,
         })),
       );
+
+      const {val, width, height} = ImageFileNode.outputSlots;
 
       this.outs.push(
         new OutSocket(this, SocketType.Vector, "RGB", context => {
@@ -118,6 +119,10 @@ export namespace images {
           if (colorData.length === 0) return [0, 0, 0] as Vec3;
   
           return colorData as Vec3;
+        }, {
+          webglOutputs: socket => () => ({
+            [webglOuts.val]: WebglTemplate.source`${val}.rgb`,
+          }),
         }),
         new OutSocket(this, SocketType.Float, "Alpha", context => {
           const imageData = this.imageSocket.inValue(context);
@@ -128,12 +133,22 @@ export namespace images {
           return index + 3 < imageData.data.length
               ? imageData.data[index + 3] / 255
               : 0;
+        }, {
+          webglOutputs: socket => () => ({
+            [webglOuts.val]: WebglTemplate.source`${val}.a`,
+          }),
         }),
         new OutSocket(this, SocketType.Float, "Width", context => this.imageSocket.inValue(context)?.width ?? 0, {
           constant: true,
+          webglOutputs: socket => () => ({
+            [webglOuts.val]: WebglTemplate.slot(width),
+          }),
         }),
         new OutSocket(this, SocketType.Float, "Height", context => this.imageSocket.inValue(context)?.height ?? 0, {
           constant: true,
+          webglOutputs: socket => () => ({
+            [webglOuts.val]: WebglTemplate.slot(height),
+          }),
         }),
       );
     }
@@ -150,24 +165,11 @@ export namespace images {
           ];
     }
     
-    webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
-      const {val, texture, width, height} = WebglSlot.outs("val", "texture", "width", "height");
-
+    webglBaseVariables(context?: NodeEvalContext): WebglVariables {
+      const {val, texture, width, height} = ImageFileNode.outputSlots;
+      
       return WebglVariables.template`vec4 ${val} = texture(${texture}, coords);`({
-        socketOutVariables: new Map([
-          [this.outs[0], {
-            [webglOuts.val]: WebglTemplate.source`${val}.rgb`,
-          }],
-          [this.outs[1], {
-            [webglOuts.val]: WebglTemplate.source`${val}.a`,
-          }],
-          [this.outs[2], {
-            [webglOuts.val]: WebglTemplate.slot(width),
-          }],
-          [this.outs[3], {
-            [webglOuts.val]: WebglTemplate.slot(height),
-          }],
-        ]),
+        node: this,
         preludeTemplate: WebglTemplate.source`uniform sampler2D ${texture};
 uniform float ${width};
 uniform float ${height};`,
@@ -210,10 +212,6 @@ uniform float ${height};`,
         ]),
       });
     }
-
-    webglNodeOutputMapping() {
-      return null;
-    }
   }
 
   export class SampleNode extends Node {
@@ -223,11 +221,13 @@ uniform float ${height};`,
     private readonly coordsSockets: [InSocket<SocketType.Float>, InSocket<SocketType.Float>];
 
     private static readonly inputSlots = WebglSlot.ins("x", "y");
+    private static readonly outputSlots = WebglSlot.ins("evaluateInput", "val", "color");
 
     constructor() {
       super();
 
       const {x, y} = SampleNode.inputSlots;
+      const {val, color} = SampleNode.outputSlots;
 
       this.ins.push(
         new InSocket(this, SocketType.Any, "Source", {constant: true, ...volatileInSocketOptions(this.ins, this.outs)}),
@@ -242,84 +242,79 @@ uniform float ${height};`,
           return this.ins[0].inValue({
             coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
           });
-        }, {constant: true, ...volatileOutSocketOptions(this.ins, this.outs)}),
+        }, {
+          constant: true,
+          ...volatileOutSocketOptions(this.ins, this.outs),
+          webglOutputs: socket => () => {
+            switch (socket.type) {
+              case SocketType.ColorCoords:
+                return {
+                  [webglOuts.val]: WebglTemplate.source`${color}.val`,
+                  [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
+                  [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
+                };
+
+              case SocketType.Vector:
+              case SocketType.VectorOrColor:
+              case SocketType.Float:
+                return {
+                  [webglOuts.val]: WebglTemplate.slot(val),
+                };
+
+              default:
+                throw new Error("socket type not supported");
+            }
+          },
+        }),
       );
     }
     
-    webglGetBaseVariables(context?: NodeEvalContext): WebglVariables {
+    webglBaseVariables(context?: NodeEvalContext): WebglVariables {
       const {x, y} = SampleNode.inputSlots;
 
-      const evaluateInput = WebglSlot.out("evaluateOutput");
+      const {evaluateInput, color, val} = SampleNode.outputSlots;
 
       switch (this.outs[0].type) {
         case SocketType.ColorCoords: {
-          const color = WebglSlot.out("color");
-
-          const socketOutVariables = new Map([
-            [this.outs[0], {
-              [webglOuts.val]: WebglTemplate.source`${color}.val`,
-              [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
-              [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
-            }],
-          ]);
-
           return this.ins[0].hasLinks
               ? WebglVariables.template`Color ${color} = ${evaluateInput}(vec2(${x}, ${y}));`({
-                socketOutVariables,
+                node: this,
                 functionInputDependencies: new Map([
                   [WebglTemplate.slot(evaluateInput), this.ins[0].link.src],
                 ]),
               })
 
               : WebglVariables.template`Color ${color} = Color(vec3(0., 0., 0.), illuminant2_D65, vec3(0., 0., 0.));`({
-                socketOutVariables,
+                node: this,
               });
         }
 
         case SocketType.Vector:
-        case SocketType.VectorOrColor: {
-          const val = WebglSlot.out("val");
-
-          const socketOutVariables = new Map([
-            [this.outs[0], {
-              [webglOuts.val]: WebglTemplate.slot(val),
-            }],
-          ]);
-
+        case SocketType.VectorOrColor:
           return this.ins[0].hasLinks
               ? WebglVariables.template`vec3 ${val} = ${evaluateInput}(vec2(${x}, ${y}));`({
-                socketOutVariables,
+                node: this,
                 functionInputDependencies: new Map([
                   [WebglTemplate.slot(evaluateInput), this.ins[0].link.src],
                 ]),
               })
 
               : WebglVariables.template`vec3 ${val} = vec3(0., 0., 0.);`({
-                socketOutVariables,
+                node: this,
               });
-        }
 
-        case SocketType.Float: {
-          const val = WebglSlot.out("val");
-
-          const socketOutVariables = new Map([
-            [this.outs[0], {
-              [webglOuts.val]: WebglTemplate.slot(val),
-            }],
-          ]);
-
+        case SocketType.Float:
           return this.ins[0].hasLinks
               ? WebglVariables.template`float ${val} = ${evaluateInput}(vec2(${x}, ${y}));`({
-                socketOutVariables,
+                node: this,
                 functionInputDependencies: new Map([
                   [WebglTemplate.slot(evaluateInput), this.ins[0].link.src],
                 ]),
               })
 
               : WebglVariables.template`float ${val} = 0.;`({
-                socketOutVariables,
+                node: this,
               });
-        }
 
         default:
           throw new Error("type not acceptable");
