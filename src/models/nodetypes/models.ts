@@ -247,9 +247,24 @@ export namespace models {
       const {lightness, redGreen, yellowBlue} = LxyNode.inputSlots;
 
       this.ins.push(
-        new InSocket(this, SocketType.Float, "Lightness", {webglOutputMapping: {[webglOuts.val]: lightness}}),
-        new InSocket(this, SocketType.Float, "Red–green", {webglOutputMapping: {[webglOuts.val]: redGreen}}),
-        new InSocket(this, SocketType.Float, "Yellow–blue", {webglOutputMapping: {[webglOuts.val]: yellowBlue}}),
+        new InSocket(this, SocketType.Float, "Lightness", {
+          webglOutputMapping: {[webglOuts.val]: lightness},
+          sliderProps: {
+            hasBounds: false,
+          },
+        }),
+        new InSocket(this, SocketType.Float, "Red–green", {
+          webglOutputMapping: {[webglOuts.val]: redGreen},
+          sliderProps: {
+            hasBounds: false,
+          },
+        }),
+        new InSocket(this, SocketType.Float, "Yellow–blue", {
+          webglOutputMapping: {[webglOuts.val]: yellowBlue},
+          sliderProps: {
+            hasBounds: false,
+          },
+        }),
       );
 
       this.outs.push(
@@ -286,10 +301,23 @@ export namespace models {
       static readonly overloadGroup = new OverloadGroup(new Map<LxyOverloadMode, Overload>([
         [LxyOverloadMode.ToLxy, new Overload(
           "To Lxy",
-          node => Object.values(inputSlots).map(
-            (slot, i) => 
-                new InSocket(node, SocketType.Float, socketLabels[i], {webglOutputMapping: {[webglOuts.val]: slot}}),
-          ),
+          node => [
+            new InSocket(node, SocketType.Float, socketLabels[0], {
+              webglOutputMapping: {[webglOuts.val]: lightness},
+              sliderProps: {
+                hasBounds: false,
+              },
+            }),
+            new InSocket(node, SocketType.Float, socketLabels[1], {
+              webglOutputMapping: {[webglOuts.val]: colorfulness},
+              sliderProps: {
+                hasBounds: false,
+              },
+            }),
+            new InSocket(node, SocketType.Float, socketLabels[2], {
+              webglOutputMapping: {[webglOuts.val]: hue},
+            }).flag(SocketFlag.Hue),
+          ],
           (node, ins) => [
             new OutSocket(node, SocketType.Vector, "Lxy", context => cm.lchToLxy(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3, {
               webglOutputs: socket => () => toLxyOutputs,
@@ -307,8 +335,21 @@ export namespace models {
         [LxyOverloadMode.FromLxy, new Overload(
           "From Lxy",
           node => [
-            new InSocket(node, SocketType.Vector, "Lxy", {webglOutputMapping: {[webglOuts.val]: lxy}}),
-          ],
+            new InSocket(node, SocketType.Vector, "Lxy", {
+              webglOutputMapping: {[webglOuts.val]: lxy},
+              sliderProps: [
+                {
+                  hasBounds: false,
+                },
+                {
+                  hasBounds: false,
+                },
+                {
+                  hasBounds: false,
+                },
+              ],
+            }),
+          ] as [InSocket<SocketType.Vector>],
           (node, ins) => Object.values(inputSlots).map(
             (slot, i) => 
                 new OutSocket(node, SocketType.Float, socketLabels[i], context => cm.lxyToLch(ins[0].inValue(context) as Vec3)[i], {
