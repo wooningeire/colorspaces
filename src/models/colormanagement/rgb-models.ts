@@ -41,10 +41,10 @@ export const rgbToHsl = ([red, green, blue]: Vec3): Vec3 => {
     hue = 0;
   } else if (componentMax === red) {
     hue = mod((green - blue) / componentRange, 6);
-  } else if (componentMax === blue) {
+  } else if (componentMax === green) {
     hue = (blue - red) / componentRange + 2;
   } else {
-    hue = (red - green) / componentRange + 2;
+    hue = (red - green) / componentRange + 4;
   }
 
   const lightness = (componentMin + componentMax) / 2;
@@ -89,10 +89,10 @@ export const rgbToHsv = ([red, green, blue]: Vec3): Vec3 => {
     hue = 0;
   } else if (componentMax === red) {
     hue = mod((green - blue) / componentRange, 6);
-  } else if (componentMax === blue) {
+  } else if (componentMax === green) {
     hue = (blue - red) / componentRange + 2;
   } else {
-    hue = (red - green) / componentRange + 2;
+    hue = (red - green) / componentRange + 4;
   }
 
   return [
@@ -170,10 +170,10 @@ vec3 rgbToHsl(vec3 rgb) {
     hue = 0.;
   } else if (componentMax == rgb.r) {
     hue = mod((rgb.g - rgb.b) / componentRange, 6.);
-  } else if (componentMax == rgb.b) {
+  } else if (componentMax == rgb.g) {
     hue = (rgb.b - rgb.r) / componentRange + 2.;
   } else {
-    hue = (rgb.r - rgb.g) / componentRange + 2.;
+    hue = (rgb.r - rgb.g) / componentRange + 4.;
   }
 
   float lightness = (componentMin + componentMax) / 2.;
@@ -218,10 +218,10 @@ vec3 rgbToHsv(vec3 rgb) {
     hue = 0.;
   } else if (componentMax == rgb.r) {
     hue = mod((rgb.g - rgb.b) / componentRange, 6.);
-  } else if (componentMax == rgb.b) {
+  } else if (componentMax == rgb.g) {
     hue = (rgb.b - rgb.r) / componentRange + 2.;
   } else {
-    hue = (rgb.r - rgb.g) / componentRange + 2.;
+    hue = (rgb.r - rgb.g) / componentRange + 4.;
   }
 
   return vec3(
