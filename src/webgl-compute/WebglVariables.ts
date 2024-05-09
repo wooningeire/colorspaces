@@ -534,11 +534,11 @@ void main() {
         };
       }
 
-      case SocketType.Float: {
+      case SocketType.Bool: {
         const val = WebglSlot.in("val");
 
         return {
-          outputTypeValue: "float",
+          outputTypeValue: "bool",
           outputTemplate: WebglTemplate.source`${val}`,
           mapping: {
             [webglOuts.val]: val,

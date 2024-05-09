@@ -738,6 +738,8 @@ export namespace math {
     private static readonly inputSlots = WebglSlot.ins("xyz0", "xyz1", "illuminant0", "illuminant1");
     private static readonly outputSlots = WebglSlot.outs("contrastRatio");
 
+    width = 180;
+
     constructor() {
       super();
 
@@ -777,14 +779,33 @@ export namespace math {
         ]),
       );
 
-      this.outs.push(
-        new OutSocket(this, SocketType.Float, "Ratio", context => {
-          const val0 = this.colorSockets[0].inValue(context);
-          const val1 = this.colorSockets[1].inValue(context);
+      const calculateContrastRatio = (context: NodeEvalContext) => {
+        const val0 = this.colorSockets[0].inValue(context);
+        const val1 = this.colorSockets[1].inValue(context);
 
-          return cm.difference.contrastRatio(val0, val1);
-        }, {
+        return cm.difference.contrastRatio(val0, val1);
+      };
+
+      const checkContrastRatioPassesThreshold = (threshold: number) => (context: NodeEvalContext) => calculateContrastRatio(context) >= threshold;
+
+      this.outs.push(
+        new OutSocket(this, SocketType.Float, "Ratio", calculateContrastRatio, {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(contrastRatio)}),
+        }),
+        new OutSocket(this, SocketType.Bool, "Passes AAA body text?", checkContrastRatioPassesThreshold(7), {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`${contrastRatio} > 7.`}),
+        }),
+        new OutSocket(this, SocketType.Bool, "Passes AAA large text?", checkContrastRatioPassesThreshold(4.5), {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`${contrastRatio} > 4.5`}),
+        }),
+        new OutSocket(this, SocketType.Bool, "Passes AA body text?", checkContrastRatioPassesThreshold(4.5), {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`${contrastRatio} > 4.5`}),
+        }),
+        new OutSocket(this, SocketType.Bool, "Passes AA large text?", checkContrastRatioPassesThreshold(3), {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`${contrastRatio} > 3.`}),
+        }),
+        new OutSocket(this, SocketType.Bool, "Passes AA graphical elements?", checkContrastRatioPassesThreshold(3), {
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`${contrastRatio} > 3.`}),
         }),
       );
     }

@@ -57,6 +57,8 @@ const strings = {
   "label.node.imagePlot": "Image plot",
   "label.node.sampleHexCodes": "Sample hex codes",
 
+  "label.node.conditional": "Conditional",
+
   "label.node.reroute": "Reroute",
 
 
@@ -118,6 +120,9 @@ const strings = {
   "label.socketType.float": "Float",
   "desc.socketType.float.out": "A single number.",
   "desc.socketType.float.in": "A single number.",
+  "label.socketType.bool": "Bool",
+  "desc.socketType.bool.out": "A true or false value.",
+  "desc.socketType.bool.in": "A true or false value.",
   "label.socketType.vector": "Vector",
   "desc.socketType.vector.out": "A list of (usually 3) numbers with no color space data attached to it.",
   "desc.socketType.vector.in": "A list of (usually 3) numbers. This socket also accepts colors, but the associated color space and white point will not affect the result of this node.",

@@ -257,6 +257,7 @@ uniform float ${height};`,
               case SocketType.Vector:
               case SocketType.VectorOrColor:
               case SocketType.Float:
+              case SocketType.Bool:
                 return {
                   [webglOuts.val]: WebglTemplate.slot(val),
                 };
@@ -312,6 +313,19 @@ uniform float ${height};`,
               })
 
               : WebglVariables.template`float ${val} = 0.;`({
+                node: this,
+              });
+
+        case SocketType.Bool:
+          return this.ins[0].hasLinks
+              ? WebglVariables.template`bool ${val} = ${evaluateInput}(vec2(${x}, ${y}));`({
+                node: this,
+                functionInputDependencies: new Map([
+                  [WebglTemplate.slot(evaluateInput), this.ins[0].link.src],
+                ]),
+              })
+
+              : WebglVariables.template`bool ${val} = false;`({
                 node: this,
               });
 

@@ -96,6 +96,7 @@ const socketTypeColors = new Map([
   [St.Unknown, "#000"],
   [St.Any, "#fff"],
   [St.Float, "#aaa"],
+  [St.Bool, "#fbc"],
   [St.Vector, "#75d"],
   [St.ColorCoords, "#dd3"],
   [St.VectorOrColor, "linear-gradient(45deg, #75d 50%, #dd3 50%)"],

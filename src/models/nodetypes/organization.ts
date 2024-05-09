@@ -4,6 +4,49 @@ import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
 import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 
 export namespace organization {
+  export class ConditionalNode extends Node {
+    static readonly TYPE = Symbol(this.name);
+    static readonly id = "conditional";
+
+    private static readonly inputSlots = WebglSlot.ins("condition", "ifTrue", "ifFalse");
+
+    constructor() {
+      super();
+
+      const {condition, ifTrue, ifFalse} = ConditionalNode.inputSlots;
+
+      this.ins.push(
+        new InSocket(this, SocketType.Bool, "Condition", {webglOutputMapping: {[webglOuts.val]: condition}}),
+        new InSocket(this, SocketType.Float, "If true…", {
+          webglOutputMapping: {[webglOuts.val]: ifTrue},
+          sliderProps: {
+            hasBounds: false,
+          },
+        }),
+        new InSocket(this, SocketType.Float, "If false…", {
+          webglOutputMapping: {[webglOuts.val]: ifFalse},
+          sliderProps: {
+            hasBounds: false,
+          },
+        }),
+      );
+
+      this.outs.push(
+        new OutSocket(this, SocketType.Float, "Value",
+          context =>
+              this.ins[0].inValue(context) ? this.ins[1].inValue(context) : this.ins[2].inValue(context),
+          {
+            webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`${condition} ? ${ifTrue} : ${ifFalse}`}),
+          },
+        ),
+      );
+    }
+
+    webglBaseVariables(): WebglVariables {
+      return WebglVariables.empty({node: this});
+    }
+  }
+
   export class RerouteNode extends Node {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "reroute";
