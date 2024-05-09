@@ -39,15 +39,15 @@ export class OverloadGroup<Mode extends string, NodeType extends Node=any> {
 /** Stores the currently selected overload of a Node instance, as well as obtains the current output evaluation
  * function when needed and updates the sockets when the selected overload changes
  */
-export class OverloadManager<Mode extends string> {
+export class OverloadManager<OverloadMode extends string> {
   readonly dropdown: InSocket<St.Dropdown>;
   private ins: InSocket[];
   private outs: OutSocket[];
 
   constructor(
     private readonly node: Node,
-    defaultMode: Mode,
-    private readonly overloadGroup: OverloadGroup<Mode>,
+    defaultMode: OverloadMode,
+    private readonly overloadGroup: OverloadGroup<OverloadMode>,
   ) {
     this.dropdown = overloadGroup.buildDropdown(node, defaultMode, this);
 
@@ -104,7 +104,7 @@ export class OverloadManager<Mode extends string> {
   }
 
   get mode() {
-    return this.dropdown.inValue() as Mode;
+    return this.dropdown.inValue() as OverloadMode;
   }
 
   get overload() {
@@ -112,12 +112,12 @@ export class OverloadManager<Mode extends string> {
   }
 }
 
-export abstract class NodeWithOverloads<Mode extends string> extends Node {
+export abstract class NodeWithOverloads<OverloadMode extends string> extends Node {
   static readonly overloadGroup: OverloadGroup<any>;
 
-  readonly overloadManager: OverloadManager<Mode>;
+  readonly overloadManager: OverloadManager<OverloadMode>;
 
-  constructor(defaultMode: Mode) {
+  constructor(defaultMode: OverloadMode) {
     super();
     this.overloadManager = new OverloadManager(this, defaultMode, new.target.overloadGroup);
     this.overloadManager.setSockets();

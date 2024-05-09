@@ -221,7 +221,7 @@ uniform float ${height};`,
     private readonly coordsSockets: [InSocket<SocketType.Float>, InSocket<SocketType.Float>];
 
     private static readonly inputSlots = WebglSlot.ins("x", "y");
-    private static readonly outputSlots = WebglSlot.ins("evaluateInput", "val", "color");
+    private static readonly outputSlots = WebglSlot.outs("evaluateInput", "val", "color");
 
     constructor() {
       super();
@@ -271,7 +271,6 @@ uniform float ${height};`,
     
     webglBaseVariables(context?: NodeEvalContext): WebglVariables {
       const {x, y} = SampleNode.inputSlots;
-
       const {evaluateInput, color, val} = SampleNode.outputSlots;
 
       switch (this.outs[0].type) {

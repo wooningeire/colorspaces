@@ -71,11 +71,11 @@ export const getIlluminant = (socket: InSocket<SocketType.Dropdown>, context: No
 };
 
 export namespace spaces {
-  enum SpaceMode {
+  enum SpaceOverloadMode {
     FromVec = "from vector",
     FromValues = "from values",
   }
-  abstract class TripletSpaceNode extends NodeWithOverloads<SpaceMode> {
+  abstract class TripletSpaceNode extends NodeWithOverloads<SpaceOverloadMode> {
     static readonly outputDisplayType = OutputDisplayType.Color;
 
     // TODO these variables are intialized in NodeWithOverload's constructor, so setting them to a default value causes
@@ -91,8 +91,8 @@ export namespace spaces {
     private static readonly inputSlots = WebglSlot.ins("xyz", "originalIlluminant", "val", "x", "y", "z");
     private static readonly outputSlots = WebglSlot.outs("color", "newIlluminant", "outVal");
 
-    static readonly overloadGroup = new OverloadGroup(new Map<SpaceMode, Overload<TripletSpaceNode>>([
-      [SpaceMode.FromVec, new Overload(
+    static readonly overloadGroup = new OverloadGroup(new Map<SpaceOverloadMode, Overload<TripletSpaceNode>>([
+      [SpaceOverloadMode.FromVec, new Overload(
         "From vector",
         node => {
           const sockets: InSocket[] = [];
@@ -201,7 +201,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
         }
       )],
 
-      [SpaceMode.FromValues, new Overload(
+      [SpaceOverloadMode.FromValues, new Overload(
         "From values",
         node => {
           const {x, y, z} = this.inputSlots;
@@ -277,7 +277,7 @@ Color ${color} = Color(${outVal}, ${newIlluminant}, ${node.webglToXyz(newIllumin
     ]));
 
     constructor() {
-      super(SpaceMode.FromVec);
+      super(SpaceOverloadMode.FromVec);
     }
 
     // Override functions

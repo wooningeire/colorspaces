@@ -181,12 +181,21 @@ export class WebglTemplate<InputSlots extends SlotMap=any, OutputSlots extends S
   toString() {
     return `${this.segments[0]}${this.slots.map((slot, i) => {
       if (!this.substitutions.has(slot)) {
-        throw new Error(`Not all input slots are filled: ${
-          Object.values(this.inputSlots)
-              .filter(slot => !this.substitutions.has(slot))
-              .map(slot => slot.identifier)
-              .join(", ")
-        }`);
+        if (slot.isOutput) {
+          throw new Error(`Not all output slots are filled: ${
+            Object.values(this.outputSlots)
+                .filter(slot => !this.substitutions.has(slot))
+                .map(slot => slot.identifier)
+                .join(", ")
+          }`);
+        } else {
+          throw new Error(`Not all input slots are filled: ${
+            Object.values(this.inputSlots)
+                .filter(slot => !this.substitutions.has(slot))
+                .map(slot => slot.identifier)
+                .join(", ")
+          }`);
+        }
       }
 
       return `${this.substitutions.get(slot)}${this.segments[i + 1]}`;
@@ -370,11 +379,7 @@ void main() {
     keepSourcePrelude: boolean=false,
   ) {
     const outputs = source.outputsFor(outputTarget);
-    const newOutputs: WebglOutputs = Object.fromEntries(
-      [...objectSymbolEntries(outputs)]
-          .map(([key, template]) => [key, template!.substitute(source.template.substitutions)])
-    );
-    const substitutions = WebglTemplate.substitutionsUsingOutputs(newOutputs, outputMapping);
+    const substitutions = WebglTemplate.substitutionsUsingOutputs(outputs, outputMapping);
 
     return keepSourcePrelude
         ? this.prependPrelude(source.preludeTemplate)
@@ -446,7 +451,8 @@ void main() {
         functionDependencySockets.add(srcSocket);
         const preludeFunction = this.getAuxiliaryFunction(srcSocket, functionName.toString(), dependencies, dependencyIndices.get(srcSocket.node)!);
 
-        variables = variables.prependPrelude(preludeFunction);
+        variables = variables
+            .prependPrelude(preludeFunction);
       }
 
       for (const socket of dependencyNode.ins) {
@@ -454,14 +460,15 @@ void main() {
         if (outputMapping === null) continue;
 
         if (!socket.hasLinks) {
-          if (!dependencyFields.has(socket)) {
-            dependencyFields.set(socket, socket.webglFieldVariables());
-          }
+          const fieldVariables = socket.webglFieldVariables();
 
-          variables = variables.substituteUsingOutputs(
-            dependencyFields.get(socket)!.fieldOutputs,
-            outputMapping,
-          );
+          variables = variables
+              .prependPrelude(fieldVariables.preludeTemplate)
+              .prependUniforms(fieldVariables.uniforms)
+              .substituteUsingOutputs(
+                fieldVariables.fieldOutputs,
+                outputMapping,
+              );
         } else {
           if (functionDependencySockets.has(socket.link.src)) continue;
           
@@ -481,22 +488,20 @@ void main() {
       i++;
     }
 
-    const dependenciesIncludingFields = [...dependencyFields.values(), ...dependencies];
-
     const uniforms: Record<string, UniformInitializer> = {};
-    for (const segment of dependenciesIncludingFields) {
+    for (const segment of dependencies) {
       for (const [uniformName, initializer] of segment.uniforms) {
         uniforms[uniformName.toString()] = initializer;
       }
     }
 
     return {
-      dependencies: dependenciesIncludingFields,
+      dependencies,
       uniforms,
     };
   }
 
-  private static getAuxiliaryFunctionTemplates(socket: Socket): {
+  private static getAuxiliaryFunctionTemplate(socket: Socket): {
     outputTypeValue: string,
     outputTemplate: WebglTemplate,
     mapping: WebglOutputMapping,
@@ -556,7 +561,7 @@ void main() {
    * @returns 
    */
   private static getAuxiliaryFunction(socket: OutSocket, functionNameValue: string, segments: WebglVariables[], nodeIndex: number): WebglTemplate {
-    const {outputTypeValue, outputTemplate, mapping} = this.getAuxiliaryFunctionTemplates(socket);
+    const {outputTypeValue, outputTemplate, mapping} = this.getAuxiliaryFunctionTemplate(socket);
 
     const relevantSegments = segments.slice(0, nodeIndex + 1);
 
@@ -565,10 +570,12 @@ void main() {
         [main, relevantSegments.map(segment => segment.template.toString())
             .join("\n\n")],
         // no need to copy prelude/uniforms because uniforms will be shared with the primary function
-        [functionOutput, outputTemplate.substituteUsingOutputs(
-          segments[nodeIndex].outputsFor(NodeOutputTarget.OutSocket(socket)),
-          mapping,
-        ).toString()],
+        [functionOutput, outputTemplate
+            .substituteUsingOutputs(
+              segments[nodeIndex].outputsFor(NodeOutputTarget.OutSocket(socket)),
+              mapping,
+            )
+            .toString()],
         [outputType, outputTypeValue],
         [functionName, functionNameValue],
       ]),
@@ -611,11 +618,18 @@ void main() {
   }
 
   private outputsFor(target: NodeOutputTarget) {
-    return target.match({
+    const unfilledOutputs = target.match({
       onSocket: socket => socket.webglOutputs(),
       onNode: node => node.webglOutputs(),
       onField: () => this.fieldOutputs,
     });
+
+    // Since the outputs are taken from constants on the socket/node, we need to fill the outputs with the current
+    // substitutions.
+    return Object.fromEntries(
+      [...objectSymbolEntries(unfilledOutputs)]
+          .map(([key, template]) => [key, template!.substitute(this.template.substitutions)])
+    );
   }
 
   static fromTemplate(template: WebglTemplate) {
