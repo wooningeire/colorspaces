@@ -138,7 +138,7 @@ const beginSliderInput = makeDragListener({
         modifierKeys.ctrl ? 8 :
         1;
   
-    const newValue = origValue + displacement.x * amountPerPixel.value * modifierFac;
+    const newValue = Math.max(props.min, Math.min(props.max, origValue + displacement.x * amountPerPixel.value * modifierFac));
     
     if (props.hasBounds && Math.abs(newValue - internalMin.value) / stickToBoundTolerance <= amountPerPixel.value * modifierFac) {
       emit("update:modelValue", internalMin.value);

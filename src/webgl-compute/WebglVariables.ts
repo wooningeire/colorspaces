@@ -348,12 +348,7 @@ void main() {
       newFunctionDependencies.set(functionNameTemplate.substitute(substitutions), value);
     }
 
-    const newFieldOutputs: WebglOutputs = {};
-    for (const [key, template] of objectSymbolEntries(this.fieldOutputs)) {
-      newFieldOutputs[key] = template!.substitute(substitutions);
-    }
-
-    return new WebglVariables(this.node, template, preludeTemplate, newUniforms, newFunctionDependencies, newFieldOutputs);
+    return new WebglVariables(this.node, template, preludeTemplate, newUniforms, newFunctionDependencies, this.fieldOutputs);
   }
 
   substituteUsingOutputs(
@@ -459,14 +454,15 @@ void main() {
         const outputMapping = socket.webglGetOutputMapping();
         if (outputMapping === null) continue;
 
-        if (!socket.hasLinks) {
+        if (socket.usesFieldValue) {
           const fieldVariables = socket.webglFieldVariables();
 
           variables = variables
               .prependPrelude(fieldVariables.preludeTemplate)
               .prependUniforms(fieldVariables.uniforms)
-              .substituteUsingOutputs(
-                fieldVariables.fieldOutputs,
+              .substituteUsingOutputsFrom(
+                fieldVariables,
+                NodeOutputTarget.Field,
                 outputMapping,
               );
         } else {
@@ -598,17 +594,17 @@ void main() {
 
     const lastDependency = dependencies.at(-1)!;
     const lastDependencySubstitutions = lastDependency.template.substitutions;
-    const lastDependencytNodeOutputs = lastDependency.node?.webglOutputs();
+    const lastDependencyNodeOutputs = lastDependency.node?.webglOutputs();
 
     return new WebglTranspilation(
       WebglVariables.fragmentShaderTemplate.substituteInputs(
         ({main, val, xyz, illuminant, prelude, alpha}) => new Map([
           [main, dependencies.map(segment => segment.template.toString())
               .join("\n\n")],
-          [val, lastDependencytNodeOutputs?.[webglOuts.val]?.substitute(lastDependencySubstitutions).toString() ?? "vec3(0., 0., 0.)"],
-          [xyz, lastDependencytNodeOutputs?.[webglOuts.xyz]?.substitute(lastDependencySubstitutions).toString() ?? "vec3(0., 0., 0.)"],
-          [illuminant, lastDependencytNodeOutputs?.[webglOuts.illuminant]?.substitute(lastDependencySubstitutions).toString() ?? "illuminant2_D65"],
-          [alpha, lastDependencytNodeOutputs?.[webglOuts.alpha]?.substitute(lastDependencySubstitutions).toString() ?? "1."],
+          [val, lastDependencyNodeOutputs?.[webglOuts.val]?.substitute(lastDependencySubstitutions).toString() ?? "vec3(0., 0., 0.)"],
+          [xyz, lastDependencyNodeOutputs?.[webglOuts.xyz]?.substitute(lastDependencySubstitutions).toString() ?? "vec3(0., 0., 0.)"],
+          [illuminant, lastDependencyNodeOutputs?.[webglOuts.illuminant]?.substitute(lastDependencySubstitutions).toString() ?? "illuminant2_D65"],
+          [alpha, lastDependencyNodeOutputs?.[webglOuts.alpha]?.substitute(lastDependencySubstitutions).toString() ?? "1."],
           [prelude, dependencies.map(segment => segment.preludeTemplate.toString())
               .join("\n")],
         ]),

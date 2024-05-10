@@ -1,7 +1,7 @@
 import { Node, SocketType, AxisNode, NodeEvalContext, InSocket, OutSocket, webglOuts } from "../Node";
 
 import { Vec3, lerp } from "@/util";
-import { volatileInSocketOptions, volatileOutSocketOptions } from "./util";
+import { useDynamicallyTypedSockets } from "./util";
 import { WebglTemplate, WebglSlot, WebglVariables } from "@/webgl-compute/WebglVariables";
 
 export namespace images {
@@ -226,11 +226,19 @@ uniform float ${height};`,
     constructor() {
       super();
 
+      const dynamicTyping = useDynamicallyTypedSockets(
+        () => [this.ins[0]],
+        () => [this.outs[0]],
+      );
+
       const {x, y} = SampleNode.inputSlots;
       const {val, color} = SampleNode.outputSlots;
 
       this.ins.push(
-        new InSocket(this, SocketType.Any, "Source", {constant: true, ...volatileInSocketOptions(this.ins, this.outs)}),
+        new InSocket(this, SocketType.Any, "Source", {
+          ...dynamicTyping.inSocketOptions,
+          constant: true,
+        }),
         ...(this.coordsSockets = [
           new InSocket(this, SocketType.Float, "X", {webglOutputMapping: {[webglOuts.val]: x}}),
           new InSocket(this, SocketType.Float, "Y", {webglOutputMapping: {[webglOuts.val]: y}}),
@@ -243,8 +251,8 @@ uniform float ${height};`,
             coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
           });
         }, {
+          ...dynamicTyping.outSocketOptions,
           constant: true,
-          ...volatileOutSocketOptions(this.ins, this.outs),
           webglOutputs: socket => () => {
             switch (socket.type) {
               case SocketType.ColorCoords:

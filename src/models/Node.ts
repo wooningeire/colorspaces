@@ -377,6 +377,16 @@ export type SocketValue<St extends SocketType=any> =
     St extends SocketType.Any ? any :
     never;
 
+/** In ascending order */
+const socketTypesByRestrictiveness = [
+  [SocketType.Any],
+  [SocketType.VectorOrColor],
+  [SocketType.Float, SocketType.Bool, SocketType.Integer, SocketType.Vector, SocketType.ColorCoords],
+];
+
+export const socketTypeRestrictiveness = new Map<SocketType, number>(
+  socketTypesByRestrictiveness.flatMap((types, i) => types.map(type => [type, i])),
+);
 
 
 export const webglOuts = Object.freeze({
@@ -450,7 +460,7 @@ export type SocketOptions<St extends SocketType=any> = {
   socketDesc?: StringKey,
   fieldText?: StringKey[],
   defaultValue?: SocketValue<St>,
-  hasVolatileType?: boolean,
+  hasDynamicType?: boolean,
   showFieldIfAvailable?: boolean,
   valueChangeRequiresShaderReload?: boolean,
   constant?: boolean,
@@ -520,7 +530,7 @@ export abstract class Socket<St extends SocketType=any> {
   readonly showFieldIfAvailable: boolean;
   /** Semantic field that determines whether the socket should not be trusted to maintain its type (used by SocketType.Any
    * sockets to determine whether they should mock this socket's type to prevent cyclical dependencies) */
-  readonly hasVolatileType: boolean;
+  readonly hasDynamicType: boolean;
   readonly valueChangeRequiresShaderReload: boolean;
   /** Whether the socket requests or produces a constant value */
   readonly constant: boolean;
@@ -545,7 +555,7 @@ export abstract class Socket<St extends SocketType=any> {
       fieldText,
       defaultValue,
       showFieldIfAvailable,
-      hasVolatileType,
+      hasDynamicType,
       valueChangeRequiresShaderReload,
       constant,
       onValueChange,
@@ -561,7 +571,7 @@ export abstract class Socket<St extends SocketType=any> {
     this.fieldText = fieldText ?? [];
     this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
     this.showFieldIfAvailable = showFieldIfAvailable ?? true;
-    this.hasVolatileType = hasVolatileType ?? false;
+    this.hasDynamicType = hasDynamicType ?? false;
     this.valueChangeRequiresShaderReload = valueChangeRequiresShaderReload ?? false;
     this.constant = constant ?? false;
     this.data = data as any as SocketData<St>;

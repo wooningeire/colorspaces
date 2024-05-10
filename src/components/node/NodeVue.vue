@@ -10,7 +10,7 @@ import NodeOutput from "./NodeOutput.vue";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 
 import {InSocket, Node, NodeUpdateSource} from "@/models/Node";
-import {models, spaces, math, images, externals, organization, output} from "@/models/nodetypes";
+import {models, spaces, math, images, externals, organization, output, booleans} from "@/models/nodetypes";
 
 import {Listen, clearTextSelection, Vec2} from "@/util";
 
@@ -85,7 +85,7 @@ const emitNodeSelected = (event: PointerEvent) => {
 const shouldDisplayLabel = computed(() => !(props.node instanceof organization.RerouteNode))
 
 
-const nodeCategories = new Map([models, spaces, math, images, externals, organization, output]
+const nodeCategories = new Map([models, spaces, math, booleans, images, externals, organization, output]
     .map(category =>
         Object.values(category)
             .map(nodeType => [nodeType.TYPE, category]))
@@ -98,6 +98,7 @@ const categoryNames = new Map<unknown, string>([
   [models, "models"],
   [spaces, "spaces"],
   [math, "math"],
+  [booleans, "booleans"],
   [images, "images"],
   [externals, "externals"],
   [output, "output"],
@@ -342,6 +343,10 @@ Object.assign(nodeVue, {
   &.category--math {
     --node-border-background: linear-gradient(hsl(50deg 40% 60%), hsl(90deg 40% 60%));
     --node-background: hsl(80deg 15% 18% / 0.8745);
+  }
+  &.category--booleans {
+    --node-border-background: linear-gradient(hsl(10deg 20% 80%), hsl(-20deg 60% 70%));
+    --node-background: hsl(-20deg 15% 20% / 0.8745);
   }
   &.category--images {
     --node-border-background: linear-gradient(hsl(165deg 10% 50%), hsl(185deg 10% 60%));
