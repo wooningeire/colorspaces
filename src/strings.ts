@@ -115,6 +115,7 @@ const strings = {
   "label.node.sampleHexCodes": "Sample hex codes",
 
   "label.node.reroute": "Reroute",
+  "label.node.value": "Value",
 
 
   "label.socket.value": "Value",
@@ -349,6 +350,7 @@ const strings = {
   "desc.field.xyy.y": "**y**: Another axis used to define chromaticity.",
   "desc.field.xyy.lum": "**Y**: Relative luminance, i.e. luminance relative to the white point. (0–1)",
 
+  "label.socketType.integer": "Integer",
   "label.socketType.float": "Float",
   "desc.socketType.float.out": "A single number.",
   "desc.socketType.float.in": "A single number.",

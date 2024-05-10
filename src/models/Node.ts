@@ -583,6 +583,9 @@ type SocketData<St extends SocketType=any> =
     St extends SocketType.Float ? {
       sliderProps?: SliderProps,
     } :
+    St extends SocketType.Integer ? {
+      sliderProps?: SliderProps,
+    } :
     St extends SocketType.Vector ? {
       sliderProps?: SliderProps[],
     } :

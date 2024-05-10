@@ -67,7 +67,7 @@ const setCoords = () => {
 const path = computed(() => {
   const [x0, y0, x1, y1] = [srcX.value, srcY.value, dstX.value, dstY.value];
 
-  const controlPointDx = Math.max(10, 8 * (Math.abs(x1! - x0! - 12) ** (1/2)));
+  const controlPointDx = 8 * (((x1! - x0!) ** 2 + 16 ** 2) ** (1/4));
 
   return `M${x0},${y0}
 C${x0! + controlPointDx},${y0} ${x1! - controlPointDx},${y1}, ${x1},${y1}`;
