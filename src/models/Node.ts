@@ -370,7 +370,7 @@ export type SocketValue<St extends SocketType=any> =
     St extends SocketType.Integer ? number :
     St extends SocketType.Vector ? Vec3 :
     St extends SocketType.ColorComponents ? Col :
-    St extends SocketType.VectorOrColor ? Vec3 :
+    St extends SocketType.VectorOrColor ? Vec3 | Col :
     St extends SocketType.Dropdown ? string :
     St extends SocketType.Image ? ImageData :
     St extends SocketType.Bool ? boolean :
@@ -471,13 +471,18 @@ export const webglVirtualizeOutputs = <St extends SocketType=any>(outSocketType:
             return target[desiredOut];
           }
 
+          const out = (directOutputs as WebglSocketOutputs<SocketType.Bool>)[webglStdOuts.bool];
+
           switch (desiredOut) {
             case webglStdOuts.integer:
-              return WebglTemplate.concat`${(directOutputs as WebglSocketOutputs<SocketType.Bool>)[webglStdOuts.bool]} ? 1 : 0`;
+              return WebglTemplate.concat`${out} ? 1 : 0`;
     
             case webglStdOuts.float:
-              return WebglTemplate.concat`${(directOutputs as WebglSocketOutputs<SocketType.Bool>)[webglStdOuts.bool]} ? 1. : 0.`;
-    
+              return WebglTemplate.concat`${out} ? 1. : 0.`;
+
+            case webglStdOuts.vector:
+              return WebglTemplate.concat`vec3(${out} ? 1. : 0., ${out} ? 1. : 0., ${out} ? 1. : 0.)`;
+
             default:
               throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocketType}`);
           }
@@ -492,9 +497,34 @@ export const webglVirtualizeOutputs = <St extends SocketType=any>(outSocketType:
             return target[desiredOut];
           }
 
+          const out = (directOutputs as WebglSocketOutputs<SocketType.Integer>)[webglStdOuts.integer];
+
           switch (desiredOut) {
             case webglStdOuts.float:
-              return WebglTemplate.concat`float(${(directOutputs as WebglSocketOutputs<SocketType.Integer>)[webglStdOuts.integer]})`;
+              return WebglTemplate.concat`float(${out})`;
+
+            case webglStdOuts.vector:
+              return WebglTemplate.concat`vec3(float(${out}), float(${out}), float(${out}))`;
+    
+            default:
+              throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocketType}`);
+          }
+        }
+      });
+
+    case SocketType.Float:
+      return new Proxy(directOutputs, {
+        get(target, desiredOut, proxy) {
+          if (target.hasOwnProperty(desiredOut)) {
+            //@ts-ignore
+            return target[desiredOut];
+          }
+
+          const out = (directOutputs as WebglSocketOutputs<SocketType.Float>)[webglStdOuts.float];
+
+          switch (desiredOut) {
+            case webglStdOuts.vector:
+              return WebglTemplate.concat`vec3(${out}, ${out}, ${out})`;
     
             default:
               throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocketType}`);
@@ -608,8 +638,9 @@ export abstract class Socket<St extends SocketType=any> {
   private static readonly typeCanBeLinkedTo = new Map<SocketType, SocketType[]>([
     [SocketType.Vector, [SocketType.Vector, SocketType.VectorOrColor]],
     [SocketType.ColorComponents, [SocketType.ColorComponents, SocketType.VectorOrColor, SocketType.Vector]],
-    [SocketType.Bool, [SocketType.Bool, SocketType.Float, SocketType.Integer]],
-    [SocketType.Integer, [SocketType.Integer, SocketType.Float]],
+    [SocketType.Bool, [SocketType.Bool, SocketType.Float, SocketType.Integer, SocketType.Vector, SocketType.VectorOrColor]],
+    [SocketType.Integer, [SocketType.Integer, SocketType.Float, SocketType.Vector, SocketType.VectorOrColor]],
+    [SocketType.Float, [SocketType.Float, SocketType.Vector, SocketType.VectorOrColor]],
   ]);
 
   /** Checks if a source socket type can be linked to a destination socket type */
@@ -887,10 +918,13 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
       return this.type;
     }
   
-    if (this.usesFieldValue || this.link.src.type === SocketType.VectorOrColor) {
+    if (this.usesFieldValue) {
       return SocketType.Vector;
     }
-    return this.link.src.type;
+    if (this.link.src.type === SocketType.ColorComponents) {
+      return SocketType.ColorComponents;
+    }
+    return SocketType.Vector;
   }
 
   get usesFieldValue() {
@@ -903,7 +937,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
   inValue(context: NodeEvalContext={}): SocketValue<St> {
     return !this.hasLinks || this.link!.causesCircularDependency
         ? this.fieldValue
-        : this.link!.src.outValueCoerced(context, this.effectiveType());
+        : this.link!.src.outValueCoerced(context, this.effectiveType()) as SocketValue<St>;
   }
 }
 
@@ -953,24 +987,49 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
     }
 
     switch (this.type) {
-      case SocketType.Bool:
+      case SocketType.Bool: {
+        const out = outValue as SocketValue<SocketType.Bool>;
+        const outNumeric = out ? 1 : 0;
+
         switch (newType) {
           case SocketType.Integer:
           case SocketType.Float:
-            return (outValue as SocketValue<SocketType.Bool> ? 1 : 0) as SocketValue<T>;
+            return outNumeric as SocketValue<T>;
+          
+          case SocketType.Vector:
+            return [outNumeric, outNumeric, outNumeric] as SocketValue<T>;
   
           default:
             throw new Error(`Cannot derive output ${newType} from socket type ${this.type}`);
         }
-  
-      case SocketType.Integer:
+      }
+
+      case SocketType.Integer: {
+        const out = outValue as SocketValue<SocketType.Integer>;
+
         switch (newType) {
           case SocketType.Float:
             return outValue as unknown as SocketValue<T>;
+          
+          case SocketType.Vector:
+            return [out, out, out] as SocketValue<T>;
   
           default:
             throw new Error(`Cannot derive output ${newType} from socket type ${this.type}`);
         }
+      }
+  
+      case SocketType.Float: {
+        const out = outValue as SocketValue<SocketType.Float>;
+
+        switch (newType) {
+          case SocketType.Vector:
+            return [out, out, out] as SocketValue<T>;
+  
+          default:
+            throw new Error(`Cannot derive output ${newType} from socket type ${this.type}`);
+        }
+      }
   
       case SocketType.ColorComponents:
         switch (newType) {
