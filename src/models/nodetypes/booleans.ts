@@ -1,3 +1,4 @@
+import { StringKey } from "@/strings";
 import { Node, SocketType, InSocket, OutSocket, webglOuts } from "../Node";
 import { NodeWithOverloads, Overload, OverloadGroup } from "../Overload";
 
@@ -24,8 +25,8 @@ export namespace booleans {
       );
 
       this.ins.push(
-        new InSocket(this, SocketType.Bool, "Condition", { webglOutputMapping: { [webglOuts.val]: condition } }),
-        new InSocket(this, SocketType.Any, "If true…", {
+        new InSocket(this, SocketType.Bool, "label.socket.conditional.condition", { webglOutputMapping: { [webglOuts.val]: condition } }),
+        new InSocket(this, SocketType.Any, "label.socket.conditional.ifTrue", {
           ...dynamicTyping.inSocketOptions,
           //@ts-ignore
           webglGetOutputMapping: socket => () => ({ [webglOuts.val]: ifTrue }),
@@ -33,7 +34,7 @@ export namespace booleans {
             hasBounds: false,
           },
         }),
-        new InSocket(this, SocketType.Any, "If false…", {
+        new InSocket(this, SocketType.Any, "label.socket.conditional.ifFalse", {
           ...dynamicTyping.inSocketOptions,
           //@ts-ignore
           webglGetOutputMapping: socket => () => ({ [webglOuts.val]: ifFalse }),
@@ -44,7 +45,7 @@ export namespace booleans {
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Any, "Value",
+        new OutSocket(this, SocketType.Any, "label.socket.value",
           context => this.ins[0].inValue(context) ? this.ins[1].inValue(context) : this.ins[2].inValue(context),
           {
             ...dynamicTyping.outSocketOptions,
@@ -103,8 +104,8 @@ if (${condition}) {
           calculate,
           getTemplate,
         }: {
-          label: string,
-          outputLabel: string,
+          label: StringKey,
+          outputLabel: StringKey,
           calculate: (val0: number, val1: number) => boolean,
           getTemplate: (inputSlots: typeof CompareFloatsNode["inputSlots"]) => WebglTemplate,
         }) => {
@@ -115,14 +116,14 @@ if (${condition}) {
             label,
             node => {
               return [
-                new InSocket(node, SocketType.Float, "Value A", {
+                new InSocket(node, SocketType.Float, "label.socket.compareFloats.valueA", {
                   //@ts-ignore
                   webglGetOutputMapping: socket => () => ({ [webglOuts.val]: val0 }),
                   sliderProps: {
                     hasBounds: false,
                   },
                 }),
-                new InSocket(node, SocketType.Float, "Value B", {
+                new InSocket(node, SocketType.Float, "label.socket.compareFloats.valueB", {
                   //@ts-ignore
                   webglGetOutputMapping: socket => () => ({ [webglOuts.val]: val1 }),
                   sliderProps: {
@@ -147,36 +148,36 @@ if (${condition}) {
 
     static readonly overloadGroup = new OverloadGroup(new Map([
       [CompareOverloadMode.GreaterThan, this.comparisonOverload({
-        label: "Greater than",
-        outputLabel: "A > B?",
+        label: "label.overload.compareFloats.greaterThan",
+        outputLabel: "label.socket.compareFloats.a>b?",
         calculate: (a, b) => a > b,
         getTemplate: ({val0, val1}) => WebglTemplate.source`${val0} > ${val1}`,
       })],
 
       [CompareOverloadMode.GreaterThanOrEqualTo, this.comparisonOverload({
-        label: "Greater than or equal to",
-        outputLabel: "A ≥ B?",
+        label: "label.overload.compareFloats.greaterThanOrEqualTo",
+        outputLabel: "label.socket.compareFloats.a>=b?",
         calculate: (a, b) => a >= b,
         getTemplate: ({val0, val1}) => WebglTemplate.source`${val0} >= ${val1}`,
       })],
 
       [CompareOverloadMode.EqualTo, this.comparisonOverload({
-        label: "Equal to",
-        outputLabel: "A = B?",
+        label: "label.overload.compareFloats.equalTo",
+        outputLabel: "label.socket.compareFloats.a=b?",
         calculate: (a, b) => a === b,
         getTemplate: ({val0, val1}) => WebglTemplate.source`${val0} == ${val1}`,
       })],
 
       [CompareOverloadMode.LessThanOrEqualTo, this.comparisonOverload({
-        label: "Less than or equal to",
-        outputLabel: "A ≤ B?",
+        label: "label.overload.compareFloats.lessThanOrEqualTo",
+        outputLabel: "label.socket.compareFloats.a<=b?",
         calculate: (a, b) => a <= b,
         getTemplate: ({val0, val1}) => WebglTemplate.source`${val0} <= ${val1}`,
       })],
 
       [CompareOverloadMode.LessThan, this.comparisonOverload({
-        label: "Less than",
-        outputLabel: "A < B?",
+        label: "label.overload.compareFloats.lessThanOrEqualTo",
+        outputLabel: "label.socket.compareFloats.a<b?",
         calculate: (a, b) => a < b,
         getTemplate: ({val0, val1}) => WebglTemplate.source`${val0} < ${val1}`,
       })],
