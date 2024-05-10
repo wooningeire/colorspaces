@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { WebglSlot, WebglTemplate, WebglVariables } from "./WebglVariables";
-import { Node, NodeOutputTarget, webglOuts } from "@/models/Node";
+import { Node, NodeOutputTarget, webglStdOuts } from "@/models/Node";
 
 const output = WebglSlot.out("output");
 class WebglConstantNode extends Node {
@@ -12,9 +12,7 @@ class WebglConstantNode extends Node {
 
   webglOutputs() {
     return {
-      [webglOuts.val]: WebglTemplate.slot(output),
-      [webglOuts.illuminant]: WebglTemplate.string("illuminant2_E"),
-      [webglOuts.xyz]: WebglTemplate.source`linearSrgbToXyz(${output})`,
+      [webglStdOuts.vector]: WebglTemplate.slot(output),
     };
   }
 }

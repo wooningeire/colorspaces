@@ -1,7 +1,7 @@
 import { NO_DESC } from "@/strings";
-import { Node, SocketType, NodeEvalContext, InSocket, OutSocket, webglOuts } from "../Node";
+import { Node, SocketType, NodeEvalContext, InSocket, OutSocket } from "../Node";
 
-import { dynamicInSocketMapping, useDynamicallyTypedSockets } from "./util";
+import { useDynamicallyTypedSockets } from "./util";
 import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 
 export namespace organization {
@@ -11,12 +11,12 @@ export namespace organization {
 
     width = 15;
 
-    private static readonly inputSlots = WebglSlot.ins("val", "illuminant", "xyz");
+    private static readonly inputSlots = WebglSlot.ins("val");
     
     constructor() {
       super();
       
-      const {val, illuminant, xyz} = RerouteNode.inputSlots;
+      const {val} = RerouteNode.inputSlots;
 
       const dynamicTyping = useDynamicallyTypedSockets(
         () => [this.ins[0]],
@@ -24,17 +24,14 @@ export namespace organization {
       );
 
       this.ins.push(
-        new InSocket(this, SocketType.Any, NO_DESC, {
-          ...dynamicTyping.inSocketOptions,
-          //@ts-ignore
-          webglGetOutputMapping: dynamicInSocketMapping({val, illuminant, xyz}),
+        new InSocket(this, SocketType.DynamicAny, NO_DESC, {
+          ...dynamicTyping.inSocketOptions(val),
         })
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Any, NO_DESC, context => this.ins[0].inValue(context), {
-          ...dynamicTyping.outSocketOptions,
-          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(val)}),
+        new OutSocket(this, SocketType.DynamicAny, NO_DESC, context => this.ins[0].inValue(context), {
+          ...dynamicTyping.outSocketOptions(WebglTemplate.slot(val)),
         }),
       );
     }

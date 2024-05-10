@@ -1,6 +1,6 @@
-import { InSocket, Node, NodeOutputTarget, NodeUpdateSource, OutSocket, Socket, SocketType, webglOuts } from "@/models/Node";
+import { InSocket, Node, NodeOutputTarget, NodeUpdateSource, OutSocket, Socket, SocketType, WebglOutputMapping, WebglOutputs, WebglSocketOutputs, WebglStdOut, webglStdOuts, webglVirtualizeOutputs } from "@/models/Node";
 import { webglDeclarations } from "@/models/colormanagement";
-import { objectSymbolEntries, objectSymbolValues } from "@/util";
+import { objectSymbolEntries } from "@/util";
 
 export class WebglModule {
   constructor(
@@ -167,7 +167,7 @@ export class WebglTemplate<InputSlots extends SlotMap=any, OutputSlots extends S
     const substitutions = new Map<WebglSlot, string>();
     for (const [key, slot] of objectSymbolEntries(outputMapping)) {
       const template = outputs[key];
-      if (!template) throw new TypeError(`Attempted to map an output variable "${key.description}", which does not exist on the given outputs`);
+      if (!template) throw new TypeError(`Attempted to map an output variable "${key.description}", which does not exist on the given outputs, which consist of ${Object.getOwnPropertySymbols(outputs).map(String).join(", ")}`);
 
       substitutions.set(slot as WebglSlot, template.toString());
     }
@@ -229,9 +229,6 @@ type UniformInitializer = {
   /** For when a dependency is a `NodeSpecialInput` */
   dependencyNodes: Node[],
 };
-
-export type WebglOutputs = Partial<Record<symbol, WebglTemplate>>;
-export type WebglOutputMapping = Partial<Record<symbol, WebglSlot>>;
 
 /** Stores a chunk of GLSL code with macro-like slots for variables. */
 export class WebglVariables {
@@ -325,7 +322,7 @@ void main() {
      * evaluate the input socket be evaluated at multiple different coordinates.
      */
     private readonly functionInputDependencies: Map<WebglTemplate, OutSocket>=new Map(),
-    private readonly fieldOutputs: WebglOutputs,
+    private readonly fieldOutputs: WebglSocketOutputs | null,
   ) {}
 
   /** Fills in the given slots with strings. */
@@ -352,7 +349,7 @@ void main() {
   }
 
   substituteUsingOutputs(
-    outputs: WebglOutputs,
+    outputs: WebglSocketOutputs,
     outputMapping: WebglOutputMapping,
   ) {
     return this.substitute(WebglTemplate.substitutionsUsingOutputs(outputs, outputMapping));
@@ -510,32 +507,32 @@ void main() {
           outputTypeValue: "Color",
           outputTemplate: WebglTemplate.source`Color(${nonXyz}, ${illuminant}, ${xyz})`,
           mapping: {
-            [webglOuts.val]: nonXyz,
+            [webglStdOuts.color]: nonXyz,
           },
         };
       }
 
       case SocketType.Vector:
       case SocketType.VectorOrColor: {
-        const val = WebglSlot.in("val");
+        const vector = WebglSlot.in("vector");
 
         return {
           outputTypeValue: "vec3",
-          outputTemplate: WebglTemplate.source`${val}`,
+          outputTemplate: WebglTemplate.source`${vector}`,
           mapping: {
-            [webglOuts.val]: val,
+            [webglStdOuts.vector]: vector,
           },
         };
       }
 
       case SocketType.Bool: {
-        const val = WebglSlot.in("val");
+        const bool = WebglSlot.in("bool");
 
         return {
           outputTypeValue: "bool",
-          outputTemplate: WebglTemplate.source`${val}`,
+          outputTemplate: WebglTemplate.source`${bool}`,
           mapping: {
-            [webglOuts.val]: val,
+            [webglStdOuts.bool]: bool,
           },
         };
       }
@@ -599,8 +596,8 @@ void main() {
         ({main, color, prelude, alpha}) => new Map([
           [main, dependencies.map(segment => segment.template.toString())
               .join("\n\n")],
-          [color, lastDependencyNodeOutputs?.[webglOuts.val]?.substitute(lastDependencySubstitutions).toString() ?? "Color(vec3(0., 0., 0.), illuminant2_D65, vec3(0., 0., 0.)"],
-          [alpha, lastDependencyNodeOutputs?.[webglOuts.alpha]?.substitute(lastDependencySubstitutions).toString() ?? "1."],
+          [color, lastDependencyNodeOutputs?.[webglStdOuts.color]?.substitute(lastDependencySubstitutions).toString() ?? "Color(vec3(0., 0., 0.), illuminant2_D65, vec3(0., 0., 0.)"],
+          [alpha, lastDependencyNodeOutputs?.[webglStdOuts.alpha]?.substitute(lastDependencySubstitutions).toString() ?? "1."],
           [prelude, dependencies.map(segment => segment.preludeTemplate.toString())
               .join("\n")],
         ]),
@@ -611,17 +608,53 @@ void main() {
 
   private outputsFor(target: NodeOutputTarget) {
     const unfilledOutputs = target.match({
-      onSocket: socket => socket.webglOutputs(),
+      onSocket: socket => webglVirtualizeOutputs(socket.type, socket.webglOutputs()),
       onNode: node => node.webglOutputs(),
-      onField: () => this.fieldOutputs,
+      onField: () => this.fieldOutputs ?? (() => {throw new TypeError("Attempted to access field outputs when null");})(),
     });
 
     // Since the outputs are taken from constants on the socket/node, we need to fill the outputs with the current
     // substitutions.
-    return Object.fromEntries(
-      [...objectSymbolEntries(unfilledOutputs)]
-          .map(([key, template]) => [key, template!.substitute(this.template.substitutions)])
-    );
+    return new Proxy(unfilledOutputs, {
+      get: (target, desiredOut: WebglStdOut, proxy) => target[desiredOut].substitute(this.template.substitutions),
+    });
+  }
+  static deriveCoercedSocketOutput<St extends SocketType>(outSocket: OutSocket<St>, outputs: WebglSocketOutputs<St>, desiredOut: WebglStdOut): WebglTemplate {
+    switch (outSocket.type) {
+      case SocketType.Bool:
+        switch (desiredOut) {
+          case webglStdOuts.integer:
+            return WebglTemplate.concat`${(outputs as WebglSocketOutputs<SocketType.Bool>)[webglStdOuts.bool]} ? 1 : 0`;
+
+          case webglStdOuts.float:
+            return WebglTemplate.concat`${(outputs as WebglSocketOutputs<SocketType.Bool>)[webglStdOuts.bool]} ? 1. : 0.`;
+
+          default:
+            throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocket.type}`);
+        }
+
+      case SocketType.Integer:
+        switch (desiredOut) {
+          case webglStdOuts.float:
+            return WebglTemplate.concat`float(${(outputs as WebglSocketOutputs<SocketType.Bool>)[webglStdOuts.bool]})`;
+
+          default:
+            throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocket.type}`);
+        }
+
+      case SocketType.ColorComponents:
+        switch (desiredOut) {
+          case webglStdOuts.vector:
+            return WebglTemplate.concat`${(outputs as WebglSocketOutputs<SocketType.ColorComponents>)[webglStdOuts.color]}.components`;
+
+          default:
+            throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocket.type}`);
+        }
+        
+
+      default:
+        throw new Error("socket type not supported");
+    }
   }
 
   static fromTemplate(template: WebglTemplate) {
@@ -630,13 +663,13 @@ void main() {
       preludeTemplate=WebglTemplate.empty(),
       uniforms=new Map(),
       functionInputDependencies=new Map(),
-      fieldOutputs={},
+      fieldOutputs=null,
     }: {
       node: Node | null,
       preludeTemplate?: WebglVariables["preludeTemplate"],
       uniforms?: WebglVariables["uniforms"],
       functionInputDependencies?: WebglVariables["functionInputDependencies"],
-      fieldOutputs?: WebglOutputs,
+      fieldOutputs?: WebglSocketOutputs | null,
     }) => {
       return new WebglVariables(
         node,

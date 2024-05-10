@@ -1,5 +1,5 @@
-import { WebglSlot } from "@/webgl-compute/WebglVariables";
-import { InSocket, InSocketOptions, OutSocket, OutSocketOptions, Socket, SocketOptions, SocketType, Tree, socketTypeRestrictiveness, webglOuts } from "../Node";
+import { WebglSlot, WebglTemplate } from "@/webgl-compute/WebglVariables";
+import { InSocket, InSocketOptions, OutSocket, OutSocketOptions, Socket, SocketOptions, SocketType, Tree, socketTypeRestrictiveness, socketTypeToStdOut, webglStdOuts } from "../Node";
 
 /** Socket options to set up input and output sockets whose type changes (and which fires the appropriate events) when
  * its link type changes. This includes links being added or remvoved
@@ -15,16 +15,14 @@ export const useDynamicallyTypedSockets = (
   };
 
   const inferType = () => {
-    let mostRestrictiveType = SocketType.Any;
+    let mostRestrictiveType = SocketType.DynamicAny;
 
     for (const socket of syncedSockets()) {
-      const inferredType = (
-        socket.isInput
-            ? socket.links[0]?.src.type
-            : socket.links[0]?.dst.type
-      ) ?? SocketType.Any;
-      if (socketTypeRestrictiveness.get(inferredType)! > socketTypeRestrictiveness.get(mostRestrictiveType)!) {
-        mostRestrictiveType = inferredType;
+      for (const link of socket.links) {
+        const inferredType = (socket.isInput ? link.src.type : link.dst.type) ?? SocketType.DynamicAny;
+        if (socketTypeRestrictiveness.get(inferredType)! > socketTypeRestrictiveness.get(mostRestrictiveType)!) {
+          mostRestrictiveType = inferredType;
+        }
       }
     }
 
@@ -38,7 +36,7 @@ export const useDynamicallyTypedSockets = (
   };
 
   return {
-    inSocketOptions: <InSocketOptions<SocketType.Any>>{
+    inSocketOptions: (slot: WebglSlot) => <InSocketOptions<SocketType.DynamicAny>>{
       showFieldIfAvailable: false,
       hasDynamicType: true,
       onLink: (link, tree) => {
@@ -50,9 +48,10 @@ export const useDynamicallyTypedSockets = (
       onInputTypeChange: (newType, tree) => {
         updateType(tree);
       },
+      webglOutputMapping: dynamicInSocketMapping(slot),
     },
     
-    outSocketOptions: <OutSocketOptions<SocketType.Any>>{
+    outSocketOptions: (template: WebglTemplate=WebglTemplate.empty()) => <OutSocketOptions<SocketType.DynamicAny>>{
       hasDynamicType: true,
       onLink: (link, tree) => {
         updateType(tree);
@@ -63,10 +62,36 @@ export const useDynamicallyTypedSockets = (
       onOutputTypeChange: (newType, tree) => {
         updateType(tree);
       },
+      webglOutputs: dynamicOutSocketOutputs(template),
     },
   };
 };
 
 
-export const dynamicInSocketMapping = ({val}: {val: WebglSlot}) =>
-    (socket: InSocket) => () => ({[webglOuts.val]: val});
+export const dynamicInSocketMapping = (slot: WebglSlot) =>
+    (socket: InSocket) => () => {
+      const effectiveType = socket.effectiveType();
+      if (!socketTypeToStdOut.has(effectiveType)) throw new Error("invalid type for dynamic socket");
+      return {[
+        socketTypeToStdOut.get(effectiveType)!]: slot,
+      };
+    };
+
+export const dynamicOutSocketOutputs = (template: WebglTemplate=WebglTemplate.empty()) =>
+    (socket: OutSocket) => () => {
+      if (!socketTypeToStdOut.has(socket.type)) throw new Error("invalid type for dynamic socket");
+      return {[
+        socketTypeToStdOut.get(socket.type)!]: template,
+      };
+    };
+
+export const vectorOrColorInSocketMapping = ({
+  colorSlot,
+  vectorSlot,
+}: {
+  colorSlot: WebglSlot,
+  vectorSlot: WebglSlot,
+}) =>
+    (socket: InSocket) => () => socket.effectiveType() === SocketType.ColorComponents
+        ? {[webglStdOuts.color]: colorSlot}
+        : {[webglStdOuts.vector]: vectorSlot};

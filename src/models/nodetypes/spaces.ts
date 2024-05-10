@@ -1,9 +1,10 @@
 import { Vec3 } from "@/util";
-import { SocketFlag, NodeEvalContext, OutputDisplayType, SocketOptions, InSocket, OutSocket, WebglSocketOutputMapping, webglOuts, SocketType, InSocketOptions } from "../Node";
+import { SocketFlag, NodeEvalContext, OutputDisplayType, SocketOptions, InSocket, OutSocket, webglStdOuts, SocketType, InSocketOptions } from "../Node";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 import { StringKey } from "@/strings";
-import { WebglOutputs, WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
+import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
+import { vectorOrColorInSocketMapping } from "./util";
 
 
 
@@ -87,12 +88,12 @@ export namespace spaces {
     // @ts-ignore
     private valuesSockets: InSocket<SocketType.Float>[] = this.valuesSockets ?? [];
 
-    private static readonly inputSlots = WebglSlot.ins("inVal", "x", "y", "z");
+    private static readonly inputSlots = WebglSlot.ins("inVec", "inColor", "x", "y", "z");
     private static readonly outputSlots = WebglSlot.outs("outColor", "newIlluminant", "outComponents");
 
     static readonly overloadGroup = new OverloadGroup(new Map<SpaceOverloadMode, Overload<TripletSpaceNode>>([
       [SpaceOverloadMode.FromVec, (() => {
-        const {inVal} = this.inputSlots;
+        const {inVec, inColor} = this.inputSlots;
         const {outColor, newIlluminant} = this.outputSlots;
 
         return new Overload(
@@ -103,9 +104,8 @@ export namespace spaces {
               sockets.push(node.illuminantSocket = new InSocket(node, SocketType.Dropdown, "label.socket.illuminant", whitePointSocketOptions));
             }
   
-            const {inVal} = this.inputSlots;
             node.colorInputSocket = node.constructInSocket({
-              webglGetOutputMapping: socket => () => ({[webglOuts.val]: inVal}),
+              webglGetOutputMapping: vectorOrColorInSocketMapping({colorSlot: inColor, vectorSlot: inVec}),
               ...node.inSocketOptions(),
             });
             sockets.push(node.colorInputSocket);
@@ -114,13 +114,13 @@ export namespace spaces {
           },
           node => [
             new OutSocket(node, SocketType.ColorComponents, "label.socket.color", context => node.computeColor(context, true), {
-              webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(outColor)}),
+              webglOutputs: socket => () => ({[webglStdOuts.color]: WebglTemplate.slot(outColor)}),
             }),
             ...node.componentLabels.map(
               (label, i) =>
                   new OutSocket(node, SocketType.Float, label, context => node.computeColor(context, true)[i], {
                     webglOutputs: socket => () => ({
-                      [webglOuts.val]: WebglTemplate.concat`${outColor}.components.${["x", "y", "z"][i]}`,
+                      [webglStdOuts.float]: WebglTemplate.concat`${outColor}.components.${["x", "y", "z"][i]}`,
                     }),
                   })
             ),
@@ -132,7 +132,7 @@ export namespace spaces {
           }),
           (ins, outs, context, node) => {
             if (node.colorInputSocket.effectiveType() === SocketType.ColorComponents) {
-              return WebglVariables.templateConcat`Color ${outColor} = Color(${node.webglXyzToComponents(inVal, newIlluminant)}, ${newIlluminant}, adaptXyz(${inVal}.xyz, ${inVal}.illuminant, ${newIlluminant}));`({
+              return WebglVariables.templateConcat`Color ${outColor} = Color(${node.webglXyzToComponents(inColor, newIlluminant)}, ${newIlluminant}, adaptXyz(${inColor}.xyz, ${inColor}.illuminant, ${newIlluminant}));`({
                 node,
                 preludeTemplate: WebglTemplate.source`uniform vec2 ${newIlluminant};`,
                 uniforms: new Map([
@@ -146,7 +146,7 @@ export namespace spaces {
                 ]),
               });
             } else {
-              return WebglVariables.templateConcat`Color ${outColor} = Color(${inVal}, ${newIlluminant}, ${node.webglComponentsToXyz(inVal, newIlluminant)});`({
+              return WebglVariables.templateConcat`Color ${outColor} = Color(${inVec}, ${newIlluminant}, ${node.webglComponentsToXyz(inVec, newIlluminant)});`({
                 node,
                 preludeTemplate: WebglTemplate.source`uniform vec2 ${newIlluminant};`,
                 uniforms: new Map([
@@ -161,7 +161,7 @@ export namespace spaces {
               });
             }
           },
-          () => ({[webglOuts.val]: WebglTemplate.slot(outColor)}),
+          () => ({[webglStdOuts.color]: WebglTemplate.slot(outColor)}),
         )
       })()],
 
@@ -177,7 +177,7 @@ export namespace spaces {
             const socketOptions = node.inSocketOptions();
             const individualSocketOptions = new Array(3).fill(0).map((_, i) =>{
               const floatSocketOptions: InSocketOptions<SocketType.Float> = {
-                webglOutputMapping: {[webglOuts.val]: slots[i]}
+                webglOutputMapping: {[webglStdOuts.float]: slots[i]}
               };
               for (const [key, value] of Object.entries(socketOptions)) {
                 const newKey = key === "fieldText" ? "socketDesc" : key;
@@ -196,7 +196,7 @@ export namespace spaces {
           },
           node => [
             new OutSocket(node, SocketType.ColorComponents, "label.socket.color", context => node.computeColor(context, false), {
-              webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(outColor)}),
+              webglOutputs: socket => () => ({[webglStdOuts.color]: WebglTemplate.slot(outColor)}),
             }),
           ],
           (ins, outs, context, node) => ({
@@ -218,7 +218,7 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
               }],
             ])
           }),
-          () => ({[webglOuts.val]: WebglTemplate.slot(outColor)}),
+          () => ({[webglStdOuts.color]: WebglTemplate.slot(outColor)}),
         )
       })()],
     ]));

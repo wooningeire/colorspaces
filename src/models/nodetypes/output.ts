@@ -1,5 +1,5 @@
 import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
-import { Node, SocketType, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, webglOuts } from "../Node";
+import { Node, SocketType, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, webglStdOuts } from "../Node";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import * as cm from "../colormanagement";
 
@@ -95,12 +95,12 @@ export namespace output {
 
     width = 240;
 
-    private static readonly inputSlots = WebglSlot.ins("val", "alpha");
+    private static readonly inputSlots = WebglSlot.ins("color", "alpha");
 
     constructor() {
       super();
 
-      const {val, alpha} = ImagePlotNode.inputSlots;
+      const {color, alpha} = ImagePlotNode.inputSlots;
 
       this.ins.push(
         (this.normalizeCoordsSocket = new InSocket(this, SocketType.Bool, "label.socket.normalizeCoordinates", {
@@ -109,13 +109,13 @@ export namespace output {
         })),
         new InSocket(this, SocketType.ColorComponents, "label.socket.colors", {
           webglOutputMapping: {
-            [webglOuts.val]: val,
+            [webglStdOuts.color]: color,
           },
         }),
         (this.alphaSocket = new InSocket(this, SocketType.Float, "label.socket.alpha", {
           defaultValue: 1,
           webglOutputMapping: {
-            [webglOuts.val]: alpha,
+            [webglStdOuts.float]: alpha,
           },
         })),
         (this.widthSocket = new InSocket(this, SocketType.Float, "label.socket.width", {
@@ -152,11 +152,11 @@ export namespace output {
     }
 
     webglOutputs() {
-      const {val, alpha} = ImagePlotNode.inputSlots;
+      const {color, alpha} = ImagePlotNode.inputSlots;
 
       return {
-        [webglOuts.val]: WebglTemplate.slot(val),
-        [webglOuts.alpha]: WebglTemplate.slot(alpha),
+        [webglStdOuts.color]: WebglTemplate.slot(color),
+        [webglStdOuts.alpha]: WebglTemplate.slot(alpha),
       };
     }
   }

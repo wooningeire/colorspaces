@@ -94,7 +94,7 @@ const willAcceptLink = () => {
 
 const socketTypeColors = new Map([
   [St.Unknown, "#000"],
-  [St.Any, "#fff"],
+  [St.DynamicAny, "#fff"],
   [St.Float, "#aaa"],
   [St.Bool, "#fbc"],
   [St.Vector, "#75d"],

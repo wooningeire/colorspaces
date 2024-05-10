@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { InSocket, Node, OutSocket, SocketType, Tree } from "./Node";
+import { NO_DESC } from "@/strings";
 
 class ConstantNode extends Node {
   constructor() {
     super();
 
     this.ins.push(
-      new InSocket(this, SocketType.Float),
+      new InSocket(this, SocketType.Float, NO_DESC),
     );
 
     this.outs.push(
-      new OutSocket(this, SocketType.Float, "", () => 1),
+      new OutSocket(this, SocketType.Float, NO_DESC, () => 1),
     )
   }
 }

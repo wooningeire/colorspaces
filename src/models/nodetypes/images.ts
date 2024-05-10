@@ -1,4 +1,4 @@
-import { Node, SocketType, AxisNode, NodeEvalContext, InSocket, OutSocket, webglOuts } from "../Node";
+import { Node, SocketType, AxisNode, NodeEvalContext, InSocket, OutSocket, webglStdOuts } from "../Node";
 
 import { Vec3, lerp } from "@/util";
 import { useDynamicallyTypedSockets } from "./util";
@@ -40,14 +40,14 @@ export namespace images {
             sliderProps: {
               hasBounds: false,
             },
-            webglOutputMapping: {[webglOuts.val]: from},
+            webglOutputMapping: {[webglStdOuts.float]: from},
           }),
           new InSocket(this, SocketType.Float, "label.socket.gradient.to", {
             defaultValue: 1,
             sliderProps: {
               hasBounds: false,
             },
-            webglOutputMapping: {[webglOuts.val]: to},
+            webglOutputMapping: {[webglStdOuts.float]: to},
           }),
         ]),
       );
@@ -59,7 +59,7 @@ export namespace images {
           const value1 = this.boundsSockets[1].inValue(context);
           return lerp(value0, value1, fac);
         }, {
-          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(val)}),
+          webglOutputs: socket => () => ({[webglStdOuts.float]: WebglTemplate.slot(val)}),
         }),
       );
     }
@@ -121,7 +121,7 @@ export namespace images {
           return colorData as Vec3;
         }, {
           webglOutputs: socket => () => ({
-            [webglOuts.val]: WebglTemplate.source`${val}.rgb`,
+            [webglStdOuts.vector]: WebglTemplate.source`${val}.rgb`,
           }),
           socketDesc: "desc.socket.imageFileRgb",
         }),
@@ -136,21 +136,21 @@ export namespace images {
               : 0;
         }, {
           webglOutputs: socket => () => ({
-            [webglOuts.val]: WebglTemplate.source`${val}.a`,
+            [webglStdOuts.float]: WebglTemplate.source`${val}.a`,
           }),
           socketDesc: "desc.socket.imageFileRgb",
         }),
         new OutSocket(this, SocketType.Float, "label.socket.width", context => this.imageSocket.inValue(context)?.width ?? 0, {
           constant: true,
           webglOutputs: socket => () => ({
-            [webglOuts.val]: WebglTemplate.slot(width),
+            [webglStdOuts.float]: WebglTemplate.slot(width),
           }),
           socketDesc: "desc.socket.imageFileWidth",
         }),
         new OutSocket(this, SocketType.Float, "label.socket.height", context => this.imageSocket.inValue(context)?.height ?? 0, {
           constant: true,
           webglOutputs: socket => () => ({
-            [webglOuts.val]: WebglTemplate.slot(height),
+            [webglStdOuts.float]: WebglTemplate.slot(height),
           }),
           socketDesc: "desc.socket.imageFileHeight",
         }),
@@ -239,25 +239,24 @@ uniform float ${height};`,
       const {val, color} = SampleNode.outputSlots;
 
       this.ins.push(
-        new InSocket(this, SocketType.Any, "label.socket.sample.source", {
+        new InSocket(this, SocketType.DynamicAny, "label.socket.sample.source", {
           ...dynamicTyping.inSocketOptions,
           constant: true,
         }),
         ...(this.coordsSockets = [
-          new InSocket(this, SocketType.Float, "label.socket.x", {webglOutputMapping: {[webglOuts.val]: x}}),
-          new InSocket(this, SocketType.Float, "label.socket.y", {webglOutputMapping: {[webglOuts.val]: y}}),
+          new InSocket(this, SocketType.Float, "label.socket.x", {webglOutputMapping: {[webglStdOuts.float]: x}}),
+          new InSocket(this, SocketType.Float, "label.socket.y", {webglOutputMapping: {[webglStdOuts.float]: y}}),
         ])
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Any, "label.socket.value", context => {
+        new OutSocket(this, SocketType.DynamicAny, "label.socket.value", context => {
           return this.ins[0].inValue({
             coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
           });
         }, {
-          ...dynamicTyping.outSocketOptions,
+          ...dynamicTyping.outSocketOptions(WebglTemplate.slot(val)),
           constant: true,
-          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(val)}),
         }),
       );
     }

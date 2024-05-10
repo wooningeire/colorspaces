@@ -364,9 +364,9 @@ const strings = {
   "label.socketType.colorComponents": "Color",
   "desc.socketType.colorComponents.out": "A list of (usually 3) coordinates in a color space.",
   "desc.socketType.colorComponents.in": "A list of (usually 3) coordinates in a color space.",
-  "label.socketType.any": "Any",
-  "desc.socketType.any.in": "This socket accepts any data type.",
-  "desc.socketType.any.out": "The data type of this socket is not yet known. It will likely depend on the data type of one of the input sockets.",
+  "label.socketType.dynamicAny": "Any (dynamic)",
+  "desc.socketType.dynamicAny.in": "This socket accepts any data type and will adjust to whatever data type is inserted into this socket.",
+  "desc.socketType.dynamicAny.out": "This socket can produce any data type and will adjust to whatever data type this socket is piped into.",
   "label.socketType.unknown": "Unknown",
   
   "label.socketAttr.constant": "**Constant**",

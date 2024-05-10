@@ -1,8 +1,8 @@
 import { StringKey } from "@/strings";
-import { Node, SocketType, InSocket, OutSocket, webglOuts } from "../Node";
+import { Node, SocketType, InSocket, OutSocket, webglStdOuts } from "../Node";
 import { NodeWithOverloads, Overload, OverloadGroup } from "../Overload";
 
-import { useDynamicallyTypedSockets } from "./util";
+import { dynamicOutSocketOutputs, useDynamicallyTypedSockets } from "./util";
 import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 
 export namespace booleans {
@@ -25,19 +25,15 @@ export namespace booleans {
       );
 
       this.ins.push(
-        new InSocket(this, SocketType.Bool, "label.socket.conditional.condition", { webglOutputMapping: { [webglOuts.val]: condition } }),
-        new InSocket(this, SocketType.Any, "label.socket.conditional.ifTrue", {
-          ...dynamicTyping.inSocketOptions,
-          //@ts-ignore
-          webglGetOutputMapping: socket => () => ({ [webglOuts.val]: ifTrue }),
+        new InSocket(this, SocketType.Bool, "label.socket.conditional.condition", { webglOutputMapping: { [webglStdOuts.bool]: condition } }),
+        new InSocket(this, SocketType.DynamicAny, "label.socket.conditional.ifTrue", {
+          ...dynamicTyping.inSocketOptions(ifTrue),
           sliderProps: {
             hasBounds: false,
           },
         }),
-        new InSocket(this, SocketType.Any, "label.socket.conditional.ifFalse", {
-          ...dynamicTyping.inSocketOptions,
-          //@ts-ignore
-          webglGetOutputMapping: socket => () => ({ [webglOuts.val]: ifFalse }),
+        new InSocket(this, SocketType.DynamicAny, "label.socket.conditional.ifFalse", {
+          ...dynamicTyping.inSocketOptions(ifFalse),
           sliderProps: {
             hasBounds: false,
           },
@@ -45,24 +41,25 @@ export namespace booleans {
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Any, "label.socket.value",
+        new OutSocket(this, SocketType.DynamicAny, "label.socket.value",
           context => this.ins[0].inValue(context) ? this.ins[1].inValue(context) : this.ins[2].inValue(context),
           {
-            ...dynamicTyping.outSocketOptions,
+            ...dynamicTyping.outSocketOptions(),
             webglOutputs: socket => () => {
+              //@ts-ignore
               if (socket.type === SocketType.ColorComponents) {
                 return {
-                  [webglOuts.val]: WebglTemplate.slot(outColor),
+                  [webglStdOuts.color]: WebglTemplate.slot(outColor),
                 };
               }
 
-              return {
-                [webglOuts.val]: WebglTemplate.source`(${condition} ? ${ifTrue} : ${ifFalse})`,
-              };
+              return nonColorOutputs();
             },
           },
         ),
       );
+
+      const nonColorOutputs = dynamicOutSocketOutputs(WebglTemplate.source`(${condition} ? ${ifTrue} : ${ifFalse})`)(this.outs[0]);
     }
 
     webglBaseVariables(): WebglVariables {
@@ -110,22 +107,20 @@ if (${condition}) {
           getTemplate: (inputSlots: typeof CompareFloatsNode["inputSlots"]) => WebglTemplate,
         }) => {
           const { val0, val1 } = this.inputSlots;
-          const outputs = {[webglOuts.val]: getTemplate(this.inputSlots)};
+          const outputs = {[webglStdOuts.bool]: getTemplate(this.inputSlots)};
           
           return new Overload(
             label,
             node => {
               return [
                 new InSocket(node, SocketType.Float, "label.socket.compareFloats.valueA", {
-                  //@ts-ignore
-                  webglGetOutputMapping: socket => () => ({ [webglOuts.val]: val0 }),
+                  webglGetOutputMapping: socket => () => ({ [webglStdOuts.float]: val0 }),
                   sliderProps: {
                     hasBounds: false,
                   },
                 }),
                 new InSocket(node, SocketType.Float, "label.socket.compareFloats.valueB", {
-                  //@ts-ignore
-                  webglGetOutputMapping: socket => () => ({ [webglOuts.val]: val1 }),
+                  webglGetOutputMapping: socket => () => ({ [webglStdOuts.float]: val1 }),
                   sliderProps: {
                     hasBounds: false,
                   },
