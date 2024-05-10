@@ -20,9 +20,9 @@ export namespace output {
 
     static readonly overloadGroup = new OverloadGroup(new Map<CssOutputMode, Overload>([
       [CssOutputMode.RgbVector, new Overload(
-        "RGB vector",
+        "label.overload.cssOutput.rgbVector",
         node => [
-          new InSocket(node, SocketType.Vector, "RGB").flag(SocketFlag.Rgb),
+          new InSocket(node, SocketType.Vector, "label.rgb").flag(SocketFlag.Rgb),
         ],
         node => [],
         (ins, outs, context) => ({
@@ -32,9 +32,9 @@ export namespace output {
         }),
       )],
       [CssOutputMode.Color, new Overload(
-        "Color",
+        "label.overload.cssOutput.color",
         node => [
-          new InSocket(node, SocketType.ColorComponents, "Color"),
+          new InSocket(node, SocketType.ColorComponents, "label.socket.color"),
         ],
         node => [],
         (ins, outs, context) => ({
@@ -56,20 +56,20 @@ export namespace output {
 
     static readonly overloadGroup = new OverloadGroup(new Map<ChromaticityPlotMode, Overload>([
       [ChromaticityPlotMode.Color, new Overload(
-        "From colors",
+        "label.overload.chromaticityPlot.fromColor",
         node => [
-          new InSocket(node, SocketType.ColorComponents, "Colors"),
+          new InSocket(node, SocketType.ColorComponents, "label.socket.colors"),
         ],
         node => [],
       )],
 
       [ChromaticityPlotMode.Xy, new Overload(
-        "From xy",
+        "label.overload.chromaticityPlot.fromXy",
         node => [
-          new InSocket(node, SocketType.Float, "x", {
+          new InSocket(node, SocketType.Float, "label.xyy.x", {
             defaultValue: cm.illuminantsXy["2deg"]["D65"][0],
           }),
-          new InSocket(node, SocketType.Float, "y", {
+          new InSocket(node, SocketType.Float, "label.xyy.y", {
             defaultValue: cm.illuminantsXy["2deg"]["D65"][1],
           }),
         ],
@@ -103,22 +103,22 @@ export namespace output {
       const {val, alpha} = ImagePlotNode.inputSlots;
 
       this.ins.push(
-        (this.normalizeCoordsSocket = new InSocket(this, SocketType.Bool, "Normalize coordinates", {
+        (this.normalizeCoordsSocket = new InSocket(this, SocketType.Bool, "label.socket.normalizeCoordinates", {
           showSocket: false,
           defaultValue: true,
         })),
-        new InSocket(this, SocketType.ColorComponents, "Colors", {
+        new InSocket(this, SocketType.ColorComponents, "label.socket.colors", {
           webglOutputMapping: {
             [webglOuts.val]: val,
           },
         }),
-        (this.alphaSocket = new InSocket(this, SocketType.Float, "Alpha", {
+        (this.alphaSocket = new InSocket(this, SocketType.Float, "label.socket.alpha", {
           defaultValue: 1,
           webglOutputMapping: {
             [webglOuts.val]: alpha,
           },
         })),
-        (this.widthSocket = new InSocket(this, SocketType.Float, "Width", {
+        (this.widthSocket = new InSocket(this, SocketType.Float, "label.socket.width", {
           defaultValue: 240,
           constant: true,
           sliderProps: {
@@ -127,7 +127,7 @@ export namespace output {
             min: 1,
           },
         })),
-        (this.heightSocket = new InSocket(this, SocketType.Float, "Height", {
+        (this.heightSocket = new InSocket(this, SocketType.Float, "label.socket.height", {
           defaultValue: 240,
           constant: true,
           sliderProps: {
@@ -173,7 +173,7 @@ export namespace output {
     constructor() {
       super();
       this.ins.push(
-        (this.colorsSocket = new InSocket(this, SocketType.ColorComponents, "Colors")),
+        (this.colorsSocket = new InSocket(this, SocketType.ColorComponents, "label.socket.colors")),
       );
     }
   }

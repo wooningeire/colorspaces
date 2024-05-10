@@ -1,10 +1,11 @@
 import { WebglOutputs, WebglVariables } from "@/webgl-compute/WebglVariables";
 import { InSocket, Node, NodeDisplay, NodeEvalContext, OutSocket, SocketType, SocketType as St, Tree } from "./Node";
+import { NO_DESC, StringKey } from "@/strings";
 
 /** A collection of input/output sockets, as well as a function to compute outputs from the inputs' values */
 export class Overload<NodeType extends Node=any, InSockets extends InSocket[]=any, OutSockets extends OutSocket[]=any> {
   constructor(
-    readonly label: string,
+    readonly label: StringKey,
     readonly buildInSockets: (node: NodeType) => [...InSockets],
     readonly buildOutSockets: (node: NodeType, ins: InSockets) => [...OutSockets],
     readonly nodeDisplay: (ins: InSockets, outs: OutSockets, context: NodeEvalContext, node: NodeType) => NodeDisplay=() => { throw new Error("not implemented") },
@@ -21,7 +22,7 @@ export class OverloadGroup<Mode extends string, NodeType extends Node=any> {
   ) {}
 
   buildDropdown(node: NodeType, defaultMode: Mode, overloadManager: OverloadManager<Mode>) {
-    return new InSocket(node, SocketType.Dropdown, "", {
+    return new InSocket(node, SocketType.Dropdown, NO_DESC, {
       showSocket: false,
       options: [...this.modes].map(([mode, overload]) => (
         {value: mode, text: overload.label}

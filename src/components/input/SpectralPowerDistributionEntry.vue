@@ -7,6 +7,7 @@ import {settings} from '../store';
 import {models} from "@/models/nodetypes";
 import {Listen, clearTextSelection, lerp, clamp} from "@/util";
 import * as cm from "@/models/colormanagement";
+import getString from "@/strings";
 
 const props = defineProps({
   node: {
@@ -168,7 +169,7 @@ const beginInput = (downEvent: PointerEvent) => {
 
       <div class="wavelength-label">
         <div class="tickmark">360</div>
-        <div>Wavelength (nm)</div>
+        <div v-html="getString('label.socket.wavelength')"></div>
         <div class="tickmark">830</div>
       </div>
     </div>
@@ -191,11 +192,17 @@ const beginInput = (downEvent: PointerEvent) => {
 
       <div class="control-row">
         <div>
-          <label>Dataset</label>
+          <label v-html="getString('label.socket.cmfDataset')"></label>
           <select v-model="datasetIdRef"
               @change="onchangeDatasetId">
-            <option value="2deg">CIE 2° observer (1931)</option>
-            <option value="10deg">CIE 10° observer (1964)</option>
+            <option
+              value="2deg"
+              v-html="getString('label.cmfDataset.2deg')"
+            ></option>
+            <option
+              value="10deg"
+              v-html="getString('label.cmfDataset.10deg')"
+            ></option>
           </select>
         </div>
       </div>
@@ -257,10 +264,12 @@ const beginInput = (downEvent: PointerEvent) => {
     > .control-row {
       display: flex;
       justify-content: space-between;
+      align-items: center;
 
       > div {
         display: flex;
         flex-flow: row;
+        align-items: center;
         gap: 0.25em;
       }
     }

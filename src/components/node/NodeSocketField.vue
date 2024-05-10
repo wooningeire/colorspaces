@@ -9,6 +9,7 @@ import {settings, tree} from "../store";
 
 import {Socket, SocketType as St, SocketFlag, Tree} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
+import getString, {NO_DESC} from "@/strings";
 
 const props = defineProps<{
   socket: Socket,
@@ -118,10 +119,11 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
       <label>
         <select v-model="socket.fieldValue"
             @change="onValueChange(socket.valueChangeRequiresShaderReload)">
-          <option v-for="{text, value} of (socket as Socket<St.Dropdown>).data.options"
-              :value="value">
-            {{text}}
-          </option>
+          <option
+            v-for="{text, value} of (socket as Socket<St.Dropdown>).data.options"
+            :value="value"
+            v-html="getString(text)"
+          ></option>
         </select>
       </label>
     </template>

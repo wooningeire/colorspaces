@@ -6,6 +6,7 @@ import { Vec3 } from "@/util";
 import { illuminantE } from "../colormanagement/spaces/col-xyz-xyy-illuminants";
 import { getIlluminant, whitePointSocketOptions } from "./spaces";
 import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
+import { StringKey } from "@/strings";
 
 export namespace models {
   export class RgbNode extends Node {
@@ -20,13 +21,13 @@ export namespace models {
       const {red, green, blue} = RgbNode.inputSlots;
 
       this.ins.push(
-        new InSocket(this, SocketType.Float, "Red", {webglOutputMapping: {[webglOuts.val]: red}}).flag(SocketFlag.Rgb),
-        new InSocket(this, SocketType.Float, "Green", {webglOutputMapping: {[webglOuts.val]: green}}).flag(SocketFlag.Rgb),
-        new InSocket(this, SocketType.Float, "Blue", {webglOutputMapping: {[webglOuts.val]: blue}}).flag(SocketFlag.Rgb),
+        new InSocket(this, SocketType.Float, "label.socket.red", {webglOutputMapping: {[webglOuts.val]: red}}).flag(SocketFlag.Rgb),
+        new InSocket(this, SocketType.Float, "label.socket.green", {webglOutputMapping: {[webglOuts.val]: green}}).flag(SocketFlag.Rgb),
+        new InSocket(this, SocketType.Float, "label.socket.blue", {webglOutputMapping: {[webglOuts.val]: blue}}).flag(SocketFlag.Rgb),
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "RGB", context => this.ins.map(socket => socket.inValue(context)) as Vec3, {
+        new OutSocket(this, SocketType.Vector, "label.socket.blue", context => this.ins.map(socket => socket.inValue(context)) as Vec3, {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`vec3(${red}, ${green}, ${blue})`}),
         }),
       );
@@ -66,7 +67,7 @@ export namespace models {
     id: string,
     outputDisplayType: OutputDisplayType,
 
-    socketLabels: string[],
+    socketLabels: StringKey[],
     nodeDisplayLabels: string[],
     socketFlags?: SocketFlag[],
 
@@ -87,13 +88,13 @@ export namespace models {
   
       static readonly overloadGroup = new OverloadGroup(new Map<RgbOverloadMode, Overload>([
         [RgbOverloadMode.ToRgb, new Overload(
-          "To RGB",
+          "label.overload.toRgb",
           node => Object.values(inputSlots).map(
             (slot, i) => 
                 new InSocket(node, SocketType.Float, socketLabels[i], {webglOutputMapping: {[webglOuts.val]: slot}}).flag(socketFlags[i]),
           ),
           (node, ins) => [
-            new OutSocket(node, SocketType.Vector, "RGB", context => toRgb.convert(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3, {
+            new OutSocket(node, SocketType.Vector, "label.rgb", context => toRgb.convert(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3, {
               webglOutputs: socket => () => toRgbOutputs,
             }),
           ],
@@ -107,9 +108,9 @@ export namespace models {
         )],
   
         [RgbOverloadMode.FromRgb, new Overload(
-          "From RGB",
+          "label.overload.fromRgb",
           node => [
-            new InSocket(node, SocketType.Vector, "RGB", {webglOutputMapping: {[webglOuts.val]: rgb}}),
+            new InSocket(node, SocketType.Vector, "label.rgb", {webglOutputMapping: {[webglOuts.val]: rgb}}),
           ],
           (node, ins) => Object.values(inputSlots).map(
             (slot, i) => 
@@ -140,7 +141,7 @@ export namespace models {
     id: "hsl",
     outputDisplayType: OutputDisplayType.Vec,
 
-    socketLabels: ["Hue", "Saturation", "Lightness"],
+    socketLabels: ["label.socket.hue", "label.socket.saturation", "label.socket.lightness"],
     nodeDisplayLabels: ["H", "S", "L"],
     socketFlags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
     toRgb: {
@@ -158,7 +159,7 @@ export namespace models {
     id: "hsv",
     outputDisplayType: OutputDisplayType.Vec,
 
-    socketLabels: ["Hue", "Saturation", "Value"],
+    socketLabels: ["label.socket.hue", "label.socket.saturation", "label.socket.hsv.value"],
     nodeDisplayLabels: ["H", "S", "V"],
     socketFlags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
     toRgb: {
@@ -176,7 +177,7 @@ export namespace models {
     id: "hwb",
     outputDisplayType: OutputDisplayType.Vec,
 
-    socketLabels: ["Hue", "Whiteness", "Blackness"],
+    socketLabels: ["label.socket.hue", "label.socket.whiteness", "label.socket.blackness"],
     nodeDisplayLabels: ["H", "W", "B"],
     socketFlags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
     toRgb: {
@@ -194,7 +195,7 @@ export namespace models {
     id: "cmy",
     outputDisplayType: OutputDisplayType.Vec,
 
-    socketLabels: ["Cyan", "Magenta", "Yellow"],
+    socketLabels: ["label.socket.cyan", "label.socket.magenta", "label.socket.yellow"],
     nodeDisplayLabels: ["C", "M", "Y"],
     toRgb: {
       convert: cm.cmyToRgb,
@@ -247,19 +248,19 @@ export namespace models {
       const {lightness, redGreen, yellowBlue} = LxyNode.inputSlots;
 
       this.ins.push(
-        new InSocket(this, SocketType.Float, "Lightness", {
+        new InSocket(this, SocketType.Float, "label.socket.lightness", {
           webglOutputMapping: {[webglOuts.val]: lightness},
           sliderProps: {
             hasBounds: false,
           },
         }),
-        new InSocket(this, SocketType.Float, "Red–green", {
+        new InSocket(this, SocketType.Float, "label.socket.redGreen", {
           webglOutputMapping: {[webglOuts.val]: redGreen},
           sliderProps: {
             hasBounds: false,
           },
         }),
-        new InSocket(this, SocketType.Float, "Yellow–blue", {
+        new InSocket(this, SocketType.Float, "label.socket.yellowBlue", {
           webglOutputMapping: {[webglOuts.val]: yellowBlue},
           sliderProps: {
             hasBounds: false,
@@ -268,7 +269,7 @@ export namespace models {
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "Lxy", context => this.ins.map(socket => socket.inValue(context)) as Vec3, {
+        new OutSocket(this, SocketType.Vector, "label.lxy", context => this.ins.map(socket => socket.inValue(context)) as Vec3, {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`vec3(${lightness}, ${redGreen}, ${yellowBlue})`}),
         }),
       );
@@ -284,7 +285,7 @@ export namespace models {
   }
 
   export const LchNode = (() => {
-    const socketLabels = ["Lightness", "Colorfulness", "Hue"];
+    const socketLabels = ["label.socket.lightness", "label.socket.colorfulness", "label.socket.hue"] as StringKey[];
 
     const inputSlots = WebglSlot.ins("lightness", "colorfulness", "hue");
     const {lightness, colorfulness, hue} = inputSlots;
@@ -300,7 +301,7 @@ export namespace models {
   
       static readonly overloadGroup = new OverloadGroup(new Map<LxyOverloadMode, Overload>([
         [LxyOverloadMode.ToLxy, new Overload(
-          "To Lxy",
+          "label.overload.toLxy",
           node => [
             new InSocket(node, SocketType.Float, socketLabels[0], {
               webglOutputMapping: {[webglOuts.val]: lightness},
@@ -319,7 +320,7 @@ export namespace models {
             }).flag(SocketFlag.Hue),
           ],
           (node, ins) => [
-            new OutSocket(node, SocketType.Vector, "Lxy", context => cm.lchToLxy(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3, {
+            new OutSocket(node, SocketType.Vector, "label.lxy", context => cm.lchToLxy(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3, {
               webglOutputs: socket => () => toLxyOutputs,
             }),
           ],
@@ -333,9 +334,9 @@ export namespace models {
         )],
   
         [LxyOverloadMode.FromLxy, new Overload(
-          "From Lxy",
+          "label.overload.fromLxy",
           node => [
-            new InSocket(node, SocketType.Vector, "Lxy", {
+            new InSocket(node, SocketType.Vector, "label.lxy", {
               webglOutputMapping: {[webglOuts.val]: lxy},
               sliderProps: [
                 {
@@ -394,10 +395,10 @@ export namespace models {
       const {unif} = SpectralPowerDistributionNode.outputSlots;
       
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz(), {
+        new OutSocket(this, SocketType.Vector, "label.xyz", context => this.computeXyz(), {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(unif)}),
         }),
-        new OutSocket(this, SocketType.ColorComponents, "Color", context => new cm.Xyz(this.computeXyz(), illuminantE), {
+        new OutSocket(this, SocketType.ColorComponents, "label.socket.color", context => new cm.Xyz(this.computeXyz(), illuminantE), {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`Color(${unif}, illuminant2_E, ${unif})`}),
         }),
       );
@@ -451,7 +452,7 @@ export namespace models {
       const {xyz} = WavelengthNode.outputSlots;
 
       this.ins.push(
-        (this.inSocket = new InSocket(this, SocketType.Float, "Wavelength (nm)", {
+        (this.inSocket = new InSocket(this, SocketType.Float, "label.socket.wavelength", {
           sliderProps: {
             softMin: 360,
             softMax: 830,
@@ -460,29 +461,29 @@ export namespace models {
           defaultValue: 510,
           webglOutputMapping: {[webglOuts.val]: wavelength},
         })),
-        (this.powerSocket = new InSocket(this, SocketType.Float, "Relative power", {
+        (this.powerSocket = new InSocket(this, SocketType.Float, "label.socket.wavelength.relativePower", {
           sliderProps: {
             hasBounds: false,
           },
           defaultValue: 1,
           webglOutputMapping: {[webglOuts.val]: power},
         })),
-        (this.datasetSocket = new InSocket(this, SocketType.Dropdown, "Dataset", {
+        (this.datasetSocket = new InSocket(this, SocketType.Dropdown, "label.socket.cmfDataset", {
           showSocket: false,
           defaultValue: "2deg",
           options: [
-            {value: "2deg", text: "CIE 2° observer (1931)"},
-            {value: "10deg", text: "CIE 10° observer (1964)"},
+            {value: "2deg", text: "label.cmfDataset.2deg"},
+            {value: "10deg", text: "label.cmfDataset.10deg"},
           ],
           valueChangeRequiresShaderReload: true,
         })),
       );
       
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz(context), {
+        new OutSocket(this, SocketType.Vector, "label.xyz", context => this.computeXyz(context), {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(xyz)}),
         }),
-        new OutSocket(this, SocketType.ColorComponents, "Color", context => new cm.Xyz(this.computeXyz(context), illuminantE), {
+        new OutSocket(this, SocketType.ColorComponents, "label.socket.color", context => new cm.Xyz(this.computeXyz(context), illuminantE), {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`Color(${xyz}, illuminant2_E, ${xyz})`}),
         }),
       );
@@ -523,7 +524,7 @@ export namespace models {
       const {xyz} = BlackbodyNode.outputSlots;
 
       this.ins.push(
-        (this.inSocket = new InSocket(this, SocketType.Float, "Temperature (K)", {
+        (this.inSocket = new InSocket(this, SocketType.Float, "label.socket.blackbody.temperature", {
           sliderProps: {
             hasBounds: false,
             unboundedChangePerPixel: 10,
@@ -531,21 +532,21 @@ export namespace models {
           defaultValue: 1750,
           webglOutputMapping: {[webglOuts.val]: temperature},
         })),
-        (this.datasetSocket = new InSocket(this, SocketType.Dropdown, "Dataset", {
+        (this.datasetSocket = new InSocket(this, SocketType.Dropdown, "label.socket.cmfDataset", {
           showSocket: false,
           defaultValue: "2deg",
           options: [
-            {value: "2deg", text: "CIE 2° observer (1931)"},
-            {value: "10deg", text: "CIE 10° observer (1964)"},
+            {value: "2deg", text: "label.cmfDataset.2deg"},
+            {value: "10deg", text: "label.cmfDataset.10deg"},
           ],
         })),
       );
       
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "XYZ", context => this.computeXyz(context), {
+        new OutSocket(this, SocketType.Vector, "label.xyz", context => this.computeXyz(context), {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(xyz)}),
         }),
-        new OutSocket(this, SocketType.ColorComponents, "Color", context => new cm.Xyz(this.computeXyz(context), illuminantE), {
+        new OutSocket(this, SocketType.ColorComponents, "label.socket.color", context => new cm.Xyz(this.computeXyz(context), illuminantE), {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`Color(${xyz}, illuminant2_E, ${xyz})`}),
         }),
       );
@@ -588,17 +589,17 @@ export namespace models {
       const {xyz, xyy} = StandardIlluminantNode.outputSlots;
 
       this.ins.push(
-        (this.whitePointSocket = new InSocket(this, SocketType.Dropdown, "White point", whitePointSocketOptions)),
+        (this.whitePointSocket = new InSocket(this, SocketType.Dropdown, "label.socket.illuminant", whitePointSocketOptions)),
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "XYZ", context => [...cm.Xyz.from(this.getIlluminant(context))] as Vec3, {
+        new OutSocket(this, SocketType.Vector, "label.xyz", context => [...cm.Xyz.from(this.getIlluminant(context))] as Vec3, {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(xyz)}),
         }),
-        new OutSocket(this, SocketType.Vector, "xyY", context => [...cm.Xyy.from(this.getIlluminant(context))] as Vec3, {
+        new OutSocket(this, SocketType.Vector, "label.xyy", context => [...cm.Xyy.from(this.getIlluminant(context))] as Vec3, {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(xyy)}),
         }),
-        new OutSocket(this, SocketType.ColorComponents, "Color", context => cm.Xyz.from(this.getIlluminant(context)), {
+        new OutSocket(this, SocketType.ColorComponents, "label.socket.color", context => cm.Xyz.from(this.getIlluminant(context)), {
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.source`Color(${xyz}, illuminant2_E, ${xyz})`}),
         }),
       );

@@ -117,6 +117,7 @@ const showTooltip = () => {
   const rect = socketContainer.value!.getBoundingClientRect();
 
   const socketTypeName = socketTypeNames.get(props.socket.type);
+  const inOut = props.socket.isInput ? "in" : "out";
 
   let tooltipString = `${getString(props.socket.socketDesc ?? NO_DESC)}`;
   
@@ -124,7 +125,14 @@ const showTooltip = () => {
     tooltipString += `<br />
 <br />
 ${getString("general.socketDataTypeLabel")}${getString(`label.socketType.${socketTypeName}`)}<br />
-${getString(`desc.socketType.${socketTypeName}.${props.socket.isInput ? "in" : "out"}`)}`;
+${getString(`desc.socketType.${socketTypeName}.${inOut}`)}`;
+  }
+
+  if (props.socket.constant) {
+    tooltipString += `<br />
+<br />
+${getString("label.socketAttr.constant")}<br />
+${getString(`desc.socketAttr.constant.${inOut}`)}`;
   }
 
   if (props.socket.showSocket && props.socket.hasLinks) {
@@ -189,9 +197,10 @@ Object.defineProperties(socketVue, {
           }"
           :style="{'--socket-color': socketColor} as any"></div>
     </div>
-    <div class="socket-label">
-      {{socket.label}}
-    </div>
+    <div
+      class="socket-label"
+      v-html="getString(socket.label)"
+    ></div>
 
     <NodeSocketField v-if="shouldShowFields"
         :socket="socket"

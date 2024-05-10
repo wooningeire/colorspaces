@@ -35,31 +35,31 @@ export const oklabSliderProps = [
   },
 ];
 
-export const whitePointSocketOptions = {
+export const whitePointSocketOptions = <SocketOptions<SocketType.Dropdown>>{
   options: [
-    {value: "2deg/A", text: "CIE 2° / A"},
-    {value: "2deg/B", text: "CIE 2° / B"},
-    {value: "2deg/C", text: "CIE 2° / C"},
-    {value: "2deg/D50", text: "CIE 2° / D50"},
-    {value: "2deg/D55", text: "CIE 2° / D55"},
-    {value: "2deg/D60", text: "CIE 2° / D60"},
-    {value: "2deg/D65", text: "CIE 2° / D65"},
-    {value: "2deg/D75", text: "CIE 2° / D75"},
-    {value: "2deg/E", text: "CIE 2° / E"},
-    {value: "10deg/A", text: "CIE 10° / A"},
-    {value: "10deg/B", text: "CIE 10° / B"},
-    {value: "10deg/C", text: "CIE 10° / C"},
-    {value: "10deg/D50", text: "CIE 10° / D50"},
-    {value: "10deg/D55", text: "CIE 10° / D55"},
-    {value: "10deg/D60", text: "CIE 10° / D60"},
-    {value: "10deg/D65", text: "CIE 10° / D65"},
-    {value: "10deg/D75", text: "CIE 10° / D75"},
-    {value: "10deg/E", text: "CIE 10° / E"},
+    {value: "2deg/A", text: "label.standardIlluminant.2deg.a"},
+    {value: "2deg/B", text: "label.standardIlluminant.2deg.b"},
+    {value: "2deg/C", text: "label.standardIlluminant.2deg.c"},
+    {value: "2deg/D50", text: "label.standardIlluminant.2deg.d50"},
+    {value: "2deg/D55", text: "label.standardIlluminant.2deg.d55"},
+    {value: "2deg/D60", text: "label.standardIlluminant.2deg.d60"},
+    {value: "2deg/D65", text: "label.standardIlluminant.2deg.d65"},
+    {value: "2deg/D75", text: "label.standardIlluminant.2deg.d75"},
+    {value: "2deg/E", text: "label.standardIlluminant.2deg.e"},
+    {value: "10deg/A", text: "label.standardIlluminant.10deg.a"},
+    {value: "10deg/B", text: "label.standardIlluminant.10deg.b"},
+    {value: "10deg/C", text: "label.standardIlluminant.10deg.c"},
+    {value: "10deg/D50", text: "label.standardIlluminant.10deg.d50"},
+    {value: "10deg/D55", text: "label.standardIlluminant.10deg.d55"},
+    {value: "10deg/D60", text: "label.standardIlluminant.10deg.d60"},
+    {value: "10deg/D65", text: "label.standardIlluminant.10deg.d65"},
+    {value: "10deg/D75", text: "label.standardIlluminant.10deg.d75"},
+    {value: "10deg/E", text: "label.standardIlluminant.10deg.e"},
   ],
   showSocket: false,
   defaultValue: "2deg/D65",
   socketDesc: "desc.socket.illuminant" as StringKey,
-} as SocketOptions<SocketType.Dropdown>;
+};
 export const getIlluminant = (socket: InSocket<SocketType.Dropdown>, context: NodeEvalContext) => {
   const illuminantId = socket.inValue(context);
   if (illuminantId !== "custom") {
@@ -96,11 +96,11 @@ export namespace spaces {
         const {outColor, newIlluminant} = this.outputSlots;
 
         return new Overload(
-          "From vector",
+          "label.overload.fromVector",
           node => {
             const sockets: InSocket[] = [];
             if (node.includeWhitePoint) {
-              sockets.push(node.illuminantSocket = new InSocket(node, SocketType.Dropdown, "White point", whitePointSocketOptions));
+              sockets.push(node.illuminantSocket = new InSocket(node, SocketType.Dropdown, "label.socket.illuminant", whitePointSocketOptions));
             }
   
             const {inVal} = this.inputSlots;
@@ -113,7 +113,7 @@ export namespace spaces {
             return sockets;
           },
           node => [
-            new OutSocket(node, SocketType.ColorComponents, "Color", context => node.computeColor(context, true), {
+            new OutSocket(node, SocketType.ColorComponents, "label.socket.color", context => node.computeColor(context, true), {
               webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(outColor)}),
             }),
             ...node.componentLabels.map(
@@ -127,7 +127,7 @@ export namespace spaces {
           ],
           (ins, outs, context, node) => ({
             values: node.computeColor(context, true),
-            labels: node.componentLabels,
+            labels: node.displayLabels,
             flags: node.displayFlags,
           }),
           (ins, outs, context, node) => {
@@ -170,7 +170,7 @@ export namespace spaces {
         const {outColor, newIlluminant, outComponents} = this.outputSlots;
 
         return new Overload(
-          "From values",
+          "label.overload.fromValues",
           node => {
             const slots = [x, y, z];
   
@@ -189,19 +189,19 @@ export namespace spaces {
   
             const sockets: InSocket[] = [];
             if (node.includeWhitePoint) {
-              sockets.push(node.illuminantSocket = new InSocket(node, SocketType.Dropdown, "White point", whitePointSocketOptions));
+              sockets.push(node.illuminantSocket = new InSocket(node, SocketType.Dropdown, "label.socket.illuminant", whitePointSocketOptions));
             }
             sockets.push(...(node.valuesSockets = node.componentLabels.map((label, i) => new InSocket(node, SocketType.Float, label, individualSocketOptions[i]))));
             return sockets;
           },
           node => [
-            new OutSocket(node, SocketType.ColorComponents, "Color", context => node.computeColor(context, false), {
+            new OutSocket(node, SocketType.ColorComponents, "label.socket.color", context => node.computeColor(context, false), {
               webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(outColor)}),
             }),
           ],
           (ins, outs, context, node) => ({
             values: node.computeColor(context, false),
-            labels: node.componentLabels,
+            labels: node.displayLabels,
             flags: node.displayFlags,
           }),
           (ins, outs, context, node) => WebglVariables.templateConcat`vec3 ${outComponents} = vec3(${x}, ${y}, ${z});
@@ -231,14 +231,18 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
 
     /** The color class to use for conversions */
     abstract get ColClass(): typeof cm.Col;
-    abstract get componentLabels(): string[];
-    
+    abstract get componentLabels(): StringKey[];
+
+    get displayLabels(): string[] {
+      return [];
+    }
+
     get displayFlags(): SocketFlag[] {
       return [];
     }
 
     constructInSocket(socketOptions: InSocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "Vector or color");
+      return new InSocket(this, SocketType.VectorOrColor, "label.socket.vectorOrColor");
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {};
@@ -279,11 +283,11 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
       return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
     }
 
-    get componentLabels() {
-      return ["R", "G", "B"];
+    get componentLabels(): StringKey[] {
+      return ["label.rgb.r", "label.rgb.g", "label.rgb.b"];
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "RGB or color", socketOptions).flag(SocketFlag.Rgb);
+      return new InSocket(this, SocketType.VectorOrColor, "label.socket.rgbOrColor", socketOptions).flag(SocketFlag.Rgb);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -342,7 +346,7 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
       return cm.Xyz;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "XYZ or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "label.socket.xyzOrColor", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -353,8 +357,8 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
         ],
       };
     }
-    get componentLabels() {
-      return ["X", "Y", "Z"];
+    get componentLabels(): StringKey[] {
+      return ["label.xyz.x", "label.xyz.y", "label.xyz.z"];
     }
     webglXyzToComponents(inColor: WebglSlot, newIlluminant: WebglSlot) {
       return WebglTemplate.source`adaptXyz(${inColor}.xyz, ${inColor}.illuminant, ${newIlluminant})`;
@@ -378,7 +382,7 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
       return cm.Xyy;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "xyY or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "label.socket.xyyOrColor", socketOptions);
       // ...(this.primariesSockets = [
       // 	new InSocket(this, SocketType.Float, "x (chromaticity 1)", true, {defaultValue: d65[0]}),
       // 	new InSocket(this, SocketType.Float, "y (chromaticity 2)", true, {defaultValue: d65[1]}),
@@ -395,8 +399,8 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
         ],
       };
     }
-    get componentLabels() {
-      return ["x", "y", "Y"];
+    get componentLabels(): StringKey[] {
+      return ["label.xyy.x", "label.xyy.y", "label.xyz.y"];
     }
     webglXyzToComponents(inColor: WebglSlot, newIlluminant: WebglSlot) {
       return WebglTemplate.source`xyzToXyy(adaptXyz(${inColor}.xyz, ${inColor}.illuminant, ${newIlluminant}))`;
@@ -408,7 +412,7 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
 
   export class LabNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly id = "lab";
+    static readonly id = "cielab";
 
     get displayLabels() {
       return ["L*", "a*", "b*"];
@@ -418,7 +422,7 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
       return cm.Lab;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "Lxy or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "label.socket.lxyOrColor", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -426,8 +430,8 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
         sliderProps: labSliderProps,
       };
     }
-    get componentLabels() {
-      return ["L*", "a*", "b*"];
+    get componentLabels(): StringKey[] {
+      return ["label.cielxy.l", "label.cielab.a", "label.cielab.b"];
     }
     webglXyzToComponents(inColor: WebglSlot, newIlluminant: WebglSlot) {
       return WebglTemplate.source`xyzToLab(${inColor}.xyz, ${inColor}.illuminant, ${newIlluminant})`;
@@ -439,7 +443,7 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
 
   export class LuvNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
-    static readonly id = "luv";
+    static readonly id = "cieluv";
 
     get displayLabels() {
       return ["L*", "u*", "v*"];
@@ -449,7 +453,7 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
       return cm.Luv;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "Lxy or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "label.socket.lxyOrColor", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -457,8 +461,8 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
         sliderProps: labSliderProps,
       };
     }
-    get componentLabels() {
-      return ["L*", "u*", "v*"];
+    get componentLabels(): StringKey[] {
+      return ["label.cielxy.l", "label.cieluv.u", "label.cieluv.v"];
     }
     webglXyzToComponents(inColor: WebglSlot, newIlluminant: WebglSlot) {
       return WebglTemplate.source`xyzToLuv(${inColor}.xyz, ${inColor}.illuminant, ${newIlluminant})`;
@@ -480,7 +484,7 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
       return cm.Oklab;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
-      return new InSocket(this, SocketType.VectorOrColor, "Lxy or color", socketOptions);
+      return new InSocket(this, SocketType.VectorOrColor, "label.socket.lxyOrColor", socketOptions);
     }
     inSocketOptions(): SocketOptions<SocketType.VectorOrColor> {
       return {
@@ -488,8 +492,8 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
         sliderProps: oklabSliderProps,
       };
     }
-    get componentLabels() {
-      return ["L", "a", "b"];
+    get componentLabels(): StringKey[] {
+      return ["label.lxy.l", "label.lab.a", "label.lab.b"];
     }
 
     get includeWhitePoint() {

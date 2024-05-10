@@ -432,7 +432,7 @@ type SocketData<St extends SocketType=any> =
     St extends SocketType.Dropdown ? {
       options?: {
         value: string,
-        text: string,
+        text: StringKey,
       }[],
     } :
     St extends SocketType.Float ? {
@@ -536,7 +536,7 @@ export abstract class Socket<St extends SocketType=any> {
     readonly isInput: boolean,
     public type: St,
 
-    public label: string="",
+    public label: StringKey=NO_DESC,
 
     /** Object that specifies SocketType-independent options for this socket as well as SocketType-specific properties/data */
     options=<SocketOptions<St>>{},
@@ -647,7 +647,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     node: Node,
     type: St,
 
-    public label: string="",
+    label: StringKey,
 
     options=<InSocketOptions<St>>{},
   ) {
@@ -795,7 +795,7 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
     node: Node,
     type: St,
 
-    public label: string="",
+    label: StringKey,
 
     readonly outValue: (context: NodeEvalContext) => SocketValue<St>,
 
@@ -854,7 +854,7 @@ export class Field {
   value = 0;
 
   constructor(
-    public label: string="",
+    public label: StringKey=NO_DESC,
   ) {}
 }
 

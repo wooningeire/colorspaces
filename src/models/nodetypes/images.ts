@@ -26,23 +26,23 @@ export namespace images {
       const {val} = GradientNode.outputSlots;
 
       this.ins.push(
-        (this.axisSocket = new InSocket(this, SocketType.Dropdown, "Axis", {
+        (this.axisSocket = new InSocket(this, SocketType.Dropdown, "label.socket.gradient.axis", {
           showSocket: false,
           options: [
-            {text: "X", value: "0"},
-            {text: "Y", value: "1"},
+            {text: "label.socket.x", value: "0"},
+            {text: "label.socket.y", value: "1"},
           ],
           defaultValue: "0",
           valueChangeRequiresShaderReload: true,
         })),
         ...(this.boundsSockets = [
-          new InSocket(this, SocketType.Float, "From", {
+          new InSocket(this, SocketType.Float, "label.socket.gradient.from", {
             sliderProps: {
               hasBounds: false,
             },
             webglOutputMapping: {[webglOuts.val]: from},
           }),
-          new InSocket(this, SocketType.Float, "To", {
+          new InSocket(this, SocketType.Float, "label.socket.gradient.to", {
             defaultValue: 1,
             sliderProps: {
               hasBounds: false,
@@ -53,7 +53,7 @@ export namespace images {
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Float, "Values", context => {
+        new OutSocket(this, SocketType.Float, "label.socket.gradient.values", context => {
           const fac = context.coords?.[this.whichDimension] ?? 0;
           const value0 = this.boundsSockets[0].inValue(context);
           const value1 = this.boundsSockets[1].inValue(context);
@@ -91,12 +91,14 @@ export namespace images {
 
     private static readonly outputSlots = WebglSlot.outs("val", "texture", "width", "height");
 
+    width = 200;
+
     constructor() {
       super();
 
       this.ins.push(
-        (this.imageSocket = new InSocket(this, SocketType.Image, "File", {showSocket: false})),
-        (this.normalizeCoordinatesSocket = new InSocket(this, SocketType.Bool, "Normalize coordinates", {
+        (this.imageSocket = new InSocket(this, SocketType.Image, "label.socket.imageFile.file", {showSocket: false})),
+        (this.normalizeCoordinatesSocket = new InSocket(this, SocketType.Bool, "label.socket.normalizeCoordinates", {
           showSocket: false,
           defaultValue: true,
         })),
@@ -105,7 +107,7 @@ export namespace images {
       const {val, width, height} = ImageFileNode.outputSlots;
 
       this.outs.push(
-        new OutSocket(this, SocketType.Vector, "RGB", context => {
+        new OutSocket(this, SocketType.Vector, "label.rgb", context => {
           const imageData = this.imageSocket.inValue(context);
           if (!imageData) return [0, 0, 0] as Vec3;
 
@@ -121,8 +123,9 @@ export namespace images {
           webglOutputs: socket => () => ({
             [webglOuts.val]: WebglTemplate.source`${val}.rgb`,
           }),
+          socketDesc: "desc.socket.imageFileRgb",
         }),
-        new OutSocket(this, SocketType.Float, "Alpha", context => {
+        new OutSocket(this, SocketType.Float, "label.socket.alpha", context => {
           const imageData = this.imageSocket.inValue(context);
           if (!imageData) return 0;
 
@@ -135,18 +138,21 @@ export namespace images {
           webglOutputs: socket => () => ({
             [webglOuts.val]: WebglTemplate.source`${val}.a`,
           }),
+          socketDesc: "desc.socket.imageFileRgb",
         }),
-        new OutSocket(this, SocketType.Float, "Width", context => this.imageSocket.inValue(context)?.width ?? 0, {
+        new OutSocket(this, SocketType.Float, "label.socket.width", context => this.imageSocket.inValue(context)?.width ?? 0, {
           constant: true,
           webglOutputs: socket => () => ({
             [webglOuts.val]: WebglTemplate.slot(width),
           }),
+          socketDesc: "desc.socket.imageFileWidth",
         }),
-        new OutSocket(this, SocketType.Float, "Height", context => this.imageSocket.inValue(context)?.height ?? 0, {
+        new OutSocket(this, SocketType.Float, "label.socket.height", context => this.imageSocket.inValue(context)?.height ?? 0, {
           constant: true,
           webglOutputs: socket => () => ({
             [webglOuts.val]: WebglTemplate.slot(height),
           }),
+          socketDesc: "desc.socket.imageFileHeight",
         }),
       );
     }
@@ -233,18 +239,18 @@ uniform float ${height};`,
       const {val, color} = SampleNode.outputSlots;
 
       this.ins.push(
-        new InSocket(this, SocketType.Any, "Source", {
+        new InSocket(this, SocketType.Any, "label.socket.sample.source", {
           ...dynamicTyping.inSocketOptions,
           constant: true,
         }),
         ...(this.coordsSockets = [
-          new InSocket(this, SocketType.Float, "X", {webglOutputMapping: {[webglOuts.val]: x}}),
-          new InSocket(this, SocketType.Float, "Y", {webglOutputMapping: {[webglOuts.val]: y}}),
+          new InSocket(this, SocketType.Float, "label.socket.x", {webglOutputMapping: {[webglOuts.val]: x}}),
+          new InSocket(this, SocketType.Float, "label.socket.y", {webglOutputMapping: {[webglOuts.val]: y}}),
         ])
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Any, "Output", context => {
+        new OutSocket(this, SocketType.Any, "label.socket.value", context => {
           return this.ins[0].inValue({
             coords: this.coordsSockets.map(socket => socket.inValue(context)) as [number, number],
           });

@@ -1,4 +1,4 @@
-import {Tree, Node, Socket, SocketType as St, Link, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, OutSocket} from "../Node";
+import {Tree, Node, Socket, SocketType, Link, NodeEvalContext, OutputDisplayType, SocketFlag, InSocket, OutSocket} from "../Node";
 import * as cm from "../colormanagement";
 
 export namespace externals {
@@ -6,26 +6,26 @@ export namespace externals {
     static readonly TYPE = Symbol(this.name);
     static readonly LABEL = "Display buffer";
 
-    readonly colorSockets: Socket<St.VectorOrColor>[];
+    readonly colorSockets: Socket<SocketType.VectorOrColor>[];
     
     constructor() {
       super();
       
       this.ins.push(
         ...(this.colorSockets = [
-          new InSocket(this, Socket.Type.VectorOrColor, "Color"),
+          new InSocket(this, SocketType.VectorOrColor, "Color"),
         ]),
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Unknown, "Color data", context => {}),
+        new OutSocket(this, SocketType.Unknown, "Color data", context => {}),
       );
 
       this.canMove = false;
     }
 
     output(context: NodeEvalContext): cm.Srgb {
-      const color = (context.socket! as Socket<St.VectorOrColor>).inValue(context);
+      const color = (context.socket! as Socket<SocketType.VectorOrColor>).inValue(context);
 
       return color && cm.Srgb.from(color);
       // return this.colorSockets.filter(socket => socket.hasLinks)
@@ -43,7 +43,7 @@ export namespace externals {
 
       if (!socket.isInput) return;
 
-      const newSocket = new InSocket(this, Socket.Type.VectorOrColor, "Color");
+      const newSocket = new InSocket(this, SocketType.VectorOrColor, "Color");
 
       this.ins.push(newSocket);
       this.colorSockets.push(newSocket);
@@ -67,11 +67,11 @@ export namespace externals {
       super();
 
       this.ins.push(
-        new InSocket(this, Socket.Type.Unknown, "Color data"),
+        new InSocket(this, SocketType.Unknown, "Color data"),
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Unknown, "Screen image", context => {}),
+        new OutSocket(this, SocketType.Unknown, "Screen image", context => {}),
       );
 
       this.canMove = false;
@@ -87,11 +87,11 @@ export namespace externals {
       super();
 
       this.ins.push(
-        new InSocket(this, Socket.Type.Unknown, "Radiation"),
+        new InSocket(this, SocketType.Unknown, "Radiation"),
       );
 
       this.outs.push(
-        new OutSocket(this, Socket.Type.Unknown, "Radiation"),
+        new OutSocket(this, SocketType.Unknown, "Radiation"),
       );
 
       this.canMove = false;
@@ -107,7 +107,7 @@ export namespace externals {
       super();
 
       this.ins.push(
-        new InSocket(this, Socket.Type.Unknown, "Light"),
+        new InSocket(this, SocketType.Unknown, "Light"),
       );
 
       this.canMove = false;

@@ -28,36 +28,6 @@ export const useDynamicallyTypedSockets = (
       }
     }
 
-    // let existingOutputSocket = outSocket.links[0]?.dst;
-    // while (existingOutputSocket && existingOutputSocket.hasDynamicType) {
-    //   existingOutputSocket = existingOutputSocket.node.outs[0].links[0]?.dst;
-    // }
-    // const existingOutputType = existingOutputSocket?.type ?? SocketType.Any;
-
-    
-    // let existingInputSocket = ins[0].links[0]?.src;
-    // while (existingInputSocket && existingInputSocket.hasDynamicType) {
-    //   // TODO this assumes the position of a Dynamic-type socket, which is not necessarily true for future node types
-    //   existingInputSocket = existingInputSocket.node.ins[0].links[0]?.src;
-    // }
-    // let newType: SocketType = existingInputSocket?.type;
-
-    // // There could be more links on this socket
-    // if (!newType) {
-    //   let existingOutputSocket = outs[0].links[0]?.dst;
-    //   while (existingOutputSocket && existingOutputSocket.hasDynamicType) {
-    //     existingOutputSocket = existingOutputSocket.node.outs[0].links[0]?.dst;
-    //   }
-    //   newType = existingOutputSocket?.type;
-    // }
-    
-    // newType ??= SocketType.Any;
-
-    // for (const socket of syncedSockets()) {
-    //   socket.changeType(newType, tree);
-    // }
-    
-
     return mostRestrictiveType;
   };
 
@@ -98,34 +68,5 @@ export const useDynamicallyTypedSockets = (
 };
 
 
-export const dynamicInSocketMapping = ({
-  val,
-  illuminant,
-  xyz,
-}: {
-  val: WebglSlot,
-  illuminant: WebglSlot,
-  xyz: WebglSlot,
-}) =>
-    (socket: InSocket) => () => {
-      switch (socket.effectiveType()) {
-        case SocketType.Float:
-        case SocketType.Integer:
-        case SocketType.Vector:
-        case SocketType.Bool:
-          return {
-            [webglOuts.val]: val,
-          };
-
-        case SocketType.VectorOrColor:
-        case SocketType.ColorComponents:
-          return {
-            [webglOuts.val]: val,
-            [webglOuts.illuminant]: illuminant,
-            [webglOuts.xyz]: xyz,
-          };
-        
-        default:
-          return null;
-      }
-    };
+export const dynamicInSocketMapping = ({val}: {val: WebglSlot}) =>
+    (socket: InSocket) => () => ({[webglOuts.val]: val});

@@ -1,3 +1,4 @@
+import { NO_DESC } from "@/strings";
 import { Node, SocketType, NodeEvalContext, InSocket, OutSocket, webglOuts } from "../Node";
 
 import { dynamicInSocketMapping, useDynamicallyTypedSockets } from "./util";
@@ -23,7 +24,7 @@ export namespace organization {
       );
 
       this.ins.push(
-        new InSocket(this, SocketType.Any, "", {
+        new InSocket(this, SocketType.Any, NO_DESC, {
           ...dynamicTyping.inSocketOptions,
           //@ts-ignore
           webglGetOutputMapping: dynamicInSocketMapping({val, illuminant, xyz}),
@@ -31,7 +32,7 @@ export namespace organization {
       );
 
       this.outs.push(
-        new OutSocket(this, SocketType.Any, "", context => this.ins[0].inValue(context), {
+        new OutSocket(this, SocketType.Any, NO_DESC, context => this.ins[0].inValue(context), {
           ...dynamicTyping.outSocketOptions,
           webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(val)}),
         }),
