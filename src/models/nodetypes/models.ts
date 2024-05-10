@@ -68,7 +68,7 @@ export namespace models {
     outputDisplayType: OutputDisplayType,
 
     socketLabels: StringKey[],
-    nodeDisplayLabels: string[],
+    nodeDisplayLabels: StringKey[],
     socketFlags?: SocketFlag[],
 
     toRgb: Conversion,
@@ -100,7 +100,7 @@ export namespace models {
           ],
           (ins, outs, context) => ({
             values: toRgb.convert(ins.map(socket => socket.inValue(context)) as Vec3),
-            labels: ["R", "G", "B"],
+            labels: ["label.rgb.r", "label.rgb.g", "label.rgb.b"],
             flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
           }),
           (ins, outs, context, node) => WebglVariables.empty({node}),
@@ -142,7 +142,7 @@ export namespace models {
     outputDisplayType: OutputDisplayType.Vec,
 
     socketLabels: ["label.socket.hue", "label.socket.saturation", "label.socket.lightness"],
-    nodeDisplayLabels: ["H", "S", "L"],
+    nodeDisplayLabels: ["label.hxy.h", "label.hsx.s", "label.hsl.l"],
     socketFlags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
     toRgb: {
       convert: cm.hslToRgb,
@@ -160,7 +160,7 @@ export namespace models {
     outputDisplayType: OutputDisplayType.Vec,
 
     socketLabels: ["label.socket.hue", "label.socket.saturation", "label.socket.hsv.value"],
-    nodeDisplayLabels: ["H", "S", "V"],
+    nodeDisplayLabels: ["label.hxy.h", "label.hsx.s", "label.hsv.v"],
     socketFlags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
     toRgb: {
       convert: cm.hsvToRgb,
@@ -178,7 +178,7 @@ export namespace models {
     outputDisplayType: OutputDisplayType.Vec,
 
     socketLabels: ["label.socket.hue", "label.socket.whiteness", "label.socket.blackness"],
-    nodeDisplayLabels: ["H", "W", "B"],
+    nodeDisplayLabels: ["label.hxy.h", "label.hwb.w", "label.hwb.b"],
     socketFlags: [SocketFlag.Hue, SocketFlag.None, SocketFlag.None],
     toRgb: {
       convert: cm.hwbToRgb,
@@ -196,7 +196,7 @@ export namespace models {
     outputDisplayType: OutputDisplayType.Vec,
 
     socketLabels: ["label.socket.cyan", "label.socket.magenta", "label.socket.yellow"],
-    nodeDisplayLabels: ["C", "M", "Y"],
+    nodeDisplayLabels: ["label.cmy.c", "label.cmy.m", "label.cmy.y"],
     toRgb: {
       convert: cm.cmyToRgb,
       webglConversionFunction: "cmyToRgb",
@@ -326,7 +326,7 @@ export namespace models {
           ],
           (ins, outs, context) => ({
             values: cm.lchToLxy(ins.map(socket => socket.inValue(context)) as Vec3),
-            labels: ["L", "x", "y"],
+            labels: ["label.lxy.l", "label.lxy.x", "label.lxy.y"] as StringKey[],
             flags: [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb],
           }),
           (ins, outs, context, node) => WebglVariables.empty({node}),
@@ -359,7 +359,7 @@ export namespace models {
           ),
           (ins, outs, context) => ({
             values: cm.lxyToLch(ins[0].inValue(context) as Vec3),
-            labels: ["L", "C", "h"],
+            labels: ["label.lxy.l", "label.lch.c", "label.lch.h"] as StringKey[],
             flags: [SocketFlag.None, SocketFlag.None, SocketFlag.Hue],
           }),
           (ins, outs, context, node) => WebglVariables.templateConcat`vec3 ${internal} = lxyToLch(${lxy});`({

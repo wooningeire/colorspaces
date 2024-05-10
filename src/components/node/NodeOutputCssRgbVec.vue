@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { PropType, computed } from 'vue';
+import { computed } from 'vue';
 import NodeOutputTable from './NodeOutputTable.vue';
-import { Color, Vec3, clamp } from '@/util';
-import { Col, rgbToHsl, rgbToHwb } from '@/models/colormanagement';
+import { Vec3, clamp } from '@/util';
+import { rgbToHsl, rgbToHwb } from '@/models/colormanagement';
 
 const props = defineProps<{
   rgbVec: Vec3,
@@ -35,13 +35,13 @@ const hslLegacy = computed(() => `hsl(${hueStrings(props.rgbVec, rgbToHsl).join(
 <template>
   <NodeOutputTable
       :labels="[
-        'HEX',
-        'HEX3',
-        'RGB',
-        'HSL',
-        'HWB',
-        'RGB legacy',
-        'HSL legacy',
+        'label.hex',
+        'label.hex3',
+        'label.rgb',
+        'label.hsl',
+        'label.hsv',
+        'label.rgbLegacy',
+        'label.hslLegacy',
       ]"
       :values="[
         hex,

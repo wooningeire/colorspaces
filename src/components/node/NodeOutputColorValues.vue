@@ -6,10 +6,11 @@ import {settings} from "../store";
 import {Col} from "@/models/colormanagement";
 import {InSocket, SocketFlag} from '@/models/Node';
 import NodeOutputTable from './NodeOutputTable.vue';
+import { StringKey } from '@/strings';
 
 const props = defineProps<{
   values: number[],
-  labels: string[],
+  labels: StringKey[],
   flags: SocketFlag[],
 }>();
 

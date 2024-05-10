@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import ReadonlyInput from "./ReadonlyInput.vue";
+import getString, { StringKey } from "@/strings";
 
 const props = withDefaults(defineProps<{
   values: string[],
-  labels: string[],
+  labels: StringKey[],
   useInputs?: boolean,
 }>(), {
   useInputs: false,
@@ -13,8 +14,10 @@ const props = withDefaults(defineProps<{
 <template>
   <div class="output-values two-column">
     <template v-for="(value, index) of values">
-      <div class="header">
-        {{index < labels.length ? labels[index] : ''}}
+      <div
+        class="header"
+        v-html="index < labels.length ? getString(labels[index]) : ''"
+      >
       </div>
       <div
         class="data"

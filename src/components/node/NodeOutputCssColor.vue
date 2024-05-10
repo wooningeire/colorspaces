@@ -3,6 +3,7 @@ import { PropType, computed } from 'vue';
 import NodeOutputTable from './NodeOutputTable.vue';
 import { Vec3, clamp, to255, toHex, toHex3 } from '@/util';
 import * as cm from '@/models/colormanagement';
+import getString, { StringKey } from '@/strings';
 
 const props = defineProps<{
   color?: cm.Col,
@@ -32,25 +33,28 @@ const hwb = computed(() => props.color ? `hwb(${hueStrings(props.color, cm.rgbTo
 const rgbLegacy = computed(() => props.color ? `rgb(${cm.Srgb.from(props.color).map(to255).join(", ")})` : "--");
 const hslLegacy = computed(() => props.color ? `hsl(${hueStrings(props.color, cm.rgbToHsl).join(", ")})` : "--");
 
-const lab = computed(() => props.color ? `lab(${labStrings(props.color, color => cm.Lab.from(color)).join(" ")})` : "--");
-const lchab = computed(() => props.color ? `lch(${labStrings(props.color, color => cm.LchAb.from(color)).join(" ")})` : "--");
+const lab = computed(() => props.color ? `lab(${labStrings(props.color, color => cm.Cielab.from(color)).join(" ")})` : "--");
+const lchab = computed(() => props.color ? `lch(${labStrings(props.color, color => cm.lxyToLch(cm.Cielab.from(color) as unknown as Vec3)).join(" ")})` : "--");
 
 const oklab = computed(() => props.color ? `oklab(${oklabStrings(props.color, color => cm.Oklab.from(color)).join(" ")})` : "--");
-const oklchab = computed(() => props.color ? `oklch(${oklabStrings(props.color, color => cm.OklchAb.from(color)).join(" ")})` : "--");
+const oklchab = computed(() => props.color ? `oklch(${oklabStrings(props.color, color => cm.lxyToLch(cm.Oklab.from(color) as unknown as Vec3)).join(" ")})` : "--");
 </script>
 
 <template>
   <div class="table-container">
-    <div class="heading">sRGB</div>
+    <div
+      class="heading"
+      v-html="getString('label.srgb')"
+    ></div>
     <NodeOutputTable
         :labels="[
-          'HEX',
-          'HEX3',
-          'RGB',
-          'HSL',
-          'HWB',
-          'RGB legacy',
-          'HSL legacy',
+          'label.hex',
+          'label.hex3',
+          'label.rgb',
+          'label.hsl',
+          'label.hsv',
+          'label.rgbLegacy',
+          'label.hslLegacy',
         ]"
         :values="[
           hex,
@@ -63,29 +67,38 @@ const oklchab = computed(() => props.color ? `oklch(${oklabStrings(props.color, 
         ]"
         :useInputs="true" />
 
-    <div class="heading">CIELAB</div>
+    <div
+      class="heading"
+      v-html="getString('label.cielab.cielab')"
+    ></div>
     <NodeOutputTable
         :labels="[
-          'L*a*b*',
-          'L*C*h',
+          'label.cielab',
+          'label.cielch',
         ]"
         :values="[
           lab,
           lchab,
         ]"
         :useInputs="true" />
-    <div class="heading">Oklab</div>
+    <div
+      class="heading"
+      v-html="getString('label.oklab')"
+    ></div>
     <NodeOutputTable
         :labels="[
-          'oklab',
-          'oklch',
+          'label.oklab',
+          'label.oklch',
         ]"
         :values="[
           oklab,
           oklchab,
         ]"
         :useInputs="true" />
-    <div class="heading">Other</div>
+    <div
+      class="heading"
+      v-html="getString('label.generic.other')"
+    ></div>
   </div>
 </template>
 

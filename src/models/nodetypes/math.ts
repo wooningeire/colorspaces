@@ -601,11 +601,11 @@ export namespace math {
           "label.overload.colorDifference.deltaE1976",
           node => {
             return [
-              new InSocket(node, SocketType.VectorOrColor, "label.socket.labOrColor", {
+              new InSocket(node, SocketType.VectorOrColor, "label.socket.cielabOrColor", {
                 sliderProps: labSliderProps,
                 webglGetOutputMapping: socket => () => ({[webglOuts.val]: col0}),
               }),
-              new InSocket(node, SocketType.VectorOrColor, "label.socket.labOrColor", {
+              new InSocket(node, SocketType.VectorOrColor, "label.socket.cielabOrColor", {
                 sliderProps: labSliderProps,
                 webglGetOutputMapping: socket => () => ({[webglOuts.val]: col1}),
               }),
@@ -644,11 +644,11 @@ export namespace math {
         return new Overload(
           "label.overload.colorDifference.deltaE2000",
           node => [
-            new InSocket(node, SocketType.VectorOrColor, "label.socket.colorDifference.sampleLabOrColor", {
+            new InSocket(node, SocketType.VectorOrColor, "label.socket.colorDifference.sampleCielabOrColor", {
               sliderProps: labSliderProps,
               webglGetOutputMapping: socket => () => ({[webglOuts.val]: col0}),
             }),
-            new InSocket(node, SocketType.VectorOrColor, "label.socket.colorDifference.targetLabOrColor", {
+            new InSocket(node, SocketType.VectorOrColor, "label.socket.colorDifference.targetCielabOrColor", {
               sliderProps: labSliderProps,
               webglGetOutputMapping: socket => () => ({[webglOuts.val]: col1}),
             }),

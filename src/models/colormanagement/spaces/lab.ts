@@ -4,19 +4,19 @@ import { Col, Xyz, Xy, adaptXyz, xyyToXyzNoAdapt } from "./col-xyz-xyy-illuminan
 
 
 //#region Types
-export class Lab extends Col {
+export class Cielab extends Col {
   // static readonly labels = ["L*", "a*", "b*"];
 
   constructor(data: Vec3, newIlluminant: Xy) {
     super(data, newIlluminant);
   }
 
-  static fromXyz(xyz: Xyz): Lab {
-    return xyzToLab(xyz, xyz.illuminant);
+  static fromXyz(xyz: Xyz): Cielab {
+    return xyzToCielab(xyz, xyz.illuminant);
   }
 
   toXyz(newIlluminant: Xy=this.illuminant): Xyz {
-    return labToXyz(this, newIlluminant);
+    return cielabToXyz(this, newIlluminant);
   }
 
   get l() { return this[0]; }
@@ -26,7 +26,7 @@ export class Lab extends Col {
 //#endregion
 
 //#region Conversion functions// https://en.wikipedia.org/wiki/CIELAB_color_space#From_CIELAB_to_CIEXYZ
-const labToXyz = (lab: Lab, newIlluminant: Xy) => {
+const cielabToXyz = (lab: Cielab, newIlluminant: Xy) => {
   const [l, a, b] = lab;
 
   const tempY = (l + 16) / 116;
@@ -47,7 +47,7 @@ const labToXyz = (lab: Lab, newIlluminant: Xy) => {
   ], lab.illuminant), newIlluminant);
 };
 
-const xyzToLab = (xyz: Xyz, newIlluminant: Xy) => {
+const xyzToCielab = (xyz: Xyz, newIlluminant: Xy) => {
   const adaptedXyz = adaptXyz(xyz, newIlluminant);
   const referenceWhiteXyz = xyyToXyzNoAdapt(newIlluminant);
 
@@ -60,7 +60,7 @@ const xyzToLab = (xyz: Xyz, newIlluminant: Xy) => {
 
   const newXyz = tempXyz.map(compHelper);
 
-  return new Lab([
+  return new Cielab([
     116 * newXyz[1] - 16,
     500 * (newXyz[0] - newXyz[1]),
     200 * (newXyz[1] - newXyz[2]),
@@ -88,7 +88,7 @@ export const webglLabDeclarations = `float xyzToLabCompHelper(float comp) {
       ? pow(comp, 1./3.)
       : comp / (3. * (6./29.) * (6./29.)) + 4./29.;
 }
-vec3 xyzToLab(vec3 xyz, vec2 originalIlluminant, vec2 newIlluminant) {
+vec3 xyzToCielab(vec3 xyz, vec2 originalIlluminant, vec2 newIlluminant) {
   vec3 adaptedXyz = adaptXyz(xyz, originalIlluminant, newIlluminant);
   vec3 referenceWhiteXyz = xyyToXyz(vec3(newIlluminant, 1.));
 
@@ -111,7 +111,7 @@ float labToXyzCompHelper(float comp) {
       ? comp * comp * comp
       : 3. * (6./29.) * (6./29.) * (comp - 4./29.);
 }
-vec3 labToXyz(vec3 lab, vec2 originalIlluminant, vec2 newIlluminant) {
+vec3 cielabToXyz(vec3 lab, vec2 originalIlluminant, vec2 newIlluminant) {
     float tempY = (lab.x + 16.) / 116.;
     float tempX = tempY + lab.y / 500.;
     float tempZ = tempY - lab.z / 200.;

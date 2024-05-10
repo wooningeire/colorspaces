@@ -1,11 +1,11 @@
 import {mod, Vec3} from "@/util";
 
 import {Col, Xyz} from "./spaces/col-xyz-xyy-illuminants";
-import {Lab, lxyToLch} from "./spaces/lab";
+import {Cielab, lxyToLch} from "./spaces/lab";
 
 export const deltaE1976 = (col1: Vec3 | Col, col2: Vec3 | Col) => {
-  const lab1 = Lab.from(col1) as Lab;
-  const lab2 = Lab.from(col2, col1 instanceof Col ? col1.illuminant : undefined) as Lab;
+  const lab1 = Cielab.from(col1) as Cielab;
+  const lab2 = Cielab.from(col2, col1 instanceof Col ? col1.illuminant : undefined) as Cielab;
 
   return Math.hypot(...lab1.map((comp, i) => lab2[i] - lab1[i]));
 };
@@ -15,11 +15,11 @@ const deg = (deg: number) => deg * Math.PI / 180;
 const elseNan = (value: number, fallback: number) => isNaN(value) ? fallback : value;
 
 export const deltaE2000 = (col1: Vec3 | Col, col2: Vec3 | Col, kL=1, kC=1, kH=1) => {
-  const lab1 = Lab.from(col1) as Lab;
-  const lab2 = Lab.from(col2, col1 instanceof Col ? col1.illuminant : undefined) as Lab;
+  const lab1 = Cielab.from(col1) as Cielab;
+  const lab2 = Cielab.from(col2, col1 instanceof Col ? col1.illuminant : undefined) as Cielab;
 
-  const [l1, c1, h1]  = lxyToLch(Lab.from(lab1) as unknown as Vec3);
-  const [l2, c2, h2]  = lxyToLch(Lab.from(lab2) as unknown as Vec3);
+  const [l1, c1, h1]  = lxyToLch(Cielab.from(lab1) as unknown as Vec3);
+  const [l2, c2, h2]  = lxyToLch(Cielab.from(lab2) as unknown as Vec3);
 
   const lAdjDiff = l2 - l1;
 
@@ -85,15 +85,15 @@ export const contrastRatio = (col1: Vec3 | Col, col2: Vec3 | Col) => {
 };
 
 export const webglDiffDeclarations = `float deltaE1976(vec3 xyz0, vec2 illuminant0, vec3 xyz1, vec2 illuminant1) {
-  vec3 lab0 = xyzToLab(xyz0, illuminant0, illuminant0);
-  vec3 lab1 = xyzToLab(xyz1, illuminant1, illuminant0);
+  vec3 lab0 = xyzToCielab(xyz0, illuminant0, illuminant0);
+  vec3 lab1 = xyzToCielab(xyz1, illuminant1, illuminant0);
 
   return length(lab1 - lab0);
 }
 
 float deltaE2000(vec3 xyz0, vec2 illuminant0, vec3 xyz1, vec2 illuminant1) {
-  vec3 lab0 = xyzToLab(xyz0, illuminant0, illuminant0);
-  vec3 lab1 = xyzToLab(xyz1, illuminant1, illuminant0);
+  vec3 lab0 = xyzToCielab(xyz0, illuminant0, illuminant0);
+  vec3 lab1 = xyzToCielab(xyz1, illuminant1, illuminant0);
 
   vec3 lchab0 = lxyToLch(lab0);
   vec3 lchab1 = lxyToLch(lab1);

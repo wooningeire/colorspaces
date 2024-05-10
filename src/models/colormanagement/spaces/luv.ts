@@ -4,19 +4,19 @@ import {Col, Xyz, Xy, adaptXyz, xyyToXyzNoAdapt} from "./col-xyz-xyy-illuminants
 
 
 //#region Types
-export class Luv extends Col {
+export class Cieluv extends Col {
   // static readonly labels = ["L*", "u*", "v*"];
 
   constructor(data: Vec3, newIlluminant: Xy) {
     super(data, newIlluminant);
   }
 
-  static fromXyz(xyz: Xyz): Luv {
-    return xyzToLuv(xyz, xyz.illuminant);
+  static fromXyz(xyz: Xyz): Cieluv {
+    return xyzToCieluv(xyz, xyz.illuminant);
   }
 
   toXyz(newIlluminant: Xy=this.illuminant): Xyz {
-    return luvToXyz(this, newIlluminant);
+    return cieluvToXyz(this, newIlluminant);
   }
 
   get l() { return this[0]; }
@@ -35,7 +35,7 @@ const uv = (xyz: Xyz) => {
   ];
 };
 
-const luvToXyz = (luv: Luv, newIlluminant: Xy) => {
+const cieluvToXyz = (luv: Cieluv, newIlluminant: Xy) => {
   const tempY = (luv.l + 16) / 116;
 
   const y = 
@@ -56,7 +56,7 @@ const luvToXyz = (luv: Luv, newIlluminant: Xy) => {
   return adaptXyz(new Xyz([x, y, z], luv.illuminant), newIlluminant);
 };
 
-const xyzToLuv = (xyz: Xyz, newIlluminant: Xy) => {
+const xyzToCieluv = (xyz: Xyz, newIlluminant: Xy) => {
   const adaptedXyz = adaptXyz(xyz, newIlluminant);
   const referenceWhite = xyyToXyzNoAdapt(newIlluminant);
 
@@ -70,7 +70,7 @@ const xyzToLuv = (xyz: Xyz, newIlluminant: Xy) => {
   const [tempU, tempV] = uv(adaptedXyz);
   const [referenceU, referenceV] = uv(referenceWhite);
 
-  return new Luv([
+  return new Cieluv([
     l,
     13 * l * (tempU - referenceU),
     13 * l * (tempV - referenceV),
@@ -88,7 +88,7 @@ export const webglLuvDeclarations = `vec2 luvUvHelper(vec3 xyz) {
   );
 }
 
-vec3 xyzToLuv(vec3 xyz, vec2 originalIlluminant, vec2 newIlluminant) {
+vec3 xyzToCieluv(vec3 xyz, vec2 originalIlluminant, vec2 newIlluminant) {
   vec3 adaptedXyz = adaptXyz(xyz, originalIlluminant, newIlluminant);
   vec3 referenceWhiteXyz = xyyToXyz(vec3(newIlluminant, 1.));
 
@@ -108,7 +108,7 @@ vec3 xyzToLuv(vec3 xyz, vec2 originalIlluminant, vec2 newIlluminant) {
     13. * l * (tempUv.y - referenceUv.y)
   );
 }
-vec3 luvToXyz(vec3 luv, vec2 originalIlluminant, vec2 newIlluminant) {
+vec3 cieluvToXyz(vec3 luv, vec2 originalIlluminant, vec2 newIlluminant) {
   float tempY = (luv.x + 16.) / 116.;
 
   float y = 

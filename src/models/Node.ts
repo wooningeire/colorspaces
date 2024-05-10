@@ -89,7 +89,7 @@ export enum OutputDisplayType {
 }
 
 export type NodeDisplay = {
-  labels: string[],
+  labels: StringKey[],
   values: number[],
   flags: SocketFlag[],
 };

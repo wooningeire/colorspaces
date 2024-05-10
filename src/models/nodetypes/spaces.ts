@@ -233,8 +233,8 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
     abstract get ColClass(): typeof cm.Col;
     abstract get componentLabels(): StringKey[];
 
-    get displayLabels(): string[] {
-      return [];
+    get displayLabels(): StringKey[] {
+      return this.componentLabels;
     }
 
     get displayFlags(): SocketFlag[] {
@@ -275,10 +275,6 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
   }
 
   abstract class RgbSpaceNode extends TripletSpaceNode {
-    get displayLabels() {
-      return ["R", "G", "B"];
-    }
-
     get displayFlags() {
       return [SocketFlag.Rgb, SocketFlag.Rgb, SocketFlag.Rgb];
     }
@@ -338,10 +334,6 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
     static readonly TYPE = Symbol(this.name);
     static readonly id = "xyz";
 
-    get displayLabels() {
-      return ["X", "Y", "Z"];
-    }
-
     get ColClass() {
       return cm.Xyz;
     }
@@ -373,10 +365,6 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
   export class XyyNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "xyy";
-
-    get displayLabels() {
-      return ["x", "y", "Y"];
-    }
 
     get ColClass() {
       return cm.Xyy;
@@ -410,16 +398,12 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
     }
   }
 
-  export class LabNode extends TripletSpaceNode {
+  export class CielabNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "cielab";
 
-    get displayLabels() {
-      return ["L*", "a*", "b*"];
-    }
-
     get ColClass() {
-      return cm.Lab;
+      return cm.Cielab;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
       return new InSocket(this, SocketType.VectorOrColor, "label.socket.lxyOrColor", socketOptions);
@@ -434,23 +418,19 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
       return ["label.cielxy.l", "label.cielab.a", "label.cielab.b"];
     }
     webglXyzToComponents(inColor: WebglSlot, newIlluminant: WebglSlot) {
-      return WebglTemplate.source`xyzToLab(${inColor}.xyz, ${inColor}.illuminant, ${newIlluminant})`;
+      return WebglTemplate.source`xyzToCielab(${inColor}.xyz, ${inColor}.illuminant, ${newIlluminant})`;
     }
     webglComponentsToXyz(outComponents: WebglSlot, newIlluminant: WebglSlot) {
-      return WebglTemplate.source`labToXyz(${outComponents}, ${newIlluminant}, ${newIlluminant})`;
+      return WebglTemplate.source`cielabToXyz(${outComponents}, ${newIlluminant}, ${newIlluminant})`;
     }
   }
 
-  export class LuvNode extends TripletSpaceNode {
+  export class CieluvNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "cieluv";
 
-    get displayLabels() {
-      return ["L*", "u*", "v*"];
-    }
-
     get ColClass() {
-      return cm.Luv;
+      return cm.Cieluv;
     }
     constructInSocket(socketOptions: SocketOptions<SocketType.VectorOrColor>) {
       return new InSocket(this, SocketType.VectorOrColor, "label.socket.lxyOrColor", socketOptions);
@@ -465,20 +445,16 @@ Color ${outColor} = Color(${outComponents}, ${newIlluminant}, ${node.webglCompon
       return ["label.cielxy.l", "label.cieluv.u", "label.cieluv.v"];
     }
     webglXyzToComponents(inColor: WebglSlot, newIlluminant: WebglSlot) {
-      return WebglTemplate.source`xyzToLuv(${inColor}.xyz, ${inColor}.illuminant, ${newIlluminant})`;
+      return WebglTemplate.source`xyzToCieluv(${inColor}.xyz, ${inColor}.illuminant, ${newIlluminant})`;
     }
     webglComponentsToXyz(outComponents: WebglSlot, newIlluminant: WebglSlot) {
-      return WebglTemplate.source`luvToXyz(${outComponents}, ${newIlluminant}, ${newIlluminant})`;
+      return WebglTemplate.source`cieluvToXyz(${outComponents}, ${newIlluminant}, ${newIlluminant})`;
     }
   }
 
   export class OklabNode extends TripletSpaceNode {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "oklab";
-
-    get displayLabels() {
-      return ["L", "a", "b"];
-    }
 
     get ColClass() {
       return cm.Oklab;
