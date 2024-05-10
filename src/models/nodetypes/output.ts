@@ -34,7 +34,7 @@ export namespace output {
       [CssOutputMode.Color, new Overload(
         "Color",
         node => [
-          new InSocket(node, SocketType.ColorCoords, "Color"),
+          new InSocket(node, SocketType.ColorComponents, "Color"),
         ],
         node => [],
         (ins, outs, context) => ({
@@ -58,7 +58,7 @@ export namespace output {
       [ChromaticityPlotMode.Color, new Overload(
         "From colors",
         node => [
-          new InSocket(node, SocketType.ColorCoords, "Colors"),
+          new InSocket(node, SocketType.ColorComponents, "Colors"),
         ],
         node => [],
       )],
@@ -95,22 +95,20 @@ export namespace output {
 
     width = 240;
 
-    private static readonly inputSlots = WebglSlot.ins("xyz", "illuminant", "val", "alpha");
+    private static readonly inputSlots = WebglSlot.ins("val", "alpha");
 
     constructor() {
       super();
 
-      const {xyz, illuminant, val, alpha} = ImagePlotNode.inputSlots;
+      const {val, alpha} = ImagePlotNode.inputSlots;
 
       this.ins.push(
         (this.normalizeCoordsSocket = new InSocket(this, SocketType.Bool, "Normalize coordinates", {
           showSocket: false,
           defaultValue: true,
         })),
-        new InSocket(this, SocketType.ColorCoords, "Colors", {
+        new InSocket(this, SocketType.ColorComponents, "Colors", {
           webglOutputMapping: {
-            [webglOuts.xyz]: xyz,
-            [webglOuts.illuminant]: illuminant,
             [webglOuts.val]: val,
           },
         }),
@@ -121,7 +119,7 @@ export namespace output {
           },
         })),
         (this.widthSocket = new InSocket(this, SocketType.Float, "Width", {
-          defaultValue: 42,
+          defaultValue: 240,
           constant: true,
           sliderProps: {
             hasBounds: false,
@@ -130,7 +128,7 @@ export namespace output {
           },
         })),
         (this.heightSocket = new InSocket(this, SocketType.Float, "Height", {
-          defaultValue: 42,
+          defaultValue: 240,
           constant: true,
           sliderProps: {
             hasBounds: false,
@@ -154,11 +152,9 @@ export namespace output {
     }
 
     webglOutputs() {
-      const {xyz, illuminant, val, alpha} = ImagePlotNode.inputSlots;
+      const {val, alpha} = ImagePlotNode.inputSlots;
 
       return {
-        [webglOuts.xyz]: WebglTemplate.slot(xyz),
-        [webglOuts.illuminant]: WebglTemplate.slot(illuminant),
         [webglOuts.val]: WebglTemplate.slot(val),
         [webglOuts.alpha]: WebglTemplate.slot(alpha),
       };
@@ -170,14 +166,14 @@ export namespace output {
     static readonly id = "sampleHexCodes";
     static readonly outputDisplayType = OutputDisplayType.Custom;
 
-    readonly colorsSocket: InSocket<SocketType.ColorCoords>;
+    readonly colorsSocket: InSocket<SocketType.ColorComponents>;
 
     width = 600;
 
     constructor() {
       super();
       this.ins.push(
-        (this.colorsSocket = new InSocket(this, SocketType.ColorCoords, "Colors")),
+        (this.colorsSocket = new InSocket(this, SocketType.ColorComponents, "Colors")),
       );
     }
   }

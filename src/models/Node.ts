@@ -360,7 +360,7 @@ export enum SocketType {
   Integer,
   Vector,
   VectorOrColor,
-  ColorCoords,
+  ColorComponents,
   Dropdown,
   Image,
   Bool,
@@ -369,7 +369,7 @@ export type SocketValue<St extends SocketType=any> =
     St extends SocketType.Float ? number :
     St extends SocketType.Integer ? number :
     St extends SocketType.Vector ? Vec3 :
-    St extends SocketType.ColorCoords ? Col :
+    St extends SocketType.ColorComponents ? Col :
     St extends SocketType.VectorOrColor ? Vec3 :
     St extends SocketType.Dropdown ? string :
     St extends SocketType.Image ? ImageData :
@@ -381,7 +381,7 @@ export type SocketValue<St extends SocketType=any> =
 const socketTypesByRestrictiveness = [
   [SocketType.Any],
   [SocketType.VectorOrColor],
-  [SocketType.Float, SocketType.Bool, SocketType.Integer, SocketType.Vector, SocketType.ColorCoords],
+  [SocketType.Float, SocketType.Bool, SocketType.Integer, SocketType.Vector, SocketType.ColorComponents],
 ];
 
 export const socketTypeRestrictiveness = new Map<SocketType, number>(
@@ -391,13 +391,9 @@ export const socketTypeRestrictiveness = new Map<SocketType, number>(
 
 export const webglOuts = Object.freeze({
   val: Symbol("val"),
-  illuminant: Symbol("illuminant"),
-  xyz: Symbol("xyz"),
   alpha: Symbol("alpha"),
 }) as unknown as {
   readonly val: unique symbol,
-  readonly illuminant: unique symbol,
-  readonly xyz: unique symbol,
   readonly alpha: unique symbol,
 };
 
@@ -407,12 +403,8 @@ export type WebglSocketOutputMapping<St extends SocketType=any> = Partial<
   } :
   St extends SocketType.Integer ? WebglSocketOutputMapping<SocketType.Float> :
   St extends SocketType.Vector ? WebglSocketOutputMapping<SocketType.Float> :
-  St extends SocketType.ColorCoords ? {
-    [webglOuts.val]: WebglSlot,
-    [webglOuts.illuminant]: WebglSlot,
-    [webglOuts.xyz]: WebglSlot,
-  } :
-  St extends SocketType.VectorOrColor ? WebglSocketOutputMapping<SocketType.ColorCoords> | WebglSocketOutputMapping<SocketType.Vector> :
+  St extends SocketType.ColorComponents ? WebglSocketOutputMapping<SocketType.Float> :
+  St extends SocketType.VectorOrColor ? WebglSocketOutputMapping<SocketType.Float> :
   St extends SocketType.Dropdown ? never :
   St extends SocketType.Image ? never :
   St extends SocketType.Bool ? WebglSocketOutputMapping<SocketType.Float> :
@@ -495,7 +487,7 @@ export abstract class Socket<St extends SocketType=any> {
    * automatically */
   private static readonly typeCanBeLinkedTo = new Map<SocketType, SocketType[]>([
     [SocketType.Vector, [SocketType.Vector, SocketType.VectorOrColor]],
-    [SocketType.ColorCoords, [SocketType.ColorCoords, SocketType.VectorOrColor, SocketType.Vector]],
+    [SocketType.ColorComponents, [SocketType.ColorComponents, SocketType.VectorOrColor, SocketType.Vector]],
   ]);
 
   /** Checks if a source socket type can be linked to a destination socket type */
@@ -683,13 +675,11 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     const unif = WebglSlot.out("unif");
 
     switch (this.effectiveType()) {
-      case SocketType.ColorCoords:
+      case SocketType.ColorComponents:
         return WebglVariables.empty({
           node: null,
           fieldOutputs: {
-            [webglOuts.val]: WebglTemplate.slot(unif),
-            [webglOuts.illuminant]: WebglTemplate.string("illuminant2_D65"),
-            [webglOuts.xyz]: WebglTemplate.string("vec3(0., 0., 0.)"),
+            [webglOuts.val]: WebglTemplate.source`Color(${unif}, illuminant2_D65, vec3(0., 0., 0.))`,
           },
           preludeTemplate: WebglTemplate.source`uniform vec3 ${unif};`,
           uniforms: new Map([

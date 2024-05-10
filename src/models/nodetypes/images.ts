@@ -59,9 +59,7 @@ export namespace images {
           const value1 = this.boundsSockets[1].inValue(context);
           return lerp(value0, value1, fac);
         }, {
-          webglOutputs: socket => () => ({
-            [webglOuts.val]: WebglTemplate.source`${val}`,
-          }),
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(val)}),
         }),
       );
     }
@@ -253,27 +251,7 @@ uniform float ${height};`,
         }, {
           ...dynamicTyping.outSocketOptions,
           constant: true,
-          webglOutputs: socket => () => {
-            switch (socket.type) {
-              case SocketType.ColorCoords:
-                return {
-                  [webglOuts.val]: WebglTemplate.source`${color}.val`,
-                  [webglOuts.illuminant]: WebglTemplate.source`${color}.illuminant`,
-                  [webglOuts.xyz]: WebglTemplate.source`${color}.xyz`,
-                };
-
-              case SocketType.Vector:
-              case SocketType.VectorOrColor:
-              case SocketType.Float:
-              case SocketType.Bool:
-                return {
-                  [webglOuts.val]: WebglTemplate.slot(val),
-                };
-
-              default:
-                throw new Error("socket type not supported");
-            }
-          },
+          webglOutputs: socket => () => ({[webglOuts.val]: WebglTemplate.slot(val)}),
         }),
       );
     }
@@ -283,7 +261,7 @@ uniform float ${height};`,
       const {evaluateInput, color, val} = SampleNode.outputSlots;
 
       switch (this.outs[0].type) {
-        case SocketType.ColorCoords: {
+        case SocketType.ColorComponents: {
           return this.ins[0].hasLinks
               ? WebglVariables.template`Color ${color} = ${evaluateInput}(vec2(${x}, ${y}));`({
                 node: this,

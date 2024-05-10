@@ -40,7 +40,7 @@ export namespace math {
 
     private static readonly inputSlots = WebglSlot.ins("fac", "val0", "val1", "vector", "scalar");
 
-    private static threeValueOverload =
+    private static readonly threeValueOverload =
         ({
           label,
           operandLabels,
@@ -222,7 +222,7 @@ export namespace math {
     
     width = 200;
 
-    private static singleOutputOverload = <InSockets extends InSocket[]>({
+    private static readonly singleOutputOverload = <InSockets extends InSocket[]>({
       label,
       ins,
       outputLabel="Value",
@@ -251,7 +251,7 @@ export namespace math {
       );
     };
 
-    private static singleInSocketBuilder: ConstructorParameters<typeof Overload>[1] = node => {
+    private static readonly singleInSocketBuilder: ConstructorParameters<typeof Overload>[1] = node => {
       const {val} = this.inputSlots;
 
       return [
@@ -262,7 +262,7 @@ export namespace math {
       ];
     };
 
-    private static singleOutputTwoInputsOverload = ({
+    private static readonly singleOutputTwoInputsOverload = ({
       label,
       operandLabels,
       outputLabel="Value",
@@ -575,52 +575,40 @@ export namespace math {
     DeltaE1976 = "deltae1976",
     DeltaE2000 = "deltae2000",
   }
+
+  
+  const getXyzTemplate = (socket: InSocket, slot: WebglSlot) =>
+      socket.effectiveType() === SocketType.Vector
+          ? WebglTemplate.slot(slot)
+          : WebglTemplate.source`${slot}.xyz`;
+  const getIlluminantTemplate = (socket: InSocket, slot: WebglSlot) =>
+      socket.effectiveType() === SocketType.Vector
+          ? WebglTemplate.string("illuminant2_E")
+          : WebglTemplate.source`${slot}.illuminant`;
   export class ColorDifferenceNode extends NodeWithOverloads<ColorDifferenceMode> {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "colorDifference";
     static readonly outputDisplayType: OutputDisplayType = OutputDisplayType.Float;
 
-    private static readonly inputSlots = WebglSlot.ins("xyz0", "xyz1", "illuminant0", "illuminant1");
+    private static readonly inputSlots = WebglSlot.ins("col0", "col1");
     private static readonly outputSlots = WebglSlot.outs("difference");
 
     static readonly overloadGroup = new OverloadGroup(new Map<ColorDifferenceMode, Overload>([
       [ColorDifferenceMode.DeltaE1976, (() => {
+        const {col0, col1} = this.inputSlots;
         const {difference} = this.outputSlots;
 
         return new Overload(
           "ΔE* 1976",
           node => {
-            const {xyz0, xyz1, illuminant0, illuminant1} = ColorDifferenceNode.inputSlots;
             return [
               new InSocket(node, SocketType.VectorOrColor, "L*a*b* or color", {
                 sliderProps: labSliderProps,
-                webglGetOutputMapping: socket => () => {
-                  if (socket.effectiveType() === SocketType.ColorCoords) {
-                    return {
-                      [webglOuts.xyz]: xyz0,
-                      [webglOuts.illuminant]: illuminant0,
-                    };
-                  } else {
-                    return {
-                      [webglOuts.val]: xyz0,
-                    };
-                  }
-                },
+                webglGetOutputMapping: socket => () => ({[webglOuts.val]: col0}),
               }),
               new InSocket(node, SocketType.VectorOrColor, "L*a*b* or color", {
                 sliderProps: labSliderProps,
-                webglGetOutputMapping: socket => () => {
-                  if (socket.effectiveType() === SocketType.ColorCoords) {
-                    return {
-                      [webglOuts.xyz]: xyz1,
-                      [webglOuts.illuminant]: illuminant1,
-                    };
-                  } else {
-                    return {
-                      [webglOuts.val]: xyz1,
-                    };
-                  }
-                },
+                webglGetOutputMapping: socket => () => ({[webglOuts.val]: col1}),
               }),
             ];
           },
@@ -635,26 +623,23 @@ export namespace math {
             }),
           ],
           singleDisplayValueFloat,
-          (ins, outs, context, node) => {
-            const {xyz0, xyz1, illuminant0, illuminant1} = ColorDifferenceNode.inputSlots;
-
-            const illuminant0Template = ins[0].effectiveType() === SocketType.Vector
-                ? WebglTemplate.string("illuminant2_E")
-                : WebglTemplate.slot(illuminant0);
-            const illuminant1Template = ins[1].effectiveType() === SocketType.Vector
-                ? WebglTemplate.string("illuminant2_E")
-                : WebglTemplate.slot(illuminant1);
-      
-            return WebglVariables.templateConcat`float ${difference} = deltaE1976(${xyz0}, ${illuminant0Template}, ${xyz1}, ${illuminant1Template});`({
-              node,
-            });
-          },
+          (ins, outs, context, node) => WebglVariables.templateConcat`float ${difference} = deltaE1976(${
+            getXyzTemplate(ins[0], col0)
+          }, ${
+            getIlluminantTemplate(ins[0], col0)
+          }, ${
+            getXyzTemplate(ins[1], col1)
+          }, ${
+            getIlluminantTemplate(ins[1], col1)
+          });`({
+            node,
+          }),
           () => ({[webglOuts.val]: WebglTemplate.slot(difference)}),
         );
       })()],
       
       [ColorDifferenceMode.DeltaE2000, (() => {
-        const {xyz0, xyz1, illuminant0, illuminant1} = this.inputSlots;
+        const {col0, col1} = this.inputSlots;
         const {difference} = this.outputSlots;
 
         return new Overload(
@@ -662,33 +647,11 @@ export namespace math {
           node => [
             new InSocket(node, SocketType.VectorOrColor, "Sample L*a*b* or color", {
               sliderProps: labSliderProps,
-              webglGetOutputMapping: socket => () => {
-                if (socket.effectiveType() === SocketType.ColorCoords) {
-                  return {
-                    [webglOuts.xyz]: xyz0,
-                    [webglOuts.illuminant]: illuminant0,
-                  };
-                } else {
-                  return {
-                    [webglOuts.val]: xyz0,
-                  };
-                }
-              },
+              webglGetOutputMapping: socket => () => ({[webglOuts.val]: col0}),
             }),
             new InSocket(node, SocketType.VectorOrColor, "Target L*a*b* or color", {
               sliderProps: labSliderProps,
-              webglGetOutputMapping: socket => () => {
-                if (socket.effectiveType() === SocketType.ColorCoords) {
-                  return {
-                    [webglOuts.xyz]: xyz1,
-                    [webglOuts.illuminant]: illuminant1,
-                  };
-                } else {
-                  return {
-                    [webglOuts.val]: xyz1,
-                  };
-                }
-              },
+              webglGetOutputMapping: socket => () => ({[webglOuts.val]: col1}),
             }),
           ],
           (node, ins) => [
@@ -706,18 +669,17 @@ export namespace math {
             labels: [],
             flags: [],
           }),
-          (ins, outs, context, node) => {  
-            const illuminant0Template = ins[0].effectiveType() === SocketType.Vector
-                ? WebglTemplate.string("illuminant2_E")
-                : WebglTemplate.slot(illuminant0);
-            const illuminant1Template = ins[1].effectiveType() === SocketType.Vector
-                ? WebglTemplate.string("illuminant2_E")
-                : WebglTemplate.slot(illuminant1);
-      
-            return WebglVariables.templateConcat`float ${difference} = deltaE2000(${xyz0}, ${illuminant0Template}, ${xyz1}, ${illuminant1Template});`({
-              node,
-            });
-          },
+          (ins, outs, context, node) => WebglVariables.templateConcat`float ${difference} = deltaE2000(${
+            getXyzTemplate(ins[0], col0)
+          }, ${
+            getIlluminantTemplate(ins[0], col0)
+          }, ${
+            getXyzTemplate(ins[1], col1)
+          }, ${
+            getIlluminantTemplate(ins[1], col1)
+          });`({
+            node,
+          }),
           () => ({[webglOuts.val]: WebglTemplate.slot(difference)}),
         );
       })()],
@@ -735,7 +697,7 @@ export namespace math {
 
     private readonly colorSockets: InSocket<SocketType.VectorOrColor>[];
 
-    private static readonly inputSlots = WebglSlot.ins("xyz0", "xyz1", "illuminant0", "illuminant1");
+    private static readonly inputSlots = WebglSlot.ins("col0", "col1");
     private static readonly outputSlots = WebglSlot.outs("contrastRatio");
 
     width = 180;
@@ -743,38 +705,16 @@ export namespace math {
     constructor() {
       super();
 
-      const {xyz0, xyz1, illuminant0, illuminant1} = ContrastRatioNode.inputSlots;
+      const {col0, col1} = ContrastRatioNode.inputSlots;
       const {contrastRatio} = ContrastRatioNode.outputSlots;
 
       this.ins.push(
         ...(this.colorSockets = [
           new InSocket(this, SocketType.VectorOrColor, "XYZ or color", {
-            webglGetOutputMapping: socket => () => {
-              if (socket.effectiveType() === SocketType.ColorCoords) {
-                return {
-                  [webglOuts.xyz]: xyz0,
-                  [webglOuts.illuminant]: illuminant0,
-                };
-              } else {
-                return {
-                  [webglOuts.val]: xyz0,
-                };
-              }
-            },
+            webglGetOutputMapping: socket => () => ({[webglOuts.val]: col0}),
           }),
           new InSocket(this, SocketType.VectorOrColor, "XYZ or color", {
-            webglGetOutputMapping: socket => () => {
-              if (socket.effectiveType() === SocketType.ColorCoords) {
-                return {
-                  [webglOuts.xyz]: xyz1,
-                  [webglOuts.illuminant]: illuminant1,
-                };
-              } else {
-                return {
-                  [webglOuts.val]: xyz1,
-                };
-              }
-            },
+            webglGetOutputMapping: socket => () => ({[webglOuts.val]: col1}),
           }),
         ]),
       );
@@ -819,17 +759,18 @@ export namespace math {
     }
 
     webglBaseVariables(): WebglVariables {
-      const {xyz0, xyz1, illuminant0, illuminant1} = ContrastRatioNode.inputSlots;
+      const {col0, col1} = ContrastRatioNode.inputSlots;
       const {contrastRatio} = ContrastRatioNode.outputSlots;
 
-      const illuminant0Template = this.colorSockets[0].effectiveType() === SocketType.Vector
-          ? WebglTemplate.string("illuminant2_E")
-          : WebglTemplate.slot(illuminant0)
-      const illuminant1Template = this.colorSockets[1].effectiveType() === SocketType.Vector
-          ? WebglTemplate.string("illuminant2_E")
-          : WebglTemplate.slot(illuminant1)
-
-      return WebglVariables.templateConcat`float ${contrastRatio} = contrastRatio(${xyz0}, ${illuminant0Template}, ${xyz1}, ${illuminant1Template});`({
+      return WebglVariables.templateConcat`float ${contrastRatio} = contrastRatio(${
+        getXyzTemplate(this.ins[0], col0)
+      }, ${
+        getIlluminantTemplate(this.ins[0], col0)
+      }, ${
+        getXyzTemplate(this.ins[1], col1)
+      }, ${
+        getIlluminantTemplate(this.ins[1], col1)
+      });`({
         node: this,
       });
     }

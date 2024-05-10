@@ -32,7 +32,7 @@ const sampleInputXy = (coords: [number, number]) => (props.node.ins as InSocket<
     .slice(1)
     .map(socket => socket.inValue({coords}));
 /** Samples a color from the input sokcet (colors mode) */
-const sampleInputColor = (coords: [number, number]) => (props.node.ins as InSocket<St.ColorCoords>[])[1]
+const sampleInputColor = (coords: [number, number]) => (props.node.ins as InSocket<St.ColorComponents>[])[1]
     .inValue({coords});
 /** The coordinates to sample from the input image/gradient/etc. */
 const sampleCoords = computed(() => {

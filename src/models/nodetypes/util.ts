@@ -1,4 +1,5 @@
-import { InSocket, InSocketOptions, OutSocket, OutSocketOptions, Socket, SocketOptions, SocketType, Tree, socketTypeRestrictiveness } from "../Node";
+import { WebglSlot } from "@/webgl-compute/WebglVariables";
+import { InSocket, InSocketOptions, OutSocket, OutSocketOptions, Socket, SocketOptions, SocketType, Tree, socketTypeRestrictiveness, webglOuts } from "../Node";
 
 /** Socket options to set up input and output sockets whose type changes (and which fires the appropriate events) when
  * its link type changes. This includes links being added or remvoved
@@ -95,3 +96,36 @@ export const useDynamicallyTypedSockets = (
     },
   };
 };
+
+
+export const dynamicInSocketMapping = ({
+  val,
+  illuminant,
+  xyz,
+}: {
+  val: WebglSlot,
+  illuminant: WebglSlot,
+  xyz: WebglSlot,
+}) =>
+    (socket: InSocket) => () => {
+      switch (socket.effectiveType()) {
+        case SocketType.Float:
+        case SocketType.Integer:
+        case SocketType.Vector:
+        case SocketType.Bool:
+          return {
+            [webglOuts.val]: val,
+          };
+
+        case SocketType.VectorOrColor:
+        case SocketType.ColorComponents:
+          return {
+            [webglOuts.val]: val,
+            [webglOuts.illuminant]: illuminant,
+            [webglOuts.xyz]: xyz,
+          };
+        
+        default:
+          return null;
+      }
+    };

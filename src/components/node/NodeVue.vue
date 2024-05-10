@@ -346,7 +346,7 @@ Object.assign(nodeVue, {
   }
   &.category--booleans {
     --node-border-background: linear-gradient(hsl(10deg 20% 80%), hsl(-20deg 60% 70%));
-    --node-background: hsl(-20deg 15% 20% / 0.8745);
+    --node-background: hsl(320deg 15% 22% / 0.8745);
   }
   &.category--images {
     --node-border-background: linear-gradient(hsl(165deg 10% 50%), hsl(185deg 10% 60%));

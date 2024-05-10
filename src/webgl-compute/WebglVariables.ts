@@ -40,7 +40,7 @@ export class WebglSlot {
   }
 
   randomVariableName() {
-    return `v_${this.identifier.replaceAll(/ |[^a-zA-Z0-9]/g, "_")}_${crypto.randomUUID().replaceAll("-", "_")}`;
+    return `v_${this.identifier.replaceAll(/ |[^a-zA-Z0-9]/g, "_")}_${crypto.randomUUID().replaceAll("-", "_").substring(0, 8)}`;
   }
 }
 
@@ -236,10 +236,10 @@ export type WebglOutputMapping = Partial<Record<symbol, WebglSlot>>;
 /** Stores a chunk of GLSL code with macro-like slots for variables. */
 export class WebglVariables {
   static readonly fragmentShaderTemplate = WebglTemplate.withSlots(
-    ["prelude", "main", "val", "illuminant", "xyz", "alpha"],
+    ["prelude", "main", "color", "alpha"],
     [],
     (
-      {prelude, main, val, illuminant, xyz, alpha},
+      {prelude, main, color, alpha},
       {},
     ) => WebglTemplate.concat`#version 300 es
 
@@ -249,7 +249,7 @@ export class WebglVariables {
 precision mediump float;
 
 struct Color {
-  vec3 val;
+  vec3 components;
   vec2 illuminant;
   vec3 xyz;
 };
@@ -271,7 +271,7 @@ ${prelude}
 AlphaColor sampleColor(vec2 coords) {
   ${main}
   
-  return AlphaColor(Color(${val}, ${illuminant}, ${xyz}), ${alpha});
+  return AlphaColor(${color}, ${alpha});
 }
 
 void main() {
@@ -503,16 +503,14 @@ void main() {
     mapping: WebglOutputMapping,
   } {
     switch (socket.type) {
-      case SocketType.ColorCoords: {
-        const {val, illuminant, xyz} = WebglSlot.ins("val", "illuminant", "xyz");
+      case SocketType.ColorComponents: {
+        const {nonXyz, illuminant, xyz} = WebglSlot.ins("nonXyz", "illuminant", "xyz");
 
         return {
           outputTypeValue: "Color",
-          outputTemplate: WebglTemplate.source`Color(${val}, ${illuminant}, ${xyz})`,
+          outputTemplate: WebglTemplate.source`Color(${nonXyz}, ${illuminant}, ${xyz})`,
           mapping: {
-            [webglOuts.val]: val,
-            [webglOuts.illuminant]: illuminant,
-            [webglOuts.xyz]: xyz,
+            [webglOuts.val]: nonXyz,
           },
         };
       }
@@ -598,12 +596,10 @@ void main() {
 
     return new WebglTranspilation(
       WebglVariables.fragmentShaderTemplate.substituteInputs(
-        ({main, val, xyz, illuminant, prelude, alpha}) => new Map([
+        ({main, color, prelude, alpha}) => new Map([
           [main, dependencies.map(segment => segment.template.toString())
               .join("\n\n")],
-          [val, lastDependencyNodeOutputs?.[webglOuts.val]?.substitute(lastDependencySubstitutions).toString() ?? "vec3(0., 0., 0.)"],
-          [xyz, lastDependencyNodeOutputs?.[webglOuts.xyz]?.substitute(lastDependencySubstitutions).toString() ?? "vec3(0., 0., 0.)"],
-          [illuminant, lastDependencyNodeOutputs?.[webglOuts.illuminant]?.substitute(lastDependencySubstitutions).toString() ?? "illuminant2_D65"],
+          [color, lastDependencyNodeOutputs?.[webglOuts.val]?.substitute(lastDependencySubstitutions).toString() ?? "Color(vec3(0., 0., 0.), illuminant2_D65, vec3(0., 0., 0.)"],
           [alpha, lastDependencyNodeOutputs?.[webglOuts.alpha]?.substitute(lastDependencySubstitutions).toString() ?? "1."],
           [prelude, dependencies.map(segment => segment.preludeTemplate.toString())
               .join("\n")],

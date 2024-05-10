@@ -58,6 +58,7 @@ const strings = {
   "label.node.sampleHexCodes": "Sample hex codes",
 
   "label.node.conditional": "Conditional",
+  "label.node.compareFloats": "Compare floats",
 
   "label.node.reroute": "Reroute",
 
@@ -73,7 +74,7 @@ const strings = {
   "desc.node.hwb": "Describes RGB colors by their hue, whiteness, and blackness.",
   "desc.node.cmy": "Describes RGB colors by subtracting amounts of their opposites (cyan, yellow, and magenta).",
   "desc.node.lxy": "Describes colors by their lightness and two chroma axes, x (red–green) and y (yellow–blue), which come from human opponent-process color vision.",
-  "desc.node.lch": "A variant of Lxy that uses hue (h) and colorfulness (C) to define colors, similar to HSV.",
+  "desc.node.lch": "A variant of Lxy that uses hue (h) and colorfulness (C) to define colors, similar to HSL.",
   "desc.node.vector": "A general set of three numbers, for input to color spaces.",
   "desc.node.spectralPowerDistribution": "Describes colors by the range of wavelengths that make them up.",
   "desc.node.standardIlluminant": `A collection of common definitions for the color “white”. Human eyes will adjust under different viewing circumstances, so different chromaticities and hues could be considered “white” (chromatic adaptation / white balance).<sup>[1]</sup><br /><br />${cite(1, "https://yuhaozhu.com/blog/chromatic-adaptation.html", "https://web.archive.org/web/20240226042830/https://yuhaozhu.com/blog/chromatic-adaptation.html")}`,
@@ -129,9 +130,9 @@ const strings = {
   "label.socketType.vectorOrColor": "Vector or color",
   "desc.socketType.vectorOrColor.out": "A list of (usually 3) numbers which may or may not already be associated with a color space.",
   "desc.socketType.vectorOrColor.in": "A list of (usually 3) numbers which may or may not already be associated with a color space (values will be handled differently depending on this).",
-  "label.socketType.colorCoords": "Color",
-  "desc.socketType.colorCoords.out": "A list of (usually 3) coordinates in a color space.",
-  "desc.socketType.colorCoords.in": "A list of (usually 3) coordinates in a color space.",
+  "label.socketType.colorComponents": "Color",
+  "desc.socketType.colorComponents.out": "A list of (usually 3) coordinates in a color space.",
+  "desc.socketType.colorComponents.in": "A list of (usually 3) coordinates in a color space.",
   "label.socketType.any": "Any",
   "desc.socketType.any.in": "This socket accepts any data type.",
   "desc.socketType.any.out": "The data type of this socket is not yet known. It will likely depend on the data type of one of the input sockets.",
