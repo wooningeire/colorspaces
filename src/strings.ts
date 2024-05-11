@@ -101,6 +101,7 @@ const strings = {
   "label.node.colorDifference": "Color difference",
   "label.node.contrastRatio": "Contrast ratio",
   "label.node.randomFloat": "Random float",
+  "label.node.wellKnownConstants": "Well-known constants",
 
   "label.node.conditional": "Conditional",
   "label.node.compareFloats": "Compare floats",
@@ -235,6 +236,8 @@ const strings = {
   "label.overload.randomFloat.vectorSeed": "Vector seed",
   "label.socket.randomFloat.integersOnly?": "Integers only?",
   "label.socket.randomFloat.seed": "Seed",
+  "label.socket.wellKnownConstants.pi": "π",
+  "label.socket.wellKnownConstants.rev": "turn = 2π",
 
   "label.socket.conditional.condition": "Condition",
   "label.socket.conditional.ifTrue": "If true…",

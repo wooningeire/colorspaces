@@ -140,17 +140,17 @@ export namespace images {
           }),
           socketDesc: "desc.socket.imageFileRgb",
         }),
-        new OutSocket(this, SocketType.Float, "label.socket.width", context => this.imageSocket.inValue(context)?.width ?? 0, {
+        new OutSocket(this, SocketType.Integer, "label.socket.width", context => this.imageSocket.inValue(context)?.width ?? 0, {
           constant: true,
           webglOutputs: socket => () => ({
-            [webglStdOuts.float]: WebglTemplate.slot(width),
+            [webglStdOuts.integer]: WebglTemplate.slot(width),
           }),
           socketDesc: "desc.socket.imageFileWidth",
         }),
-        new OutSocket(this, SocketType.Float, "label.socket.height", context => this.imageSocket.inValue(context)?.height ?? 0, {
+        new OutSocket(this, SocketType.Integer, "label.socket.height", context => this.imageSocket.inValue(context)?.height ?? 0, {
           constant: true,
           webglOutputs: socket => () => ({
-            [webglStdOuts.float]: WebglTemplate.slot(height),
+            [webglStdOuts.integer]: WebglTemplate.slot(height),
           }),
           socketDesc: "desc.socket.imageFileHeight",
         }),

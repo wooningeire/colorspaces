@@ -1,4 +1,4 @@
-import { InSocket, Node, NodeOutputTarget, NodeUpdateSource, OutSocket, Socket, SocketType, WebglOutputMapping, WebglOutputs, WebglSocketOutputs, WebglStdOut, webglStdOuts, webglVirtualizeOutputs } from "@/models/Node";
+import { InSocket, Node, NodeOutputTarget, NodeUpdateSource, OutSocket, Socket, SocketType, WebglOutputMapping, WebglOutputs, WebglSocketOutputs, WebglStdOut, webglStdOuts } from "@/models/Node";
 import { webglDeclarations } from "@/models/colormanagement";
 import { objectSymbolEntries } from "@/util";
 
@@ -46,7 +46,7 @@ export class WebglSlot {
 
 type SlotMap<S extends readonly string[]=any> = Record<S[number], WebglSlot>;
 
-/** Stores chunks of WebGL code, between them macro-like variable slots to insert values into, as well as the values
+/** Stores chunks of GLSL code, between them macro-like variable slots to insert values into, as well as the values
  * which the slots have been assigned. */
 export class WebglTemplate<InputSlots extends SlotMap=any, OutputSlots extends SlotMap=any> {
   private constructor(
@@ -608,53 +608,17 @@ void main() {
 
   private outputsFor(target: NodeOutputTarget) {
     const unfilledOutputs = target.match({
-      onSocket: socket => webglVirtualizeOutputs(socket.type, socket.webglOutputs()),
+      onSocket: socket => socket.webglVirtualizedOutputs(),
       onNode: node => node.webglOutputs(),
       onField: () => this.fieldOutputs ?? (() => {throw new TypeError("Attempted to access field outputs when null");})(),
     });
 
     // Since the outputs are taken from constants on the socket/node, we need to fill the outputs with the current
-    // substitutions.
+    // substitutions. We also need to use a proxy because the virtualized output keys on a socket's outputs are not
+    // iterable.
     return new Proxy(unfilledOutputs, {
       get: (target, desiredOut: WebglStdOut, proxy) => target[desiredOut].substitute(this.template.substitutions),
     });
-  }
-  static deriveCoercedSocketOutput<St extends SocketType>(outSocket: OutSocket<St>, outputs: WebglSocketOutputs<St>, desiredOut: WebglStdOut): WebglTemplate {
-    switch (outSocket.type) {
-      case SocketType.Bool:
-        switch (desiredOut) {
-          case webglStdOuts.integer:
-            return WebglTemplate.concat`${(outputs as WebglSocketOutputs<SocketType.Bool>)[webglStdOuts.bool]} ? 1 : 0`;
-
-          case webglStdOuts.float:
-            return WebglTemplate.concat`${(outputs as WebglSocketOutputs<SocketType.Bool>)[webglStdOuts.bool]} ? 1. : 0.`;
-
-          default:
-            throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocket.type}`);
-        }
-
-      case SocketType.Integer:
-        switch (desiredOut) {
-          case webglStdOuts.float:
-            return WebglTemplate.concat`float(${(outputs as WebglSocketOutputs<SocketType.Bool>)[webglStdOuts.bool]})`;
-
-          default:
-            throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocket.type}`);
-        }
-
-      case SocketType.ColorComponents:
-        switch (desiredOut) {
-          case webglStdOuts.vector:
-            return WebglTemplate.concat`${(outputs as WebglSocketOutputs<SocketType.ColorComponents>)[webglStdOuts.color]}.components`;
-
-          default:
-            throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocket.type}`);
-        }
-        
-
-      default:
-        throw new Error("socket type not supported");
-    }
   }
 
   static fromTemplate(template: WebglTemplate) {

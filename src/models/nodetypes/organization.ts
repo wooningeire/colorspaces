@@ -36,10 +36,6 @@ export namespace organization {
         }),
       );
     }
-    
-    webglBaseVariables(context?: NodeEvalContext): WebglVariables {
-      return WebglVariables.empty({node: this});
-    }
 
     /*
     onSocketLink(socket: Socket, link: Link, tree: Tree) {

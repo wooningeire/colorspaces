@@ -129,7 +129,7 @@ export abstract class Node {
 
   /** A `WebglVariables` object that provides a template to fill, output variables, and uniforms */
   webglBaseVariables(): WebglVariables {
-    throw new Error("not implmeneted");
+    return WebglVariables.empty({ node: this });
   }
   
   /**
@@ -287,7 +287,7 @@ export abstract class Node {
       if (socket.constant) continue;
 
       for (const link of socket.links) {
-        if (link.causesCircularDependency) continue;
+        if (link.causesCircularDependency || link.src.constant) continue;
         
         for (const axis of link.srcNode.getDependencyAxes()) {
           axes.add(axis);
@@ -416,8 +416,8 @@ export const socketTypeToStdOut = new Map<SocketType, WebglStdOut>([
   [SocketType.Bool, webglStdOuts.bool],
 ])
 
-/** Object that provides WebGL expressions used to obtain the values of certain standard outputs from an output socket
- * after executing the WebGL code in its node's `WebglVariables` object.
+/** Object that provides GLSL expressions used to obtain the values of certain standard outputs from an output socket
+ * after executing the GLSL code in its node's `WebglVariables` object.
  * 
  * Even if a socket's `SocketType` can be coerced into another, this object does not include the standard
  * outputs of the socket types which it can be coerced into, so as to avoid repetition in the codebase;
@@ -450,110 +450,6 @@ export type WebglOutputs = Record<symbol, WebglTemplate>;
  * socket.
  */
 export type WebglOutputMapping<St extends SocketType=any> = Partial<{[K in keyof WebglSocketOutputs<St>]: WebglSlot}>;
-
-
-/**
- * Obtains a WebGL expression that can be used to effectively coerce one socket type to another, allowing more
- * standard outputs to be accessed than what may be provided in the given `directoutputs` object.
- * @param outSocketType The type of the output socket that was used to obtain `outputs` and which is now being
- * coerced.
- * @param directOutputs The `WebglSocketOutputs` object obtained from the output socket.
- * @returns A proxy that provides WebGL expressions that can be evaluated to obtain the desired standard output from
- * the given socket type and `WebglSocketOutputs` object.
- */
-export const webglVirtualizeOutputs = <St extends SocketType=any>(outSocketType: St, directOutputs: WebglSocketOutputs<St>) => {
-  switch (outSocketType) {
-    case SocketType.Bool:
-      return new Proxy(directOutputs, {
-        get(target, desiredOut, proxy) {
-          if (target.hasOwnProperty(desiredOut)) {
-            //@ts-ignore
-            return target[desiredOut];
-          }
-
-          const out = (directOutputs as WebglSocketOutputs<SocketType.Bool>)[webglStdOuts.bool];
-
-          switch (desiredOut) {
-            case webglStdOuts.integer:
-              return WebglTemplate.concat`${out} ? 1 : 0`;
-    
-            case webglStdOuts.float:
-              return WebglTemplate.concat`${out} ? 1. : 0.`;
-
-            case webglStdOuts.vector:
-              return WebglTemplate.concat`vec3(${out} ? 1. : 0., ${out} ? 1. : 0., ${out} ? 1. : 0.)`;
-
-            default:
-              throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocketType}`);
-          }
-        }
-      });
-
-    case SocketType.Integer:
-      return new Proxy(directOutputs, {
-        get(target, desiredOut, proxy) {
-          if (target.hasOwnProperty(desiredOut)) {
-            //@ts-ignore
-            return target[desiredOut];
-          }
-
-          const out = (directOutputs as WebglSocketOutputs<SocketType.Integer>)[webglStdOuts.integer];
-
-          switch (desiredOut) {
-            case webglStdOuts.float:
-              return WebglTemplate.concat`float(${out})`;
-
-            case webglStdOuts.vector:
-              return WebglTemplate.concat`vec3(float(${out}), float(${out}), float(${out}))`;
-    
-            default:
-              throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocketType}`);
-          }
-        }
-      });
-
-    case SocketType.Float:
-      return new Proxy(directOutputs, {
-        get(target, desiredOut, proxy) {
-          if (target.hasOwnProperty(desiredOut)) {
-            //@ts-ignore
-            return target[desiredOut];
-          }
-
-          const out = (directOutputs as WebglSocketOutputs<SocketType.Float>)[webglStdOuts.float];
-
-          switch (desiredOut) {
-            case webglStdOuts.vector:
-              return WebglTemplate.concat`vec3(${out}, ${out}, ${out})`;
-    
-            default:
-              throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocketType}`);
-          }
-        }
-      });
-
-    case SocketType.ColorComponents:
-      return new Proxy(directOutputs, {
-        get(target, desiredOut, proxy) {
-          if (target.hasOwnProperty(desiredOut)) {
-            //@ts-ignore
-            return target[desiredOut];
-          }
-          
-          switch (desiredOut) {
-            case webglStdOuts.vector:
-              return WebglTemplate.concat`${(directOutputs as WebglSocketOutputs<SocketType.ColorComponents>)[webglStdOuts.color]}.components`;
-    
-            default:
-              throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${outSocketType}`);
-          }
-        }
-      });
-
-    default:
-      return directOutputs;
-  }
-};
 
 
 export enum SocketFlag {
@@ -987,7 +883,7 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
   outValueCoerced<T extends SocketType>(context: NodeEvalContext, newType: T): SocketValue<T> {
     const outValue = this.outValue(context);
 
-    if (this.isType(newType)) {
+    if (this.isType(newType) || this.isType(SocketType.VectorOrColor)) {
       return outValue as unknown as SocketValue<T>;
     }
 
@@ -1047,6 +943,110 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
   
       default:
         throw new Error("socket type not supported");
+    }
+  }
+
+  
+  /**
+   * Obtains a GLSL expression that can be used to effectively coerce one socket type to another, allowing more
+   * standard outputs to be accessed than what may be provided in the given `directoutputs` object.
+   * @returns A proxy that provides GLSL expressions that can be evaluated to obtain the desired standard output from
+   * the given socket type and `WebglSocketOutputs` object.
+   */
+  webglVirtualizedOutputs() {
+    const socket = this;
+    const directOutputs = this.webglOutputs();
+
+    switch (this.type) {
+      case SocketType.Bool:
+        return new Proxy(directOutputs, {
+          get(target, desiredOut, proxy) {
+            if (target.hasOwnProperty(desiredOut)) {
+              //@ts-ignore
+              return target[desiredOut];
+            }
+
+            const out = (directOutputs as WebglSocketOutputs<SocketType.Bool>)[webglStdOuts.bool];
+
+            switch (desiredOut) {
+              case webglStdOuts.integer:
+                return WebglTemplate.concat`${out} ? 1 : 0`;
+      
+              case webglStdOuts.float:
+                return WebglTemplate.concat`${out} ? 1. : 0.`;
+
+              case webglStdOuts.vector:
+                return WebglTemplate.concat`vec3(${out} ? 1. : 0., ${out} ? 1. : 0., ${out} ? 1. : 0.)`;
+
+              default:
+                throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${socket.type}`);
+            }
+          }
+        });
+
+      case SocketType.Integer:
+        return new Proxy(directOutputs, {
+          get(target, desiredOut, proxy) {
+            if (target.hasOwnProperty(desiredOut)) {
+              //@ts-ignore
+              return target[desiredOut];
+            }
+
+            const out = (directOutputs as WebglSocketOutputs<SocketType.Integer>)[webglStdOuts.integer];
+
+            switch (desiredOut) {
+              case webglStdOuts.float:
+                return WebglTemplate.concat`float(${out})`;
+
+              case webglStdOuts.vector:
+                return WebglTemplate.concat`vec3(float(${out}), float(${out}), float(${out}))`;
+      
+              default:
+                throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${socket.type}`);
+            }
+          }
+        });
+
+      case SocketType.Float:
+        return new Proxy(directOutputs, {
+          get(target, desiredOut, proxy) {
+            if (target.hasOwnProperty(desiredOut)) {
+              //@ts-ignore
+              return target[desiredOut];
+            }
+
+            const out = (directOutputs as WebglSocketOutputs<SocketType.Float>)[webglStdOuts.float];
+
+            switch (desiredOut) {
+              case webglStdOuts.vector:
+                return WebglTemplate.concat`vec3(${out}, ${out}, ${out})`;
+      
+              default:
+                throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${socket.type}`);
+            }
+          }
+        });
+
+      case SocketType.ColorComponents:
+        return new Proxy(directOutputs, {
+          get(target, desiredOut, proxy) {
+            if (target.hasOwnProperty(desiredOut)) {
+              //@ts-ignore
+              return target[desiredOut];
+            }
+            
+            switch (desiredOut) {
+              case webglStdOuts.vector:
+                return WebglTemplate.concat`${(directOutputs as WebglSocketOutputs<SocketType.ColorComponents>)[webglStdOuts.color]}.components`;
+      
+              default:
+                throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${socket.type}`);
+            }
+          }
+        });
+
+      default:
+        return directOutputs;
     }
   }
 }

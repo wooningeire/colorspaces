@@ -36,10 +36,6 @@ export namespace models {
     displayValues(context: NodeEvalContext): Vec3 {
       return this.ins.map(socket => socket.inValue(context)) as Vec3;
     }
-
-    webglBaseVariables(): WebglVariables {
-      return WebglVariables.empty({node: this});
-    }
   }
 
   enum RgbOverloadMode {
@@ -277,10 +273,6 @@ export namespace models {
 
     displayValues(context: NodeEvalContext): Vec3 {
       return this.ins.map(socket => socket.inValue(context)) as Vec3;
-    }
-
-    webglBaseVariables(): WebglVariables {
-      return WebglVariables.empty({node: this});
     }
   }
 

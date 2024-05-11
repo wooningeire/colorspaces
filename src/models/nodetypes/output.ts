@@ -90,8 +90,8 @@ export namespace output {
 
     readonly normalizeCoordsSocket: InSocket<SocketType.Bool>;
     readonly alphaSocket: InSocket<SocketType.Float>;
-    readonly widthSocket: InSocket<SocketType.Float>;
-    readonly heightSocket: InSocket<SocketType.Float>;
+    readonly widthSocket: InSocket<SocketType.Integer>;
+    readonly heightSocket: InSocket<SocketType.Integer>;
 
     width = 240;
 
@@ -118,21 +118,19 @@ export namespace output {
             [webglStdOuts.float]: alpha,
           },
         })),
-        (this.widthSocket = new InSocket(this, SocketType.Float, "label.socket.width", {
+        (this.widthSocket = new InSocket(this, SocketType.Integer, "label.socket.width", {
           defaultValue: 240,
           constant: true,
           sliderProps: {
             hasBounds: false,
-            step: 1,
             min: 1,
           },
         })),
-        (this.heightSocket = new InSocket(this, SocketType.Float, "label.socket.height", {
+        (this.heightSocket = new InSocket(this, SocketType.Integer, "label.socket.height", {
           defaultValue: 240,
           constant: true,
           sliderProps: {
             hasBounds: false,
-            step: 1,
             min: 1,
           },
         })),
@@ -146,11 +144,7 @@ export namespace output {
         flags: [],
       };
     }
-
-    webglBaseVariables(context?: NodeEvalContext): WebglVariables {
-      return WebglVariables.empty({node: this});
-    }
-
+    
     webglOutputs() {
       const {color, alpha} = ImagePlotNode.inputSlots;
 

@@ -1,5 +1,7 @@
 import { Vec3 } from "@/util";
 
+// TODO CPU calculations do not match WebGL's
+
 const hashInt = (x: number) => {
   x += x << 10;
   x ^= x >> 6;
@@ -15,18 +17,18 @@ const hashVec3 = (vec: Vec3) => {
 
 const constructFloat = (int: number) => {
   const dataView = new DataView(new ArrayBuffer(4));
-  dataView.setUint32(0, (int & 0x007FFFFF) | 0x3F800000);
-  return dataView.getFloat32(0) - 1.
+  dataView.setUint32(0, (int & (0x007FFFFF >>> 0)) | (0x3F800000 >>> 0));
+  return dataView.getFloat32(0) - 1;
 };
 
-const floatBitsAsInt = (float: number) => {
+const floatBitsAsUint = (float: number) => {
   const dataView = new DataView(new ArrayBuffer(4));
   dataView.setFloat32(0, float);
   return dataView.getUint32(0);
 };
 
-export const randFloat = (seed: number) => constructFloat(hashInt(floatBitsAsInt(seed)));
-export const randFloatVec3Seed = (seed: Vec3) => constructFloat(hashVec3(seed.map(floatBitsAsInt) as Vec3));
+export const randFloat = (seed: number) => constructFloat(hashInt(floatBitsAsUint(seed)));
+export const randFloatVec3Seed = (seed: Vec3) => constructFloat(hashVec3(seed.map(floatBitsAsUint) as Vec3));
 
 export const webglRandomDeclarations = `//#region https://stackoverflow.com/a/17479300
 uint hash(uint x) {

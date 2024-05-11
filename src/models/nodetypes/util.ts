@@ -80,8 +80,9 @@ export const dynamicInSocketMapping = (slot: WebglSlot) =>
 export const dynamicOutSocketOutputs = (template: WebglTemplate=WebglTemplate.empty()) =>
     (socket: OutSocket) => () => {
       if (!socketTypeToStdOut.has(socket.type)) throw new Error("invalid type for dynamic socket");
-      return {[
-        socketTypeToStdOut.get(socket.type)!]: template,
+
+      return {
+        [socketTypeToStdOut.get(socket.type)!]: template,
       };
     };
 

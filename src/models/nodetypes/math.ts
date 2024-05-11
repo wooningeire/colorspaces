@@ -1,5 +1,5 @@
 import { labSliderProps } from "./spaces";
-import { Node, SocketType, NodeEvalContext, OutputDisplayType, OutSocket, InSocket, WebglOutputMapping, webglStdOuts } from "../Node";
+import { Node, SocketType, NodeEvalContext, OutputDisplayType, OutSocket, InSocket, WebglOutputMapping, webglStdOuts, socketTypeToStdOut } from "../Node";
 import * as cm from "../colormanagement";
 
 import { Vec3, lerp } from "@/util";
@@ -228,22 +228,24 @@ export namespace math {
       label,
       ins,
       outputLabel="label.socket.value",
+      outputType=SocketType.Float,
       calculate,
       getTemplate,
     }: {
       label: StringKey,
       ins: (...args: Parameters<ConstructorParameters<typeof Overload>[1]>) => [...InSockets],
       outputLabel?: StringKey,
+      outputType?: SocketType,
       calculate: (...inputs: {[I in keyof InSockets]: ReturnType<InSockets[I]["inValue"]>}) => number,
       getTemplate: (inputSlots: typeof ArithmeticNode["inputSlots"]) => WebglTemplate,
     }) => {
-      const outputs = {[webglStdOuts.float]: getTemplate(this.inputSlots)};
+      const outputs = {[socketTypeToStdOut.get(outputType)!]: getTemplate(this.inputSlots)};
 
       return new Overload(
         label,
         ins,
         (node, ins) => [
-          new OutSocket(node, SocketType.Float, outputLabel, context => calculate(...ins.map(socket => socket.inValue(context)) as {[I in keyof InSockets]: ReturnType<InSockets[I]["inValue"]>}), {
+          new OutSocket(node, outputType, outputLabel, context => calculate(...ins.map(socket => socket.inValue(context)) as {[I in keyof InSockets]: ReturnType<InSockets[I]["inValue"]>}), {
             webglOutputs: socket => () => outputs,
           }),
         ],
@@ -268,12 +270,14 @@ export namespace math {
       label,
       operandLabels=["label.socket.value", "label.socket.value"],
       outputLabel="label.socket.value",
+      outputType=SocketType.Float,
       calculate,
       getTemplate,
     }: {
       label: StringKey,
       operandLabels?: [StringKey, StringKey],
       outputLabel?: StringKey,
+      outputType?: SocketType,
       calculate: (val0: number, val1: number) => number,
       getTemplate: (inputSlots: typeof ArithmeticNode["inputSlots"]) => WebglTemplate,
     }) => this.singleOutputOverload({
@@ -292,21 +296,25 @@ export namespace math {
         ];
       },
       outputLabel,
+      outputType,
       calculate,
       getTemplate,
     });
 
     private static singleOutputSingleInputOverload = ({
       label,
+      outputType=SocketType.Float,
       calculate,
       getTemplate,
     }: {
       label: StringKey,
+      outputType?: SocketType,
       calculate: (val: number) => number,
       getTemplate: (inputSlots: typeof ArithmeticNode["inputSlots"]) => WebglTemplate,
     }) => this.singleOutputOverload({
       label,
       ins: this.singleInSocketBuilder,
+      outputType,
       calculate,
       getTemplate,
     });
@@ -413,8 +421,9 @@ export namespace math {
       
       [ArithmeticMode.Floor, this.singleOutputSingleInputOverload({
         label: "label.overload.arithmetic.floor",
+        outputType: SocketType.Integer,
         calculate: Math.floor,
-        getTemplate: ({val}) => WebglTemplate.source`floor(${val})`,
+        getTemplate: ({val}) => WebglTemplate.source`int(floor(${val}))`,
       })],
       
       [ArithmeticMode.Sine, this.singleOutputSingleInputOverload({
@@ -531,9 +540,6 @@ export namespace math {
         }),
       );
     }
-    webglBaseVariables(): WebglVariables {
-      return WebglVariables.empty({node: this});
-    }
   }
 
   export class SplitVectorNode extends Node {
@@ -564,10 +570,6 @@ export namespace math {
           webglOutputs: socket => () => ({[webglStdOuts.float]: WebglTemplate.source`${vec}.z`}),
         }),
       );
-    }
-
-    webglBaseVariables(): WebglVariables {
-      return WebglVariables.empty({node: this});
     }
   }
 
@@ -907,6 +909,24 @@ float ${flooredFloat} = ${useFloor} ? floor(${float}) : ${float};`({
 
     constructor() {
       super(RandomFloatMode.FloatSeed);
+    }
+  }
+
+  export class WellKnownConstantsNode extends Node {
+    static readonly TYPE = Symbol(this.name);
+    static readonly id = "wellKnownConstants";
+
+    constructor() {
+      super();
+
+      this.outs.push(
+        new OutSocket(this, SocketType.Float, "label.socket.wellKnownConstants.pi", () => Math.PI, {
+          webglOutputs: socket => () => ({[webglStdOuts.float]: WebglTemplate.string(`PI`)}),
+        }),
+        new OutSocket(this, SocketType.Float, "label.socket.wellKnownConstants.rev", () => 2 * Math.PI, {
+          webglOutputs: socket => () => ({[webglStdOuts.float]: WebglTemplate.string(`REV`)}),
+        }),
+      );
     }
   }
 }
