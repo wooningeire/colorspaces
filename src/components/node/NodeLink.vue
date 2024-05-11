@@ -75,36 +75,49 @@ C${x0! + controlPointDx},${y0} ${x1! - controlPointDx},${y1}, ${x1},${y1}`;
 </script>
 
 <template>
-  <path v-if="socketLoaded"
-      :d="path"
-      
-      :class="{
-                subtle,
-                invalid,
-            }" />
+  <path
+    v-if="socketLoaded"
+    :d="path"
+    
+    :class="{
+      subtle,
+      invalid,
+    }"
+  />
 </template>
 
 <style lang="scss" scoped>
 path {
+  --dasharray-length: -22px;
+
   fill: none;
+
+  transition:
+      stroke .25s ease-in-out,
+      stroke-dasharray .5s ease-in-out;
+
+  animation: move-stroke 0.5s infinite linear;
+
+  stroke-dasharray: 20px 2px;
+
+  @keyframes move-stroke {
+    0% {
+      stroke-dashoffset: 0;
+    }
+    100% {
+      stroke-dashoffset: var(--dasharray-length);
+    }
+  }
 
   &.subtle {
     opacity: 0.25;
   }
 
   &.invalid {
+    --dasharray-length: -8px;
+
     stroke: #f68;
     stroke-dasharray: 4px;
-    animation: move-stroke 0.25s infinite linear;
-
-    @keyframes move-stroke {
-      0% {
-        stroke-dashoffset: 0;
-      }
-      100% {
-        stroke-dashoffset: -8px;
-      }
-    }
   }
 }
 </style>

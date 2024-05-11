@@ -148,27 +148,30 @@ Object.assign(nodeVue, {
 </script>
 
 <template>
-  <div class="node"
-      @pointerdown="event => {
-        emitNodeSelected(event);
-        beginDrag(event);
-      }"
-      :style="{
-        'left': `${node.pos[0]}px`,
-        'top': `${node.pos[1]}px`,
-        '--node-width': `${node.width}px`,
-      } as any"
-      :class="[{
-        'subtle': isSubtle,
-        'selected': isSelected,
-        'reroute': node instanceof organization.RerouteNode,
-      }, nodeCategoryClass]">
+  <div
+    class="node"
+    @pointerdown="event => {
+      emitNodeSelected(event);
+      beginDrag(event);
+    }"
+    :style="{
+      'left': `${node.pos[0]}px`,
+      'top': `${node.pos[1]}px`,
+      '--node-width': `${node.width}px`,
+    } as any"
+    :class="[{
+      'subtle': isSubtle,
+      'selected': isSelected,
+      'reroute': node instanceof organization.RerouteNode,
+    }, nodeCategoryClass]"
+  >
     <div class="node-border"></div>
 
-    <div class="label"
-        v-if="shouldDisplayLabel"
-        v-html="getString(node.label)">
-    </div>
+    <div
+      class="label"
+      v-if="shouldDisplayLabel"
+      v-html="getString(node.label)"
+    ></div>
 
     <NodeSpecialInput
       :node="node"
@@ -186,8 +189,10 @@ Object.assign(nodeVue, {
     </div> -->
 
     <div class="in-sockets">
-      <template v-for="(socket, index) of node.ins"
-          :key="socket.id">
+      <template
+        v-for="(socket, index) of node.ins"
+        :key="socket.id"
+      >
         <NodeOutputColorDisplay
           v-if="node instanceof externals.DeviceTransformNode
               && socket.hasLinks"
@@ -213,23 +218,29 @@ Object.assign(nodeVue, {
     </div>
 
     <div class="out-sockets">
-      <NodeSocket v-for="socket of node.outs"
-          :key="socket.id"
-          :socket="socket"
-          @drag-socket="(socketVue: InstanceType<typeof NodeSocket>) => $emit('drag-socket', socketVue)"
-          @link-to-socket="(socketVue: InstanceType<typeof NodeSocket>) => (
-            $emit('link-to-socket', socketVue),
-            $emit('tree-update'),
-            $emit('potential-socket-position-change'))"
+      <NodeSocket
+        v-for="socket of node.outs"
+        :key="socket.id"
+        :socket="socket"
+        @drag-socket="(socketVue: InstanceType<typeof NodeSocket>) => $emit('drag-socket', socketVue)"
+        @link-to-socket="(socketVue: InstanceType<typeof NodeSocket>) => (
+          $emit('link-to-socket', socketVue),
+          $emit('tree-update'),
+          $emit('potential-socket-position-change'))
+        "
 
-          @unlink="
-            $emit('tree-update'),
-            $emit('potential-socket-position-change')"/>
+        @unlink="
+          $emit('tree-update'),
+          $emit('potential-socket-position-change')
+        "
+      />
     </div>
 
     <!-- {{node.output().map((x: number) => x.toFixed(4))}} -->
-    <NodeOutput :node="node"
-        ref="outputVue" />
+    <NodeOutput
+      :node="node"
+      ref="outputVue"
+    />
   </div>
 </template>
 

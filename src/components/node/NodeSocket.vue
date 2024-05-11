@@ -163,52 +163,76 @@ Object.defineProperties(socketVue, {
   },
 });
 
+// for transition
+const height = ref(0);
+const nodeSocketFieldRef = ref<InstanceType<typeof NodeSocketField> | null>(null);
+onMounted(() => {
+  if (!shouldShowFields.value) return;
+  height.value = nodeSocketFieldRef.value!.$el.clientHeight;
+});
 </script>
 
 <template>
-  <div class="socket-container"
-      :class="{'in': socket.isInput}"
-      ref="socketContainer"
+  <div
+    class="socket-container"
+    :class="{'in': socket.isInput}"
+    ref="socketContainer"
+    
+    @pointerover="() => !draggedSocket && showTooltip()"
+    @pointerout="tooltipController.hideTooltip()"
+  >
+    <div
+      class="socket"
+      v-if="socket.showSocket"
+
+      ref="socketHitbox"
+      draggable="true"
+      @dragstart="event => (ondragstart(event), tooltipController.hideTooltip())"
+      @dragenter.prevent
+      @dragover.prevent="isDraggedOver = true"
+      @drop="event => (ondrop(event), isDraggedOver = false)"
+      @pointerdown="event => event.button === 0 && event.stopPropagation()"
+      @dragleave="isDraggedOver = false"
+      @dragend="event => (event.currentTarget as HTMLDivElement)?.blur()"
+
+      @dblclick="unlinkLinks"
       
-      @pointerover="() => !draggedSocket && showTooltip()"
-      @pointerout="tooltipController.hideTooltip()">
-    <div class="socket"
-        v-if="socket.showSocket"
-
-        ref="socketHitbox"
-        draggable="true"
-        @dragstart="event => (ondragstart(event), tooltipController.hideTooltip())"
-        @dragenter.prevent
-        @dragover.prevent="isDraggedOver = true"
-        @drop="event => (ondrop(event), isDraggedOver = false)"
-        @pointerdown="event => event.button === 0 && event.stopPropagation()"
-        @dragleave="isDraggedOver = false"
-        @dragend="event => (event.currentTarget as HTMLDivElement)?.blur()"
-
-        @dblclick="unlinkLinks"
-        
+      :class="{
+        hiding: Boolean(draggedSocket) && !canLinkDraggedSocket,
+      }"
+    >
+      <div
+        class="socket-display"
         :class="{
-          hiding: Boolean(draggedSocket) && !canLinkDraggedSocket,
-        }">
-      <div class="socket-display"
-          :class="{
-            constant: socket.constant,
-						excited: Boolean(draggedSocket) && canLinkDraggedSocket,
-            accepting: isDraggedOver && canLinkDraggedSocket,
-          }"
-          :style="{'--socket-color': socketColor} as any"></div>
+          constant: socket.constant,
+          excited: Boolean(draggedSocket) && canLinkDraggedSocket,
+          accepting: isDraggedOver && canLinkDraggedSocket,
+        }"
+        :style="{'--socket-color': socketColor} as any"
+      ></div>
     </div>
     <div
       class="socket-label"
       v-html="getString(socket.label)"
     ></div>
 
-    <NodeSocketField v-if="shouldShowFields"
+    <Transition
+      name="drawer"
+      :style="{
+        '--end-height': `-${height}px`,
+      }"
+      ref=""
+    >
+      <NodeSocketField
+        v-if="shouldShowFields"
         :socket="socket"
         @value-change="(requiresShaderReload) => {
           socket.node.onSocketFieldValueChange(socket, tree as Tree);
           $emit('field-value-change', requiresShaderReload, socket);
-        }" />
+        }"
+        ref="nodeSocketFieldRef"
+      />
+    </Transition>
   </div>
 </template>
 
@@ -297,6 +321,28 @@ Object.defineProperties(socketVue, {
 
     > .socket {
       right: var(--socket-offset);
+    }
+  }
+
+
+  // vue transition
+  > .drawer-enter-active {
+    animation: drawer .125s cubic-bezier(0,.74,.55,1);
+  }
+
+  > .drawer-leave-active {
+    pointer-events: none;
+    animation: drawer .125s cubic-bezier(.45,0,1,.26) reverse;
+  }
+
+  @keyframes drawer {
+    0% {
+      transform: scaleY(0);
+      margin-bottom: var(--end-height);
+    }
+
+    100% {
+      margin-bottom: 0;
     }
   }
 }

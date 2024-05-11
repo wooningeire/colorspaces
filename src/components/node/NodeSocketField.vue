@@ -60,8 +60,10 @@ type VectorSocket = Socket<SocketType.Vector | SocketType.VectorOrColor>;
 </script>
 
 <template>
-  <div class="socket-value-editor"
-      ref="editorContainer">
+  <div
+    class="socket-value-editor"
+    ref="editorContainer"
+  >
     <template v-if="isNumeric">
       <EntrySlider
         v-model="(socket as Socket<SocketType.Float>).fieldValue"
@@ -147,9 +149,12 @@ type VectorSocket = Socket<SocketType.Vector | SocketType.VectorOrColor>;
   </div>
 </template>
 
-<!-- <style lang="scss">
-.socket-value-editor.entry {
-  border-radius: 4px;
-  overflow: hidden;
+<style lang="scss">
+.socket-value-editor {
+  transform-origin: top;
 }
-</style> -->
+// .socket-value-editor.entry {
+//   border-radius: 4px;
+//   overflow: hidden;
+// }
+</style>

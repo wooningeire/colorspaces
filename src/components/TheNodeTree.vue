@@ -176,6 +176,23 @@ const onWheel = (event: WheelEvent) => {
 };
 
 
+let animationHandle = 0;
+const onAnimationStart = (event: AnimationEvent) => {
+  if (!(event.target! as HTMLElement).classList.contains("socket-value-editor")) return;
+  updateLinksEveryFrame();
+};
+const onAnimationEnd = (event: AnimationEvent) => {
+  if (!(event.target! as HTMLElement).classList.contains("socket-value-editor")) return;
+  cancelAnimationFrame(animationHandle);
+};
+
+const updateLinksEveryFrame = () => {
+  rerenderLinks();
+
+  animationHandle = requestAnimationFrame(updateLinksEveryFrame);
+};
+
+
 defineExpose({
   selectNode,
   reloadOutputs,
@@ -184,57 +201,71 @@ defineExpose({
 
 <template>
   <!-- drag events here are from node tray -->
-  <div class="node-tree"
-      @dragover="event => isDraggingNodeFromNodeTray && event.preventDefault()"
-      @drop="event => isDraggingNodeFromNodeTray && $emit('add-node', currentlyDraggedNodeConstructor, [event.pageX, event.pageY])"
+  <div
+    class="node-tree"
+    @dragover="event => isDraggingNodeFromNodeTray && event.preventDefault()"
+    @drop="event => isDraggingNodeFromNodeTray && $emit('add-node', currentlyDraggedNodeConstructor, [event.pageX, event.pageY])"
 
-      @pointerdown.self="onPointerDownSelf"
-      @pointerdown="event => event.button === 1 && beginDragCamera(event)"
-      @wheel.passive="onWheel"
-      
-      :style="{
-        '--pos-x': `${viewportPos[0]}px`,
-        '--pos-y': `${viewportPos[1]}px`,
-        '--scale': `${viewportScale}`,
-      } as any">
-    <div class="nodes">
-      <NodeVue
-        v-for="node of tree.nodes"
-        :key="node.id"
-        :node="(node as Node)"
-        @drag-socket="onDragSocket"
-        @link-to-socket="onLinkToSocket"
-        @node-selected="selectNode"
+    @pointerdown.self="onPointerDownSelf"
+    @pointerdown="event => event.button === 1 && beginDragCamera(event)"
+    @wheel.passive="onWheel"
+    
+    :style="{
+      '--pos-x': `${viewportPos[0]}px`,
+      '--pos-y': `${viewportPos[1]}px`,
+      '--scale': `${viewportScale}`,
+    } as any"
+  >
+    <div
+      class="nodes"
+      @animationstart.capture="onAnimationStart"
+      @animationend.capture="onAnimationEnd"
+    >
+      <TransitionGroup name="pop-in">
+        <NodeVue
+          v-for="node of tree.nodes"
+          :key="node.id"
+          :node="(node as Node)"
+          @drag-socket="onDragSocket"
+          @link-to-socket="onLinkToSocket"
+          @node-selected="selectNode"
 
-        @potential-socket-position-change="rerenderLinks"
-        
-        @field-value-change="(requiresShaderReload, updateSource) => reloadOutputs(requiresShaderReload, updateSource)"
-        @tree-update="reloadOutputs(true, NodeUpdateSource.TreeReload)"
-      />
+          @potential-socket-position-change="rerenderLinks"
+          
+          @field-value-change="(requiresShaderReload, updateSource) => reloadOutputs(requiresShaderReload, updateSource)"
+          @tree-update="reloadOutputs(true, NodeUpdateSource.TreeReload)"
+        />
+      </TransitionGroup>
     </div>
 
-    <svg class="links"
-        :viewbox="`0 0 ${$el?.clientWidth ?? 300} ${$el?.clientHeight ?? 150}`">
+    <svg
+      class="links"
+      :viewbox="`0 0 ${$el?.clientWidth ?? 300} ${$el?.clientHeight ?? 150}`"
+    >
       <g>
         <template v-if="draggingSocket">
-          <NodeLink v-if="draggedSocket?.isOutput"
-              class="new-link"
-              :link="null"
-              :socketVues="socketVues"
+          <NodeLink
+            v-if="draggedSocket?.isOutput"
+            class="new-link"
+            :link="null"
+            :socketVues="socketVues"
 
-              :x0="draggedSocketVue?.socketPos()[0] ?? 0"
-              :y0="draggedSocketVue?.socketPos()[1] ?? 0"
-              :x1="pointerX"
-              :y1="pointerY" />
-          <NodeLink v-else
-              class="new-link"
-              :link="null"
-              :socketVues="socketVues"
+            :x0="draggedSocketVue?.socketPos()[0] ?? 0"
+            :y0="draggedSocketVue?.socketPos()[1] ?? 0"
+            :x1="pointerX"
+            :y1="pointerY"
+          />
+          <NodeLink
+            v-else
+            class="new-link"
+            :link="null"
+            :socketVues="socketVues"
 
-              :x0="pointerX"
-              :y0="pointerY"
-              :x1="draggedSocketVue?.socketPos()[0] ?? 0"
-              :y1="draggedSocketVue?.socketPos()[1] ?? 0" />
+            :x0="pointerX"
+            :y0="pointerY"
+            :x1="draggedSocketVue?.socketPos()[0] ?? 0"
+            :y1="draggedSocketVue?.socketPos()[1] ?? 0"
+          />
         </template>
 
         <TheNodeTreeLinks :socketVues="socketVues" />
@@ -268,6 +299,28 @@ defineExpose({
 
     > :deep(*) {
       pointer-events: initial;
+    }
+
+    // vue transition
+    > .pop-in-enter-active {
+      animation: pop-in .25s cubic-bezier(.26,1.5,.39,.99);
+    }
+    > .pop-in-leave-active {
+      pointer-events: none;
+      animation: fade-out .125s cubic-bezier(.44,0,1,.71);
+    }
+    @keyframes pop-in {
+      0% {
+        opacity: 0;
+        transform: scale(0);
+      }
+    }
+
+    @keyframes fade-out {
+      100% {
+        transform: scale(0.5);
+        opacity: 0;
+      }
     }
   }
 
