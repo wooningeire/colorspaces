@@ -25,7 +25,7 @@ export namespace booleans {
       );
 
       this.ins.push(
-        new InSocket(this, SocketType.Bool, "label.socket.conditional.condition", { webglOutputMapping: { [webglStdOuts.bool]: condition } }),
+        new InSocket(this, SocketType.Bool, "label.socket.conditional.condition", { webglOutputMappingStatic: { [webglStdOuts.bool]: condition } }),
         new InSocket(this, SocketType.DynamicAny, "label.socket.conditional.ifTrue", {
           ...dynamicTyping.inSocketOptions(ifTrue),
           sliderProps: {
@@ -114,13 +114,13 @@ if (${condition}) {
             node => {
               return [
                 new InSocket(node, SocketType.Float, "label.socket.compareFloats.valueA", {
-                  webglGetOutputMapping: socket => () => ({ [webglStdOuts.float]: val0 }),
+                  webglOutputMapping: socket => () => ({ [webglStdOuts.float]: val0 }),
                   sliderProps: {
                     hasBounds: false,
                   },
                 }),
                 new InSocket(node, SocketType.Float, "label.socket.compareFloats.valueB", {
-                  webglGetOutputMapping: socket => () => ({ [webglStdOuts.float]: val1 }),
+                  webglOutputMapping: socket => () => ({ [webglStdOuts.float]: val1 }),
                   sliderProps: {
                     hasBounds: false,
                   },

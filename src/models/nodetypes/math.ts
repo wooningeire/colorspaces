@@ -67,10 +67,10 @@ export namespace math {
               return [
                 new InSocket(node, SocketType.Float, "label.socket.blendAmount", {
                   defaultValue: defaultBlendAmount,
-                  webglOutputMapping: {[webglStdOuts.float]: fac},
+                  webglOutputMappingStatic: {[webglStdOuts.float]: fac},
                 }),
-                new InSocket(node, SocketType.Vector, operandLabels[0], {webglOutputMapping: {[webglStdOuts.vector]: val0}}),
-                new InSocket(node, SocketType.Vector, operandLabels[1], {webglOutputMapping: {[webglStdOuts.vector]: val1}}),
+                new InSocket(node, SocketType.Vector, operandLabels[0], {webglOutputMappingStatic: {[webglStdOuts.vector]: val0}}),
+                new InSocket(node, SocketType.Vector, operandLabels[1], {webglOutputMappingStatic: {[webglStdOuts.vector]: val1}}),
               ];
             },
             (node, ins) => [
@@ -141,8 +141,8 @@ export namespace math {
           "label.overload.vectorArithmetic.distance",
           node => {
             return [
-              new InSocket(node, SocketType.Vector, "label.socket.vector", {webglOutputMapping: {[webglStdOuts.vector]: val0}}),
-              new InSocket(node, SocketType.Vector, "label.socket.vector", {webglOutputMapping: {[webglStdOuts.vector]: val1}}),
+              new InSocket(node, SocketType.Vector, "label.socket.vector", {webglOutputMappingStatic: {[webglStdOuts.vector]: val0}}),
+              new InSocket(node, SocketType.Vector, "label.socket.vector", {webglOutputMappingStatic: {[webglStdOuts.vector]: val1}}),
             ];
           },
           (node, ins) => [
@@ -167,8 +167,8 @@ export namespace math {
           "label.overload.vectorArithmetic.scalarMultiply",
           node => {
             return [
-              new InSocket(node, SocketType.Vector, "label.socket.vector", {webglOutputMapping: {[webglStdOuts.vector]: vector}}),
-              new InSocket(node, SocketType.Float, "label.socket.scalar", {webglOutputMapping: {[webglStdOuts.float]: scalar}}),
+              new InSocket(node, SocketType.Vector, "label.socket.vector", {webglOutputMappingStatic: {[webglStdOuts.vector]: vector}}),
+              new InSocket(node, SocketType.Float, "label.socket.scalar", {webglOutputMappingStatic: {[webglStdOuts.float]: scalar}}),
             ];
           },
           (node, ins) => [
@@ -261,7 +261,7 @@ export namespace math {
       return [
         new InSocket(node, SocketType.Float, "label.socket.value", {
           sliderProps: {hasBounds: false},
-          webglOutputMapping: {[webglStdOuts.float]: val},
+          webglOutputMappingStatic: {[webglStdOuts.float]: val},
         }),
       ];
     };
@@ -287,11 +287,11 @@ export namespace math {
         return [
           new InSocket(node, SocketType.Float, operandLabels[0], {
             sliderProps: {hasBounds: false},
-            webglOutputMapping: {[webglStdOuts.float]: val0},
+            webglOutputMappingStatic: {[webglStdOuts.float]: val0},
           }),
           new InSocket(node, SocketType.Float, operandLabels[1], {
             sliderProps: {hasBounds: false},
-            webglOutputMapping: {[webglStdOuts.float]: val1},
+            webglOutputMappingStatic: {[webglStdOuts.float]: val1},
           }),
         ];
       },
@@ -375,13 +375,13 @@ export namespace math {
           return [
             new InSocket(node, SocketType.Float, "label.socket.min", {
               sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglStdOuts.float]: min},
+              webglOutputMappingStatic: {[webglStdOuts.float]: min},
             }),
             new InSocket(node, SocketType.Float, "label.socket.max", {
               sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglStdOuts.float]: max},
+              webglOutputMappingStatic: {[webglStdOuts.float]: max},
             }),
-            new InSocket(node, SocketType.Float, "label.socket.blendAmount", {webglOutputMapping: {[webglStdOuts.float]: fac}}),
+            new InSocket(node, SocketType.Float, "label.socket.blendAmount", {webglOutputMappingStatic: {[webglStdOuts.float]: fac}}),
           ];
         },
         calculate: lerp,
@@ -395,23 +395,23 @@ export namespace math {
           return [
             new InSocket(node, SocketType.Float, "label.socket.arithmetic.mapRange.sourceValue", {
               sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglStdOuts.float]: source},
+              webglOutputMappingStatic: {[webglStdOuts.float]: source},
             }),
             new InSocket(node, SocketType.Float, "label.socket.arithmetic.mapRange.sourceMin", {
               sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglStdOuts.float]: sourceMin},
+              webglOutputMappingStatic: {[webglStdOuts.float]: sourceMin},
             }),
             new InSocket(node, SocketType.Float, "label.socket.arithmetic.mapRange.sourceMax", {
               sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglStdOuts.float]: sourceMax},
+              webglOutputMappingStatic: {[webglStdOuts.float]: sourceMax},
             }),
             new InSocket(node, SocketType.Float, "label.socket.arithmetic.mapRange.targetMin", {
               sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglStdOuts.float]: targetMin},
+              webglOutputMappingStatic: {[webglStdOuts.float]: targetMin},
             }),
             new InSocket(node, SocketType.Float, "label.socket.arithmetic.mapRange.targetMax", {
               sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglStdOuts.float]: targetMax},
+              webglOutputMappingStatic: {[webglStdOuts.float]: targetMax},
             }),
           ];
         },
@@ -483,12 +483,12 @@ export namespace math {
           return [
             new InSocket(node, SocketType.Float, "label.socket.value", {
               sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglStdOuts.float]: val},
+              webglOutputMappingStatic: {[webglStdOuts.float]: val},
             }),
             new InSocket(node, SocketType.Float, "label.socket.arithmetic.quantize.nSegments", {
               sliderProps: {hasBounds: false, step: 1},
               defaultValue: 4,
-              webglOutputMapping: {[webglStdOuts.float]: nSegments},
+              webglOutputMappingStatic: {[webglStdOuts.float]: nSegments},
             }),
           ];
         },
@@ -518,19 +518,19 @@ export namespace math {
           sliderProps: {
             hasBounds: false,
           },
-          webglOutputMapping: {[webglStdOuts.float]: x},
+          webglOutputMappingStatic: {[webglStdOuts.float]: x},
         }),
         new InSocket(this, SocketType.Float, NO_DESC, {
           sliderProps: {
             hasBounds: false,
           },
-          webglOutputMapping: {[webglStdOuts.float]: y},
+          webglOutputMappingStatic: {[webglStdOuts.float]: y},
         }),
         new InSocket(this, SocketType.Float, NO_DESC, {
           sliderProps: {
             hasBounds: false,
           },
-          webglOutputMapping: {[webglStdOuts.float]: z},
+          webglOutputMappingStatic: {[webglStdOuts.float]: z},
         }),
       );
 
@@ -556,7 +556,7 @@ export namespace math {
       const {vec} = SplitVectorNode.inputSlots;
 
       this.ins.push(
-        (this.inSocket = new InSocket(this, SocketType.Vector, "label.socket.vector", {webglOutputMapping: {[webglStdOuts.vector]: vec}})),
+        (this.inSocket = new InSocket(this, SocketType.Vector, "label.socket.vector", {webglOutputMappingStatic: {[webglStdOuts.vector]: vec}})),
       );
 
       this.outs.push(
@@ -606,11 +606,11 @@ export namespace math {
             return [
               new InSocket(node, SocketType.VectorOrColor, "label.socket.cielabOrColor", {
                 sliderProps: labSliderProps,
-                webglGetOutputMapping: vectorOrColorInSocketMapping({colorSlot: col0, vectorSlot: vec0}),
+                webglOutputMapping: vectorOrColorInSocketMapping({colorSlot: col0, vectorSlot: vec0}),
               }),
               new InSocket(node, SocketType.VectorOrColor, "label.socket.cielabOrColor", {
                 sliderProps: labSliderProps,
-                webglGetOutputMapping: vectorOrColorInSocketMapping({colorSlot: col1, vectorSlot: vec1}),
+                webglOutputMapping: vectorOrColorInSocketMapping({colorSlot: col1, vectorSlot: vec1}),
               }),
             ];
           },
@@ -649,11 +649,11 @@ export namespace math {
           node => [
             new InSocket(node, SocketType.VectorOrColor, "label.socket.colorDifference.sampleCielabOrColor", {
               sliderProps: labSliderProps,
-              webglGetOutputMapping: vectorOrColorInSocketMapping({colorSlot: col0, vectorSlot: vec0}),
+              webglOutputMapping: vectorOrColorInSocketMapping({colorSlot: col0, vectorSlot: vec0}),
             }),
             new InSocket(node, SocketType.VectorOrColor, "label.socket.colorDifference.targetCielabOrColor", {
               sliderProps: labSliderProps,
-              webglGetOutputMapping: vectorOrColorInSocketMapping({colorSlot: col1, vectorSlot: vec1}),
+              webglOutputMapping: vectorOrColorInSocketMapping({colorSlot: col1, vectorSlot: vec1}),
             }),
           ],
           (node, ins) => [
@@ -713,10 +713,10 @@ export namespace math {
       this.ins.push(
         ...(this.colorSockets = [
           new InSocket(this, SocketType.VectorOrColor, "label.socket.xyzOrColor", {
-            webglGetOutputMapping: vectorOrColorInSocketMapping({colorSlot: col0, vectorSlot: vec0}),
+            webglOutputMapping: vectorOrColorInSocketMapping({colorSlot: col0, vectorSlot: vec0}),
           }),
           new InSocket(this, SocketType.VectorOrColor, "label.socket.xyzOrColor", {
-            webglGetOutputMapping: vectorOrColorInSocketMapping({colorSlot: col1, vectorSlot: vec1}),
+            webglOutputMapping: vectorOrColorInSocketMapping({colorSlot: col1, vectorSlot: vec1}),
           }),
         ]),
       );
@@ -807,20 +807,20 @@ export namespace math {
           "label.overload.randomFloat.floatSeed",
           node => [
             new InSocket(node, SocketType.Bool, "label.socket.randomFloat.integersOnly?", {
-              webglOutputMapping: {[webglStdOuts.bool]: useFloor},
+              webglOutputMappingStatic: {[webglStdOuts.bool]: useFloor},
             }),
             new InSocket(node, SocketType.Float, "label.socket.randomFloat.seed", {
               sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglStdOuts.float]: seed},
+              webglOutputMappingStatic: {[webglStdOuts.float]: seed},
             }),
             new InSocket(node, SocketType.Float, "label.socket.min", {
               sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglStdOuts.float]: min},
+              webglOutputMappingStatic: {[webglStdOuts.float]: min},
             }),
             new InSocket(node, SocketType.Float, "label.socket.max", {
               sliderProps: {hasBounds: false},
               defaultValue: 1,
-              webglOutputMapping: {[webglStdOuts.float]: max},
+              webglOutputMappingStatic: {[webglStdOuts.float]: max},
             }),
           ],
           (node, ins) => [
@@ -859,7 +859,7 @@ float ${flooredFloat} = ${useFloor} ? floor(${float}) : ${float};`({
           "label.overload.randomFloat.vectorSeed",
           node => [
             new InSocket(node, SocketType.Bool, "label.socket.randomFloat.integersOnly?", {
-              webglOutputMapping: {[webglStdOuts.bool]: useFloor},
+              webglOutputMappingStatic: {[webglStdOuts.bool]: useFloor},
             }),
             new InSocket(node, SocketType.Vector, "label.socket.randomFloat.seed", {
               sliderProps: [
@@ -867,16 +867,16 @@ float ${flooredFloat} = ${useFloor} ? floor(${float}) : ${float};`({
                 {hasBounds: false},
                 {hasBounds: false},
               ],
-              webglOutputMapping: {[webglStdOuts.vector]: seed},
+              webglOutputMappingStatic: {[webglStdOuts.vector]: seed},
             }),
             new InSocket(node, SocketType.Float, "label.socket.min", {
               sliderProps: {hasBounds: false},
-              webglOutputMapping: {[webglStdOuts.float]: min},
+              webglOutputMappingStatic: {[webglStdOuts.float]: min},
             }),
             new InSocket(node, SocketType.Float, "label.socket.max", {
               sliderProps: {hasBounds: false},
               defaultValue: 1,
-              webglOutputMapping: {[webglStdOuts.float]: max},
+              webglOutputMappingStatic: {[webglStdOuts.float]: max},
             }),
           ],
           (node, ins) => [

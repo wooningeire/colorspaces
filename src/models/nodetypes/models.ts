@@ -21,9 +21,9 @@ export namespace models {
       const {red, green, blue} = RgbNode.inputSlots;
 
       this.ins.push(
-        new InSocket(this, SocketType.Float, "label.socket.red", {webglOutputMapping: {[webglStdOuts.float]: red}}).flag(SocketFlag.Rgb),
-        new InSocket(this, SocketType.Float, "label.socket.green", {webglOutputMapping: {[webglStdOuts.float]: green}}).flag(SocketFlag.Rgb),
-        new InSocket(this, SocketType.Float, "label.socket.blue", {webglOutputMapping: {[webglStdOuts.float]: blue}}).flag(SocketFlag.Rgb),
+        new InSocket(this, SocketType.Float, "label.socket.red", {webglOutputMappingStatic: {[webglStdOuts.float]: red}}).flag(SocketFlag.Rgb),
+        new InSocket(this, SocketType.Float, "label.socket.green", {webglOutputMappingStatic: {[webglStdOuts.float]: green}}).flag(SocketFlag.Rgb),
+        new InSocket(this, SocketType.Float, "label.socket.blue", {webglOutputMappingStatic: {[webglStdOuts.float]: blue}}).flag(SocketFlag.Rgb),
       );
 
       this.outs.push(
@@ -87,7 +87,7 @@ export namespace models {
           "label.overload.toRgb",
           node => Object.values(inputSlots).map(
             (slot, i) => 
-                new InSocket(node, SocketType.Float, socketLabels[i], {webglOutputMapping: {[webglStdOuts.float]: slot}}).flag(socketFlags[i]),
+                new InSocket(node, SocketType.Float, socketLabels[i], {webglOutputMappingStatic: {[webglStdOuts.float]: slot}}).flag(socketFlags[i]),
           ),
           (node, ins) => [
             new OutSocket(node, SocketType.Vector, "label.rgb", context => toRgb.convert(ins.map(socket => socket.inValue(context)) as Vec3) as Vec3, {
@@ -106,7 +106,7 @@ export namespace models {
         [RgbOverloadMode.FromRgb, new Overload(
           "label.overload.fromRgb",
           node => [
-            new InSocket(node, SocketType.Vector, "label.rgb", {webglOutputMapping: {[webglStdOuts.vector]: rgb}}),
+            new InSocket(node, SocketType.Vector, "label.rgb", {webglOutputMappingStatic: {[webglStdOuts.vector]: rgb}}),
           ],
           (node, ins) => Object.values(inputSlots).map(
             (slot, i) => 
@@ -245,19 +245,19 @@ export namespace models {
 
       this.ins.push(
         new InSocket(this, SocketType.Float, "label.socket.lightness", {
-          webglOutputMapping: {[webglStdOuts.float]: lightness},
+          webglOutputMappingStatic: {[webglStdOuts.float]: lightness},
           sliderProps: {
             hasBounds: false,
           },
         }),
         new InSocket(this, SocketType.Float, "label.socket.redGreen", {
-          webglOutputMapping: {[webglStdOuts.float]: redGreen},
+          webglOutputMappingStatic: {[webglStdOuts.float]: redGreen},
           sliderProps: {
             hasBounds: false,
           },
         }),
         new InSocket(this, SocketType.Float, "label.socket.yellowBlue", {
-          webglOutputMapping: {[webglStdOuts.float]: yellowBlue},
+          webglOutputMappingStatic: {[webglStdOuts.float]: yellowBlue},
           sliderProps: {
             hasBounds: false,
           },
@@ -296,19 +296,19 @@ export namespace models {
           "label.overload.toLxy",
           node => [
             new InSocket(node, SocketType.Float, socketLabels[0], {
-              webglOutputMapping: {[webglStdOuts.float]: lightness},
+              webglOutputMappingStatic: {[webglStdOuts.float]: lightness},
               sliderProps: {
                 hasBounds: false,
               },
             }),
             new InSocket(node, SocketType.Float, socketLabels[1], {
-              webglOutputMapping: {[webglStdOuts.float]: colorfulness},
+              webglOutputMappingStatic: {[webglStdOuts.float]: colorfulness},
               sliderProps: {
                 hasBounds: false,
               },
             }),
             new InSocket(node, SocketType.Float, socketLabels[2], {
-              webglOutputMapping: {[webglStdOuts.float]: hue},
+              webglOutputMappingStatic: {[webglStdOuts.float]: hue},
             }).flag(SocketFlag.Hue),
           ],
           (node, ins) => [
@@ -329,7 +329,7 @@ export namespace models {
           "label.overload.fromLxy",
           node => [
             new InSocket(node, SocketType.Vector, "label.lxy", {
-              webglOutputMapping: {[webglStdOuts.vector]: lxy},
+              webglOutputMappingStatic: {[webglStdOuts.vector]: lxy},
               sliderProps: [
                 {
                   hasBounds: false,
@@ -451,14 +451,14 @@ export namespace models {
             step: 1,
           },
           defaultValue: 510,
-          webglOutputMapping: {[webglStdOuts.float]: wavelength},
+          webglOutputMappingStatic: {[webglStdOuts.float]: wavelength},
         })),
         (this.powerSocket = new InSocket(this, SocketType.Float, "label.socket.wavelength.relativePower", {
           sliderProps: {
             hasBounds: false,
           },
           defaultValue: 1,
-          webglOutputMapping: {[webglStdOuts.float]: power},
+          webglOutputMappingStatic: {[webglStdOuts.float]: power},
         })),
         (this.datasetSocket = new InSocket(this, SocketType.Dropdown, "label.socket.cmfDataset", {
           showSocket: false,
@@ -522,7 +522,7 @@ export namespace models {
             unboundedChangePerPixel: 10,
           },
           defaultValue: 1750,
-          webglOutputMapping: {[webglStdOuts.float]: temperature},
+          webglOutputMappingStatic: {[webglStdOuts.float]: temperature},
         })),
         (this.datasetSocket = new InSocket(this, SocketType.Dropdown, "label.socket.cmfDataset", {
           showSocket: false,

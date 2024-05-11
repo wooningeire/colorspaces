@@ -105,7 +105,7 @@ export namespace spaces {
             }
   
             node.colorInputSocket = node.constructInSocket({
-              webglGetOutputMapping: vectorOrColorInSocketMapping({colorSlot: inColor, vectorSlot: inVec}),
+              webglOutputMapping: vectorOrColorInSocketMapping({colorSlot: inColor, vectorSlot: inVec}),
               ...node.inSocketOptions(),
             });
             sockets.push(node.colorInputSocket);
@@ -177,7 +177,7 @@ export namespace spaces {
             const socketOptions = node.inSocketOptions();
             const individualSocketOptions = new Array(3).fill(0).map((_, i) =>{
               const floatSocketOptions: InSocketOptions<SocketType.Float> = {
-                webglOutputMapping: {[webglStdOuts.float]: slots[i]}
+                webglOutputMappingStatic: {[webglStdOuts.float]: slots[i]}
               };
               for (const [key, value] of Object.entries(socketOptions)) {
                 const newKey = key === "fieldText" ? "socketDesc" : key;

@@ -167,7 +167,7 @@ export class WebglTemplate<InputSlots extends SlotMap=any, OutputSlots extends S
     const substitutions = new Map<WebglSlot, string>();
     for (const [key, slot] of objectSymbolEntries(outputMapping)) {
       const template = outputs[key];
-      if (!template) throw new TypeError(`Attempted to map an output variable "${key.description}", which does not exist on the given outputs, which consist of ${Object.getOwnPropertySymbols(outputs).map(String).join(", ")}`);
+      if (!template) throw new TypeError(`Attempted to map an output variable "${key.description}" which does not exist on the given outputs, which consist of ${Object.getOwnPropertySymbols(outputs).map(String).join(", ")}`);
 
       substitutions.set(slot as WebglSlot, template.toString());
     }
@@ -431,7 +431,6 @@ void main() {
   private static getTranspiledNodeDependencies(node: Node) {
     const dependencyIndices = new Map<Node, number>();
     const dependencies: WebglVariables[] = [];
-    const dependencyFields = new Map<InSocket, WebglVariables>();
 
     let i = 0;
     for (const dependencyNode of node.toposortedDependencies()) {
@@ -448,7 +447,7 @@ void main() {
       }
 
       for (const socket of dependencyNode.ins) {
-        const outputMapping = socket.webglGetOutputMapping();
+        const outputMapping = socket.webglOutputMapping();
         if (outputMapping === null) continue;
 
         if (socket.usesFieldValue) {
@@ -464,7 +463,7 @@ void main() {
               );
         } else {
           if (functionDependencySockets.has(socket.link.src)) continue;
-          
+
           const srcNode = socket.link.srcNode;
           const srcIndex = dependencyIndices.get(srcNode)!;
           variables = variables.substituteUsingOutputsFrom(

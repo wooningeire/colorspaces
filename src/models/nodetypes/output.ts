@@ -108,13 +108,13 @@ export namespace output {
           defaultValue: true,
         })),
         new InSocket(this, SocketType.ColorComponents, "label.socket.colors", {
-          webglOutputMapping: {
+          webglOutputMappingStatic: {
             [webglStdOuts.color]: color,
           },
         }),
         (this.alphaSocket = new InSocket(this, SocketType.Float, "label.socket.alpha", {
           defaultValue: 1,
-          webglOutputMapping: {
+          webglOutputMappingStatic: {
             [webglStdOuts.float]: alpha,
           },
         })),

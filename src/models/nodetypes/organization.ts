@@ -94,7 +94,7 @@ export namespace organization {
         node => [
           new InSocket(node, type, NO_DESC, {
             ...inSocketOptions,
-            webglOutputMapping: {[socketTypeToStdOut.get(type)!]: val},
+            webglOutputMappingStatic: {[socketTypeToStdOut.get(type)!]: val},
           }),
         ],
         (node, ins) => [

@@ -510,8 +510,8 @@ export type InSocketOptions<St extends SocketType=any> = {
   /** A mapping from output names from an incoming source socket (that is linked to this socket) to input slots in
    * `webglBaseVariables`
    */
-  webglOutputMapping?: WebglOutputMapping<St>,
-  webglGetOutputMapping?: (socket: InSocket<St>) => () => WebglOutputMapping<St>,
+  webglOutputMappingStatic?: WebglOutputMapping<St>,
+  webglOutputMapping?: (socket: InSocket<St>) => () => WebglOutputMapping<St>,
 } & SocketOptions<St>;
 export type OutSocketOptions<St extends SocketType=any> = {
   /**
@@ -694,8 +694,8 @@ export abstract class Socket<St extends SocketType=any> {
 }
 
 export class InSocket<St extends SocketType=any> extends Socket<St> {
-  private readonly webglOutputMapping: WebglOutputMapping<St> | null;
-  readonly webglGetOutputMapping: () => WebglOutputMapping<St> | null;
+  private readonly webglOutputMappingStatic: WebglOutputMapping<St> | null;
+  readonly webglOutputMapping: () => WebglOutputMapping<St> | null;
 
   constructor(
     node: Node,
@@ -708,12 +708,12 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     super(node, true, type, label, options);
 
     const {
+      webglOutputMappingStatic,
       webglOutputMapping,
-      webglGetOutputMapping,
     } = options;
 
-    this.webglOutputMapping = webglOutputMapping ?? {};
-    this.webglGetOutputMapping = webglGetOutputMapping?.(this) ?? (() => this.webglOutputMapping);
+    this.webglOutputMappingStatic = webglOutputMappingStatic ?? {};
+    this.webglOutputMapping = webglOutputMapping?.(this) ?? (() => this.webglOutputMappingStatic);
   }
 
   get link() {

@@ -40,14 +40,14 @@ export namespace images {
             sliderProps: {
               hasBounds: false,
             },
-            webglOutputMapping: {[webglStdOuts.float]: from},
+            webglOutputMappingStatic: {[webglStdOuts.float]: from},
           }),
           new InSocket(this, SocketType.Float, "label.socket.gradient.to", {
             defaultValue: 1,
             sliderProps: {
               hasBounds: false,
             },
-            webglOutputMapping: {[webglStdOuts.float]: to},
+            webglOutputMappingStatic: {[webglStdOuts.float]: to},
           }),
         ]),
       );
@@ -244,8 +244,8 @@ uniform float ${height};`,
           constant: true,
         }),
         ...(this.coordsSockets = [
-          new InSocket(this, SocketType.Float, "label.socket.x", {webglOutputMapping: {[webglStdOuts.float]: x}}),
-          new InSocket(this, SocketType.Float, "label.socket.y", {webglOutputMapping: {[webglStdOuts.float]: y}}),
+          new InSocket(this, SocketType.Float, "label.socket.x", {webglOutputMappingStatic: {[webglStdOuts.float]: x}}),
+          new InSocket(this, SocketType.Float, "label.socket.y", {webglOutputMappingStatic: {[webglStdOuts.float]: y}}),
         ])
       );
 
