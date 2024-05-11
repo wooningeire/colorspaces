@@ -57,6 +57,8 @@ export const mod = (a: number, b: number) => (a % b + b) % b;
 export const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;
 export const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+export const REV = 2 * Math.PI;
+
 
 export const clearTextSelection = () => {
   getSelection()?.removeAllRanges();

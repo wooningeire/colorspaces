@@ -203,6 +203,23 @@ export namespace models {
     },
   });
 
+  export const HsiNode = createConverterNodeType({
+    name: "HsiNode",
+    id: "hsi",
+    outputDisplayType: OutputDisplayType.Vec,
+
+    socketLabels: ["label.socket.hue", "label.socket.saturation", "label.socket.intensity"],
+    nodeDisplayLabels: ["label.hxy.h", "label.hsx.s", "label.hsi.i"],
+    toRgb: {
+      convert: cm.hsiToRgb,
+      webglConversionFunction: "hsiToRgb",
+    },
+    fromRgb: {
+      convert: cm.rgbToHsi,
+      webglConversionFunction: "rgbToHsi",
+    },
+  });
+
   /* export class XyzModelNode extends Node {
     static readonly TYPE = Symbol(this.name);
     static readonly LABEL = "XYZ (model)";

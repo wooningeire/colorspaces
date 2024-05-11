@@ -7,7 +7,7 @@ export {Oklab} from "./colormanagement/spaces/oklab";
 
 export {spectralPowerDistribution, singleWavelength} from "./colormanagement/spectral-power-distribution";
 export {blackbody} from "./colormanagement/blackbody";
-export {cmyToRgb, rgbToCmy, rgbToHsl, hslToRgb, rgbToHsv, hsvToRgb, rgbToHwb, hwbToRgb} from "./colormanagement/rgb-models";
+export {cmyToRgb, rgbToCmy, rgbToHsl, hslToRgb, rgbToHsv, hsvToRgb, rgbToHwb, hwbToRgb, rgbToHsi, hsiToRgb} from "./colormanagement/rgb-models";
 
 export * as difference from "./colormanagement/difference";
 

@@ -1,4 +1,4 @@
-import {Vec3, clamp, mod} from "@/util";
+import {REV, Vec3, clamp, mod} from "@/util";
 
 export const cmyToRgb = (vec: Vec3): Vec3 => vec.map(comp => 1 - comp) as Vec3;
 export const rgbToCmy = cmyToRgb;
@@ -126,6 +126,61 @@ export const rgbToHwb = ([red, green, blue]: Vec3): Vec3 => {
     hsv[0],
     (1 - hsv[1]) * hsv[2],
     1 - hsv[2],
+  ];
+};
+
+//http://www.rmuti.ac.th/user/kedkarn/impfile/RGB_to_HSI.pdf
+export const hsiToRgb = ([hue, sat, intensity]: Vec3): Vec3 => {
+  let hueRad = mod(hue, 1) * REV;
+
+  const x = intensity * (1 - sat);
+
+  if (hue < 1 / 3) {
+    const y = intensity * (1 + sat * Math.cos(hueRad) / Math.cos(Math.PI / 3 - hueRad));
+    const z = 3 * intensity - x - y;
+    
+    return [y, z, x];
+  } else if (hue < 2 / 3) {
+    hueRad -= Math.PI * 2 / 3;
+    const y = intensity * (1 + sat * Math.cos(hueRad) / Math.cos(Math.PI / 3 - hueRad));
+    const z = 3 * intensity - x - y;
+
+    return [x, y, z];
+  } else {
+    hueRad -= Math.PI * 4 / 3;
+    const y = intensity * (1 + sat * Math.cos(hueRad) / Math.cos(Math.PI / 3 - hueRad));
+    const z = 3 * intensity - x - y;
+
+    return [z, x, y];
+  }
+};
+
+export const rgbToHsi = ([red, green, blue]: Vec3): Vec3 => {
+  const rgbSum = red + green + blue;
+  if (rgbSum === 0) {
+    return [0, 0, 0];
+  }
+
+  const r = red / rgbSum;
+  const g = green / rgbSum;
+  const b = blue / rgbSum;
+
+  const denominator = (r - g)**2 + (r - b) * (g - b);
+
+  let hue;
+  if (denominator === 0) {
+    hue = 0;
+  } else {
+    hue = Math.acos(0.5 * ((r - g) + (r - b)) / Math.sqrt(denominator)) / REV;
+    if (b > g) {
+      hue = 1 - hue;
+    }
+  }
+
+  return [
+    hue,
+    1 - 3 * Math.min(r, g, b),
+    rgbSum / 3,
   ];
 };
 
@@ -263,5 +318,60 @@ vec3 cmyToRgb(vec3 cmy) {
 }
 vec3 rgbToCmy(vec3 rgb) {
   return 1. - rgb;
+}
+
+vec3 hsiToRgb(vec3 hsi) {
+  float hueRad = mod(hsi.x, 1.) * REV;
+
+  float x = hsi.z * (1. - hsi.y);
+
+  if (hsi.x < 1. / 3.) {
+    float y = hsi.z * (1. + hsi.y * cos(hueRad) / cos(PI / 3. - hueRad));
+    float z = 3. * hsi.z - x - y;
+
+    return vec3(y, z, x);
+  } else if (hsi.x < 2. / 3.) {
+    hueRad -= PI * 2. / 3.;
+    float y = hsi.z * (1. + hsi.y * cos(hueRad) / cos(PI / 3. - hueRad));
+    float z = 3. * hsi.z - x - y;
+
+    return vec3(x, y, z);
+  } else {
+    hueRad -= PI * 4. / 3.;
+    float y = hsi.z * (1. + hsi.y * cos(hueRad) / cos(PI / 3. - hueRad));
+    float z = 3. * hsi.z - x - y;
+
+    return vec3(z, x, y);
+  }
+}
+
+vec3 rgbToHsi(vec3 rgb) {
+  float rgbSum = rgb.r + rgb.g + rgb.b;
+  if (rgbSum == 0.) {
+    return vec3(0., 0., 0.);
+  }
+
+  float r = rgb.r / rgbSum;
+  float g = rgb.g / rgbSum;
+  float b = rgb.b / rgbSum;
+
+
+  float denominator = (r - g) * (r - g) + (r - b) * (g - b);
+
+  float hue;
+  if (denominator == 0.) {
+    hue = 0.;
+  } else {
+    hue = acos(0.5 * ((r - g) + (r - b)) / sqrt(denominator)) / REV;
+    if (b > g) {
+      hue = 1. - hue;
+    }
+  }
+
+  return vec3(
+    hue,
+    1. - 3. * min(min(r, g), b),
+    rgbSum / 3.
+  );
 }`;
 //#endregion
