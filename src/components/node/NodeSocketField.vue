@@ -7,7 +7,7 @@ import EntrySlider from "../input/EntrySlider.vue";
 
 import {settings, tree} from "../store";
 
-import {Socket, SocketType as St, SocketFlag, Tree} from "@/models/Node";
+import {Socket, SocketType, SocketFlag, Tree} from "@/models/Node";
 import {externals} from "@/models/nodetypes";
 import getString, {NO_DESC} from "@/strings";
 
@@ -50,44 +50,45 @@ const onValueChange = (requiresShaderReload=false) => {
 const isOutputNode = props.socket.node instanceof externals.DeviceTransformNode;
 
 
-const isFloat = props.socket.isType(St.Float);
-const isVector = [St.Vector, St.VectorOrColor].includes(props.socket.type) && !isOutputNode;
-
-const isEntry = isFloat || isVector;
+const isNumeric = [SocketType.Float, SocketType.Integer].includes(props.socket.type);
+const isVector = [SocketType.Vector, SocketType.VectorOrColor].includes(props.socket.type) && !isOutputNode;
 
 const isRgb = Boolean(props.socket.flags & SocketFlag.Rgb);
 const isHue = Boolean(props.socket.flags & SocketFlag.Hue);
 
-type FloatSocket = Socket<St.Float>;
-type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
+type VectorSocket = Socket<SocketType.Vector | SocketType.VectorOrColor>;
 </script>
 
 <template>
   <div class="socket-value-editor"
       ref="editorContainer">
-    <template v-if="isFloat">
-      <EntrySlider v-model="(socket as FloatSocket).fieldValue"
-          @update:modelValue="onValueChange(socket.valueChangeRequiresShaderReload)"
-          
-          :convertIn="
-            isRgb ? (value: number) => value / settings.rgbScale :
-            isHue ? (value: number) => value / settings.hueScale :
-            undefined
-          "
-          :convertOut="
-            isRgb ? (value: number) => value * settings.rgbScale :
-            isHue ? (value: number) => value * settings.hueScale :
-            undefined
-          "
-          :validate="isFinite"
+    <template v-if="isNumeric">
+      <EntrySlider
+        v-model="(socket as Socket<SocketType.Float>).fieldValue"
+        @update:modelValue="onValueChange(socket.valueChangeRequiresShaderReload)"
+        
+        :convertIn="
+          isRgb ? (value: number) => value / settings.rgbScale :
+          isHue ? (value: number) => value / settings.hueScale :
+          undefined
+        "
+        :convertOut="
+          isRgb ? (value: number) => value * settings.rgbScale :
+          isHue ? (value: number) => value * settings.hueScale :
+          undefined
+        "
+        :validate="isFinite"
 
-          :max="
-            isRgb ? settings.rgbScale :
-            isHue ? settings.hueScale :
-            undefined
-          "
-          
-          v-bind="(socket as FloatSocket).data.sliderProps" />
+        :softMax="
+          isRgb ? settings.rgbScale :
+          isHue ? settings.hueScale :
+          undefined
+        "
+
+        :step="props.socket.type === SocketType.Integer ? 1 : undefined"
+        
+        v-bind="(socket as Socket<SocketType.Float>).data.sliderProps"
+      />
     </template>
 
     <template v-else-if="isVector">
@@ -106,7 +107,7 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
           "
           :validate="(color: number[]) => color.every(comp => isFinite(comp))"
           
-          :maxes="
+          :softMaxes="
             isRgb ? (socket as VectorSocket).fieldValue.map(() => settings.rgbScale) :
             isHue ? (socket as VectorSocket).fieldValue.map(() => settings.hueScale) :
             undefined
@@ -115,12 +116,12 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
           :descs="socket.fieldText" />
     </template>
 
-    <template v-else-if="socket.type === St.Dropdown">
+    <template v-else-if="socket.type === SocketType.Dropdown">
       <label>
         <select v-model="socket.fieldValue"
             @change="onValueChange(socket.valueChangeRequiresShaderReload)">
           <option
-            v-for="{text, value} of (socket as Socket<St.Dropdown>).data.options"
+            v-for="{text, value} of (socket as Socket<SocketType.Dropdown>).data.options"
             :value="value"
             v-html="getString(text)"
           ></option>
@@ -128,7 +129,7 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
       </label>
     </template>
 
-    <template v-else-if="socket.type === St.Image">
+    <template v-else-if="socket.type === SocketType.Image">
       <input type="file"
           accept="image/*"
           ref="fileInput"
@@ -138,7 +139,7 @@ type VectorSocket = Socket<St.Vector | St.VectorOrColor>;
           }" />
     </template>
 
-    <template v-else-if="socket.type === St.Bool">
+    <template v-else-if="socket.type === SocketType.Bool">
       <input type="checkbox"
           v-model="socket.fieldValue"
           @change="onValueChange(socket.valueChangeRequiresShaderReload)" />

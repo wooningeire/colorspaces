@@ -51,7 +51,7 @@ const proposedValueIsValid = ref(true);
 const entryActive = ref(false);
 
 
-const tempValue = ref(props.convertOut(props.modelValue).toString());
+const tempValue = ref("");
 
 const displayValue = computed({
   get: () => entryActive.value ? tempValue.value : Number(Number(tempValue.value).toFixed(4)).toString(),
@@ -77,6 +77,7 @@ const emit = defineEmits([
 const setDisplayToTrueValue = () => {
   tempValue.value = props.convertOut(props.modelValue).toString();
 };
+setDisplayToTrueValue();
 
 
 const onInput = () => {

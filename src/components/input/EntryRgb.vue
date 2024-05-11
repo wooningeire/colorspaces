@@ -8,45 +8,26 @@ import {tooltipController, settings} from "../store";
 
 import {Vec3} from "@/util";
 import getString, {NO_DESC, StringKey} from "@/strings";
+import { SliderProps } from "@/models/Node";
 
 
-const props = defineProps({
-  modelValue: {
-    type: Array as any as PropType<Vec3>,
-    required: true,
-  },
-
-  validate: {
-    // type requires a generic component
-    type: Function as PropType<(proposedValue: any) => boolean>,
-    default: acceptAlways,
-  },
-
-  convertIn: {
-    type: Function as PropType<(value: any) => any>,
-    default: cloneArray,
-  },
-
-  convertOut: {
-    type: Function as PropType<(value: any) => any>,
-    default: cloneArray,
-  },
-
-
-  maxes: {
-    type: Array as PropType<number[]>,
-    default: [],
-  },
-
-  sliderProps: {
-    type: Array,
-    default: [],
-  },
-
-  descs: {
-    type: Array as PropType<StringKey[]>,
-    default: [],
-  },
+const props = withDefaults(defineProps<{
+  modelValue: Vec3,
+  validate?: (proposedValue: Vec3) => boolean,
+  convertIn?: (proposedValue: Vec3) => Vec3,
+  convertOut?: (proposedValue: Vec3) => Vec3,
+  maxes?: number[],
+  softMaxes?: number[],
+  sliderProps?: SliderProps[],
+  descs?: StringKey[],
+}>(), {
+  validate: acceptAlways,
+  convertIn: cloneArray,
+  convertOut: cloneArray,
+  maxes: [],
+  softMaxes: [],
+  sliderProps: [],
+  descs: [],
 });
 
 

@@ -240,7 +240,7 @@ uniform float ${height};`,
 
       this.ins.push(
         new InSocket(this, SocketType.DynamicAny, "label.socket.sample.source", {
-          ...dynamicTyping.inSocketOptions,
+          ...dynamicTyping.inSocketOptions(val),
           constant: true,
         }),
         ...(this.coordsSockets = [

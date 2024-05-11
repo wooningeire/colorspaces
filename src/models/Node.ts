@@ -632,8 +632,10 @@ export abstract class Socket<St extends SocketType=any> {
 
   private static readonly defaultValues = new Map<SocketType, SocketValue>([
     [SocketType.Float, 0],
+    [SocketType.Integer, 0],
     [SocketType.Vector, [0, 0, 0]],
     [SocketType.VectorOrColor, [0, 0, 0]],
+    [SocketType.Bool, false],
   ]);
 
   /** Specifies what destination socket types a source socket type can be linked to, if it cannot be determined
