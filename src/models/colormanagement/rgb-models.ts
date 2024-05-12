@@ -6,9 +6,9 @@ export const rgbToCmy = cmyToRgb;
 export const hslToRgb = ([hue, sat, lightness]: Vec3): Vec3 => {
   if (sat === 0) return [lightness, lightness, lightness];
 
-  const rgbCompDistribFromHue = (p: number, q: number, hue: number) => {
-    hue = mod(hue, 1);
+  hue = mod(hue, 1);
 
+  const rgbCompDistribFromHue = (p: number, q: number, hue: number) => {
     if (hue < 1/6) return p + (q - p) * 6 * hue;
     if (hue < 3/6) return q;
     if (hue < 4/6) return p + (q - p) * (2/3 - hue) * 6;
@@ -131,7 +131,8 @@ export const rgbToHwb = ([red, green, blue]: Vec3): Vec3 => {
 
 //http://www.rmuti.ac.th/user/kedkarn/impfile/RGB_to_HSI.pdf
 export const hsiToRgb = ([hue, sat, intensity]: Vec3): Vec3 => {
-  let hueRad = mod(hue, 1) * REV;
+  hue = mod(hue, 1);
+  let hueRad = hue * REV;
 
   const x = intensity * (1 - sat);
 
@@ -321,23 +322,24 @@ vec3 rgbToCmy(vec3 rgb) {
 }
 
 vec3 hsiToRgb(vec3 hsi) {
-  float hueRad = mod(hsi.x, 1.) * REV;
+  float hue = mod(hsi.x, 1.);
+  float hueRad = hue * REV;
 
   float x = hsi.z * (1. - hsi.y);
 
-  if (hsi.x < 1. / 3.) {
+  if (hue < 1. / 3.) {
     float y = hsi.z * (1. + hsi.y * cos(hueRad) / cos(PI / 3. - hueRad));
     float z = 3. * hsi.z - x - y;
 
     return vec3(y, z, x);
-  } else if (hsi.x < 2. / 3.) {
-    hueRad -= PI * 2. / 3.;
+  } else if (hue < 2. / 3.) {
+    hueRad -= REV / 3.;
     float y = hsi.z * (1. + hsi.y * cos(hueRad) / cos(PI / 3. - hueRad));
     float z = 3. * hsi.z - x - y;
 
     return vec3(x, y, z);
   } else {
-    hueRad -= PI * 4. / 3.;
+    hueRad -= REV * 2. / 3.;
     float y = hsi.z * (1. + hsi.y * cos(hueRad) / cos(PI / 3. - hueRad));
     float z = 3. * hsi.z - x - y;
 

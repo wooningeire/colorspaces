@@ -233,18 +233,20 @@ defineExpose({
         'background': `rgb(${settings.deviceSpace.from(node.output(outputIndex, 0, 0)).map((x: number) => x * 255)})`,
       }"></div> -->
 
-  <canvas class="color-display-box"
-      :class="{
-        'out-of-gamut': imageIsOutOfGamut,
-      }"
-      :style="{
-        '--width': `${width}`,
-        '--height': `${height}`,
-      }"
-      :title="imageIsOutOfGamut ? 'Colors are out of gamut of the device color space; it cannot accurately represent this color.' : ''"
-      ref="canvas"
-      width="1"
-      height="1"></canvas>
+  <canvas
+    class="color-display-box"
+    :class="{
+      'out-of-gamut': imageIsOutOfGamut,
+    }"
+    :style="{
+      '--width': `${width}`,
+      '--height': `${height}`,
+    }"
+    :title="imageIsOutOfGamut ? 'Colors are out of gamut of the device color space; it cannot accurately represent this color.' : ''"
+    ref="canvas"
+    width="1"
+    height="1"
+  ></canvas>
 </template>
 
 <style lang="scss" scoped>
@@ -260,6 +262,8 @@ defineExpose({
   aspect-ratio: var(--width) / var(--height);
   max-width: 100%;
   // height: calc(var(--height) * 1px);
+
+  image-rendering: pixelated;
 
   &.out-of-gamut {
     cursor: help;
