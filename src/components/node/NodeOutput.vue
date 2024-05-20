@@ -6,16 +6,21 @@ import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 import NodeOutputCssRgbVec from "./NodeOutputCssRgbVec.vue";
 import NodeOutputCssColor from "./NodeOutputCssColor.vue";
 import NodeOutputQuantized from "./NodeOutputQuantized.vue";
+import NodeOutputCssInput from "./NodeOutputCssInput.vue";
 
 import {InSocket, Node, NodeUpdateSource, OutputDisplayType} from "@/models/Node";
 import { NodeWithOverloads } from "@/models/Overload";
-import {output} from "@/models/nodetypes";
+import {models, output} from "@/models/nodetypes";
 import {Col} from "@/models/colormanagement";
 import { Vec3 } from "@/util";
 import { tree } from "../store";
 
 const props = defineProps<{
   node: Node,
+}>();
+
+const emit = defineEmits<{
+  (event: "force-update", requiresShaderReload: boolean, editedSocket: InSocket): void,
 }>();
 
 const hasConstantOutput = ref(true);
@@ -107,6 +112,13 @@ defineExpose({
       <NodeOutputQuantized
         :node="node"
         ref="quantizedDisplayVue"
+      />
+    </template>
+
+    <template v-else-if="node instanceof models.CssInputNode">
+      <NodeOutputCssInput
+        :node="node"
+        @force-update="(requiresShaderReload: boolean, editedSocket: InSocket) => $emit('force-update', requiresShaderReload, editedSocket)"
       />
     </template>
   </div>

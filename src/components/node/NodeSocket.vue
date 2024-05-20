@@ -99,7 +99,7 @@ const socketTypeColors = new Map([
   [St.Bool, "#fbc"],
   [St.Integer, "#6a6"],
   [St.Vector, "#75d"],
-  [St.ColorComponents, "#dd3"],
+  [St.Color, "#dd3"],
   [St.VectorOrColor, "linear-gradient(45deg, #75d 50%, #dd3 50%)"],
 ]);
 const socketType = ref(props.socket.type);

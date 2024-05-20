@@ -47,7 +47,7 @@ export namespace booleans {
             ...dynamicTyping.outSocketOptions(),
             webglOutputs: socket => () => {
               //@ts-ignore
-              if (socket.type === SocketType.ColorComponents) {
+              if (socket.type === SocketType.Color) {
                 return {
                   [webglStdOuts.color]: WebglTemplate.slot(outColor),
                 };
@@ -66,7 +66,7 @@ export namespace booleans {
       const { condition, ifTrue, ifFalse } = ConditionalNode.inputSlots;
       const { outColor } = ConditionalNode.outputSlots;
 
-      if (this.outs[0].type === SocketType.ColorComponents) {
+      if (this.outs[0].type === SocketType.Color) {
         return WebglVariables.template`Color ${outColor};
 if (${condition}) {
   ${outColor} = ${ifTrue};

@@ -93,6 +93,6 @@ export const vectorOrColorInSocketMapping = ({
   colorSlot: WebglSlot,
   vectorSlot: WebglSlot,
 }) =>
-    (socket: InSocket) => () => socket.effectiveType() === SocketType.ColorComponents
+    (socket: InSocket) => () => socket.effectiveType() === SocketType.Color
         ? {[webglStdOuts.color]: colorSlot}
         : {[webglStdOuts.vector]: vectorSlot};

@@ -113,7 +113,7 @@ export namespace spaces {
             return sockets;
           },
           node => [
-            new OutSocket(node, SocketType.ColorComponents, "label.socket.color", context => node.computeColor(context, true), {
+            new OutSocket(node, SocketType.Color, "label.socket.color", context => node.computeColor(context, true), {
               webglOutputs: socket => () => ({[webglStdOuts.color]: WebglTemplate.slot(outColor)}),
             }),
             ...node.componentLabels.map(
@@ -131,7 +131,7 @@ export namespace spaces {
             flags: node.displayFlags,
           }),
           (ins, outs, context, node) => {
-            if (node.colorInputSocket.effectiveType() === SocketType.ColorComponents) {
+            if (node.colorInputSocket.effectiveType() === SocketType.Color) {
               return WebglVariables.templateConcat`Color ${outColor} = Color(${node.webglXyzToComponents(inColor, newIlluminant)}, ${newIlluminant}, adaptXyz(${inColor}.xyz, ${inColor}.illuminant, ${newIlluminant}));`({
                 node,
                 preludeTemplate: WebglTemplate.source`uniform vec2 ${newIlluminant};`,
@@ -195,7 +195,7 @@ export namespace spaces {
             return sockets;
           },
           node => [
-            new OutSocket(node, SocketType.ColorComponents, "label.socket.color", context => node.computeColor(context, false), {
+            new OutSocket(node, SocketType.Color, "label.socket.color", context => node.computeColor(context, false), {
               webglOutputs: socket => () => ({[webglStdOuts.color]: WebglTemplate.slot(outColor)}),
             }),
           ],

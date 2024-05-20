@@ -213,63 +213,12 @@ const showTooltip = () => {
 </template>
 
 <style lang="scss" scoped>
+@import "./index.scss";
+
 input {
-  background: linear-gradient(90deg,
-      var(--col-slider-progress) var(--slider-progress-pct),
-      var(--col-slider-empty) var(--slider-progress-pct));
-  border: none;
-  color: inherit;
-
-  margin-bottom: 0.25rem;
-  border-radius: 4px;
-
-  --slider-progress: 0;
-  --slider-progress-pct: calc(var(--slider-progress) * 100%);
-
-  --col-slider-progress: #ad4c64;
-  --col-slider-empty: #555857;
-  --col-slider-overflow: #f581a6;
-  --col-slider-underflow: #212222;
-
-  text-align: right;
-  cursor: ew-resize;
-
-  &:hover {
-    --col-slider-progress: #dd4f96;
-    --col-slider-empty: #666b69;
-    --col-slider-overflow: #ffc7cc;
-    --col-slider-underflow: #323333;
-  }
+  @include entry;
   
-  &.inputing {
-    cursor: text;
-
-    --col-slider-progress: #693333;
-    --col-slider-empty: #3a3b3b;
-    --col-slider-overflow: #ad4c64;
-    --col-slider-underflow: #1f1f1f;
-  }
-
-  &.overflow {
-    background: linear-gradient(90deg,
-        var(--col-slider-progress) 50%,
-        var(--col-slider-overflow));
-  }
-
-  &.underflow {
-    background: linear-gradient(90deg,
-        var(--col-slider-underflow),
-        var(--col-slider-empty) 50%);
-  }
-
-  &.unbounded {
-  background: linear-gradient(90deg,
-      var(--col-slider-empty),
-      var(--col-slider-progress));
-  }
-
-  &.invalid {
-    color: var(--col-invalid-input);
-  }
+  text-align: right; 
+  cursor: ew-resize;
 }
 </style>

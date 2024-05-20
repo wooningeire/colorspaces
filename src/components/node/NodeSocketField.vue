@@ -94,34 +94,38 @@ type VectorSocket = Socket<SocketType.Vector | SocketType.VectorOrColor>;
     </template>
 
     <template v-else-if="isVector">
-      <EntryRgb v-model="(socket as VectorSocket).fieldValue"
-          @update:modelValue="onValueChange(socket.valueChangeRequiresShaderReload)"
+      <EntryRgb
+        v-model="(socket as VectorSocket).fieldValue"
+        @update:modelValue="onValueChange(socket.valueChangeRequiresShaderReload)"
 
-          :convertIn="
-            isRgb ? (color: number[]) => color.map(value => value / settings.rgbScale) :
-            isHue ? (color: number[]) => color.map(value => value / settings.hueScale) :
-            undefined
-          "
-          :convertOut="
-            isRgb ? (color: number[]) => color.map(value => value * settings.rgbScale) :
-            isHue ? (color: number[]) => color.map(value => value * settings.hueScale) :
-            undefined
-          "
-          :validate="(color: number[]) => color.every(comp => isFinite(comp))"
-          
-          :softMaxes="
-            isRgb ? (socket as VectorSocket).fieldValue.map(() => settings.rgbScale) :
-            isHue ? (socket as VectorSocket).fieldValue.map(() => settings.hueScale) :
-            undefined
-          "
-          :sliderProps="(socket as VectorSocket).data.sliderProps"
-          :descs="socket.fieldText" />
+        :convertIn="
+          isRgb ? (color: number[]) => color.map(value => value / settings.rgbScale) :
+          isHue ? (color: number[]) => color.map(value => value / settings.hueScale) :
+          undefined
+        "
+        :convertOut="
+          isRgb ? (color: number[]) => color.map(value => value * settings.rgbScale) :
+          isHue ? (color: number[]) => color.map(value => value * settings.hueScale) :
+          undefined
+        "
+        :validate="(color: number[]) => color.every(comp => isFinite(comp))"
+        
+        :softMaxes="
+          isRgb ? (socket as VectorSocket).fieldValue.map(() => settings.rgbScale) :
+          isHue ? (socket as VectorSocket).fieldValue.map(() => settings.hueScale) :
+          undefined
+        "
+        :sliderProps="(socket as VectorSocket).data.sliderProps"
+        :descs="socket.fieldText"
+      />
     </template>
 
     <template v-else-if="socket.type === SocketType.Dropdown">
       <label>
-        <select v-model="socket.fieldValue"
-            @change="onValueChange(socket.valueChangeRequiresShaderReload)">
+        <select
+          v-model="socket.fieldValue"
+          @change="onValueChange(socket.valueChangeRequiresShaderReload)"
+        >
           <option
             v-for="{text, value} of (socket as Socket<SocketType.Dropdown>).data.options"
             :value="value"
@@ -132,26 +136,46 @@ type VectorSocket = Socket<SocketType.Vector | SocketType.VectorOrColor>;
     </template>
 
     <template v-else-if="socket.type === SocketType.Image">
-      <input type="file"
-          accept="image/*"
-          ref="fileInput"
-          @change="async () => {
-            socket.fieldValue = await readFile();
-            onValueChange(socket.valueChangeRequiresShaderReload);
-          }" />
+      <input
+        type="file"
+        accept="image/*"
+        ref="fileInput"
+        @change="async () => {
+          socket.fieldValue = await readFile();
+          onValueChange(socket.valueChangeRequiresShaderReload);
+        }"
+      />
     </template>
 
     <template v-else-if="socket.type === SocketType.Bool">
-      <input type="checkbox"
-          v-model="socket.fieldValue"
-          @change="onValueChange(socket.valueChangeRequiresShaderReload)" />
+      <input
+        type="checkbox"
+        v-model="socket.fieldValue"
+        @change="onValueChange(socket.valueChangeRequiresShaderReload)"
+      />
+    </template>
+
+    <template v-else-if="socket.type === SocketType.String">
+      <input
+        type="text"
+        v-model="socket.fieldValue"
+        @input="onValueChange(socket.valueChangeRequiresShaderReload)"
+      />
     </template>
   </div>
 </template>
 
 <style lang="scss">
+@import "../input/index.scss";
+
 .socket-value-editor {
   transform-origin: top;
+}
+
+input[type="text"] {
+  @include entry;
+
+  font-family: var(--font-mono);
 }
 // .socket-value-editor.entry {
 //   border-radius: 4px;

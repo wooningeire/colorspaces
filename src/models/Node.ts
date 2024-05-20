@@ -360,20 +360,22 @@ export enum SocketType {
   Integer,
   Vector,
   VectorOrColor,
-  ColorComponents,
+  Color,
   Dropdown,
   Image,
   Bool,
+  String,
 }
 export type SocketValue<St extends SocketType=any> =
     St extends SocketType.Float ? number :
     St extends SocketType.Integer ? number :
     St extends SocketType.Vector ? Vec3 :
-    St extends SocketType.ColorComponents ? Col :
+    St extends SocketType.Color ? Col :
     St extends SocketType.VectorOrColor ? Vec3 | Col :
     St extends SocketType.Dropdown ? string :
     St extends SocketType.Image ? ImageData :
     St extends SocketType.Bool ? boolean :
+    St extends SocketType.String ? string :
     St extends SocketType.DynamicAny ? any :
     never;
 
@@ -381,7 +383,11 @@ export type SocketValue<St extends SocketType=any> =
 const socketTypesByRestrictiveness = [
   [SocketType.DynamicAny],
   [SocketType.VectorOrColor],
-  [SocketType.Float, SocketType.Bool, SocketType.Integer, SocketType.Vector, SocketType.ColorComponents],
+  [SocketType.Color],
+  [SocketType.Vector],
+  [SocketType.Float],
+  [SocketType.Bool],
+  [SocketType.Integer],
 ];
 
 export const socketTypeRestrictiveness = new Map<SocketType, number>(
@@ -412,7 +418,7 @@ export const socketTypeToStdOut = new Map<SocketType, WebglStdOut>([
   [SocketType.Integer, webglStdOuts.integer],
   [SocketType.Vector, webglStdOuts.vector],
   [SocketType.VectorOrColor, webglStdOuts.vector],
-  [SocketType.ColorComponents, webglStdOuts.color],
+  [SocketType.Color, webglStdOuts.color],
   [SocketType.Bool, webglStdOuts.bool],
 ])
 
@@ -433,10 +439,10 @@ export type WebglSocketOutputs<St extends SocketType=any> =
     St extends SocketType.Vector ? {
       [webglStdOuts.vector]: WebglTemplate,
     } :
-    St extends SocketType.ColorComponents ? {
+    St extends SocketType.Color ? {
       [webglStdOuts.color]: WebglTemplate,
     } :
-    St extends SocketType.VectorOrColor ? WebglSocketOutputs<SocketType.Vector> | WebglSocketOutputs<SocketType.ColorComponents> :
+    St extends SocketType.VectorOrColor ? WebglSocketOutputs<SocketType.Vector> | WebglSocketOutputs<SocketType.Color> :
     St extends SocketType.Dropdown ? {} :
     St extends SocketType.Image ? {} :
     St extends SocketType.Bool ? {
@@ -538,7 +544,7 @@ export abstract class Socket<St extends SocketType=any> {
    * automatically */
   private static readonly typeCanBeLinkedTo = new Map<SocketType, SocketType[]>([
     [SocketType.Vector, [SocketType.Vector, SocketType.VectorOrColor]],
-    [SocketType.ColorComponents, [SocketType.ColorComponents, SocketType.VectorOrColor, SocketType.Vector]],
+    [SocketType.Color, [SocketType.Color, SocketType.VectorOrColor, SocketType.Vector]],
     [SocketType.Bool, [SocketType.Bool, SocketType.Float, SocketType.Integer, SocketType.Vector, SocketType.VectorOrColor]],
     [SocketType.Integer, [SocketType.Integer, SocketType.Float, SocketType.Vector, SocketType.VectorOrColor]],
     [SocketType.Float, [SocketType.Float, SocketType.Vector, SocketType.VectorOrColor]],
@@ -729,7 +735,7 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     const unif = WebglSlot.out("unif");
 
     switch (this.effectiveType()) {
-      case SocketType.ColorComponents:
+      case SocketType.Color:
         return WebglVariables.empty({
           node: null,
           fieldOutputs: {
@@ -840,8 +846,8 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     if (this.usesFieldValue) {
       return SocketType.Vector;
     }
-    if (this.link.src.type === SocketType.ColorComponents) {
-      return SocketType.ColorComponents;
+    if (this.link.src.type === SocketType.Color) {
+      return SocketType.Color;
     }
     return SocketType.Vector;
   }
@@ -950,7 +956,7 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
         }
       }
   
-      case SocketType.ColorComponents:
+      case SocketType.Color:
         switch (newType) {
           case SocketType.Vector:
             return outValue as unknown as SocketValue<T>;
@@ -1045,7 +1051,7 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
           }
         });
 
-      case SocketType.ColorComponents:
+      case SocketType.Color:
         return new Proxy(directOutputs, {
           get(target, desiredOut, proxy) {
             if (target.hasOwnProperty(desiredOut)) {
@@ -1055,7 +1061,7 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
             
             switch (desiredOut) {
               case webglStdOuts.vector:
-                return WebglTemplate.concat`${(directOutputs as WebglSocketOutputs<SocketType.ColorComponents>)[webglStdOuts.color]}.components`;
+                return WebglTemplate.concat`${(directOutputs as WebglSocketOutputs<SocketType.Color>)[webglStdOuts.color]}.components`;
       
               default:
                 throw new Error(`Cannot derive output ${String(desiredOut)} from socket type ${socket.type}`);

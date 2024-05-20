@@ -34,7 +34,7 @@ export namespace output {
       [CssOutputMode.Color, new Overload(
         "label.overload.cssOutput.color",
         node => [
-          new InSocket(node, SocketType.ColorComponents, "label.socket.color"),
+          new InSocket(node, SocketType.Color, "label.socket.color"),
         ],
         node => [],
         (ins, outs, context) => ({
@@ -58,7 +58,7 @@ export namespace output {
       [ChromaticityPlotMode.Color, new Overload(
         "label.overload.chromaticityPlot.fromColor",
         node => [
-          new InSocket(node, SocketType.ColorComponents, "label.socket.colors"),
+          new InSocket(node, SocketType.Color, "label.socket.colors"),
         ],
         node => [],
       )],
@@ -107,7 +107,7 @@ export namespace output {
           showSocket: false,
           defaultValue: true,
         })),
-        new InSocket(this, SocketType.ColorComponents, "label.socket.colors", {
+        new InSocket(this, SocketType.Color, "label.socket.colors", {
           webglOutputMappingStatic: {
             [webglStdOuts.color]: color,
           },
@@ -160,7 +160,7 @@ export namespace output {
     static readonly id = "sampleHexCodes";
     static readonly outputDisplayType = OutputDisplayType.Custom;
 
-    readonly colorsSocket: InSocket<SocketType.ColorComponents>;
+    readonly colorsSocket: InSocket<SocketType.Color>;
     readonly scaleXSocket: InSocket<SocketType.Float>;
     readonly scaleYSocket: InSocket<SocketType.Float>;
     readonly nSegmentsXSocket: InSocket<SocketType.Integer>;
@@ -174,7 +174,7 @@ export namespace output {
     constructor() {
       super();
       this.ins.push(
-        (this.colorsSocket = new InSocket(this, SocketType.ColorComponents, "label.socket.colors")),
+        (this.colorsSocket = new InSocket(this, SocketType.Color, "label.socket.colors")),
         (this.scaleXSocket = new InSocket(this, SocketType.Float, "label.socket.sampleHexCodes.scaleX", {
           defaultValue: 1,
           sliderProps: {

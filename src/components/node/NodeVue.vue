@@ -240,6 +240,7 @@ Object.assign(nodeVue, {
     <NodeOutput
       :node="node"
       ref="outputVue"
+      @force-update="(requiresShaderReload: boolean, editedSocket: InSocket) => $emit('field-value-change', requiresShaderReload, NodeUpdateSource.InSocket(editedSocket))"
     />
   </div>
 </template>
@@ -264,11 +265,12 @@ Object.assign(nodeVue, {
 
   cursor: default;
 
+  --node-width: 40px;
   --node-border-width: 4px;
+  --node-widget-border-radius: 0.5rem;
   --node-border-background: #ffffff3f; //linear-gradient(#9c20aa, #fb3570);
   --node-background: #2e3331df;
 
-  --node-width: 40px;
 
   // grid-template-areas:
   //     "A A"

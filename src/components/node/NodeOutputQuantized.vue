@@ -32,16 +32,14 @@ const hexString = (x: number, y: number): Option<string> => {
   const xQuantized = nSegmentsX.value === 1 ? 0.5 : x * scaleX / (nSegmentsX.value - (fitRangeX ? 1 : 0));
   const yQuantized = nSegmentsY.value === 1 ? 0.5 : y * scaleY / (nSegmentsY.value - (fitRangeY ? 1 : 0));
 
-  let color = settings.deviceSpace.from(props.node.colorsSocket.inValue({
+  const color = settings.deviceSpace.from(props.node.colorsSocket.inValue({
     coords: [xQuantized, yQuantized],
   }));
   
   if (!color.inGamut()) {
-    if (props.node.clampSocket.inValue()) {
-      color = color.map(value => clamp(value, 0, 1)) as cm.Col;
-    } else {
-      return Option.None;
-    }
+    return props.node.clampSocket.inValue()
+        ? Option.Some(`#${color.map(value => clamp(value, 0, 1)).map(toHex).join("")}${toHex(settings.outOfGamutAlpha)}`)
+        : Option.None;
   }
   return Option.Some(`#${color.map(toHex).join("")}`);
 };
@@ -91,7 +89,7 @@ defineExpose({
           }"
         >
           <ReadonlyInput
-            :value="hexString(x, y).getElse('--')"
+            :value="hexString(x, y).map(str => str.slice(0, 7)).getElse('--')"
             cssWidth="8ch"
           />
         </div>
@@ -108,6 +106,7 @@ defineExpose({
   flex-direction: column;
   gap: 0.5rem;
   width: 100%;
+  margin: 0 var(--socket-text-padding);
 }
 
 .grid {
@@ -118,7 +117,7 @@ defineExpose({
   grid-template-columns: repeat(var(--n-cols), 1fr);
   grid-template-rows: repeat(var(--n-rows), 1fr);
 
-  border-radius: 0.5rem;
+  border-radius: var(--node-widget-border-radius);
   overflow-x: auto;
 
   > div {

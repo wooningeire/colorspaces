@@ -499,7 +499,7 @@ void main() {
     mapping: WebglOutputMapping,
   } {
     switch (socket.type) {
-      case SocketType.ColorComponents: {
+      case SocketType.Color: {
         const {nonXyz, illuminant, xyz} = WebglSlot.ins("nonXyz", "illuminant", "xyz");
 
         return {

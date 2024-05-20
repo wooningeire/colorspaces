@@ -72,6 +72,7 @@ const strings = {
   "label.oklch": "Oklch",
 
 
+  "label.node.cssInput": "CSS input",
   "label.node.rgb": "RGB",
   "label.node.hsl": "HSL",
   "label.node.hsv": "HSV",
@@ -194,6 +195,7 @@ const strings = {
   "label.overload.fromRgb": "From RGB",
   "label.overload.toLxy": "To Lxy",
   "label.overload.fromLxy": "From Lxy",
+  "label.socket.cssInput.cssColor": "CSS color",
   "label.socket.wavelength.relativePower": "Relative power",
   "label.socket.blackbody.temperature": "Temperature (K)",
 
@@ -385,9 +387,9 @@ const strings = {
   "label.socketType.vectorOrColor": "Vector or color",
   "desc.socketType.vectorOrColor.out": "A list of (usually 3) numbers which may or may not already be associated with a color space.",
   "desc.socketType.vectorOrColor.in": "A list of (usually 3) numbers which may or may not already be associated with a color space (values will be handled differently depending on this).",
-  "label.socketType.colorComponents": "Color",
-  "desc.socketType.colorComponents.out": "A list of (usually 3) coordinates in a color space.",
-  "desc.socketType.colorComponents.in": "A list of (usually 3) coordinates in a color space.",
+  "label.socketType.color": "Color",
+  "desc.socketType.color.out": "A list of (usually 3) coordinates in a color space.",
+  "desc.socketType.color.in": "A list of (usually 3) coordinates in a color space.",
   "label.socketType.dynamicAny": "Any (dynamic)",
   "desc.socketType.dynamicAny.in": "This socket accepts any data type and will adjust to whatever data type is inserted into this socket.",
   "desc.socketType.dynamicAny.out": "This socket can produce any data type and will adjust to whatever data type this socket is piped into.",

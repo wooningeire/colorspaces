@@ -266,7 +266,7 @@ uniform float ${height};`,
       const {evaluateInput, color, val} = SampleNode.outputSlots;
 
       switch (this.outs[0].type) {
-        case SocketType.ColorComponents: {
+        case SocketType.Color: {
           return this.ins[0].hasLinks
               ? WebglVariables.template`Color ${color} = ${evaluateInput}(vec2(${x}, ${y}));`({
                 node: this,
