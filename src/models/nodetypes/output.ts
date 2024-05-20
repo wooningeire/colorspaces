@@ -161,6 +161,13 @@ export namespace output {
     static readonly outputDisplayType = OutputDisplayType.Custom;
 
     readonly colorsSocket: InSocket<SocketType.ColorComponents>;
+    readonly scaleXSocket: InSocket<SocketType.Float>;
+    readonly scaleYSocket: InSocket<SocketType.Float>;
+    readonly nSegmentsXSocket: InSocket<SocketType.Integer>;
+    readonly nSegmentsYSocket: InSocket<SocketType.Integer>;
+    readonly fitRangeXSocket: InSocket<SocketType.Bool>;
+    readonly fitRangeYSocket: InSocket<SocketType.Bool>;
+    readonly clampSocket: InSocket<SocketType.Bool>;
 
     width = 600;
 
@@ -168,6 +175,50 @@ export namespace output {
       super();
       this.ins.push(
         (this.colorsSocket = new InSocket(this, SocketType.ColorComponents, "label.socket.colors")),
+        (this.scaleXSocket = new InSocket(this, SocketType.Float, "label.socket.sampleHexCodes.scaleX", {
+          defaultValue: 1,
+          sliderProps: {
+            hasBounds: false,
+          },
+        })),
+        (this.nSegmentsXSocket = new InSocket(this, SocketType.Integer, "label.socket.sampleHexCodes.nSegmentsX", {
+          defaultValue: 4,
+          constant: true,
+          sliderProps: {
+            hasBounds: false,
+            min: 1,
+            max: 25,
+            step: 1,
+          },
+        })),
+        (this.fitRangeXSocket = new InSocket(this, SocketType.Bool, "label.socket.sampleHexCodes.fitRangeX?", {
+          defaultValue: true,
+          socketDesc: "desc.socket.arithmetic.quantize.fitRange?",
+        })),
+        (this.scaleYSocket = new InSocket(this, SocketType.Float, "label.socket.sampleHexCodes.scaleY", {
+          defaultValue: 1,
+          sliderProps: {
+            hasBounds: false,
+          },
+        })),
+        (this.nSegmentsYSocket = new InSocket(this, SocketType.Integer, "label.socket.sampleHexCodes.nSegmentsY", {
+          defaultValue: 4,
+          constant: true,
+          sliderProps: {
+            hasBounds: false,
+            min: 1,
+            max: 25,
+            step: 1,
+          },
+        })),
+        (this.fitRangeYSocket = new InSocket(this, SocketType.Bool, "label.socket.sampleHexCodes.fitRangeY?", {
+          defaultValue: true,
+          socketDesc: "desc.socket.arithmetic.quantize.fitRange?",
+        })),
+        (this.clampSocket = new InSocket(this, SocketType.Bool, "label.socket.sampleHexCodes.clampOutOfGamutColors", {
+          defaultValue: false,
+          constant: true,
+        })),
       );
     }
   }

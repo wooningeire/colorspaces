@@ -787,6 +787,24 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
           ]),
         });
 
+      case SocketType.Integer:
+        return WebglVariables.empty({
+          node: null,
+          fieldOutputs: {
+            [webglStdOuts.integer]: WebglTemplate.slot(unif),
+          },
+          preludeTemplate: WebglTemplate.source`uniform int ${unif};`,
+          uniforms: new Map([
+            [WebglTemplate.slot(unif), {
+              set: (gl, unif) => {
+                gl.uniform1i(unif, this.fieldValue as number);
+              },
+              dependencySockets: [this],
+              dependencyNodes: [],
+            }],
+          ]),
+        });
+
       case SocketType.Bool:
         return WebglVariables.empty({
           node: null,

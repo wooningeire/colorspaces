@@ -175,6 +175,8 @@ const strings = {
   "label.socket.subtractOut": "Difference",
   "label.socket.divideOut": "Quotient",
   "label.socket.blendAmount": "Blend amount",
+  "label.socket.minimum": "Minimum",
+  "label.socket.maximum": "Maximum",
   "label.socket.cmfDataset": "Color-matching function dataset",
   "label.socket.wavelength": "Wavelength (nm)",
   "label.socket.normalizeCoordinates": "Normalize coordinates",
@@ -183,6 +185,9 @@ const strings = {
   "label.overload.add": "Add",
   "label.overload.subtract": "Subtract",
   "label.overload.screen": "Screen",
+  "label.overload.minimum": "Minimum",
+  "label.overload.maximum": "Maximum",
+  "label.overload.clamp": "Clamp",
 
 
   "label.overload.toRgb": "To RGB",
@@ -223,7 +228,9 @@ const strings = {
   "label.overload.arithmetic.hypotenuse": "Hypotenuse",
   "label.socket.arithmetic.hypotenuse": "Hypotenuse",
   "label.overload.arithmetic.quantize": "Quantize",
+  "label.socket.arithmetic.quantize.scale": "Scale",
   "label.socket.arithmetic.quantize.nSegments": "# segments",
+  "label.socket.arithmetic.quantize.fitRange?": "Fit range?",
   "label.overload.colorDifference.deltaE1976": "ΔE* 1976",
   "label.overload.colorDifference.deltaE2000": "ΔE* 2000",
   "label.socket.colorDifference.difference": "Difference",
@@ -269,6 +276,13 @@ const strings = {
   "label.overload.cssOutput.color": "Color",
   "label.overload.chromaticityPlot.fromColor": "From colors",
   "label.overload.chromaticityPlot.fromXy": "From xy",
+  "label.socket.sampleHexCodes.scaleX": "Scale X",
+  "label.socket.sampleHexCodes.scaleY": "Scale Y",
+  "label.socket.sampleHexCodes.nSegmentsX": "# segments X",
+  "label.socket.sampleHexCodes.nSegmentsY": "# segments Y",
+  "label.socket.sampleHexCodes.fitRangeX?": "Fit X range?",
+  "label.socket.sampleHexCodes.fitRangeY?": "Fit Y range?",
+  "label.socket.sampleHexCodes.clampOutOfGamutColors": "Clamp out-of-gamut colors",
 
 
   "label.cmfDataset.2deg": "CIE 2° observer (1931)",
@@ -334,6 +348,8 @@ const strings = {
   "desc.socket.imageFileAlpha": "The color transparency information from the image file.",
   "desc.socket.imageFileWidth": "The width of the image file.",
   "desc.socket.imageFileHeight": "The height of the image file.",
+
+  "desc.socket.arithmetic.quantize.fitRange?": "If checked, the range of output values will be stretched so that the first quantum is 0 and the last quantum is the scale (or 1). If unchecked, each quantum's value will be aligned to the start of the quantum.<br /><br />For instance, with a scale 1 and with 4 segments, the values produced will be <math>{0, 0.33, 0.67, 1}</math> if checked and <math>{0, 0.25, 0.5, 0.75}</math> if unchecked.",
 
 
   "desc.field.rgb.r": "**R**: Red light.",

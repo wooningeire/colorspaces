@@ -2,7 +2,7 @@ import { labSliderProps } from "./spaces";
 import { Node, SocketType, NodeEvalContext, OutputDisplayType, OutSocket, InSocket, WebglOutputMapping, webglStdOuts, socketTypeToStdOut } from "../Node";
 import * as cm from "../colormanagement";
 
-import { Vec3, lerp } from "@/util";
+import { Vec3, clamp, lerp } from "@/util";
 import { Overload, OverloadGroup, NodeWithOverloads } from "../Overload";
 import { WebglSlot, WebglTemplate, WebglVariables } from "@/webgl-compute/WebglVariables";
 import { randFloat, randFloatVec3Seed } from "../colormanagement/random";
@@ -25,24 +25,27 @@ export namespace math {
   const outputsWithNoStatements: ConstructorParameters<typeof Overload>[4] =
       (ins, outs, context, node) => WebglVariables.empty({node});
 
-  enum VectorArithmeticMode {
+  enum VectorArithmeticOverloadMode {
     Lerp = "lerp",
     Add = "add",
     Multiply = "multiply",
     Subtract = "subtract",
     Divide = "divide",
     Screen = "screen",
+    Minimum = "Minimum",
+    Maximum = "Maximum",
+    Clamp = "Clamp",
     Distance = "distance",
     Scale = "scale",
   }
-  export class VectorArithmeticNode extends NodeWithOverloads<VectorArithmeticMode> {
+  export class VectorArithmeticNode extends NodeWithOverloads<VectorArithmeticOverloadMode> {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "vectorArithmetic";
     static readonly outputDisplayType = OutputDisplayType.Vec;
 
-    private static readonly inputSlots = WebglSlot.ins("fac", "val0", "val1", "vector", "scalar");
+    private static readonly inputSlots = WebglSlot.ins("fac", "val0", "val1", "vector", "scalar", "min", "max");
 
-    private static readonly threeValueOverload =
+    private static readonly twoInputBlendingOverload =
         ({
           label,
           operandLabels,
@@ -84,8 +87,8 @@ export namespace math {
           );
         };
 
-    static readonly overloadGroup = new OverloadGroup(new Map<VectorArithmeticMode, Overload>([
-      [VectorArithmeticMode.Lerp, this.threeValueOverload({
+    static readonly overloadGroup = new OverloadGroup(new Map<VectorArithmeticOverloadMode, Overload>([
+      [VectorArithmeticOverloadMode.Lerp, this.twoInputBlendingOverload({
         label: "label.overload.lerp",
         operandLabels: ["label.socket.start", "label.socket.end"],
         defaultBlendAmount: 0.5,
@@ -93,7 +96,7 @@ export namespace math {
         getTemplate: ({fac, val0, val1}) => WebglTemplate.source`mix(${val0}, ${val1}, ${fac})`,
       })],
 
-      [VectorArithmeticMode.Add, this.threeValueOverload({
+      [VectorArithmeticOverloadMode.Add, this.twoInputBlendingOverload({
         label: "label.overload.add",
         operandLabels: ["label.socket.addOperand", "label.socket.addOperand"],
         outputLabel: "label.socket.addOut",
@@ -101,7 +104,7 @@ export namespace math {
         getTemplate: ({fac, val0, val1}) => WebglTemplate.source`${val0} + ${val1} * ${fac}`,
       })],
 
-      [VectorArithmeticMode.Multiply, this.threeValueOverload({
+      [VectorArithmeticOverloadMode.Multiply, this.twoInputBlendingOverload({
         label: "label.overload.vectorArithmetic.componentwiseMultiply",
         operandLabels: ["label.socket.multiplyOperand", "label.socket.multiplyOperand"],
         outputLabel: "label.socket.multiplyOut",
@@ -109,7 +112,7 @@ export namespace math {
         getTemplate: ({fac, val0, val1}) => WebglTemplate.source`${val0} * ((1. - ${fac}) + ${val1} * ${fac})`,
       })],
 
-      [VectorArithmeticMode.Subtract, this.threeValueOverload({
+      [VectorArithmeticOverloadMode.Subtract, this.twoInputBlendingOverload({
         label: "label.overload.subtract",
         operandLabels: ["label.socket.subtractOperand1", "label.socket.subtractOperand2"],
         outputLabel: "label.socket.subtractOut",
@@ -117,7 +120,7 @@ export namespace math {
         getTemplate: ({fac, val0, val1}) => WebglTemplate.source`${val0} - ${val1} * ${fac}`,
       })],
 
-      [VectorArithmeticMode.Divide, this.threeValueOverload({
+      [VectorArithmeticOverloadMode.Divide, this.twoInputBlendingOverload({
         label: "label.overload.vectorArithmetic.componentwiseMultiply",
         operandLabels: ["label.socket.divideOperand1", "label.socket.divideOperand2"],
         outputLabel: "label.socket.divideOut",
@@ -125,26 +128,65 @@ export namespace math {
         getTemplate: ({fac, val0, val1}) => WebglTemplate.source`${val0} / ((1. - ${fac}) + ${val1} * ${fac})`,
       })],
 
-      [VectorArithmeticMode.Screen, this.threeValueOverload({
+      [VectorArithmeticOverloadMode.Screen, this.twoInputBlendingOverload({
         label: "label.overload.screen",
         operandLabels: ["label.socket.multiplyOperand", "label.socket.multiplyOperand"],
         outputLabel: "label.socket.multiplyOut",
         calculate: (fac, val0, val1) => val0.map((_, i) => 1 - (1 - val0[i]) * (1 - val1[i] * fac)) as Vec3,
         getTemplate: ({fac, val0, val1}) => WebglTemplate.source`1. - (1. - ${val0}) * (1. - ${val1} * ${fac})`,
       })],
+
+      [VectorArithmeticOverloadMode.Minimum, this.twoInputBlendingOverload({
+        label: "label.overload.minimum",
+        operandLabels: ["label.socket.vector", "label.socket.vector"],
+        outputLabel: "label.socket.minimum",
+        calculate: (fac, val0, val1) => val0.map((_, i) => val0[i] * (1 - fac) + Math.min(val0[i], val1[i]) * fac) as Vec3,
+        getTemplate: ({fac, val0, val1}) => WebglTemplate.source`${val0} * (1 - ${fac}) + vec3(min(${val0}.x, ${val1}.x), min(${val0}.y, ${val1}.y), min(${val0}.z, ${val1}.z)) * ${fac}`,
+      })],
+
+      [VectorArithmeticOverloadMode.Maximum, this.twoInputBlendingOverload({
+        label: "label.overload.maximum",
+        operandLabels: ["label.socket.vector", "label.socket.vector"],
+        outputLabel: "label.socket.maximum",
+        calculate: (fac, val0, val1) => val0.map((_, i) => val0[i] * (1 - fac) + Math.max(val0[i], val1[i]) * fac) as Vec3,
+        getTemplate: ({fac, val0, val1}) => WebglTemplate.source`${val0} * (1 - ${fac}) + vec3(max(${val0}.x, ${val1}.x), max(${val0}.y, ${val1}.y), max(${val0}.z, ${val1}.z)) * ${fac}`,
+      })],
+
+      [VectorArithmeticOverloadMode.Clamp, (() => {
+        const {vector, min, max} = this.inputSlots;
+        const outputs = ({[webglStdOuts.float]: WebglTemplate.source`vec3(clamp(${vector}.x, ${min}.x, ${max}.x), clamp(${vector}.y, ${min}.y, ${max}.y), clamp(${vector}.z, ${min}.z, ${max}.z))`});
+
+        return new Overload(
+          "label.overload.clamp",
+          node => [
+            new InSocket(node, SocketType.Vector, "label.socket.vector", {webglOutputMappingStatic: {[webglStdOuts.vector]: vector}}),
+            new InSocket(node, SocketType.Vector, "label.socket.minimum", {webglOutputMappingStatic: {[webglStdOuts.vector]: min}}),
+            new InSocket(node, SocketType.Vector, "label.socket.maximum", {webglOutputMappingStatic: {[webglStdOuts.vector]: max}}),
+          ],
+          (node, ins) => [
+            new OutSocket(node, SocketType.Float, "label.socket.vector", context => {
+              const [val0, val1] = ins.map(socket => socket.inValue(context)) as [Vec3, Vec3];
+              return Math.hypot(...val0.map((_, i) => val0[i] - val1[i]));
+            }, {
+              webglOutputs: socket => () => outputs,
+            }),
+          ],
+          singleDisplayValueVec,
+          outputsWithNoStatements,
+          () => outputs,
+        );
+      })()],
       
-      [VectorArithmeticMode.Distance, (() => {
+      [VectorArithmeticOverloadMode.Distance, (() => {
         const {val0, val1} = this.inputSlots;
         const outputs = ({[webglStdOuts.float]: WebglTemplate.source`length(${val0} - ${val1})`});
 
         return new Overload(
           "label.overload.vectorArithmetic.distance",
-          node => {
-            return [
-              new InSocket(node, SocketType.Vector, "label.socket.vector", {webglOutputMappingStatic: {[webglStdOuts.vector]: val0}}),
-              new InSocket(node, SocketType.Vector, "label.socket.vector", {webglOutputMappingStatic: {[webglStdOuts.vector]: val1}}),
-            ];
-          },
+          node => [
+            new InSocket(node, SocketType.Vector, "label.socket.vector", {webglOutputMappingStatic: {[webglStdOuts.vector]: val0}}),
+            new InSocket(node, SocketType.Vector, "label.socket.vector", {webglOutputMappingStatic: {[webglStdOuts.vector]: val1}}),
+          ],
           (node, ins) => [
             new OutSocket(node, SocketType.Float, "label.socket.vectorArithmetic.distance", context => {
               const [val0, val1] = ins.map(socket => socket.inValue(context)) as [Vec3, Vec3];
@@ -159,7 +201,7 @@ export namespace math {
         );
       })()],
 
-      [VectorArithmeticMode.Scale, (() => {
+      [VectorArithmeticOverloadMode.Scale, (() => {
         const {vector, scalar} = this.inputSlots;
         const outputs = ({[webglStdOuts.vector]: WebglTemplate.source`${vector} * ${scalar}`});
 
@@ -189,12 +231,12 @@ export namespace math {
     width = 200;
 
     constructor() {
-      super(VectorArithmeticMode.Lerp);
+      super(VectorArithmeticOverloadMode.Lerp);
     }
   }
 
 
-  enum ArithmeticMode {
+  enum ArithmeticOverloadMode {
     Expression = "expression",
     Add = "add",
     Multiply = "multiply",
@@ -213,14 +255,20 @@ export namespace math {
     Arctangent = "arctangent",
     Arctangent2 = "arctangent2",
     Hypotenuse = "hypotenuse",
+    Minimum = "minimum",
+    Maximum = "maximum",
+    Clamp = "clamp",
     Quantize = "quantize",
   }
-  export class ArithmeticNode extends NodeWithOverloads<ArithmeticMode> {
+  export class ArithmeticNode extends NodeWithOverloads<ArithmeticOverloadMode> {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "arithmetic";
     static readonly outputDisplayType = OutputDisplayType.Float;
 
-    private static readonly inputSlots = WebglSlot.ins("val0", "val1", "min", "max", "fac", "source", "sourceMin", "sourceMax", "targetMin", "targetMax", "val", "nSegments");
+    private static readonly inputSlots = WebglSlot.ins(
+      "val0", "val1", "min", "max", "fac", "source", "sourceMin", "sourceMax", "targetMin", "targetMax", "val",
+      "nSegments", "scale", "fitRange",
+    );
     
     width = 200;
 
@@ -319,40 +367,40 @@ export namespace math {
       getTemplate,
     });
 
-    static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticMode, Overload>([
-      [ArithmeticMode.Add, this.singleOutputTwoInputsOverload({
+    static readonly overloadGroup = new OverloadGroup(new Map<ArithmeticOverloadMode, Overload>([
+      [ArithmeticOverloadMode.Add, this.singleOutputTwoInputsOverload({
         label: "label.overload.add",
         operandLabels: ["label.socket.addOperand", "label.socket.addOperand"],
         outputLabel: "label.socket.addOut",
         calculate: (val0, val1) => val0 + val1,
-        getTemplate: ({val0, val1}) => WebglTemplate.source`${val0} + ${val1}`,
+        getTemplate: ({val0, val1}) => WebglTemplate.source`(${val0} + ${val1})`,
       })],
 
-      [ArithmeticMode.Multiply, this.singleOutputTwoInputsOverload({
+      [ArithmeticOverloadMode.Multiply, this.singleOutputTwoInputsOverload({
         label: "label.overload.arithmetic.multiply",
         operandLabels: ["label.socket.multiplyOperand", "label.socket.multiplyOperand"],
         outputLabel: "label.socket.multiplyOut",
         calculate: (val0, val1) => val0 * val1,
-        getTemplate: ({val0, val1}) => WebglTemplate.source`${val0} * ${val1}`,
+        getTemplate: ({val0, val1}) => WebglTemplate.source`(${val0} * ${val1})`,
       })],
       
-      [ArithmeticMode.Subtract, this.singleOutputTwoInputsOverload({
+      [ArithmeticOverloadMode.Subtract, this.singleOutputTwoInputsOverload({
         label: "label.overload.subtract",
         operandLabels: ["label.socket.subtractOperand1", "label.socket.subtractOperand2"],
         outputLabel: "label.socket.subtractOut",
         calculate: (val0, val1) => val0 - val1,
-        getTemplate: ({val0, val1}) => WebglTemplate.source`${val0} - ${val1}`,
+        getTemplate: ({val0, val1}) => WebglTemplate.source`(${val0} - ${val1})`,
       })],
       
-      [ArithmeticMode.Divide, this.singleOutputTwoInputsOverload({
+      [ArithmeticOverloadMode.Divide, this.singleOutputTwoInputsOverload({
         label: "label.overload.arithmetic.divide",
         operandLabels: ["label.socket.divideOperand1", "label.socket.divideOperand2"],
         outputLabel: "label.socket.divideOut",
         calculate: (val0, val1) => val0 / val1,
-        getTemplate: ({val0, val1}) => WebglTemplate.source`${val0} / ${val1}`,
+        getTemplate: ({val0, val1}) => WebglTemplate.source`(${val0} / ${val1})`,
       })],
       
-      [ArithmeticMode.Pow, this.singleOutputTwoInputsOverload({
+      [ArithmeticOverloadMode.Pow, this.singleOutputTwoInputsOverload({
         label: "label.overload.arithmetic.power",
         operandLabels: ["label.socket.arithmetic.powerBase", "label.socket.arithmetic.powerExponent"],
         outputLabel: "label.socket.arithmetic.powerOut",
@@ -360,15 +408,15 @@ export namespace math {
         getTemplate: ({val0, val1}) => WebglTemplate.source`pow(${val0}, ${val1})`,
       })],
       
-      [ArithmeticMode.Screen, this.singleOutputTwoInputsOverload({
+      [ArithmeticOverloadMode.Screen, this.singleOutputTwoInputsOverload({
         label: "label.overload.screen",
         operandLabels: ["label.socket.multiplyOperand", "label.socket.multiplyOperand"],
         outputLabel: "label.socket.multiplyOut",
         calculate: (val0, val1) => 1 - (1 - val0) * (1 - val1),
-        getTemplate: ({val0, val1}) => WebglTemplate.source`1. - (1. - ${val0}) * (1. - ${val1})`,
+        getTemplate: ({val0, val1}) => WebglTemplate.source`(1. - (1. - ${val0}) * (1. - ${val1}))`,
       })],
       
-      [ArithmeticMode.Lerp, this.singleOutputOverload({
+      [ArithmeticOverloadMode.Lerp, this.singleOutputOverload({
         label: "label.overload.lerp",
         ins: node => {
           const {min, max, fac} = this.inputSlots;
@@ -388,7 +436,7 @@ export namespace math {
         getTemplate: ({min, max, fac}) => WebglTemplate.source`mix(${min}, ${max}, ${fac})`,
       })],
           
-      [ArithmeticMode.MapRange, this.singleOutputOverload({
+      [ArithmeticOverloadMode.MapRange, this.singleOutputOverload({
         label: "label.overload.arithmetic.mapRange",
         ins: node => {
           const {source, sourceMin, sourceMax, targetMin, targetMax} = this.inputSlots;
@@ -419,86 +467,137 @@ export namespace math {
         getTemplate: ({source, sourceMin, sourceMax, targetMin, targetMax}) => WebglTemplate.source`mix(${targetMin}, ${targetMax}, ${source} / (${sourceMax} - ${sourceMin}))`,
       })],
       
-      [ArithmeticMode.Floor, this.singleOutputSingleInputOverload({
+      [ArithmeticOverloadMode.Floor, this.singleOutputSingleInputOverload({
         label: "label.overload.arithmetic.floor",
         outputType: SocketType.Integer,
         calculate: Math.floor,
         getTemplate: ({val}) => WebglTemplate.source`int(floor(${val}))`,
       })],
       
-      [ArithmeticMode.Sine, this.singleOutputSingleInputOverload({
+      [ArithmeticOverloadMode.Sine, this.singleOutputSingleInputOverload({
         label: "label.overload.arithmetic.sine",
         calculate: Math.sin,
         getTemplate: ({val}) => WebglTemplate.source`sin(${val})`,
       })],
       
-      [ArithmeticMode.Cosine, this.singleOutputSingleInputOverload({
+      [ArithmeticOverloadMode.Cosine, this.singleOutputSingleInputOverload({
         label: "label.overload.arithmetic.cosine",
         calculate: Math.cos,
         getTemplate: ({val}) => WebglTemplate.source`cos(${val})`,
       })],
       
-      [ArithmeticMode.Cosine, this.singleOutputSingleInputOverload({
+      [ArithmeticOverloadMode.Cosine, this.singleOutputSingleInputOverload({
         label: "label.overload.arithmetic.tangent",
         calculate: Math.tan,
         getTemplate: ({val}) => WebglTemplate.source`tan(${val})`,
       })],
       
-      [ArithmeticMode.Arcsine, this.singleOutputSingleInputOverload({
+      [ArithmeticOverloadMode.Arcsine, this.singleOutputSingleInputOverload({
         label: "label.overload.arithmetic.arcsine",
         calculate: Math.asin,
         getTemplate: ({val}) => WebglTemplate.source`asin(${val})`,
       })],
       
-      [ArithmeticMode.Arccosine, this.singleOutputSingleInputOverload({
+      [ArithmeticOverloadMode.Arccosine, this.singleOutputSingleInputOverload({
         label: "label.overload.arithmetic.arccosine",
         calculate: Math.acos,
         getTemplate: ({val}) => WebglTemplate.source`acos(${val})`,
       })],
       
-      [ArithmeticMode.Arctangent, this.singleOutputSingleInputOverload({
+      [ArithmeticOverloadMode.Arctangent, this.singleOutputSingleInputOverload({
         label: "label.overload.arithmetic.arctangent",
         calculate: Math.atan,
         getTemplate: ({val}) => WebglTemplate.source`atan(${val})`,
       })],
       
-      [ArithmeticMode.Arctangent2, this.singleOutputTwoInputsOverload({
+      [ArithmeticOverloadMode.Arctangent2, this.singleOutputTwoInputsOverload({
         label: "label.overload.arithmetic.arctangent2",
         operandLabels: ["label.socket.y", "label.socket.x"],
         calculate: Math.atan2,
         getTemplate: ({val0, val1}) => WebglTemplate.source`atan(${val1}, ${val0})`,
       })],
       
-      [ArithmeticMode.Hypotenuse, this.singleOutputTwoInputsOverload({
+      [ArithmeticOverloadMode.Hypotenuse, this.singleOutputTwoInputsOverload({
         label: "label.overload.arithmetic.hypotenuse",
         outputLabel: "label.socket.arithmetic.hypotenuse",
         calculate: Math.hypot,
         getTemplate: ({val0, val1}) => WebglTemplate.source`sqrt(${val0} * ${val0} + ${val1} * ${val1})`,
       })],
       
-      [ArithmeticMode.Quantize, this.singleOutputOverload({
-        label: "label.overload.arithmetic.quantize",
+      [ArithmeticOverloadMode.Minimum, this.singleOutputTwoInputsOverload({
+        label: "label.overload.minimum",
+        outputLabel: "label.socket.minimum",
+        calculate: Math.min,
+        getTemplate: ({val0, val1}) => WebglTemplate.source`sqrt(${val0} * ${val0} + ${val1} * ${val1})`,
+      })],
+      
+      [ArithmeticOverloadMode.Maximum, this.singleOutputTwoInputsOverload({
+        label: "label.overload.maximum",
+        outputLabel: "label.socket.maximum",
+        calculate: Math.max,
+        getTemplate: ({val0, val1}) => WebglTemplate.source`sqrt(${val0} * ${val0} + ${val1} * ${val1})`,
+      })],
+      
+      [ArithmeticOverloadMode.Clamp, this.singleOutputOverload({
+        label: "label.overload.clamp",
         ins: node => {
-          const {val, nSegments} = this.inputSlots;
+          const {val, min, max} = this.inputSlots;
           return [
             new InSocket(node, SocketType.Float, "label.socket.value", {
               sliderProps: {hasBounds: false},
               webglOutputMappingStatic: {[webglStdOuts.float]: val},
             }),
-            new InSocket(node, SocketType.Float, "label.socket.arithmetic.quantize.nSegments", {
-              sliderProps: {hasBounds: false, step: 1},
-              defaultValue: 4,
-              webglOutputMappingStatic: {[webglStdOuts.float]: nSegments},
+            new InSocket(node, SocketType.Float, "label.socket.minimum", {
+              defaultValue: 0,
+              sliderProps: {hasBounds: false},
+              webglOutputMappingStatic: {[webglStdOuts.float]: min},
+            }),
+            new InSocket(node, SocketType.Float, "label.socket.maximum", {
+              defaultValue: 1,
+              sliderProps: {hasBounds: false},
+              webglOutputMappingStatic: {[webglStdOuts.float]: max},
             }),
           ];
         },
-        calculate: (value, nSegments) => Math.floor(value * nSegments) / nSegments,
-        getTemplate: ({val, nSegments}) => WebglTemplate.source`floor(${val} * ${nSegments}) / (${nSegments} - 1.)`,
+        calculate: clamp,
+        getTemplate: ({val, min, max}) => WebglTemplate.source`clamp(${val}, ${min}, ${max})`,
+      })],
+      
+      [ArithmeticOverloadMode.Quantize, this.singleOutputOverload({
+        label: "label.overload.arithmetic.quantize",
+        ins: node => {
+          const {val, scale, nSegments, fitRange} = this.inputSlots;
+          return [
+            new InSocket(node, SocketType.Float, "label.socket.value", {
+              sliderProps: {hasBounds: false},
+              webglOutputMappingStatic: {[webglStdOuts.float]: val},
+            }),
+            new InSocket(node, SocketType.Float, "label.socket.arithmetic.quantize.scale", {
+              sliderProps: {hasBounds: false},
+              defaultValue: 1,
+              webglOutputMappingStatic: {[webglStdOuts.float]: scale},
+            }),
+            new InSocket(node, SocketType.Integer, "label.socket.arithmetic.quantize.nSegments", {
+              sliderProps: {hasBounds: false, step: 1, min: 2},
+              defaultValue: 4,
+              webglOutputMappingStatic: {[webglStdOuts.integer]: nSegments},
+            }),
+            new InSocket(node, SocketType.Bool, "label.socket.arithmetic.quantize.fitRange?", {
+              defaultValue: true,
+              webglOutputMappingStatic: {[webglStdOuts.bool]: fitRange},
+              socketDesc: "desc.socket.arithmetic.quantize.fitRange?",
+            }),
+          ];
+        },
+        calculate: (value, scale, nSegments, fitRange) => nSegments === 1
+            ? 0.5
+            : Math.floor(value / scale * nSegments) * scale / (nSegments - (fitRange ? 1 : 0)),
+        getTemplate: ({val, scale, nSegments, fitRange}) => WebglTemplate.source`(nSegments == 1 ? 0.5 : floor(${val} / ${scale} * float(${nSegments})) * ${scale} / float(${nSegments} - (${fitRange} ? 1 : 0)))`,
       })],
     ]));
 
     constructor() {
-      super(ArithmeticMode.Add);
+      super(ArithmeticOverloadMode.Add);
     }
   }
 

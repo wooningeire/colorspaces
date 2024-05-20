@@ -1,12 +1,11 @@
 <script lang="ts" setup>
-import { getCurrentInstance, nextTick, ref } from "vue";
-import EntrySlider from "../input/EntrySlider.vue";
-import { toHex, Option } from "@/util";
-import { Node, InSocket } from "@/models/Node";
+import { computed, getCurrentInstance, nextTick, ref } from "vue";
+import { toHex, Option, clamp } from "@/util";
 import { output } from "@/models/nodetypes";
 import { settings } from "../store";
-import * as cm from "@/models/colormanagement";
 import ReadonlyInput from "./ReadonlyInput.vue";
+import { NodeEvalContext } from "@/models/Node";
+import * as cm from "@/models/colormanagement";
 
 const props = defineProps<{
   node: output.SampleHexCodesNode,
@@ -15,20 +14,35 @@ const props = defineProps<{
 const proxy = getCurrentInstance()!.proxy!;
 
 
-const nSegmentsX = ref(4);
-const nSegmentsY = ref(4);
+const nSegmentsX = computed(() => Math.max(0, props.node.nSegmentsXSocket.inValue()));
+const nSegmentsY = computed(() => Math.max(0, props.node.nSegmentsYSocket.inValue()));
 
 const hexString = (x: number, y: number): Option<string> => {
   if (!props.node.colorsSocket.hasLinks) return Option.None;
 
-  const color = settings.deviceSpace.from(props.node.colorsSocket.inValue({
-    coords: [
-      nSegmentsX.value === 1 ? 0.5 : x / (nSegmentsX.value - 1),
-      nSegmentsY.value === 1 ? 0.5 : y / (nSegmentsY.value - 1),
-    ],
+  const context: NodeEvalContext = {
+    coords: [x, y],
+  };
+
+  const scaleX = props.node.scaleXSocket.inValue(context);
+  const fitRangeX = props.node.fitRangeXSocket.inValue(context);
+  const scaleY = props.node.scaleYSocket.inValue(context);
+  const fitRangeY = props.node.fitRangeYSocket.inValue(context);
+
+  const xQuantized = nSegmentsX.value === 1 ? 0.5 : x * scaleX / (nSegmentsX.value - (fitRangeX ? 1 : 0));
+  const yQuantized = nSegmentsY.value === 1 ? 0.5 : y * scaleY / (nSegmentsY.value - (fitRangeY ? 1 : 0));
+
+  let color = settings.deviceSpace.from(props.node.colorsSocket.inValue({
+    coords: [xQuantized, yQuantized],
   }));
   
-  if (!color.inGamut()) return Option.None;
+  if (!color.inGamut()) {
+    if (props.node.clampSocket.inValue()) {
+      color = color.map(value => clamp(value, 0, 1)) as cm.Col;
+    } else {
+      return Option.None;
+    }
+  }
   return Option.Some(`#${color.map(toHex).join("")}`);
 };
 
@@ -56,26 +70,6 @@ defineExpose({
 
 <template>
   <div class="container">
-    <div class="fields">
-      # segments X
-      <EntrySlider
-        v-model="nSegmentsX"
-        :hasBounds="false"
-        :min="1"
-        :max="25"
-        :step="1"
-      />
-
-      # segments Y
-      <EntrySlider
-        v-model="nSegmentsY"
-        :hasBounds="false"
-        :min="1"
-        :max="25"
-        :step="1"
-      />
-    </div>
-
     <div
       class="grid"
       :style="{
@@ -113,10 +107,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.fields {
-  padding: 0 var(--socket-text-padding);
+  width: 100%;
 }
 
 .grid {
@@ -128,7 +119,7 @@ defineExpose({
   grid-template-rows: repeat(var(--n-rows), 1fr);
 
   border-radius: 0.5rem;
-  overflow: hidden;
+  overflow-x: auto;
 
   > div {
     --x: 1;
