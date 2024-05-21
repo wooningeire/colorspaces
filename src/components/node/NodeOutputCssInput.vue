@@ -12,10 +12,10 @@ const emit = defineEmits<{
   (event: "force-update", requiresShaderReload: boolean, editedSocket: InSocket): void,
 }>();
 
-const cssPreview = ref<HTMLDivElement | null>(null);
+const sampler = ref<HTMLDivElement | null>(null);
 watch(() => props.node.ins[0].inValue(), () => {
   setTimeout(() => {
-    const computedColorRgb = getComputedStyle(cssPreview.value!).backgroundColor; // either in rgb or rgba format
+    const computedColorRgb = getComputedStyle(sampler.value!).backgroundColor; // either in rgb or rgba format
     const numbers = computedColorRgb.slice(computedColorRgb.indexOf("(") + 1, computedColorRgb.lastIndexOf(")"))
         .split(",")
         .map(value => Number(value));
@@ -34,20 +34,29 @@ watch(() => props.node.ins[0].inValue(), () => {
     :style="{
       '--color': node.ins[0].inValue(),
     }"
-    ref="cssPreview"
+  ></div>
+  <div 
+    :style="{
+      '--color': node.ins[0].inValue(),
+    }"
+    ref="sampler"
   ></div>
 </template>
 
 <style lang="scss" scoped>
+div {
+  --color: #0000;
+  background-color: var(--color);
+}
+
 .css-preview {
   width: 100%;
   height: 2rem;
   margin: 0 var(--socket-text-padding);
   border-radius: var(--node-widget-border-radius);
 
-  --color: #0000;
-  background-color: var(--color);
+  box-shadow: 0 0 0 2px var(--node-border-color);
   
-  // transition: background 0.1s ease-in-out;
+  transition: background 0.1s ease-in-out;
 }
 </style>
