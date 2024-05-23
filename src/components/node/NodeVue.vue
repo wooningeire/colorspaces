@@ -38,14 +38,6 @@ const emit = defineEmits<{
 const nodeVue = getCurrentInstance()!.proxy as InstanceType<typeof NodeVue>;
 
 
-onMounted(() => {
-  Object.assign(props.node.pos, [
-    props.node.pos[0] - (getCurrentInstance()?.proxy?.$el.offsetWidth / 2 ?? 0),
-    props.node.pos[1] - (getCurrentInstance()?.proxy?.$el.offsetHeight / 2 ?? 0),
-  ]);
-});
-
-
 const isSelected = computed(() => selectedNodes.has(props.node));
 
 
@@ -142,7 +134,7 @@ const beginResizeDragLeft = createDragListener({
     const newWidth = originalWidth - displacement.x / viewportScale.value;
     if (newWidth > props.node.minWidth) {
       props.node.width = newWidth;
-      props.node.pos[0] = originalX + displacement.x;
+      props.node.pos[0] = originalX + displacement.x / 2;
     }
 
     emit("potential-socket-position-change");
@@ -154,11 +146,16 @@ const beginResizeDragRight = createDragListener({
   onDown(moveEvent) {
     return {
       originalWidth: props.node.width,
+      originalX: props.node.pos[0],
     };
   },
 
-  onDrag(moveEvent, displacement, {originalWidth}) {
-    props.node.width = Math.max(props.node.minWidth, originalWidth + displacement.x / viewportScale.value);
+  onDrag(moveEvent, displacement, {originalWidth, originalX}) {
+    const newWidth = originalWidth + displacement.x / viewportScale.value;
+    if (newWidth > props.node.minWidth) {
+      props.node.width = newWidth;
+      props.node.pos[0] = originalX + displacement.x / 2;
+    }
 
     emit("potential-socket-position-change");
   },
@@ -308,6 +305,7 @@ Object.assign(nodeVue, {
 
   background: var(--node-background);
 
+  transform: translateX(-50%);
   box-shadow: 0 4px 40px -20px #000000af;
   border-radius: calc(1em - var(--node-border-width));
 

@@ -156,9 +156,11 @@ const beginInput = (downEvent: PointerEvent) => {
     <div class="spectral-power-distribution-graph"
         @pointerdown="beginInput">
       <div ref="svgContainer">
-        <svg :viewbox="`0 0 471 ${HEIGHT}`"
-            :width="WIDTH"
-            :height="HEIGHT">
+        <svg
+          :viewbox="`0 0 471 ${HEIGHT}`"
+          :width="svgContainer?.offsetWidth ?? WIDTH"
+          :height="HEIGHT"
+        >
           <path :d="d" />
         </svg>
       </div>
@@ -223,8 +225,10 @@ const beginInput = (downEvent: PointerEvent) => {
     cursor: crosshair;
 
     svg {
-      transform: scaleY(-1);
+      width: 100%;
       overflow: visible;
+
+      transform: scaleY(-1);
       
       path {
         fill: #ffffff3f;

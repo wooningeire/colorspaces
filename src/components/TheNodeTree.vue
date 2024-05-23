@@ -312,13 +312,17 @@ defineExpose({
     @keyframes pop-in {
       0% {
         opacity: 0;
-        transform: scale(0);
+        transform:
+            translateX(-50%)
+            scale(0);
       }
     }
 
     @keyframes fade-out {
       100% {
-        transform: scale(0.5);
+        transform:
+            translateX(-50%)
+            scale(0.5);
         opacity: 0;
       }
     }
@@ -333,11 +337,15 @@ defineExpose({
   }
 
   > .nodes {
-    transform: scale(var(--scale)) translate(var(--pos-x), var(--pos-y));
+    transform:
+        scale(var(--scale))
+        translate(var(--pos-x), var(--pos-y));
   }
 
   > svg.links > g {
-    transform: scale(var(--scale)) translate(var(--pos-x), var(--pos-y));
+    transform:
+        scale(var(--scale))
+        translate(var(--pos-x), var(--pos-y));
   }
 
   > svg.links {
