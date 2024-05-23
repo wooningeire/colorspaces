@@ -116,10 +116,12 @@ export abstract class Node {
 
 
   width = 140;
-  canMove = true;
-  canEditLinks = true;
   pos: Vec2 = [0, 0];
+  readonly minWidth = this.width;
+  readonly canMove = true;
+  readonly canEditLinks = true;
   setPos(pos: Vec2) { this.pos = pos; return this; }
+  setWidth(width: number) { this.width = width; return this; }
 
   // Note: If subclass constructor is called, `new.target` is the subclass
   constructor(

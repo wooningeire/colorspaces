@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {computed, onMounted, PropType, reactive, ref, watch, inject, Ref} from 'vue';
 
-import makeDragListener from "../draggable";
+import createDragListener from "../draggable";
 import {settings} from '../store';
 
 import {models} from "@/models/nodetypes";

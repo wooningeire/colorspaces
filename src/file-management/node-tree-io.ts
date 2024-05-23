@@ -40,6 +40,7 @@ interface SerializedNode {
   type: string,
   socketFieldValues: Exclude<SocketValue, ImageData>[],
   pos: [number, number],
+  width: number,
 };
 
 interface SerializedLink {
@@ -85,6 +86,7 @@ const serializeNodeTree = (tree: Tree) => {
       type: (node.constructor as typeof Node).TYPE.description!,
       socketFieldValues: node.ins.map(socket => socket.fieldValue instanceof ImageData ? "" : socket.fieldValue),
       pos: node.pos,
+      width: node.width,
     });
 
     nodesToIndices.set(node, nodeIndex);
@@ -119,7 +121,8 @@ const deserializeNodeTree = (tree: Tree, fileString: string) => {
     }
 
     const node = new nodeConstructor()
-        .setPos(serializedNode.pos);
+        .setPos(serializedNode.pos)
+        .setWidth(serializedNode.width);
 
     if (node instanceof NodeWithOverloads) {
       // Handle the overload dropdown socket

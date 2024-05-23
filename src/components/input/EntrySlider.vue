@@ -3,7 +3,7 @@ import {computed, nextTick, onBeforeMount, onMounted, PropType, ref, watch} from
 
 import {acceptAlways, identity} from "./base-functions";
 import {modifierKeys, tooltipController} from "../store";
-import makeDragListener from "../draggable";
+import createDragListener from "../draggable";
 
 import getString, {NO_DESC, StringKey} from "@/strings";
 import { clearTextSelection } from "@/util";
@@ -118,7 +118,7 @@ const roundToStep = (value: number, step: number) => Math.round(value / step) * 
 
 const stickToBoundTolerance = 12;
 
-const beginSliderInput = makeDragListener({
+const beginSliderInput = createDragListener({
   shouldCancel(event: PointerEvent) {
     return event.button !== 0;
   },

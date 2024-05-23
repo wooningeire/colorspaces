@@ -17,7 +17,7 @@ import {Listen, clearTextSelection, Vec2} from "@/util";
 import getString from "@/strings";
 
 import {selectedNodes, modifierKeys} from "../store";
-import makeDragListener from "../draggable";
+import createDragListener from "../draggable";
 
 
 const props = defineProps<{
@@ -51,11 +51,10 @@ const isSelected = computed(() => selectedNodes.has(props.node));
 
 const viewportScale = inject("treeViewportScale") as Ref<number>;
 
-const beginDrag = makeDragListener({
+const begiNodeDrag = createDragListener({
   shouldCancel(event: PointerEvent) {
     // Make this check more sophisticated
-    // return event.target !== this.$el;
-    return ["input", "select"].includes((event.target as Element).tagName.toLowerCase())
+    return ["INPUT", "SELECT"].includes((event.target as Element).tagName)
         || !props.node.canMove
         || event.button !== 0;
   },
@@ -131,6 +130,41 @@ onUnmounted(() => {
 });
 
 
+const beginResizeDragLeft = createDragListener({
+  onDown(moveEvent) {
+    return {
+      originalWidth: props.node.width,
+      originalX: props.node.pos[0],
+    };
+  },
+
+  onDrag(moveEvent, displacement, {originalWidth, originalX}) {
+    const newWidth = originalWidth - displacement.x / viewportScale.value;
+    if (newWidth > props.node.minWidth) {
+      props.node.width = newWidth;
+      props.node.pos[0] = originalX + displacement.x;
+    }
+
+    emit("potential-socket-position-change");
+  },
+});
+
+
+const beginResizeDragRight = createDragListener({
+  onDown(moveEvent) {
+    return {
+      originalWidth: props.node.width,
+    };
+  },
+
+  onDrag(moveEvent, displacement, {originalWidth}) {
+    props.node.width = Math.max(props.node.minWidth, originalWidth + displacement.x / viewportScale.value);
+
+    emit("potential-socket-position-change");
+  },
+});
+
+
 const outputVue = ref<InstanceType<typeof NodeOutput>>();
 const inputVue = ref<InstanceType<typeof NodeSpecialInput>>();
 const reload = (requiresShaderReload: boolean, updateSource:  NodeUpdateSource) => {
@@ -152,7 +186,7 @@ Object.assign(nodeVue, {
     class="node"
     @pointerdown="event => {
       emitNodeSelected(event);
-      beginDrag(event);
+      begiNodeDrag(event);
     }"
     :style="{
       'left': `${node.pos[0]}px`,
@@ -166,6 +200,22 @@ Object.assign(nodeVue, {
     }, nodeCategoryClass]"
   >
     <div class="node-border"></div>
+    <div
+      class="node-resize left"
+      @pointerdown="event => {
+        if (event.button !== 0) return;
+        beginResizeDragLeft(event);
+        event.stopPropagation();
+      }"
+    ></div>
+    <div
+      class="node-resize right"
+      @pointerdown="event => {
+        if (event.button !== 0) return;
+        beginResizeDragRight(event);
+        event.stopPropagation();
+      }"
+    ></div>
 
     <div
       class="label"
@@ -339,6 +389,27 @@ Object.assign(nodeVue, {
 
   > .node-border {
     @include gradient-border(var(--node-border-width), var(--node-border-background));
+  }
+
+  > .node-resize {
+    --node-resize-width: 20px;
+    // cuts halfway into the border
+    --node-resize-offset: calc((var(--node-resize-width) + var(--node-border-width)) / -2);
+
+    position: absolute;
+    height: 100%;
+    width: var(--node-resize-width);
+    top: 0;
+
+    cursor: ew-resize;
+
+    &.left {
+      left: var(--node-resize-offset);
+    }
+
+    &.right {
+      right: var(--node-resize-offset);
+    }
   }
 
   :deep(input:is([type="text"], [type="file"])) {

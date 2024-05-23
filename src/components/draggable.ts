@@ -36,28 +36,28 @@ export default <T>({
   };
 
   // Used to temporarily lock the displacement values after passing the threshold to avoid problems with pointer lock
-  let displacementLocked = false;
+  // let displacementLocked = false;
 
   const moveListener = Listen.for(window, "pointermove", (moveEvent: PointerEvent) => {
     clearTextSelection();
 
-    if (!displacementLocked) {
-      displacement.x += moveEvent.movementX;
-      displacement.y += moveEvent.movementY;
-    }
+    // if (!displacementLocked) {
+    displacement.x += moveEvent.movementX;
+    displacement.y += moveEvent.movementY;
+    // }
     if (!hasPassedTolerance && (displacement.x**2 + displacement.y**2) <= dragTolerance**2) {
       return;
     } else if (!hasPassedTolerance) {
       onPassTolerance(downEvent, moveEvent);
       hasPassedTolerance = true;
 
-      displacementLocked = true;
-      displacement.x = 0;
-      displacement.y = 0;
-      // Temporary hardcoded value until pointer lock has a mechanism to detect when lock begins
-      setTimeout(() => {
-        displacementLocked = false;
-      }, 100);
+      // displacementLocked = true;
+      // displacement.x = 0;
+      // displacement.y = 0;
+      // // Temporary hardcoded value until pointer lock has a mechanism to detect when lock begins
+      // setTimeout(() => {
+      //   displacementLocked = false;
+      // }, 100);
 
       addEventListener("pointerup", (upEvent: PointerEvent) => {
         onUpAfterPassTolerance(upEvent);
