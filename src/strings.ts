@@ -3,10 +3,10 @@ import * as marked from "marked";
 export type StringKey = keyof typeof strings;
 export const NO_DESC = Symbol();
 
-let getString: (key: string | StringKey, ...replacements: string[]) => string;
-export default getString = (key: string | StringKey, ...replacements: string[]) =>
+let getString: (key: string | StringKey, ...substitutions: string[]) => string;
+export default getString = (key: string | StringKey, ...substitutions: string[]) =>
   marked.parseInline(strings.hasOwnProperty(key) ? strings[key as keyof typeof strings] : `[missing text: \`${String(key)}\`]`)
-      .replaceAll(/\{(\d+)\}/g, (match, slotIndex) => replacements[Number(slotIndex)]);
+      .replaceAll(/\{(\d+)\}/g, (match, slotIndex) => substitutions[Number(slotIndex)]);
 
 const cite = (index: number, url: string, archivedUrl: string) => `<small>[${index}] ${url} ([archived](${archivedUrl}))</small>`;
 
@@ -109,6 +109,7 @@ const strings = {
   "label.node.conditional": "Conditional",
   "label.node.compareFloats": "Compare floats",
 
+  "label.node.coordinates": "Coordinates",
   "label.node.gradient": "Gradient",
   "label.node.imageFile": "Image file",
   "label.node.sample": "Sample",
@@ -268,8 +269,9 @@ const strings = {
   "label.socket.compareFloats.a<b?": "A < B?",
 
   "label.socket.gradient.axis": "Axis",
-  "label.socket.gradient.from": "From",
-  "label.socket.gradient.to": "To",
+  "label.socket.gradient.nStops": "# stops",
+  "label.socket.gradient.stopIPosition": "Stop {0} position",
+  "label.socket.gradient.stopIValue": "Stop {0} value",
   "label.socket.gradient.values": "Values",
   "label.socket.imageFile.file": "File",
   "label.socket.sample.source": "Source",

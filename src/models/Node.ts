@@ -503,6 +503,7 @@ export type SocketOptions<St extends SocketType=any> = {
   showSocket?: boolean,
   socketDesc?: StringKey,
   fieldText?: StringKey[],
+  labelSubstitutions?: string[],
   defaultValue?: SocketValue<St>,
   hasDynamicType?: boolean,
   showFieldIfAvailable?: boolean,
@@ -578,6 +579,7 @@ export abstract class Socket<St extends SocketType=any> {
 
   readonly socketDesc: StringKey;
   readonly fieldText: StringKey[];
+  readonly labelSubstitutions: string[];
 
   /** The value of the entry field input for this socket */
   fieldValue: SocketValue<St>;
@@ -607,6 +609,7 @@ export abstract class Socket<St extends SocketType=any> {
       showSocket,
       socketDesc,
       fieldText,
+      labelSubstitutions,
       defaultValue,
       showFieldIfAvailable,
       hasDynamicType,
@@ -623,6 +626,7 @@ export abstract class Socket<St extends SocketType=any> {
     this.showSocket = showSocket ?? true;
     this.socketDesc = socketDesc ?? NO_DESC;
     this.fieldText = fieldText ?? [];
+    this.labelSubstitutions = labelSubstitutions ?? [];
     this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,
     this.showFieldIfAvailable = showFieldIfAvailable ?? true;
     this.hasDynamicType = hasDynamicType ?? false;

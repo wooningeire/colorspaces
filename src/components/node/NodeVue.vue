@@ -35,6 +35,13 @@ const emit = defineEmits<{
   (event: "field-value-change", requiresShaderReload: boolean, updateSource: NodeUpdateSource): void,
 }>();
 
+watch(props.node.ins, () => {
+  emit("potential-socket-position-change");
+});
+watch(props.node.outs, () => {
+  emit("potential-socket-position-change");
+});
+
 const nodeVue = getCurrentInstance()!.proxy as InstanceType<typeof NodeVue>;
 
 

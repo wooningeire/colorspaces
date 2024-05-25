@@ -3,27 +3,73 @@ import { Node, SocketType, AxisNode, NodeEvalContext, InSocket, OutSocket, webgl
 import { Vec3, lerp } from "@/util";
 import { useDynamicallyTypedSockets } from "./util";
 import { WebglTemplate, WebglSlot, WebglVariables } from "@/webgl-compute/WebglVariables";
+import { toRaw } from "vue";
 
 export namespace images {
+  export class CoordinatesNode extends Node implements AxisNode {
+    static readonly TYPE = Symbol(this.name);
+    static readonly id = "coordinates";
+
+    // TODO attach this property to the sockets instead of the node
+    get axes() {
+      return [0, 1];
+    }
+
+    private static outputSlots = WebglSlot.outs("x", "y");
+
+    constructor() {
+      super();
+
+      const {x, y} = CoordinatesNode.outputSlots;
+
+      this.outs.push(
+        new OutSocket(this, SocketType.Float, "label.socket.x", context => context.coords?.[0] ?? 0, {
+          webglOutputs: socket => () => ({[webglStdOuts.float]: WebglTemplate.source`coords.x`}),
+        }),
+        new OutSocket(this, SocketType.Float, "label.socket.y", context => context.coords?.[0] ?? 0, {
+          webglOutputs: socket => () => ({[webglStdOuts.float]: WebglTemplate.source`coords.y`}),
+        }),
+        new OutSocket(this, SocketType.Vector, "label.socket.vector", context => [context.coords?.[0] ?? 0, context.coords?.[1] ?? 0, 0] as Vec3, {
+          webglOutputs: socket => () => ({[webglStdOuts.vector]: WebglTemplate.source`vec3(coords, 0.)`}),
+        }),
+      );
+    }
+  }
+
   export class GradientNode extends Node implements AxisNode {
     static readonly TYPE = Symbol(this.name);
     static readonly id = "gradient";
 
     private readonly axisSocket: InSocket<SocketType.Dropdown>;
-    private readonly boundsSockets: InSocket<SocketType.Float>[];
+    private stopsSockets: {
+      positionSocket: InSocket<SocketType.Float>,
+      valueSocket: InSocket<SocketType.Float>,
+    }[] = [];
+    private stopsSlots: {
+      position: WebglSlot,
+      value: WebglSlot,
+    }[] = [];
 
     get axes() {
       return [this.whichDimension];
     }
 
-    private static inputSlots = WebglSlot.ins("from", "to");
     private static outputSlots = WebglSlot.outs("val");
 
     constructor() {
       super();
 
-      const {from, to} = GradientNode.inputSlots;
       const {val} = GradientNode.outputSlots;
+
+      const recreateStopSockets = () => {
+        const {sockets, slots} = this.createStopSockets();
+        while (this.ins.length > 2) {
+          this.ins.pop();
+        }
+        this.ins.push(...sockets.flatMap(Object.values));
+        this.stopsSockets = sockets;
+        this.stopsSlots = slots;
+      };
 
       this.ins.push(
         (this.axisSocket = new InSocket(this, SocketType.Dropdown, "label.socket.gradient.axis", {
@@ -35,44 +81,114 @@ export namespace images {
           defaultValue: "0",
           valueChangeRequiresShaderReload: true,
         })),
-        ...(this.boundsSockets = [
-          new InSocket(this, SocketType.Float, "label.socket.gradient.from", {
-            sliderProps: {
-              hasBounds: false,
-            },
-            webglOutputMappingStatic: {[webglStdOuts.float]: from},
-          }),
-          new InSocket(this, SocketType.Float, "label.socket.gradient.to", {
-            defaultValue: 1,
-            sliderProps: {
-              hasBounds: false,
-            },
-            webglOutputMappingStatic: {[webglStdOuts.float]: to},
-          }),
-        ]),
+        new InSocket(this, SocketType.Integer, "label.socket.gradient.nStops", {
+          constant: true,
+          defaultValue: 2,
+          sliderProps: {
+            min: 1,
+            hasBounds: false,
+          },
+          onValueChange: () => {
+            recreateStopSockets();
+          },
+          valueChangeRequiresShaderReload: true,
+        }),
       );
+      recreateStopSockets();
 
       this.outs.push(
         new OutSocket(this, SocketType.Float, "label.socket.gradient.values", context => {
           const fac = context.coords?.[this.whichDimension] ?? 0;
-          const value0 = this.boundsSockets[0].inValue(context);
-          const value1 = this.boundsSockets[1].inValue(context);
-          return lerp(value0, value1, fac);
+          const stopsPrecomputed = this.stopsSockets.map(({positionSocket, valueSocket}) => ({position: positionSocket.inValue(context), valueSocket}));
+          
+          let leftStopIndex = -1;
+          for (const [i, stop] of stopsPrecomputed.entries()) {
+            if (fac < stop.position) continue;
+            
+            leftStopIndex = i;
+            break;
+          }
+
+          if (leftStopIndex === -1) {
+            return stopsPrecomputed[0].valueSocket.inValue(context);
+          }
+          if (leftStopIndex === stopsPrecomputed.length - 1) {
+            return stopsPrecomputed.at(-1)!.valueSocket.inValue(context);
+          }
+
+          const leftStop = stopsPrecomputed[leftStopIndex];
+          const rightStop = stopsPrecomputed[leftStopIndex + 1];
+
+          const value0 = leftStop.valueSocket.inValue(context);
+          if (fac === leftStop.position) {
+            return value0;
+          }
+
+          const value1 = rightStop.valueSocket.inValue(context);
+          return lerp(value0, value1, (fac - leftStop.position) / (rightStop.position - leftStop.position));
         }, {
           webglOutputs: socket => () => ({[webglStdOuts.float]: WebglTemplate.slot(val)}),
         }),
       );
     }
 
+    private createStopSockets() {
+      const nStops = this.ins[1].inValue();
+
+      const slots = new Array(nStops).fill(0).map((_, i) => ({
+        position: WebglSlot.in(`position_${i}`),
+        value: WebglSlot.in(`value_${i}`),
+      }));
+
+      return {
+        sockets: new Array(nStops).fill(0)
+            .map((_, i) => ({
+              positionSocket: new InSocket(this, SocketType.Float, "label.socket.gradient.stopIPosition", {
+                defaultValue: nStops === 1 ? 0.5 : i / (nStops - 1),
+                sliderProps: {
+                  softMin: 0,
+                  softMax: 1,
+                },
+                webglOutputMappingStatic: {[webglStdOuts.float]: slots[i].position},
+                labelSubstitutions: [String(i)],
+              }),
+              valueSocket: new InSocket(this, SocketType.Float, "label.socket.gradient.stopIValue", {
+                sliderProps: {
+                  hasBounds: false,
+                },
+                webglOutputMappingStatic: {[webglStdOuts.float]: slots[i].value},
+                labelSubstitutions: [String(i)],
+              }),
+            })),
+        slots,
+      };
+    }
+
     get whichDimension() {
       return Number(this.axisSocket.inValue());
     }
 
-    webglBaseVariables(context: NodeEvalContext={}): WebglVariables {
-      const {from, to} = GradientNode.inputSlots;
-      const {val} = GradientNode.outputSlots;
 
-      return WebglVariables.templateConcat`float ${val} = mix(${from}, ${to}, coords.${this.whichDimension === 0 ? "x" : "y * -1."});`({
+    webglBaseVariables(context: NodeEvalContext={}): WebglVariables {
+      const {val} = GradientNode.outputSlots;
+      const fac = WebglSlot.out("fac");
+
+      const stopsPrecomputed = this.stopsSockets.map(({positionSocket, valueSocket}, i) => ({position: positionSocket.inValue(context), valueSocket}));
+
+      const slots = (index: number) => toRaw(this.stopsSlots.at(index)!); // toRaw included due to VueJS inconsistency
+
+      return WebglVariables.templateConcat`float ${fac} = coords.${this.whichDimension === 0 ? "x" : "y"};
+float ${val} =
+    ${fac} < ${slots(0).position} ? ${slots(0).value} :
+    ${WebglTemplate.merge(
+      ...new Array(stopsPrecomputed.length - 1).fill(0)
+          .map((_, i) => {
+            const leftPos = slots(i).position;
+            const rightPos = slots(i + 1).position;
+            return WebglTemplate.source`${fac} < ${rightPos} ? mix(${slots(i).value}, ${slots(i + 1).value}, (${fac} - ${leftPos}) / (${rightPos} - ${leftPos})) :`;
+          })
+    )}
+    ${slots(-1).value};`({
         node: this,
       });
     }

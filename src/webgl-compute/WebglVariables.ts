@@ -40,7 +40,7 @@ export class WebglSlot {
   }
 
   randomVariableName() {
-    return `v_${this.identifier.replaceAll(/ |[^a-zA-Z0-9]/g, "_")}_${crypto.randomUUID().replaceAll("-", "_").substring(0, 8)}`;
+    return `v_${this.identifier.replaceAll(/ |[^a-zA-Z0-9]/g, "_")}_${crypto.randomUUID().replaceAll("-", "_")}`;
   }
 }
 

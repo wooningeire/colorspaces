@@ -213,7 +213,7 @@ onMounted(() => {
     </div>
     <div
       class="socket-label"
-      v-html="getString(socket.label)"
+      v-html="getString(socket.label, ...socket.labelSubstitutions)"
     ></div>
 
     <Transition

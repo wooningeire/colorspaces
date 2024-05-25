@@ -48,7 +48,7 @@ void main() {
   gl_Position = a_pos;
 
   // Map [-1, 1] to [0, 1]
-  v_uv = (a_pos.xy + 1.) / 2. * vec2(1., -1.);
+  v_uv = (a_pos.xy + 1.) / 2.;
 }`;
 
   const fragmentShaderSource = lastTranspilation.shaderSource;
