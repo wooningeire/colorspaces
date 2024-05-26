@@ -1,7 +1,8 @@
 import { WebglSlot, WebglTemplate, WebglVariables } from "$/webgl-compute/WebglVariables";
 import { NO_DESC, StringKey } from "../strings";
 import { Vec2, Vec3, Option } from "../util";
-import { Col } from "$/color-management";
+import { Col, Xyz } from "$/color-management";
+import { illuminantE } from "../color-management/spaces/col-xyz-xyy-illuminants";
 
 export class Tree {
   readonly nodes = new Set<Node>();
@@ -494,6 +495,7 @@ export abstract class Socket<St extends SocketType=any> {
     [SocketType.Vector, [0, 0, 0]],
     [SocketType.VectorOrColor, [0, 0, 0]],
     [SocketType.Bool, false],
+    [SocketType.Color, new Xyz([0, 0, 0], illuminantE)],
   ]);
 
   /** Specifies what destination socket types a source socket type can be linked to, if it cannot be determined
