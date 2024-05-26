@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import {ref, computed, onBeforeUpdate, onUpdated, watchEffect, onMounted, watch, nextTick} from "vue";
+import {ref, computed, onMounted, watch, nextTick} from "vue";
 
-import {Node, Socket, NodeEvalContext, InSocket, NodeUpdateSource} from "@/models/Node";
-import {tree, settings} from "../store";
-import { UniformReloadData, WebglTranspilation, WebglVariables } from "@/webgl-compute/WebglVariables";
+import {Node, Socket, NodeUpdateSource} from "$/node/";
+import {settings} from "@/components/store";
+import { UniformReloadData, WebglTranspilation, WebglVariables } from "$/webgl-compute/WebglVariables";
 
 const props = withDefaults(defineProps<{
   node: Node,

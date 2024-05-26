@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { Tree, Node } from "@/models/Node";
+import { Tree, Node } from "$/node/";
 import {tree, selectedNodes} from "./store";
-import {downloadNodeTree, importNodeTree} from "@/file-management/node-tree-io";
+import {downloadNodeTree, importNodeTree} from "$/file-management/node-tree-io";
 import { ref } from "vue";
 
 const emit = defineEmits<{

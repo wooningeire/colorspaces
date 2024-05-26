@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import NodeOutputTable from './NodeOutputTable.vue';
-import { Vec3, clamp } from '@/util';
-import { rgbToHsl, rgbToHwb } from '@/models/colormanagement';
+import { Vec3, clamp } from '$/util';
+import { rgbToHsl, rgbToHwb } from '$/color-management/';
 
 const props = defineProps<{
   rgbVec: Vec3,

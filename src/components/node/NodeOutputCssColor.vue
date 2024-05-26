@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { PropType, computed } from 'vue';
 import NodeOutputTable from './NodeOutputTable.vue';
-import { Vec3, clamp, to255, toHex, toHex3 } from '@/util';
-import * as cm from '@/models/colormanagement';
-import getString, { StringKey } from '@/strings';
+import { Vec3, clamp, to255, toHex, toHex3 } from '$/util';
+import * as cm from '$/color-management/';
+import getString, { StringKey } from '$/strings';
 
 const props = defineProps<{
   color?: cm.Col,

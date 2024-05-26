@@ -6,7 +6,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { Field } from "../models/Node";
+import { Field } from "$/node/";
 
 export default defineComponent({
   props: {

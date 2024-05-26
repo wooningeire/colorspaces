@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import {PropType, computed, getCurrentInstance, ref, toValue} from 'vue';
 
-import {settings} from "../store";
+import {settings} from "@/components/store";
 
-import {Col} from "@/models/colormanagement";
-import {InSocket, SocketFlag} from '@/models/Node';
+import {Col} from "$/color-management/";
+import {InSocket, SocketFlag} from '$/node/';
 import NodeOutputTable from './NodeOutputTable.vue';
-import { StringKey } from '@/strings';
+import { StringKey } from '$/strings';
 
 const props = defineProps<{
   values: number[],

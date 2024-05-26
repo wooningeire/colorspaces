@@ -1,22 +1,19 @@
 <script lang="ts" setup>
 import {inject, computed, Ref, watch, ref, getCurrentInstance, onMounted, onUnmounted} from "vue";
-import * as marked from "marked";
 
 import NodeVue from "./NodeVue.vue";
 import NodeSocket from "./NodeSocket.vue";
-import NodeField from "./NodeField.vue";
 import NodeSpecialInput from "./NodeSpecialInput.vue";
 import NodeOutput from "./NodeOutput.vue";
-import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 
-import {InSocket, Node, NodeUpdateSource, OutputDisplayType} from "@/models/Node";
-import {models, spaces, math, images, organization, output, booleans} from "@/models/nodetypes";
+import {InSocket, Node, NodeUpdateSource, OutputDisplayType} from "$/node/";
+import {models, spaces, math, images, organization, output, booleans} from "$/node-types/";
 
-import {Listen, clearTextSelection, Vec2} from "@/util";
+import {clearTextSelection} from "$/util";
 
-import getString from "@/strings";
+import getString from "$/strings";
 
-import {selectedNodes, modifierKeys} from "../store";
+import {selectedNodes, modifierKeys} from "@/components/store";
 import createDragListener from "../draggable";
 
 

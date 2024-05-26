@@ -4,11 +4,10 @@ import {defineComponent, reactive, PropType, ref, watch} from "vue";
 import EntrySlider from "./EntrySlider.vue";
 
 import {acceptAlways, cloneArray} from "./base-functions";
-import {tooltipController, settings} from "../store";
 
-import {Vec3} from "@/util";
-import getString, {NO_DESC, StringKey} from "@/strings";
-import { SliderProps } from "@/models/Node";
+import {Vec3} from "$/util";
+import getString, {NO_DESC, StringKey} from "$/strings";
+import { SliderProps } from "$/node/";
 
 
 const props = withDefaults(defineProps<{
@@ -97,4 +96,4 @@ watch(() => [props.modelValue, props.convertOut], () => {
 .invalid :deep(input) {
   color: var(--col-invalid-input);
 }
-</style>
+</style>$/util$/strings$/node/

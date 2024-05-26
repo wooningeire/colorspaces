@@ -1,4 +1,4 @@
-import { Vec3 } from "@/util";
+import { Vec3 } from "$/util";
 
 export const acceptAlways = () => true;
 export const identity = <T>(value: T) => value;

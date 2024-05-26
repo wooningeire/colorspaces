@@ -2,10 +2,10 @@
 import {ref} from "vue";
 import * as marked from "marked";
 
-import {models, math, spaces, images, organization, output, booleans} from "@/models/nodetypes";
-import {Node} from "@/models/Node";
+import {models, math, spaces, images, organization, output, booleans} from "$/node-types/";
+import {Node} from "$/node/";
 
-import getString from "@/strings";
+import getString from "$/strings";
 
 import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, tooltipController} from "./store";
 

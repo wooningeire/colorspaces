@@ -3,8 +3,8 @@ import {getCurrentInstance, inject, nextTick, onMounted, ref, Ref, watch} from "
 
 import NodeLink from "./node/NodeLink.vue";
 
-import {Tree, Socket, Link} from "@/models/Node";
-import {externals} from "@/models/nodetypes";
+import {Tree, Socket, Link} from "$/node/";
+import {externals} from "$/node-types/";
 
 import {tree} from "./store";
 

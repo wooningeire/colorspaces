@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import ReadonlyInput from "./ReadonlyInput.vue";
-import getString, { StringKey } from "@/strings";
+import getString, { StringKey } from "$/strings";
 
 const props = withDefaults(defineProps<{
   values: string[],

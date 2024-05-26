@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import {models} from "@/models/nodetypes";
+import {models} from "$/node-types";
 import { nextTick, ref, watch } from "vue";
-import { settings, tree } from "../store";
-import { InSocket, Tree } from "@/models/Node";
+import { settings, tree } from "@/components/store";
+import { InSocket, Tree } from "$/node/";
 
 const props = defineProps<{
   node: models.CssInputNode,

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import * as cm from "@/models/colormanagement";
+import * as cm from "$/color-management/";
 
 import {settings} from "./store";
 

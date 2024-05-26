@@ -1,11 +1,10 @@
 <script lang="ts" setup>
 import { computed, getCurrentInstance, nextTick, ref } from "vue";
-import { toHex, Option, clamp } from "@/util";
-import { output } from "@/models/nodetypes";
-import { settings } from "../store";
+import { toHex, Option, clamp } from "$/util";
+import { output } from "$/node-types";
+import { settings } from "@/components/store";
 import ReadonlyInput from "./ReadonlyInput.vue";
-import { NodeEvalContext } from "@/models/Node";
-import * as cm from "@/models/colormanagement";
+import { NodeEvalContext } from "$/node/";
 
 const props = defineProps<{
   node: output.SampleHexCodesNode,

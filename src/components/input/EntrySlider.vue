@@ -2,11 +2,11 @@
 import {computed, nextTick, onBeforeMount, onMounted, PropType, ref, watch} from "vue";
 
 import {acceptAlways, identity} from "./base-functions";
-import {modifierKeys, tooltipController} from "../store";
+import {modifierKeys, tooltipController} from "@/components/store";
 import createDragListener from "../draggable";
 
-import getString, {NO_DESC, StringKey} from "@/strings";
-import { clearTextSelection } from "@/util";
+import getString, {NO_DESC, StringKey} from "$/strings";
+import { clearTextSelection } from "$/util";
 
 const props = withDefaults(defineProps<{
   modelValue: number,
@@ -221,4 +221,4 @@ input {
   text-align: right; 
   cursor: ew-resize;
 }
-</style>
+</style>$/util$/strings

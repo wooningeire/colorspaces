@@ -2,8 +2,8 @@
 import SpectralPowerDistributionEntry from "../input/SpectralPowerDistributionEntry.vue";
 import ChromaticityEntry from "../input/ChromaticityEntry.vue";
 
-import {InSocket, Node, NodeUpdateSource} from "@/models/Node";
-import {models, output} from "@/models/nodetypes";
+import {InSocket, Node, NodeUpdateSource} from "$/node/";
+import {models, output} from "$/node-types";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 import { ref } from "vue";
 

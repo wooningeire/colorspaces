@@ -1,9 +1,9 @@
 import {ref, reactive} from "vue";
 
-import {Tree, Node} from "@/models/Node";
-import {models, spaces, externals} from "@/models/nodetypes";
-import * as cm from "@/models/colormanagement";
-import { StringKey } from "@/strings";
+import {Tree, Node} from "$/node/";
+import {models, spaces, externals} from "$/node-types/";
+import * as cm from "$/color-management/";
+import { StringKey } from "$/strings";
 
 
 //#region Node tree

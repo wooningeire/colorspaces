@@ -8,12 +8,12 @@ import NodeOutputCssColor from "./NodeOutputCssColor.vue";
 import NodeOutputQuantized from "./NodeOutputQuantized.vue";
 import NodeOutputCssInput from "./NodeOutputCssInput.vue";
 
-import {InSocket, Node, NodeUpdateSource, OutputDisplayType} from "@/models/Node";
-import { NodeWithOverloads } from "@/models/Overload";
-import {models, output} from "@/models/nodetypes";
-import {Col} from "@/models/colormanagement";
-import { Vec3 } from "@/util";
-import { tree } from "../store";
+import {InSocket, Node, NodeUpdateSource, OutputDisplayType} from "$/node/";
+import { NodeWithOverloads } from "$/node/Overload";
+import {models, output} from "$/node-types";
+import {Col} from "$/color-management/";
+import { Vec3 } from "$/util";
+import { tree } from "@/components/store";
 
 const props = defineProps<{
   node: Node,

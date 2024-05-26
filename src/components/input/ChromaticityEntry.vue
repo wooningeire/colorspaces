@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import { InSocket, SocketType as St } from "@/models/Node";
-import { output } from "@/models/nodetypes";
+import { InSocket, SocketType as St } from "$/node/";
+import { output } from "$/node-types/";
 import {onMounted, ref, computed, onUpdated, watch, getCurrentInstance} from "vue";
-import { settings, tree } from "../store";
-import { ChromaticityPlotMode } from "@/models/nodetypes/output";
-import * as cm from "@/models/colormanagement";
+import { settings, tree } from "@/components/store";
+import { ChromaticityPlotMode } from "$/node-types/output";
+import * as cm from "$/color-management/";
 
 
 const props = defineProps<{

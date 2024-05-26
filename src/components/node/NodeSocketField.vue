@@ -5,11 +5,11 @@ import BaseEntry from "../input/BaseEntry.vue";
 import EntryRgb from "../input/EntryRgb.vue";
 import EntrySlider from "../input/EntrySlider.vue";
 
-import {settings, tree} from "../store";
+import {settings, tree} from "@/components/store";
 
-import {Socket, SocketType, SocketFlag, Tree} from "@/models/Node";
-import {externals} from "@/models/nodetypes";
-import getString, {NO_DESC} from "@/strings";
+import {Socket, SocketType, SocketFlag, Tree} from "$/node/";
+import {externals} from "$/node-types/";
+import getString, {NO_DESC} from "$/strings";
 
 const props = defineProps<{
   socket: Socket,
@@ -42,7 +42,7 @@ const readFile = (): Promise<ImageData> => new Promise(resolve => {
 });
 
 const onValueChange = (requiresShaderReload=false) => {
-  props.socket.onValueChange(tree as Tree);
+  props.socket.onValueChange();
   emit("value-change", requiresShaderReload);
 };
 

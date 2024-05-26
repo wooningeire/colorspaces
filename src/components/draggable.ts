@@ -1,4 +1,4 @@
-import {Listen, clearTextSelection} from "@/util";
+import {Listen, clearTextSelection} from "$/util";
 
 const noop = () => {};
 

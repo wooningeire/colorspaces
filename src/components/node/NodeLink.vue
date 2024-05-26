@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Link, Socket } from "@/models/Node";
+import { Link, Socket } from "$/node/";
 import {computed, getCurrentInstance, inject, nextTick, onBeforeUpdate, onMounted, onUpdated, ref} from "vue";
 
 const props = withDefaults(defineProps<{

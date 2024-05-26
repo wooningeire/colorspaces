@@ -6,9 +6,9 @@ import TheNodeTray from "./TheNodeTray.vue";
 import TheToolbar from "./TheToolbar.vue";
 import TheSettingsPanel from "./TheSettingsPanel.vue";
 
-import {Node, NodeUpdateSource} from "@/models/Node";
+import {Node, NodeUpdateSource} from "$/node/";
 
-import {Vec2} from "@/util";
+import {Vec2} from "$/util";
 
 import {tree, tooltipController, errorPopupController} from "./store";
 import ObjectTooltip from "./ObjectTooltip.vue";

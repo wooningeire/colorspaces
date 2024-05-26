@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import {computed, onMounted, PropType, reactive, ref, watch, inject, Ref} from 'vue';
 
-import createDragListener from "../draggable";
-import {settings} from '../store';
+import createDragListener from "@/components/draggable";
+import {settings} from '@/components/store';
 
-import {models} from "@/models/nodetypes";
-import {Listen, clearTextSelection, lerp, clamp} from "@/util";
-import * as cm from "@/models/colormanagement";
-import getString from "@/strings";
+import {models} from "$/node-types";
+import {Listen, clearTextSelection, lerp, clamp} from "$/util";
+import * as cm from "$/color-management/";
+import getString from "$/strings";
 
 const props = defineProps({
   node: {

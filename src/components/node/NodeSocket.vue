@@ -3,10 +3,10 @@ import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef, watch
 
 import NodeSocketField from "./NodeSocketField.vue";
 import NodeSocket from "./NodeSocket.vue";
-import {tooltipController} from "../store";
+import {tooltipController} from "@/components/store";
 
-import {Socket, SocketType, InSocket} from "@/models/Node";
-import getString, {NO_DESC} from "@/strings";
+import {Socket, SocketType, InSocket} from "$/node/";
+import getString, {NO_DESC} from "$/strings";
 
 
 const socketVue = getCurrentInstance()!.proxy;

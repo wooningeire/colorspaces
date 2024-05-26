@@ -6,8 +6,8 @@ import NodeSocket from "./node/NodeSocket.vue";
 import TheNodeTreeLinks from "./TheNodeTreeLinks.vue";
 import NodeLink from "./node/NodeLink.vue";
 
-import {Vec2, Listen, clearTextSelection} from "@/util";
-import {Socket, Node, Link, InSocket, NodeUpdateSource} from "@/models/Node";
+import {Vec2, Listen, clearTextSelection} from "$/util";
+import {Socket, Node, Link, InSocket, NodeUpdateSource} from "$/node/";
 
 import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";
 
@@ -357,4 +357,4 @@ defineExpose({
     }
   }
 }
-</style>
+</style>$/util$/node/
