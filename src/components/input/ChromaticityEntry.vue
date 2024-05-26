@@ -13,7 +13,7 @@ const props = defineProps<{
 
 
 const dependencyAxes = ref(props.node.getDependencyAxes());
-watch(tree.links(), () => {
+watch(() => tree.links(), () => {
   dependencyAxes.value = props.node.getDependencyAxes();
   getCurrentInstance()?.proxy?.$forceUpdate();
 });
@@ -66,7 +66,7 @@ const sampledXys = computed(() => {
 });
 
 const canvas = ref<HTMLCanvasElement | null>(null);
-onMounted(() => {
+const rerenderCanvas = () => {
   canvas.value!.width = canvas.value!.offsetWidth * devicePixelRatio;
   canvas.value!.height = canvas.value!.offsetWidth * devicePixelRatio;
 
@@ -297,6 +297,8 @@ void main() {
   // gl.clearColor(0, 0, 0, 0);
   // gl.clear(gl.COLOR_BUFFER_BIT);
 
+  gl.viewport(0, 0, canvas.value!.width, canvas.value!.height);
+
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -309,48 +311,10 @@ void main() {
   gl.uniform1f(alphaUnif, 1);
   gl.uniform1i(detectGamutUnif, 1);
   gl.drawArrays(gl.TRIANGLES, 0, nVertsSpectralLocus);
-});
-
-// Performance bottleneck
-const rerenderCanvas = () => {
-  if (!canvas.value) return;
-
-  // let hasPixelOutOfGamut = false;
-
-  // const width = 140;
-  // const height = 140;
-
-  // const imageData = cx.value.getImageData(0, 0, width, height);
-  // for (let xPixels = 0; xPixels < width; xPixels++) {
-  //     const xFacFrac = (xPixels + 0.5) / width;
-
-  //     for (let yPixels = 0; yPixels < height; yPixels++) {
-  //         const yFacFrac = (yPixels + 0.5) / height;
-  
-  //         const colorData = new Xyy([xFacFrac, yFacFrac, 0.5]);
-  //         if (!colorData) return; // Deals with extraneous call from watcher when nodes are deleted; not ideal
-
-  //         const color = settings.deviceSpace.from(colorData);
-  //         const inGamut = color.inGamut();
-
-  //         const index = (xPixels + yPixels * imageData.width) * 4;
-
-  //         if (inGamut) {
-  //             imageData.data[index] = color[0] * 255;
-  //             imageData.data[index + 1] = color[1] * 255;
-  //             imageData.data[index + 2] = color[2] * 255;
-  //             imageData.data[index + 3] = 255;
-  //         } else {
-  //             imageData.data[index + 3] = 0;
-  //         }
-  //     }
-  // }
-  // cx.value.putImageData(imageData, 0, 0);
 };
 
 onMounted(rerenderCanvas);
-onUpdated(rerenderCanvas);
-watch(settings, rerenderCanvas);
+watch(() => props.node.width, rerenderCanvas);
 </script>
 
 <template>
@@ -377,7 +341,7 @@ watch(settings, rerenderCanvas);
 
   > * {
     grid-area: 1/1;
-    max-width: 100%;
+    width: 100%;
   }
 
   > canvas {

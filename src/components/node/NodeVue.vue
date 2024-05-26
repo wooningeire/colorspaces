@@ -9,8 +9,8 @@ import NodeSpecialInput from "./NodeSpecialInput.vue";
 import NodeOutput from "./NodeOutput.vue";
 import NodeOutputColorDisplay from "./NodeOutputColorDisplay.vue";
 
-import {InSocket, Node, NodeUpdateSource} from "@/models/Node";
-import {models, spaces, math, images, externals, organization, output, booleans} from "@/models/nodetypes";
+import {InSocket, Node, NodeUpdateSource, OutputDisplayType} from "@/models/Node";
+import {models, spaces, math, images, organization, output, booleans} from "@/models/nodetypes";
 
 import {Listen, clearTextSelection, Vec2} from "@/util";
 
@@ -83,7 +83,7 @@ const emitNodeSelected = (event: PointerEvent) => {
 const shouldDisplayLabel = computed(() => !(props.node instanceof organization.RerouteNode))
 
 
-const nodeCategories = new Map([models, spaces, math, booleans, images, externals, organization, output]
+const nodeCategories = new Map([models, spaces, math, booleans, images, organization, output]
     .map(category =>
         Object.values(category)
             .map(nodeType => [nodeType.TYPE, category]))
@@ -98,7 +98,6 @@ const categoryNames = new Map<unknown, string>([
   [math, "math"],
   [booleans, "booleans"],
   [images, "images"],
-  [externals, "externals"],
   [output, "output"],
 ]);
 const nodeCategoryClass = computed(() =>
@@ -107,12 +106,6 @@ const nodeCategoryClass = computed(() =>
         : ""
 );
 
-
-const isSubtle = computed(() => 
-    props.node instanceof externals.DevicePostprocessingNode
-    || props.node instanceof externals.EnvironmentNode
-    || props.node instanceof externals.VisionNode
-);
 
 const instance = getCurrentInstance();
 watch(props.node, () => { // update please :(
@@ -198,7 +191,6 @@ Object.assign(nodeVue, {
       '--node-width': `${node.width}px`,
     } as any"
     :class="[{
-      'subtle': isSubtle,
       'selected': isSelected,
       'reroute': node instanceof organization.RerouteNode,
     }, nodeCategoryClass]"
@@ -247,13 +239,6 @@ Object.assign(nodeVue, {
         v-for="(socket, index) of node.ins"
         :key="socket.id"
       >
-        <NodeOutputColorDisplay
-          v-if="node instanceof externals.DeviceTransformNode
-              && socket.hasLinks"
-          :node="node"
-          :socket="socket"
-        />
-
         <NodeSocket
           :socket="socket"
           @drag-socket="(socketVue: InstanceType<typeof NodeSocket>) => $emit('drag-socket', socketVue)"
@@ -295,6 +280,7 @@ Object.assign(nodeVue, {
       :node="node"
       ref="outputVue"
       @force-update="(requiresShaderReload: boolean, editedSocket: InSocket) => $emit('field-value-change', requiresShaderReload, NodeUpdateSource.InSocket(editedSocket))"
+      v-if="(props.node.constructor as typeof Node).outputDisplayType !== OutputDisplayType.None"
     />
   </div>
 </template>
