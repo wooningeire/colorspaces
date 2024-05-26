@@ -12,7 +12,7 @@ const props = defineProps(["socketVues"]);
 </script>
 
 <template>
-  <NodeLink v-for="link of tree.links"
+  <NodeLink v-for="link of tree.links()"
       :key="link.id"
       :link="(link as Link)"
       :socketVues="socketVues"

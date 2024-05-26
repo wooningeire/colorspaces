@@ -63,12 +63,10 @@ export namespace images {
 
       const {val} = GradientNode.outputSlots;
 
-      const recreateStopSockets = (tree: Tree | null) => {
-        for (const _ of this.stopsSockets) {
-          tree!.unlinkAllLinks(this.ins.at(-1)!);
-          this.ins.pop();
-          tree!.unlinkAllLinks(this.ins.at(-1)!);
-          this.ins.pop();
+      const recreateStopSockets = () => {
+        for (const {valueSocket, positionSocket} of this.stopsSockets) {
+          valueSocket.delete();
+          positionSocket.delete();
         }
 
         const {sockets, slots} = this.createStopSockets();
@@ -76,7 +74,7 @@ export namespace images {
         this.stopsSockets = sockets;
         this.stopsSlots = slots;
       };
-      const recreateOutputSocket = (tree: Tree | null) => {
+      const recreateOutputSocket = () => {
         const getLeftStopIndex = (context: NodeEvalContext) => {
           const fac = context.coords?.[this.whichDimension] ?? 0;
           const stopsPrecomputed = this.stopsSockets.map(({positionSocket, valueSocket}) => ({position: positionSocket.inValue(context), valueSocket}));
@@ -92,10 +90,7 @@ export namespace images {
           return {fac, stopsPrecomputed, leftStopIndex};
         };
 
-        if (this.outs.length > 0) {
-          tree!.unlinkAllLinks(this.outs[0]);
-          this.outs.pop();
-        }
+        this.outs[0]?.delete();
         this.outs.push(
           this.typeSocket.inValue() === "float"
               ? new OutSocket(this, SocketType.Float, "label.socket.gradient.values", context => {
@@ -164,9 +159,9 @@ export namespace images {
             {text: "label.socketType.float", value: "float"},
             {text: "label.socketType.vector", value: "vector"},
           ],
-          onValueChange: (tree) => {
-            recreateStopSockets(tree);
-            recreateOutputSocket(tree);
+          onValueChange: () => {
+            recreateStopSockets();
+            recreateOutputSocket();
           },
           valueChangeRequiresShaderReload: true,
         })),
@@ -181,8 +176,8 @@ export namespace images {
           valueChangeRequiresShaderReload: true,
         })),
       );
-      recreateStopSockets(null);
-      recreateOutputSocket(null);
+      recreateStopSockets();
+      recreateOutputSocket();
     }
 
     private createStopSockets() {

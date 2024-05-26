@@ -13,7 +13,7 @@ const props = defineProps<{
 
 
 const dependencyAxes = ref(props.node.getDependencyAxes());
-watch(tree.links, () => {
+watch(tree.links(), () => {
   dependencyAxes.value = props.node.getDependencyAxes();
   getCurrentInstance()?.proxy?.$forceUpdate();
 });

@@ -1,5 +1,5 @@
-import { WebglOutputs, WebglVariables } from "@/webgl-compute/WebglVariables";
-import { InSocket, Node, NodeDisplay, NodeEvalContext, OutSocket, SocketType, SocketType as St, Tree } from "./Node";
+import { WebglVariables } from "@/webgl-compute/WebglVariables";
+import { InSocket, Node, NodeDisplay, NodeEvalContext, OutSocket, SocketType, WebglOutputs } from "./Node";
 import { NO_DESC, StringKey } from "@/strings";
 
 /** A collection of input/output sockets, as well as a function to compute outputs from the inputs' values */
@@ -28,7 +28,7 @@ export class OverloadGroup<Mode extends string, NodeType extends Node=any> {
         {value: mode, text: overload.label}
       )),
       defaultValue: defaultMode,
-      onValueChange: tree => overloadManager.handleModeChange(tree),
+      onValueChange: () => overloadManager.handleModeChange(),
     });
   }
 
@@ -41,7 +41,7 @@ export class OverloadGroup<Mode extends string, NodeType extends Node=any> {
  * function when needed and updates the sockets when the selected overload changes
  */
 export class OverloadManager<OverloadMode extends string> {
-  readonly dropdown: InSocket<St.Dropdown>;
+  readonly dropdown: InSocket<SocketType.Dropdown>;
   private ins: InSocket[];
   private outs: OutSocket[];
 
@@ -75,7 +75,7 @@ export class OverloadManager<OverloadMode extends string> {
     return this.overload.webglOutputs();
   }
 
-  handleModeChange(tree: Tree) {
+  handleModeChange() {
     /* 
     const deleteSocketsUntilLength = (targetLength: number) => {
       while (this.valueSockets.length > targetLength) {
@@ -90,12 +90,12 @@ export class OverloadManager<OverloadMode extends string> {
     const nOuts = this.outs.length;
     for (let i = 0; i < nIns; i++) {
       const oldSocket = this.node.ins.pop();
-      oldSocket?.links.forEach(link => tree.unlink(link));
+      oldSocket?.unlinkAllLinks();
     }
 
     for (let i = 0; i < nOuts; i++) {
       const oldSocket = this.node.outs.pop();
-      oldSocket?.links.forEach(link => tree.unlink(link));
+      oldSocket?.unlinkAllLinks();
     }
 
     this.ins = this.overload.buildInSockets(this.node);

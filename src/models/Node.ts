@@ -4,63 +4,16 @@ import { Vec2, Vec3, Option } from "../util";
 import { Col } from "./colormanagement";
 
 export class Tree {
-  readonly links = new Set<Link>();
   readonly nodes = new Set<Node>();
 
-  linkSockets(src: OutSocket, dst: InSocket) {
-    if (src.isInput) throw new Error("Source is an input");
-    if (dst.isOutput) throw new Error("Dest is an output");
-    if (src.node === dst.node) throw new Error("Sockets belong to same node");
+  * links() {
+    for (const node of this.nodes) {
+      for (const socket of node.ins) {
+        if (!socket.hasLinks) continue;
 
-
-    const existingDstLink = dst.links[0];
-    if (existingDstLink) {
-      this.unlinkWithoutEvents(existingDstLink);
+        yield socket.link;
+      }
     }
-
-    if (existingDstLink && src !== existingDstLink.src) {
-      src.onUnlink(existingDstLink, this);
-      dst.onInputTypeChange(src.type, this);
-      existingDstLink.srcNode.onSocketUnlink(existingDstLink.src, existingDstLink, this);
-    }
-
-
-    const link = new Link(src, dst);
-
-    src.links.push(link);
-    dst.links.push(link);
-
-    this.links.add(link);
-
-    if (!existingDstLink) {
-      dst.onLink(link, this);
-      dst.node.onSocketLink(dst, link, this);
-      src.onOutputTypeChange(dst.type, this);
-      
-      dst.node.onDependencyUpdate();
-    }
-
-    src.onLink(link, this);
-    src.node.onSocketLink(src, link, this);
-    dst.onInputTypeChange(src.type, this);
-  }
-
-  private unlinkWithoutEvents(link: Link) {
-    this.links.delete(link);
-    link.src.links.splice(link.src.links.indexOf(link), 1);
-    link.dst.links.splice(link.dst.links.indexOf(link), 1);
-  }
-
-  unlink(link: Link) {
-    this.unlinkWithoutEvents(link);
-
-    link.src.onUnlink(link, this);
-    link.srcNode.onSocketUnlink(link.src, link, this);
-
-    link.dst.onUnlink(link, this);
-    link.dstNode.onSocketUnlink(link.dst, link, this);
-    
-    link.dstNode.onDependencyUpdate();
   }
 
   deleteNode(node: Node) {
@@ -69,11 +22,7 @@ export class Tree {
     [...node.ins, ...node.outs]
         .map(socket => socket.links)
         .flat()
-        .forEach(link => this.unlink(link));
-  }
-
-  unlinkAllLinks(socket: Socket) {
-    socket.links.forEach(link => this.unlink(link));
+        .forEach(link => link.unlink());
   }
 
   clear() {
@@ -177,7 +126,7 @@ export abstract class Node {
   /**
    * Called when a new link is added to any socket on this node, but not if the link is immediately replaced
    */
-  onSocketLink(socket: Socket, link: Link, tree: Tree) {
+  onSocketLink(socket: Socket, link: Link) {
     this.markCyclicalLinks();
   }
 
@@ -194,11 +143,11 @@ export abstract class Node {
    * @param link 
    * @param tree 
    */
-  onSocketUnlink(socket: Socket, link: Link, tree: Tree) {
+  onSocketUnlink(socket: Socket, link: Link) {
     this.markCyclicalLinks();
   }
 
-  onSocketFieldValueChange(socket: Socket, tree: Tree) {
+  onSocketFieldValueChange(socket: Socket) {
     this.onDependencyUpdate();
   }
 
@@ -513,11 +462,11 @@ export type SocketOptions<St extends SocketType=any> = {
   showFieldIfAvailable?: boolean,
   valueChangeRequiresShaderReload?: boolean,
   constant?: boolean,
-  onValueChange?: (this: Socket<St>, tree: Tree) => void,
-  onLink?: (this: Socket<St>, link: Link, tree: Tree) => void,
-  onUnlink?: (this: Socket<St>, link: Link, tree: Tree) => void,
-  onInputTypeChange?: (this: Socket<St>, type: SocketType, tree: Tree) => void,
-  onOutputTypeChange?: (this: Socket<St>, type: SocketType, tree: Tree) => void,
+  onValueChange?: (this: Socket<St>) => void,
+  onLink?: (this: Socket<St>, link: Link) => void,
+  onUnlink?: (this: Socket<St>, link: Link) => void,
+  onInputTypeChange?: (this: Socket<St>, type: SocketType) => void,
+  onOutputTypeChange?: (this: Socket<St>, type: SocketType) => void,
 } & SocketData<St>;
 export type InSocketOptions<St extends SocketType=any> = {
   /** A mapping from output names from an incoming source socket (that is linked to this socket) to input slots in
@@ -660,7 +609,7 @@ export abstract class Socket<St extends SocketType=any> {
   }
 
   /** Changes the type of a socket, with event handling */
-  changeType<T extends SocketType>(this: Socket<T>, newType: T, tree: Tree) {
+  changeType<T extends SocketType>(this: Socket<T>, newType: T) {
     if (this.type === newType) return;
 
     this.type = newType;
@@ -671,14 +620,14 @@ export abstract class Socket<St extends SocketType=any> {
 
     for (const link of this.links) {
       if (this.isOutput) {
-        link.dst.onInputTypeChange(newType, tree);
+        link.dst.onInputTypeChange(newType);
       }
       if (this.isInput) {
-        link.src.onOutputTypeChange(newType, tree);
+        link.src.onOutputTypeChange(newType);
       }
 
       if (!Socket.canLinkTypes(link.src.type, link.dst.type)) {
-        tree.unlink(link);
+        link.unlink();
       }
     }
   }
@@ -688,25 +637,59 @@ export abstract class Socket<St extends SocketType=any> {
     return this.type === type;
   }
 
-  removeAllLinks(tree: Tree) {
+  unlinkAllLinks() {
     for (const link of this.links) {
-      tree.unlink(link);
+      link.unlink();
     }
+  }
+
+  static linkSockets(src: OutSocket, dst: InSocket) {
+    if (src.isInput) throw new Error("Source is an input");
+    if (dst.isOutput) throw new Error("Dest is an output");
+    if (src.node === dst.node) throw new Error("Sockets belong to same node");
+
+
+    const existingDstLink = dst.links[0];
+    existingDstLink?.unlinkWithoutEvents();
+
+    if (existingDstLink && src !== existingDstLink.src) {
+      src.onUnlink(existingDstLink);
+      dst.onInputTypeChange(src.type);
+      existingDstLink.srcNode.onSocketUnlink(existingDstLink.src, existingDstLink);
+    }
+
+
+    const link = new Link(src, dst);
+
+    src.links.push(link);
+    dst.links.push(link);
+
+    if (!existingDstLink) {
+      dst.onLink(link);
+      dst.node.onSocketLink(dst, link);
+      src.onOutputTypeChange(dst.type);
+      
+      dst.node.onDependencyUpdate();
+    }
+
+    src.onLink(link);
+    src.node.onSocketLink(src, link);
+    dst.onInputTypeChange(src.type);
   }
 
   get usesFieldValue() {
     return false;
   }
 
-  onValueChange(tree: Tree) {}
+  onValueChange() {}
   /** Called whenever a new link is attached to this socket */
-  onLink(link: Link, tree: Tree) {}
+  onLink(link: Link) {}
   /** Called whenever a link is removed from this socket */
-  onUnlink(link: Link, tree: Tree) {}
+  onUnlink(link: Link) {}
   /** Called whenever the type of the source socket of a link to this input socket changes, or a link is removed */
-  onInputTypeChange(type: SocketType, tree: Tree) {}
+  onInputTypeChange(type: SocketType) {}
   /** Called whenever the type of the destination socket of a link to this output socket changes, or a link is removed */
-  onOutputTypeChange(type: SocketType, tree: Tree) {}
+  onOutputTypeChange(type: SocketType) {}
 }
 
 export class InSocket<St extends SocketType=any> extends Socket<St> {
@@ -873,6 +856,11 @@ export class InSocket<St extends SocketType=any> extends Socket<St> {
     return !this.hasLinks || this.link!.causesCircularDependency
         ? this.fieldValue
         : this.link!.src.outValueCoerced(context, this.effectiveType()) as SocketValue<St>;
+  }
+
+  delete() {
+    this.unlinkAllLinks();
+    this.node.ins.splice(this.node.ins.indexOf(this), 1);
   }
 }
 
@@ -1083,6 +1071,11 @@ export class OutSocket<St extends SocketType=any> extends Socket<St> {
         return directOutputs;
     }
   }
+
+  delete() {
+    this.unlinkAllLinks();
+    this.node.outs.splice(this.node.outs.indexOf(this), 1);
+  }
 }
 
 export class Link {
@@ -1107,6 +1100,23 @@ export class Link {
 
   get dstNode() {
     return this.dst.node;
+  }
+
+  unlinkWithoutEvents() {
+    this.src.links.splice(this.src.links.indexOf(this), 1);
+    this.dst.links.splice(this.dst.links.indexOf(this), 1);
+  }
+
+  unlink() {
+    this.unlinkWithoutEvents();
+
+    this.src.onUnlink(this);
+    this.srcNode.onSocketUnlink(this.src, this);
+
+    this.dst.onUnlink(this);
+    this.dstNode.onSocketUnlink(this.dst, this);
+    
+    this.dstNode.onDependencyUpdate();
   }
 }
 

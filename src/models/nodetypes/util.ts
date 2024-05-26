@@ -29,9 +29,9 @@ export const useDynamicallyTypedSockets = (
     return mostRestrictiveType;
   };
 
-  const updateType = (tree: Tree) => {
+  const updateType = () => {
     for (const socket of syncedSockets()) {
-      socket.changeType(inferType(), tree);
+      socket.changeType(inferType());
     }
   };
 
@@ -39,28 +39,28 @@ export const useDynamicallyTypedSockets = (
     inSocketOptions: (slot: WebglSlot) => <InSocketOptions<SocketType.DynamicAny>>{
       showFieldIfAvailable: false,
       hasDynamicType: true,
-      onLink: (link, tree) => {
-        updateType(tree);
+      onLink: link => {
+        updateType();
       },
-      onUnlink: (link, tree) => {
-        updateType(tree);
+      onUnlink: link => {
+        updateType();
       },
-      onInputTypeChange: (newType, tree) => {
-        updateType(tree);
+      onInputTypeChange: newType => {
+        updateType();
       },
       webglOutputMapping: dynamicInSocketMapping(slot),
     },
     
     outSocketOptions: (template: WebglTemplate=WebglTemplate.empty()) => <OutSocketOptions<SocketType.DynamicAny>>{
       hasDynamicType: true,
-      onLink: (link, tree) => {
-        updateType(tree);
+      onLink: link => {
+        updateType();
       },
-      onUnlink: (link, tree) => {
-        updateType(tree);
+      onUnlink: link => {
+        updateType();
       },
-      onOutputTypeChange: (newType, tree) => {
-        updateType(tree);
+      onOutputTypeChange: newType => {
+        updateType();
       },
       webglOutputs: dynamicOutSocketOutputs(template),
     },

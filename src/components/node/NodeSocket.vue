@@ -3,9 +3,9 @@ import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef, watch
 
 import NodeSocketField from "./NodeSocketField.vue";
 import NodeSocket from "./NodeSocket.vue";
-import {tree, tooltipController} from "../store";
+import {tooltipController} from "../store";
 
-import {Tree, Socket, SocketType as St, InSocket} from "@/models/Node";
+import {Socket, SocketType, InSocket} from "@/models/Node";
 import getString, {NO_DESC} from "@/strings";
 
 
@@ -54,7 +54,7 @@ const socketPos = () => screenToViewport([
 const unlinkLinks = () => {
   props.socket.links.forEach(link => {
     if (!link.srcNode.canEditLinks || !link.dstNode.canEditLinks) return;
-    tree.unlink(link);
+    link.unlink();
   });
   emit("unlink");
 };
@@ -93,14 +93,14 @@ const willAcceptLink = () => {
 
 
 const socketTypeColors = new Map([
-  [St.Unknown, "#000"],
-  [St.DynamicAny, "#fff"],
-  [St.Float, "#aaa"],
-  [St.Bool, "#fbc"],
-  [St.Integer, "#6a6"],
-  [St.Vector, "#75d"],
-  [St.Color, "#dd3"],
-  [St.VectorOrColor, "linear-gradient(45deg, #75d 50%, #dd3 50%)"],
+  [SocketType.Unknown, "#000"],
+  [SocketType.DynamicAny, "#fff"],
+  [SocketType.Float, "#aaa"],
+  [SocketType.Bool, "#fbc"],
+  [SocketType.Integer, "#6a6"],
+  [SocketType.Vector, "#75d"],
+  [SocketType.Color, "#dd3"],
+  [SocketType.VectorOrColor, "linear-gradient(45deg, #75d 50%, #dd3 50%)"],
 ]);
 const socketType = ref(props.socket.type);
 const socketColor = computed(() => socketTypeColors.get(socketType.value) ?? "");
@@ -111,7 +111,7 @@ watch(props.socket, () => {
 
 const socketContainer = ref(null as HTMLDivElement | null);
 const socketTypeNames = new Map(
-  Object.entries(St)
+  Object.entries(SocketType)
       .map(([key, value]) => [value, `${key[0].toLowerCase()}${key.substring(1)}`])
 );
 const showTooltip = () => {
@@ -227,7 +227,7 @@ onMounted(() => {
         v-if="shouldShowFields"
         :socket="socket"
         @value-change="(requiresShaderReload) => {
-          socket.node.onSocketFieldValueChange(socket, tree as Tree);
+          socket.node.onSocketFieldValueChange(socket);
           $emit('field-value-change', requiresShaderReload, socket);
         }"
         ref="nodeSocketFieldRef"

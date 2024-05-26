@@ -66,13 +66,12 @@ const onDragSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 };
 
 const onLinkToSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
-  // preemptive + stops TypeScript complaint
   if (!draggedSocket.value) throw new TypeError("Not currently dragging from a socket");
 
   if (draggedSocket.value.isInput) {
-    tree.linkSockets(socketVue.socket, draggedSocket.value);
+    Socket.linkSockets(socketVue.socket, draggedSocket.value);
   } else {
-    tree.linkSockets(draggedSocket.value, socketVue.socket);
+    Socket.linkSockets(draggedSocket.value, socketVue.socket);
   }
 };
 
@@ -81,8 +80,7 @@ const onLinkToSocket = (socketVue: InstanceType<typeof NodeSocket>) => {
 const rerenderLinks = () => {
   // Delay to next tick because socket positions in DOM have not updated yet
   nextTick(() => {
-    for (const link of tree.links) {
-      //@ts-ignore
+    for (const link of tree.links()) {
       linkVues.get(link)!.$forceUpdate();
     }
   });
@@ -114,8 +112,8 @@ const selectNode = (node: Node, clearSelection: boolean=true) => {
   selectedNodes.add(node);
 
   // For layering purposes — places node at top
-  // this.tree.nodes.delete(node);
-  // this.tree.nodes.add(node);
+  tree.nodes.delete(node);
+  tree.nodes.add(node);
 };
 
 const cancelSelect = () => {

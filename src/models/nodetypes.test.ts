@@ -1,19 +1,17 @@
 import { describe, expect, test } from "vitest";
 import { images, math, spaces } from "./nodetypes";
-import { Tree } from "./Node";
+import { Socket } from "./Node";
 import { WebglVariables } from "@/webgl-compute/WebglVariables";
 
 describe(images.SampleNode.name, () => {
-  const tree = new Tree();
-
   const gradientNode = new images.GradientNode();
   const sampleNode = new images.SampleNode();
   const vectorNode = new math.VectorNode();
   const srgbNode = new spaces.SrgbNode();
 
-  tree.linkSockets(gradientNode.outs[0], sampleNode.ins[0]);
-  tree.linkSockets(sampleNode.outs[0], vectorNode.ins[1]);
-  tree.linkSockets(vectorNode.outs[0], srgbNode.ins[1]);
+  Socket.linkSockets(gradientNode.outs[0], sampleNode.ins[0]);
+  Socket.linkSockets(sampleNode.outs[0], vectorNode.ins[1]);
+  Socket.linkSockets(vectorNode.outs[0], srgbNode.ins[1]);
 
   sampleNode.ins[1].fieldValue = 0.812;
 

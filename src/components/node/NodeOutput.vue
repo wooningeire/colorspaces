@@ -28,7 +28,7 @@ const setHasConstantOutput = () => {
   hasConstantOutput.value = props.node.getDependencyAxes().size === 0;
 };
 onMounted(setHasConstantOutput);
-watch(tree.links, setHasConstantOutput)
+watch(tree.links(), setHasConstantOutput)
 
 const type = computed(() => (props.node.constructor as typeof Node).outputDisplayType);
 

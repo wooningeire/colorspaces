@@ -93,7 +93,7 @@ const serializeNodeTree = (tree: Tree) => {
     nodeIndex++;
   }
 
-  for (const link of tree.links) {
+  for (const link of tree.links()) {
     serializedTree.links.push({
       srcNodeIndex: nodesToIndices.get(link.srcNode)!,
       srcSocketIndex: socketsToIndices.get(link.src)!,
@@ -128,7 +128,7 @@ const deserializeNodeTree = (tree: Tree, fileString: string) => {
       // Handle the overload dropdown socket
       node.ins[0].fieldValue = serializedNode.socketFieldValues[0];
       try {
-        node.overloadManager.handleModeChange(tree);
+        node.overloadManager.handleModeChange();
       } catch (error) {
         throw new Error(getString("error.import.unknownOverload", serializedNode.type, node.overloadManager.mode));
       }
@@ -147,7 +147,7 @@ const deserializeNodeTree = (tree: Tree, fileString: string) => {
   }
 
   for (const serializedLink of serializedTree.links) {
-    tree.linkSockets(
+    Socket.linkSockets(
       nodes[serializedLink.srcNodeIndex].outs[serializedLink.srcSocketIndex],
       nodes[serializedLink.dstNodeIndex].ins[serializedLink.dstSocketIndex],
     );
