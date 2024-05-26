@@ -59,7 +59,7 @@ export const whitePointSocketOptions = <SocketOptions<SocketType.Dropdown>>{
   ],
   showSocket: false,
   defaultValue: "2deg/D65",
-  socketDesc: "desc.socket.illuminant" as StringKey,
+  desc: "desc.socket.illuminant" as StringKey,
 };
 export const getIlluminant = (socket: InSocket<SocketType.Dropdown>, context: NodeEvalContext) => {
   const illuminantId = socket.inValue(context);

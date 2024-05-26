@@ -585,7 +585,7 @@ export namespace math {
             new InSocket(node, SocketType.Bool, "label.socket.arithmetic.quantize.fitRange?", {
               defaultValue: true,
               webglOutputMappingStatic: {[webglStdOuts.bool]: fitRange},
-              socketDesc: "desc.socket.arithmetic.quantize.fitRange?",
+              desc: "desc.socket.arithmetic.quantize.fitRange?",
             }),
           ];
         },

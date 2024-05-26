@@ -72,6 +72,10 @@ export class Tree {
         .forEach(link => this.unlink(link));
   }
 
+  unlinkAllLinks(socket: Socket) {
+    socket.links.forEach(link => this.unlink(link));
+  }
+
   clear() {
     for (const node of this.nodes) {
       this.deleteNode(node);
@@ -501,7 +505,7 @@ type SocketData<St extends SocketType=any> =
 
 export type SocketOptions<St extends SocketType=any> = {
   showSocket?: boolean,
-  socketDesc?: StringKey,
+  desc?: StringKey,
   fieldText?: StringKey[],
   labelSubstitutions?: string[],
   defaultValue?: SocketValue<St>,
@@ -577,7 +581,7 @@ export abstract class Socket<St extends SocketType=any> {
   /** Whether the connection point of the socket should be displayed */
   readonly showSocket: boolean;
 
-  readonly socketDesc: StringKey;
+  readonly desc: StringKey;
   readonly fieldText: StringKey[];
   readonly labelSubstitutions: string[];
 
@@ -607,7 +611,7 @@ export abstract class Socket<St extends SocketType=any> {
   ) {
     const {
       showSocket,
-      socketDesc,
+      desc,
       fieldText,
       labelSubstitutions,
       defaultValue,
@@ -624,7 +628,7 @@ export abstract class Socket<St extends SocketType=any> {
     } = options;
 
     this.showSocket = showSocket ?? true;
-    this.socketDesc = socketDesc ?? NO_DESC;
+    this.desc = desc ?? NO_DESC;
     this.fieldText = fieldText ?? [];
     this.labelSubstitutions = labelSubstitutions ?? [];
     this.fieldValue = defaultValue ?? new.target.defaultValues.get(type) as SocketValue<St>,

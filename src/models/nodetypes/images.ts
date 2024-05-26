@@ -1,4 +1,4 @@
-import { Node, SocketType, AxisNode, NodeEvalContext, InSocket, OutSocket, webglStdOuts } from "../Node";
+import { Node, SocketType, AxisNode, NodeEvalContext, InSocket, OutSocket, webglStdOuts, Socket, SliderProps, Tree } from "../Node";
 
 import { Vec3, lerp } from "@/util";
 import { useDynamicallyTypedSockets } from "./util";
@@ -41,9 +41,11 @@ export namespace images {
     static readonly id = "gradient";
 
     private readonly axisSocket: InSocket<SocketType.Dropdown>;
+    private readonly typeSocket: InSocket<SocketType.Dropdown>;
+    private readonly nStopsSocket: InSocket<SocketType.Integer>;
     private stopsSockets: {
       positionSocket: InSocket<SocketType.Float>,
-      valueSocket: InSocket<SocketType.Float>,
+      valueSocket: InSocket<SocketType.Float | SocketType.Vector>,
     }[] = [];
     private stopsSlots: {
       position: WebglSlot,
@@ -61,14 +63,88 @@ export namespace images {
 
       const {val} = GradientNode.outputSlots;
 
-      const recreateStopSockets = () => {
-        const {sockets, slots} = this.createStopSockets();
-        while (this.ins.length > 2) {
+      const recreateStopSockets = (tree: Tree | null) => {
+        for (const _ of this.stopsSockets) {
+          tree!.unlinkAllLinks(this.ins.at(-1)!);
+          this.ins.pop();
+          tree!.unlinkAllLinks(this.ins.at(-1)!);
           this.ins.pop();
         }
+
+        const {sockets, slots} = this.createStopSockets();
         this.ins.push(...sockets.flatMap(Object.values));
         this.stopsSockets = sockets;
         this.stopsSlots = slots;
+      };
+      const recreateOutputSocket = (tree: Tree | null) => {
+        const getLeftStopIndex = (context: NodeEvalContext) => {
+          const fac = context.coords?.[this.whichDimension] ?? 0;
+          const stopsPrecomputed = this.stopsSockets.map(({positionSocket, valueSocket}) => ({position: positionSocket.inValue(context), valueSocket}));
+          
+          let leftStopIndex = -1;
+          for (const [i, stop] of stopsPrecomputed.entries()) {
+            if (fac < stop.position) continue;
+            
+            leftStopIndex = i;
+            break;
+          }
+
+          return {fac, stopsPrecomputed, leftStopIndex};
+        };
+
+        if (this.outs.length > 0) {
+          tree!.unlinkAllLinks(this.outs[0]);
+          this.outs.pop();
+        }
+        this.outs.push(
+          this.typeSocket.inValue() === "float"
+              ? new OutSocket(this, SocketType.Float, "label.socket.gradient.values", context => {
+                const {fac, stopsPrecomputed, leftStopIndex} = getLeftStopIndex(context);
+
+                if (leftStopIndex === -1) {
+                  return stopsPrecomputed[0].valueSocket.inValue(context) as number;
+                }
+                if (leftStopIndex === stopsPrecomputed.length - 1) {
+                  return stopsPrecomputed.at(-1)!.valueSocket.inValue(context) as number;
+                }
+      
+                const leftStop = stopsPrecomputed[leftStopIndex];
+                const rightStop = stopsPrecomputed[leftStopIndex + 1];
+      
+                const value0 = leftStop.valueSocket.inValue(context) as number;
+                if (fac === leftStop.position) {
+                  return value0;
+                }
+      
+                const value1 = rightStop.valueSocket.inValue(context) as number;
+                return lerp(value0, value1, (fac - leftStop.position) / (rightStop.position - leftStop.position));
+              }, {
+                webglOutputs: socket => () => ({[webglStdOuts.float]: WebglTemplate.slot(val)}),
+              })
+              : new OutSocket(this, SocketType.Vector, "label.socket.gradient.values", context => {
+                const {fac, stopsPrecomputed, leftStopIndex} = getLeftStopIndex(context);
+
+                if (leftStopIndex === -1) {
+                  return stopsPrecomputed[0].valueSocket.inValue(context) as Vec3;
+                }
+                if (leftStopIndex === stopsPrecomputed.length - 1) {
+                  return stopsPrecomputed.at(-1)!.valueSocket.inValue(context) as Vec3;
+                }
+      
+                const leftStop = stopsPrecomputed[leftStopIndex];
+                const rightStop = stopsPrecomputed[leftStopIndex + 1];
+      
+                const value0 = leftStop.valueSocket.inValue(context) as Vec3;
+                if (fac === leftStop.position) {
+                  return value0;
+                }
+      
+                const value1 = rightStop.valueSocket.inValue(context) as Vec3;
+                return value0.map((_, i) => lerp(value0[i], value1[i], (fac - leftStop.position) / (rightStop.position - leftStop.position))) as Vec3;
+              }, {
+                webglOutputs: socket => () => ({[webglStdOuts.vector]: WebglTemplate.slot(val)}),
+              }),
+        );
       };
 
       this.ins.push(
@@ -81,59 +157,37 @@ export namespace images {
           defaultValue: "0",
           valueChangeRequiresShaderReload: true,
         })),
-        new InSocket(this, SocketType.Integer, "label.socket.gradient.nStops", {
+        (this.typeSocket = new InSocket(this, SocketType.Dropdown, "label.socket.gradient.type", {
+          showSocket: false,
+          defaultValue: "vector",
+          options: [
+            {text: "label.socketType.float", value: "float"},
+            {text: "label.socketType.vector", value: "vector"},
+          ],
+          onValueChange: (tree) => {
+            recreateStopSockets(tree);
+            recreateOutputSocket(tree);
+          },
+          valueChangeRequiresShaderReload: true,
+        })),
+        (this.nStopsSocket = new InSocket(this, SocketType.Integer, "label.socket.gradient.nStops", {
           constant: true,
           defaultValue: 2,
           sliderProps: {
             min: 1,
             hasBounds: false,
           },
-          onValueChange: () => {
-            recreateStopSockets();
-          },
+          onValueChange: recreateStopSockets,
           valueChangeRequiresShaderReload: true,
-        }),
+        })),
       );
-      recreateStopSockets();
-
-      this.outs.push(
-        new OutSocket(this, SocketType.Float, "label.socket.gradient.values", context => {
-          const fac = context.coords?.[this.whichDimension] ?? 0;
-          const stopsPrecomputed = this.stopsSockets.map(({positionSocket, valueSocket}) => ({position: positionSocket.inValue(context), valueSocket}));
-          
-          let leftStopIndex = -1;
-          for (const [i, stop] of stopsPrecomputed.entries()) {
-            if (fac < stop.position) continue;
-            
-            leftStopIndex = i;
-            break;
-          }
-
-          if (leftStopIndex === -1) {
-            return stopsPrecomputed[0].valueSocket.inValue(context);
-          }
-          if (leftStopIndex === stopsPrecomputed.length - 1) {
-            return stopsPrecomputed.at(-1)!.valueSocket.inValue(context);
-          }
-
-          const leftStop = stopsPrecomputed[leftStopIndex];
-          const rightStop = stopsPrecomputed[leftStopIndex + 1];
-
-          const value0 = leftStop.valueSocket.inValue(context);
-          if (fac === leftStop.position) {
-            return value0;
-          }
-
-          const value1 = rightStop.valueSocket.inValue(context);
-          return lerp(value0, value1, (fac - leftStop.position) / (rightStop.position - leftStop.position));
-        }, {
-          webglOutputs: socket => () => ({[webglStdOuts.float]: WebglTemplate.slot(val)}),
-        }),
-      );
+      recreateStopSockets(null);
+      recreateOutputSocket(null);
     }
 
     private createStopSockets() {
-      const nStops = this.ins[1].inValue();
+      const stopType = this.typeSocket.inValue();
+      const nStops = this.nStopsSocket.inValue();
 
       const slots = new Array(nStops).fill(0).map((_, i) => ({
         position: WebglSlot.in(`position_${i}`),
@@ -152,13 +206,29 @@ export namespace images {
                 webglOutputMappingStatic: {[webglStdOuts.float]: slots[i].position},
                 labelSubstitutions: [String(i)],
               }),
-              valueSocket: new InSocket(this, SocketType.Float, "label.socket.gradient.stopIValue", {
-                sliderProps: {
-                  hasBounds: false,
-                },
-                webglOutputMappingStatic: {[webglStdOuts.float]: slots[i].value},
-                labelSubstitutions: [String(i)],
-              }),
+              valueSocket: stopType === "float" 
+                  ? new InSocket(this, SocketType.Float, "label.socket.gradient.stopIValue", {
+                    sliderProps: {
+                      hasBounds: false,
+                    },
+                    webglOutputMappingStatic: {[webglStdOuts.float]: slots[i].value},
+                    labelSubstitutions: [String(i)],
+                  })
+                  : new InSocket(this, SocketType.Vector, "label.socket.gradient.stopIValue", {
+                    sliderProps: [
+                      {
+                        hasBounds: false,
+                      },
+                      {
+                        hasBounds: false,
+                      },
+                      {
+                        hasBounds: false,
+                      },
+                    ],
+                    webglOutputMappingStatic: {[webglStdOuts.vector]: slots[i].value},
+                    labelSubstitutions: [String(i)],
+                  })
             })),
         slots,
       };
@@ -178,7 +248,7 @@ export namespace images {
       const slots = (index: number) => toRaw(this.stopsSlots.at(index)!); // toRaw included due to VueJS inconsistency
 
       return WebglVariables.templateConcat`float ${fac} = coords.${this.whichDimension === 0 ? "x" : "y"};
-float ${val} =
+${this.typeSocket.inValue() === "float" ? "float" : "vec3"} ${val} =
     ${fac} < ${slots(0).position} ? ${slots(0).value} :
     ${WebglTemplate.merge(
       ...new Array(stopsPrecomputed.length - 1).fill(0)
@@ -239,7 +309,7 @@ float ${val} =
           webglOutputs: socket => () => ({
             [webglStdOuts.vector]: WebglTemplate.source`${val}.rgb`,
           }),
-          socketDesc: "desc.socket.imageFileRgb",
+          desc: "desc.socket.imageFileRgb",
         }),
         new OutSocket(this, SocketType.Float, "label.socket.alpha", context => {
           const imageData = this.imageSocket.inValue(context);
@@ -254,21 +324,21 @@ float ${val} =
           webglOutputs: socket => () => ({
             [webglStdOuts.float]: WebglTemplate.source`${val}.a`,
           }),
-          socketDesc: "desc.socket.imageFileRgb",
+          desc: "desc.socket.imageFileRgb",
         }),
         new OutSocket(this, SocketType.Integer, "label.socket.width", context => this.imageSocket.inValue(context)?.width ?? 0, {
           constant: true,
           webglOutputs: socket => () => ({
             [webglStdOuts.integer]: WebglTemplate.slot(width),
           }),
-          socketDesc: "desc.socket.imageFileWidth",
+          desc: "desc.socket.imageFileWidth",
         }),
         new OutSocket(this, SocketType.Integer, "label.socket.height", context => this.imageSocket.inValue(context)?.height ?? 0, {
           constant: true,
           webglOutputs: socket => () => ({
             [webglStdOuts.integer]: WebglTemplate.slot(height),
           }),
-          socketDesc: "desc.socket.imageFileHeight",
+          desc: "desc.socket.imageFileHeight",
         }),
       );
     }

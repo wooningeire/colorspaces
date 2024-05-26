@@ -269,6 +269,7 @@ const strings = {
   "label.socket.compareFloats.a<b?": "A < B?",
 
   "label.socket.gradient.axis": "Axis",
+  "label.socket.gradient.type": "Type",
   "label.socket.gradient.nStops": "# stops",
   "label.socket.gradient.stopIPosition": "Stop {0} position",
   "label.socket.gradient.stopIValue": "Stop {0} value",

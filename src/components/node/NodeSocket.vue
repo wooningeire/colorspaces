@@ -120,7 +120,7 @@ const showTooltip = () => {
   const socketTypeName = socketTypeNames.get(props.socket.type);
   const inOut = props.socket.isInput ? "in" : "out";
 
-  let tooltipString = `${getString(props.socket.socketDesc ?? NO_DESC)}`;
+  let tooltipString = `${getString(props.socket.desc ?? NO_DESC)}`;
   
   if (props.socket.showSocket) {
     tooltipString += `<br />
