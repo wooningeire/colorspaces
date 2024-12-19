@@ -2,7 +2,7 @@
 import { computed, getCurrentInstance, nextTick, ref } from "vue";
 import { toHex, Option, clamp } from "$/util";
 import { output } from "$/node-types";
-import { settings } from "@/components/store";
+import { settings } from "@/components/store.svelte";
 import ReadonlyInput from "./ReadonlyInput.vue";
 import { NodeEvalContext } from "$/node/";
 

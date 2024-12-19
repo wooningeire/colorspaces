@@ -1,9 +1,12 @@
-import {createApp} from "vue";
-import Root from "./components/Root.vue";
+import { mount } from 'svelte';
+import Root from './components/Root.svelte';
+import "./index.scss";
 
-const app = createApp(Root);
-app.config.unwrapInjectedRef = true; // https://vuejs.org/guide/components/provide-inject.html#working-with-reactivity
-app.mount("main");
+const app = mount(Root, {
+    target: document.querySelector("main")!,
+});
+
+export default app;
 
 // const colourWorker = new Worker(new URL("./pyodide-worker/index.ts", import.meta.url), {type: "module"});
 // colourWorker.addEventListener("message", console.log);

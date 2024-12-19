@@ -6,7 +6,7 @@ import NodeLink from "./node/NodeLink.vue";
 import {Tree, Socket, Link} from "$/node/";
 import {externals} from "$/node-types/";
 
-import {tree} from "./store";
+import {tree} from "./store.svelte";
 
 const props = defineProps(["socketVues"]);
 </script>

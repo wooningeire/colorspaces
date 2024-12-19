@@ -11,7 +11,7 @@ import NodeLink from "./node/NodeLink.vue";
 import {Vec2, clearTextSelection} from "$/util";
 import {Socket, Node, Link, InSocket, NodeUpdateSource} from "$/node/";
 
-import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";
+import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store.svelte";
 
 
 const pointerX = ref(-1);

@@ -13,7 +13,7 @@ import {clearTextSelection} from "$/util";
 
 import getString from "$/strings";
 
-import {selectedNodes, modifierKeys} from "@/components/store";
+import {selectedNodes, modifierKeys} from "@/components/store.svelte";
 import createDragListener from "@vaie/drag-listener";
 
 

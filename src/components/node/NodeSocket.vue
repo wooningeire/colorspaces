@@ -3,7 +3,7 @@ import {ref, inject, computed, onMounted, getCurrentInstance, ComputedRef, watch
 
 import NodeSocketField from "./NodeSocketField.vue";
 import NodeSocket from "./NodeSocket.vue";
-import {tooltipController} from "@/components/store";
+import {tooltipController} from "@/components/store.svelte";
 
 import {Socket, SocketType, InSocket} from "$/node/";
 import getString, {NO_DESC} from "$/strings";

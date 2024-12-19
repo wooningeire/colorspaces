@@ -5,7 +5,7 @@ import BaseEntry from "../input/BaseEntry.vue";
 import EntryRgb from "../input/EntryRgb.vue";
 import EntrySlider from "../input/EntrySlider.vue";
 
-import {settings, tree} from "@/components/store";
+import {settings, tree} from "@/components/store.svelte";
 
 import {Socket, SocketType, SocketFlag, Tree} from "$/node/";
 import {externals} from "$/node-types/";

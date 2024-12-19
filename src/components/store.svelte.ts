@@ -1,5 +1,3 @@
-import {ref, reactive} from "vue";
-
 import {Tree, Node} from "$/node/";
 import {models, spaces, externals} from "$/node-types/";
 import * as cm from "$/color-management/";
@@ -7,7 +5,7 @@ import { StringKey } from "$/strings";
 
 
 //#region Node tree
-export const tree = reactive<Tree>(new Tree());
+export const tree = $state(new Tree());
 
 //#region Node tree nodes setup
 export interface DeviceNodes {
@@ -18,7 +16,7 @@ export interface DeviceNodes {
 }
 
 
-export const deviceNodes = reactive(<DeviceNodes>{});
+export const deviceNodes = <DeviceNodes>{};
 const dn = deviceNodes;
 [
   new spaces.SrgbNode().setPos([500, 250]),
@@ -34,16 +32,16 @@ const dn = deviceNodes;
 //#endregion
 //#endregion
 
-export const selectedNodes = reactive(new Set<Node>());
+export const selectedNodes = new Set<Node>();
 
 
 //#region Modifier keys
-export const modifierKeys = reactive({
+export const modifierKeys = {
   ctrl: false,
   shift: false,
   alt: false,
   meta: false,
-});
+};
 
 const updateModifierKeys = (event: KeyboardEvent) => {
   Object.assign(modifierKeys, {
@@ -60,13 +58,13 @@ addEventListener("keyup", updateModifierKeys);
 
 
 //#region Dragging nodes from the node tray
-export const isDraggingNodeFromNodeTray = ref(false);
-export const currentlyDraggedNodeConstructor = ref(null as any as new <T extends Node>() => T);
+export const isDraggingNodeFromNodeTray = $state(false);
+export const currentlyDraggedNodeConstructor = $state(null as any as new <T extends Node>() => T);
 //#endregion
 
 
 //#region Global settings
-export const settings = reactive(<{
+export const settings = $state(<{
   deviceSpace: typeof cm.Col,
   rgbScale: number,
   hueScale: number,
@@ -94,7 +92,7 @@ type Tooltip = {
 };
 const tooltips = new Set<Tooltip>();
 
-export const tooltipController = reactive({
+export const tooltipController = $state({
   text: "",
   pos: {},
 
@@ -111,7 +109,7 @@ export const tooltipController = reactive({
 //#endregion
 
 //#region Error popup
-export const errorPopupController =  reactive({
+export const errorPopupController = $state({
   text: "",
 
   async showPopup(text: string) {

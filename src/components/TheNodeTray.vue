@@ -7,7 +7,7 @@ import {Node} from "$/node/";
 
 import getString from "$/strings";
 
-import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, tooltipController} from "./store";
+import {isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, tooltipController} from "./store.svelte";
 
 const emit = defineEmits(["add-node"]);
 

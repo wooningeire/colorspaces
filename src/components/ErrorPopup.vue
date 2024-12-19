@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import {computed, ref, watch} from "vue";
-import { errorPopupController } from "./store";
+import { errorPopupController } from "./store.svelte";
 
 const props = withDefaults(defineProps<{
   text: string,

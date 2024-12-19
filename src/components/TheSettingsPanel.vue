@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import * as cm from "$/color-management/";
 
-import {settings} from "./store";
+import {settings} from "./store.svelte";
 
 </script>
 

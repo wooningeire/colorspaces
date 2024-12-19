@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {PropType, computed, getCurrentInstance, ref, toValue} from 'vue';
 
-import {settings} from "@/components/store";
+import {settings} from "@/components/store.svelte";
 
 import {Col} from "$/color-management/";
 import {InSocket, SocketFlag} from '$/node/';

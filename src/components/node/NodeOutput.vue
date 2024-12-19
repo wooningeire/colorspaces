@@ -13,7 +13,7 @@ import { NodeWithOverloads } from "$/node/Overload";
 import {models, output} from "$/node-types";
 import {Col} from "$/color-management/";
 import { Vec3 } from "$/util";
-import { tree } from "@/components/store";
+import { tree } from "@/components/store.svelte";
 
 const props = defineProps<{
   node: Node,

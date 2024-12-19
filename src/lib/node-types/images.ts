@@ -3,7 +3,6 @@ import { Node, SocketType, AxisNode, NodeEvalContext, InSocket, OutSocket, webgl
 import { Vec3, lerp } from "$/util";
 import { useDynamicallyTypedSockets } from "./util";
 import { WebglTemplate, WebglSlot, WebglVariables } from "$/webgl-compute/WebglVariables";
-import { toRaw } from "vue";
 
 export namespace images {
   export class CoordinatesNode extends Node implements AxisNode {
@@ -240,7 +239,7 @@ export namespace images {
 
       const stopsPrecomputed = this.stopsSockets.map(({positionSocket, valueSocket}, i) => ({position: positionSocket.inValue(context), valueSocket}));
 
-      const slots = (index: number) => toRaw(this.stopsSlots.at(index)!); // toRaw included due to VueJS inconsistency
+      const slots = (index: number) => this.stopsSlots.at(index)!;
 
       return WebglVariables.templateConcat`float ${fac} = coords.${this.whichDimension === 0 ? "x" : "y"};
 ${this.typeSocket.inValue() === "float" ? "float" : "vec3"} ${val} =

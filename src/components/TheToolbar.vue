@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { Tree, Node } from "$/node/";
-import {tree, selectedNodes} from "./store";
+import {tree, selectedNodes} from "./store.svelte";
 import {downloadNodeTree, importNodeTree} from "$/file-management/node-tree-io";
 import { ref } from "vue";
 
