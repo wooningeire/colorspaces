@@ -1,12 +1,14 @@
 <script lang="ts" setup>
 import {computed, ref, reactive, provide, nextTick, onMounted, Ref, inject, watch} from "vue";
 
+import { Listen } from "@vaie/listen";
+
 import NodeVue from "./node/NodeVue.vue";
 import NodeSocket from "./node/NodeSocket.vue";
 import TheNodeTreeLinks from "./TheNodeTreeLinks.vue";
 import NodeLink from "./node/NodeLink.vue";
 
-import {Vec2, Listen, clearTextSelection} from "$/util";
+import {Vec2, clearTextSelection} from "$/util";
 import {Socket, Node, Link, InSocket, NodeUpdateSource} from "$/node/";
 
 import {tree, selectedNodes, modifierKeys, isDraggingNodeFromNodeTray, currentlyDraggedNodeConstructor, DeviceNodes} from "./store";

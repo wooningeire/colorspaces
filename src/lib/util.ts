@@ -32,27 +32,6 @@ const convert = (col: Col<ColorType.Rgb>, targetType: ColorType) => {
 export const qs = (selector: string, context: Element | Document | DocumentFragment=document) => context.querySelector(selector);
 
 
-type Handler = (event: any) => void; //TypeScript workaround
-
-export class Listen {
-  private constructor(
-    readonly target: EventTarget,
-    readonly type: string,
-    readonly handler: Handler, //EventListener,
-    readonly options?: AddEventListenerOptions,
-  ) {}
-  
-  static for(target: EventTarget, type: string, handler: Handler /* EventListener */, options?: AddEventListenerOptions) {
-    target.addEventListener(type, handler, options);
-    return new this(target, type, handler, options);
-  }
-
-  detach() {
-    this.target.removeEventListener(this.type, this.handler, this.options);
-  }
-}
-
-
 export const mod = (a: number, b: number) => (a % b + b) % b;
 export const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;
 export const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));

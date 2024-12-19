@@ -1,11 +1,12 @@
 <script lang="ts" setup>
 import {computed, onMounted, PropType, reactive, ref, watch, inject, Ref} from 'vue';
 
-import createDragListener from "@/components/draggable";
+import { Listen } from '@vaie/listen';
+
 import {settings} from '@/components/store';
 
 import {models} from "$/node-types";
-import {Listen, clearTextSelection, lerp, clamp} from "$/util";
+import {clearTextSelection, lerp, clamp} from "$/util";
 import * as cm from "$/color-management/";
 import getString from "$/strings";
 

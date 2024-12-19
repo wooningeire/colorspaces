@@ -5,6 +5,12 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@vaie/drag-listener':
+    specifier: ^0.0.0
+    version: 0.0.0
+  '@vaie/listen':
+    specifier: ^0.0.2
+    version: 0.0.2
   marked:
     specifier: ^4.0.16
     version: 4.3.0
@@ -34,9 +40,6 @@ devDependencies:
   sass:
     specifier: ^1.70.0
     version: 1.70.0
-  typescript:
-    specifier: ^4.9.5
-    version: 4.9.5
   vite:
     specifier: ^4.5.2
     version: 4.5.2(@types/node@20.11.17)(sass@1.70.0)
@@ -310,6 +313,16 @@ packages:
   /@types/seedrandom@3.0.8:
     resolution: {integrity: sha512-TY1eezMU2zH2ozQoAFAQFOPpvP15g+ZgSfTZt31AUUH/Rxtnz3H+A/Sv1Snw2/amp//omibc+AEkTaA8KUeOLQ==}
     dev: true
+
+  /@vaie/drag-listener@0.0.0:
+    resolution: {integrity: sha512-qeAyeqfshaH5QSHIvSxSMuYh20XiFkTfRhq1IWXwOPjM+Kg0/hB28JnZlEXPMArEQqbEywWhr1LKHvMwYerohw==}
+    dependencies:
+      '@vaie/listen': 0.0.2
+    dev: false
+
+  /@vaie/listen@0.0.2:
+    resolution: {integrity: sha512-PfYFqOsrV+Lfcdjx9CeaiezN3/vDHuca7SYks21mIf/h1qMNsAfW7oTr43JxZraKWpCxz8WfwKuf1hGWbQRG0g==}
+    dev: false
 
   /@vitejs/plugin-vue@4.6.2(vite@4.5.2)(vue@3.4.19):
     resolution: {integrity: sha512-kqf7SGFoG+80aZG6Pf+gsZIVvGSCKE98JbiWqcCV9cThtg91Jav0yvYFC9Zb+jKetNGF6ZKeoaxgZfND21fWKw==}

@@ -14,7 +14,7 @@ import {clearTextSelection} from "$/util";
 import getString from "$/strings";
 
 import {selectedNodes, modifierKeys} from "@/components/store";
-import createDragListener from "../draggable";
+import createDragListener from "@vaie/drag-listener";
 
 
 const props = defineProps<{
